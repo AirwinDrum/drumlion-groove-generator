@@ -695,7 +695,7 @@ body {
       }
       h += '<div class="block-seg" style="flex:'+Math.round(b.dur)+';background:'+bg+';border-color:'+bc+';">';
       h += '<span class="b-bpm" style="color:'+tc+'">'+b.bpm+' bpm</span>';
-      h += '<span class="b-dur" style="color:'+tc+'">'+b.bars+' Takte</span></div>';
+      h += '<span class="b-dur" style="color:'+tc+'">'+b.bars+' Bars</span></div>';
       if (i < blocks.length-1 && pauses[i]) {
         var pa = (i===bIdx-1 && phase==='pause');
         h += '<div class="pause-seg" style="color:'+(pa?'#C9A84C':'#666')+'">'+pauses[i]+'s</div>';
