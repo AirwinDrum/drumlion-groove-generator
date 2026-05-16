@@ -234,18 +234,6 @@ body {
 
     <div id="dgBlocks"></div>
 
-    <div class="bpm-selector" id="dgBpmSel">
-      <div class="bpm-controls">
-        <button class="bpm-btn" id="dgM1">−</button>
-        <div class="bpm-display">
-          <span class="bpm-val" id="dgBV">100</span>
-          <span class="bpm-lbl">BPM</span>
-        </div>
-        <button class="bpm-btn" id="dgP1">+</button>
-      </div>
-      <input type="range" class="bpm-slider" id="dgSlider" min="30" max="300" value="100">
-    </div>
-
     <div class="controls" id="dgCtrl">
       <button class="btn-go" id="dgStart">▶ Start</button>
     </div>
@@ -777,12 +765,10 @@ body {
   }
 
   function updateBpm() {
-    document.getElementById('dgBV').textContent = tBpm;
-    document.getElementById('dgSlider').value   = tBpm;
     blocks = getBlocks(tBpm);
     pauses = getPauses(tBpm, blocks.length);
     document.getElementById('dgSub').textContent =
-      'Target: '+tBpm+' BPM — '+blocks.length+' Block'+(blocks.length>1?'s':'');
+      tBpm+' BPM — '+blocks.length+' Block'+(blocks.length>1?'s':'');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
   }
@@ -807,7 +793,16 @@ body {
   // ============================================================
   // STATE
   // ============================================================
-  var tBpm=100, playing=false, intId=null;
+  // BPM + Groove aus URL lesen
+  var _params  = new URLSearchParams(window.location.search);
+  var tBpm     = Math.min(300, Math.max(30, parseInt(_params.get('bpm'))  || 100));
+  var grooveId = parseInt(_params.get('groove')) || 1;
+  var _gName   = 'Groove ' + grooveId;
+
+  // Header direkt setzen
+  document.getElementById('dgName').textContent = _gName;
+
+  var playing=false, intId=null;
   var blocks=[], pauses=[], bIdx=0, beat=0, bar=0, phase='idle';
 
   // ============================================================
@@ -818,7 +813,6 @@ body {
     blocks  = getBlocks(tBpm);
     pauses  = getPauses(tBpm, blocks.length);
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
-    document.getElementById('dgBpmSel').style.display = 'none';
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ Stop</button>';
     document.getElementById('dgStop').addEventListener('click', stopExercise);
     renderBlocksBar(); renderNot(-1, true); startTotal(); startCountIn();
@@ -1014,7 +1008,6 @@ body {
     playing=false;
     if (intId) clearInterval(intId);
     stopTotal(); hideCountIn(); phase='idle';
-    document.getElementById('dgBpmSel').style.display='block';
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2">▶ Start</button>';
     document.getElementById('dgStart2').addEventListener('click', startExercise);
     renderNot(-1, false); updateBpm();
@@ -1034,9 +1027,6 @@ body {
   // EVENTS & INIT
   // ============================================================
   document.getElementById('dgStart').addEventListener('click', startExercise);
-  document.getElementById('dgM1').addEventListener('click', function() { tBpm=Math.max(30,tBpm-1); updateBpm(); });
-  document.getElementById('dgP1').addEventListener('click', function() { tBpm=Math.min(300,tBpm+1); updateBpm(); });
-  document.getElementById('dgSlider').addEventListener('input', function() { tBpm=parseInt(this.value); updateBpm(); });
 
   updateBpm();
   renderNot(-1, false);
