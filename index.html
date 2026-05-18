@@ -767,52 +767,147 @@ body {
   ];
 
   // ── Section aus URL ──────────────────────────────────────────
-  var _section = (new URLSearchParams(location.search).get('section') || 'grooves').toLowerCase();
+  // ============================================================
+  // COURSE DISTRIBUTION ALGORITHM
+  // ============================================================
+  // • 3 Start-Übungen (G1, F1, R1), danach +1 alle 20 Lektionen
+  // • Boost-Sequenz: Lücke nach n Auftritten = n Lektionen
+  // • Steady-State: ~31 Übungen gleichzeitig aktiv
+  // • Übungen graduieren nach letztem BPM-Schritt
+  // • Einführungsreihenfolge: G → F → R → G → F → R → ...
+  // ============================================================
 
-  // ── Alle Lektionen — BPM wird aus SPHM automatisch berechnet ─
-  var LESSONS = (function() {
-    var list = [];
-    EXERCISES.filter(function(e) { return e.cat === _section; })
-      .forEach(function(ex) {
-        var minB = sphmToBpm(ex.minSPHM, ex, ex.step);
-        var maxB = sphmToBpm(ex.maxSPHM, ex, ex.step);
-        for (var b = minB; b <= maxB; b += ex.step)
-          list.push({exercise: ex, bpm: b, sphm: bpmToSphm(b, ex)});
-      });
-    return list;
-  })();
+  var INTRO_INTERVAL = 20;   // neue Übung alle N Lektionen
+  var START_COUNT    = 3;    // G1, F1, R1 starten sofort
+  var COURSE_KEY     = 'drumlion_v1_course';
 
-  // ── Fortschritt aus localStorage ─────────────────────────────
-  var _progKey = 'drumlion_v1_' + _section;
-  var _lessonIdx = Math.min(
-    parseInt(localStorage.getItem(_progKey) || '0'),
-    Math.max(0, LESSONS.length - 1)
-  );
+  // Einführungsreihenfolge G→F→R rotierend
+  function _buildIntroQueue() {
+    var g = EXERCISES.filter(function(e){ return e.cat==='grooves';   });
+    var f = EXERCISES.filter(function(e){ return e.cat==='fillins';   });
+    var r = EXERCISES.filter(function(e){ return e.cat==='rudiments'; });
+    var q = [], len = Math.max(g.length, f.length, r.length);
+    for (var i=0; i<len; i++) {
+      if (g[i]) q.push(g[i]);
+      if (f[i]) q.push(f[i]);
+      if (r[i]) q.push(r[i]);
+    }
+    return q;
+  }
+  var _introQueue = _buildIntroQueue();
 
-  function _saveProgress() {
-    try { localStorage.setItem(_progKey, String(_lessonIdx)); } catch(e) {}
+  // Anzahl BPM-Schritte für eine Übung
+  function _exSteps(ex) {
+    var minB = sphmToBpm(ex.minSPHM, ex, ex.step);
+    var maxB = sphmToBpm(ex.maxSPHM, ex, ex.step);
+    return Math.max(1, Math.round((maxB - minB) / ex.step) + 1);
   }
 
-    function _updateNavUI() {
-    if (!LESSONS.length) return;
-    var total = LESSONS.length;
-    document.getElementById('dgNavPrev').disabled = (_lessonIdx === 0);
-    document.getElementById('dgNavNext').disabled = (_lessonIdx >= total - 1);
-    _updateLevelUI();
+  // BPM für einen bestimmten Schritt-Index
+  function _exBpm(ex, stepIdx) {
+    return sphmToBpm(ex.minSPHM, ex, ex.step) + stepIdx * ex.step;
   }
 
-  function loadLesson(idx, doStart) {
-    if (idx < 0 || idx >= LESSONS.length) return;
+  // Initial State aufbauen
+  function _initState() {
+    var active = _introQueue.slice(0, START_COUNT).map(function(ex) {
+      return {id: ex.id, bpmStep: 0, appearances: 0, lessonsDue: 0};
+    });
+    return {active: active, total: 0, nextIntro: INTRO_INTERVAL, introIdx: START_COUNT};
+  }
+
+  function _loadState() {
+    try {
+      var s = localStorage.getItem(COURSE_KEY);
+      if (s) { var p = JSON.parse(s); if (p && p.active) return p; }
+    } catch(e) {}
+    return _initState();
+  }
+
+  function _saveState() {
+    try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
+  }
+
+  var _cState = _loadState();
+
+  // Nächste Lektion ermitteln (ohne State zu ändern)
+  function _peekLesson() {
+    if (!_cState.active.length) return null;
+    var sorted = _cState.active.slice().sort(function(a,b) {
+      if (a.lessonsDue !== b.lessonsDue) return a.lessonsDue - b.lessonsDue;
+      if (a.appearances !== b.appearances) return a.appearances - b.appearances;
+      return a.id - b.id;
+    });
+    var entry = sorted[0];
+    var ex    = EXERCISES.find(function(e){ return e.id === entry.id; });
+    if (!ex) return null;
+    var bpm   = _exBpm(ex, entry.bpmStep);
+    return {ex: ex, bpm: bpm, sphm: bpmToSphm(bpm, ex), entry: entry};
+  }
+
+  // Lektion abschließen: State vorwärts
+  function _advanceState() {
+    var lesson = _peekLesson();
+    if (!lesson) return;
+    var id    = lesson.entry.id;
+    var entry = _cState.active.find(function(e){ return e.id === id; });
+
+    entry.appearances++;
+    entry.bpmStep++;
+    entry.lessonsDue = entry.appearances;   // Lücke wächst mit jeder Wiederholung
+
+    // Graduation: alle BPM-Schritte gespielt
+    if (entry.bpmStep >= _exSteps(lesson.ex)) {
+      _cState.active = _cState.active.filter(function(e){ return e.id !== id; });
+    }
+
+    // Alle anderen Übungen: Lücke -1
+    _cState.active.forEach(function(e) {
+      if (e.id !== id) e.lessonsDue = Math.max(0, e.lessonsDue - 1);
+    });
+
+    _cState.total++;
+
+    // Neue Übung einführen wenn fällig
+    while (_cState.total >= _cState.nextIntro && _cState.introIdx < _introQueue.length) {
+      var newEx = _introQueue[_cState.introIdx];
+      _cState.active.push({id: newEx.id, bpmStep: 0, appearances: 0, lessonsDue: 0});
+      _cState.introIdx++;
+      _cState.nextIntro += INTRO_INTERVAL;
+    }
+
+    _saveState();
+  }
+
+  // Aktuelle Lektion in den Player laden
+  function _loadCurrentLesson(autoStart) {
     if (playing) stopExercise();
-    _lessonIdx = idx;
-    var L = LESSONS[idx];
-    tBpm = L.bpm;
-    if (L.exercise.beats) GROOVE.beats = L.exercise.beats;
-    document.getElementById('dgName').textContent = L.exercise.name;
-    _saveProgress();
-    _updateNavUI();
+    var lesson = _peekLesson();
+    if (!lesson) return;
+    tBpm = lesson.bpm;
+    if (lesson.ex.beats) GROOVE.beats = lesson.ex.beats;
+    document.getElementById('dgName').textContent = lesson.ex.name;
+    _updateCourseUI();
     updateBpm();
-    if (doStart) setTimeout(startExercise, 80);
+    if (autoStart) setTimeout(startExercise, 80);
+  }
+
+  // UI mit aktuellem Course-State aktualisieren
+  function _updateCourseUI() {
+    var lesson = _peekLesson();
+    if (!lesson) return;
+    // Lesson counter
+    var el = document.getElementById('dgLessonNum');
+    if (el) {
+      var activeCount = _cState.active.length;
+      el.textContent  = 'Lesson ' + (_cState.total + 1) + '  ·  ' + activeCount + ' active';
+    }
+    // Nav-Buttons: Prev verstecken, Next = skip
+    var prev = document.getElementById('dgNavPrev');
+    var next = document.getElementById('dgNavNext');
+    if (prev) prev.style.visibility = 'hidden';
+    if (next) { next.style.visibility = 'visible'; next.textContent = 'Skip →'; }
+    _updateLevelUI();
   }
 
   // ============================================================
@@ -1275,15 +1370,14 @@ body {
   function updateBpm() {
     blocks = getBlocks(tBpm);
     pauses = getPauses(tBpm, blocks.length);
-    var _curLesson = (typeof LESSONS !== 'undefined' && LESSONS[_lessonIdx]);
+    var _curLesson = (typeof _peekLesson === 'function') ? _peekLesson() : null;
     var _sphmStr = _curLesson ? '  ·  '+_curLesson.sphm+' SPHM' : '';
     document.getElementById('dgSub').textContent =
       tBpm+' BPM'+_sphmStr+' — '+blocks.length+' Block'+(blocks.length>1?'s':'');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
-    if (typeof _updateNavUI === 'function') _updateNavUI();
-    _updateLevelUI();
+    if (typeof _updateCourseUI === 'function') _updateCourseUI();
   }
 
   // ============================================================
@@ -1516,17 +1610,14 @@ body {
     document.getElementById('dgTotal').style.display='block';
     document.getElementById('dgCtrl').innerHTML =
       '<button class="btn-stp" id="dgAgain">▶ Again</button>'+
-      (_lessonIdx < LESSONS.length - 1
-        ? '<button class="btn-go" id="dgNextLesson">Next Lesson →</button>'
-        : '<button class="btn-go" id="dgNextLesson" style="background:#66bb6a">🎉 Complete!</button>')+
-      '<button class="btn-stp" id="dgClose">✕ Reset</button>';
+      '<button class="btn-go" id="dgNextLesson">Next Lesson →</button>'+
+      '<button class="btn-stp" id="dgClose">✕ Stop</button>';
     document.getElementById('dgAgain').addEventListener('click', startExercise);
     document.getElementById('dgClose').addEventListener('click', stopExercise);
-    if (_lessonIdx < LESSONS.length - 1) {
-      document.getElementById('dgNextLesson').addEventListener('click', function() {
-        loadLesson(_lessonIdx + 1, true);
-      });
-    }
+    document.getElementById('dgNextLesson').addEventListener('click', function() {
+      _advanceState();
+      _loadCurrentLesson(true);
+    });
   }
 
   function stopExercise() {
@@ -1552,15 +1643,19 @@ body {
   // EVENTS & INIT
   // ============================================================
   document.getElementById('dgStart').addEventListener('click', startExercise);
-  document.getElementById('dgNavPrev').addEventListener('click', function() {
-    loadLesson(_lessonIdx - 1, false);
-  });
-  document.getElementById('dgNavNext').addEventListener('click', function() {
-    loadLesson(_lessonIdx + 1, false);
-  });
 
-  // Init: Lektion aus localStorage laden
-  loadLesson(_lessonIdx, false);
+  // Prev = versteckt (Algorithmus bestimmt Reihenfolge)
+  document.getElementById('dgNavPrev').style.visibility = 'hidden';
+
+  // Next = aktuelle Lektion überspringen
+  document.getElementById('dgNavNext').addEventListener('click', function() {
+    _advanceState();
+    _loadCurrentLesson(false);
+  });
+  document.getElementById('dgNavNext').textContent = 'Skip →';
+
+  // Init: erste Lektion aus Course-State laden
+  _loadCurrentLesson(false);
   _updateLevelUI();
 
 })();
