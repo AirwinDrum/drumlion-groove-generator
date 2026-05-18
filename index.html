@@ -362,8 +362,23 @@ body {
   //          16th-note groove,one hand,    100 BPM  →  SPHM = 100 × 4 × 1.0 = 400
   // ============================================================
 
+  // noteValue factors — strokes per quarter-note beat
+  var NOTE_FACTORS = {
+    whole:             0.25,  // ganze Note          (1 per 4 beats)
+    half:              0.5,   // halbe Note           (1 per 2 beats)
+    quarter:           1,     // Viertel              (1 per beat)
+    quarterTriplet:    1.5,   // Vierteltriole        (3 per 2 beats)
+    eighth:            2,     // Achtel               (2 per beat)
+    eighthTriplet:     3,     // Achteltriole         (3 per beat)
+    sixteenth:         4,     // 16tel                (4 per beat)
+    quintuplet:        5,     // Quintole             (5 per beat)
+    sixteenthTriplet:  6,     // 16tel-Triole/Sextole (6 per beat)
+    septuplet:         7,     // Septole              (7 per beat)
+    thirtySecond:      8      // 32tel                (8 per beat)
+  };
+
   function spmFactor(ex) {
-    var nv = {quarter:1, eighth:2, sixteenth:4, triplet:3}[ex.noteValue] || 2;
+    var nv = NOTE_FACTORS[ex.noteValue] || 2;
     var hf = (ex.hihatHands === 'one') ? 1.0 : 0.5;
     return nv * hf;
   }
