@@ -919,7 +919,7 @@ body {
     var el = document.getElementById('dgRepLine');
     if (!el) return;
     var r = (_cState.reps && _cState.reps[id]) ? _cState.reps[id] : 0;
-    el.textContent = r === 0 ? 'Erste Mal 🎯' : (r === 1 ? '1× gespielt' : r + '× gespielt');
+    el.textContent = r === 0 ? 'First time 🎯' : (r === 1 ? 'Played 1×' : 'Played ' + r + '×');
   }
 
   // Aktuelle Lektion in den Player laden
@@ -1335,7 +1335,7 @@ body {
       }
       h += '<div class="block-seg" style="flex:'+Math.round(b.dur)+';background:'+bg+';border-color:'+bc+';">';
       h += '<span class="b-bpm" style="color:'+tc+'">'+b.bpm+' bpm</span>';
-      h += '<span class="b-dur" style="color:'+tc+'">'+b.bars+' Takte</span></div>';
+      h += '<span class="b-dur" style="color:'+tc+'">'+b.bars+' bars</span></div>';
       if (i < blocks.length-1 && pauses[i]) {
         var pa = (i===bIdx-1 && phase==='pause');
         h += '<div class="pause-seg" style="color:'+(pa?'#C9A84C':'#666')+'">'+pauses[i]+'s</div>';
