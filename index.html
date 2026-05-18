@@ -350,104 +350,147 @@ body {
 
   // Alle Übungen — beats:null = aktueller GROOVE wird verwendet
   // beats:[...] = eigene Notation (wird nach Definition gesetzt)
+  // ============================================================
+  // SPHM — Strokes Per Hand Per Minute (Drumlion Difficulty Metric)
+  // ============================================================
+  // SPHM = BPM × noteValueFactor × handFactor
+  //   noteValue:  quarter=1, eighth=2, sixteenth=4, triplet=3
+  //   hihatHands: one=1.0,  alternate=0.5
+  //
+  // Example: 8th-note groove, one hand,    100 BPM  →  SPHM = 100 × 2 × 1.0 = 200
+  //          16th-note fill,  alternating, 100 BPM  →  SPHM = 100 × 4 × 0.5 = 200
+  //          16th-note groove,one hand,    100 BPM  →  SPHM = 100 × 4 × 1.0 = 400
+  // ============================================================
+
+  function spmFactor(ex) {
+    var nv = {quarter:1, eighth:2, sixteenth:4, triplet:3}[ex.noteValue] || 2;
+    var hf = (ex.hihatHands === 'one') ? 1.0 : 0.5;
+    return nv * hf;
+  }
+  function sphmToBpm(sphm, ex, step) {
+    return Math.round((sphm / spmFactor(ex)) / step) * step;
+  }
+  function bpmToSphm(bpm, ex) {
+    return Math.round(bpm * spmFactor(ex));
+  }
+
+  // ── COURSE SPHM RANGE ───────────────────────────────────────
+  var COURSE_MIN_SPHM = 120;   // comfortable beginner pace
+  var COURSE_MAX_SPHM = 400;   // advanced / near-limit
+
+  // ── EXERCISES ───────────────────────────────────────────────
+  // noteValue   : 'quarter' | 'eighth' | 'sixteenth' | 'triplet'
+  // hihatHands  : 'one' | 'alternate'
+  // minSPHM/maxSPHM : Strokes Per Hand Per Minute difficulty range
+  // step        : BPM step size
+  // beats       : null = default GROOVE; array = custom notation
+  // ─────────────────────────────────────────────────────────────
   var EXERCISES = [
-    // ── GROOVES (1–20) ──────────────────────────────────────
-    {id:1,  cat:'grooves',   name:'Groove 1',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:2,  cat:'grooves',   name:'Groove 2',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:3,  cat:'grooves',   name:'Groove 3',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:4,  cat:'grooves',   name:'Groove 4',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:5,  cat:'grooves',   name:'Groove 5',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:6,  cat:'grooves',   name:'Groove 6',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:7,  cat:'grooves',   name:'Groove 7',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:8,  cat:'grooves',   name:'Groove 8',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:9,  cat:'grooves',   name:'Groove 9',    minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:10, cat:'grooves',   name:'Groove 10',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:11, cat:'grooves',   name:'Groove 11',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:12, cat:'grooves',   name:'Groove 12',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:13, cat:'grooves',   name:'Groove 13',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:14, cat:'grooves',   name:'Groove 14',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:15, cat:'grooves',   name:'Groove 15',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:16, cat:'grooves',   name:'Groove 16',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:17, cat:'grooves',   name:'Groove 17',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:18, cat:'grooves',   name:'Groove 18',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:19, cat:'grooves',   name:'Groove 19',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:20, cat:'grooves',   name:'Groove 20',   minBpm:60, maxBpm:230, step:5, beats:null},
+    // ── GROOVES (1–20) ──────────────────────────────────────────
+    // G 1–15: 8th-note HH one hand   → factor 2.0 → BPM 60–200
+    // G 16–18: 16th-note HH one hand → factor 4.0 → BPM 30–100
+    // G 19–20: 16th-note HH alternate→ factor 2.0 → BPM 60–200
+    {id:1,  cat:'grooves',   name:'Groove 1',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:2,  cat:'grooves',   name:'Groove 2',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:3,  cat:'grooves',   name:'Groove 3',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:4,  cat:'grooves',   name:'Groove 4',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:5,  cat:'grooves',   name:'Groove 5',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:6,  cat:'grooves',   name:'Groove 6',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:7,  cat:'grooves',   name:'Groove 7',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:8,  cat:'grooves',   name:'Groove 8',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:9,  cat:'grooves',   name:'Groove 9',    noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:10, cat:'grooves',   name:'Groove 10',   noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:11, cat:'grooves',   name:'Groove 11',   noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:12, cat:'grooves',   name:'Groove 12',   noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:13, cat:'grooves',   name:'Groove 13',   noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:14, cat:'grooves',   name:'Groove 14',   noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:15, cat:'grooves',   name:'Groove 15',   noteValue:'eighth',    hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:16, cat:'grooves',   name:'Groove 16',   noteValue:'sixteenth', hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:17, cat:'grooves',   name:'Groove 17',   noteValue:'sixteenth', hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:18, cat:'grooves',   name:'Groove 18',   noteValue:'sixteenth', hihatHands:'one',       minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:19, cat:'grooves',   name:'Groove 19',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:20, cat:'grooves',   name:'Groove 20',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
 
-    // ── FILL INS (21–40) ────────────────────────────────────
-    {id:21, cat:'fillins',   name:'Fill In 1',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:22, cat:'fillins',   name:'Fill In 2',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:23, cat:'fillins',   name:'Fill In 3',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:24, cat:'fillins',   name:'Fill In 4',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:25, cat:'fillins',   name:'Fill In 5',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:26, cat:'fillins',   name:'Fill In 6',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:27, cat:'fillins',   name:'Fill In 7',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:28, cat:'fillins',   name:'Fill In 8',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:29, cat:'fillins',   name:'Fill In 9',   minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:30, cat:'fillins',   name:'Fill In 10',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:31, cat:'fillins',   name:'Fill In 11',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:32, cat:'fillins',   name:'Fill In 12',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:33, cat:'fillins',   name:'Fill In 13',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:34, cat:'fillins',   name:'Fill In 14',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:35, cat:'fillins',   name:'Fill In 15',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:36, cat:'fillins',   name:'Fill In 16',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:37, cat:'fillins',   name:'Fill In 17',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:38, cat:'fillins',   name:'Fill In 18',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:39, cat:'fillins',   name:'Fill In 19',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:40, cat:'fillins',   name:'Fill In 20',  minBpm:60, maxBpm:230, step:5, beats:null},
+    // ── FILL INS (21–40) ────────────────────────────────────────
+    // F 1–15: 16th-note alternating → factor 2.0 → BPM 60–200
+    // F 16–20: triplet alternating  → factor 1.5 → BPM 80–267
+    {id:21, cat:'fillins',   name:'Fill In 1',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:22, cat:'fillins',   name:'Fill In 2',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:23, cat:'fillins',   name:'Fill In 3',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:24, cat:'fillins',   name:'Fill In 4',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:25, cat:'fillins',   name:'Fill In 5',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:26, cat:'fillins',   name:'Fill In 6',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:27, cat:'fillins',   name:'Fill In 7',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:28, cat:'fillins',   name:'Fill In 8',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:29, cat:'fillins',   name:'Fill In 9',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:30, cat:'fillins',   name:'Fill In 10',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:31, cat:'fillins',   name:'Fill In 11',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:32, cat:'fillins',   name:'Fill In 12',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:33, cat:'fillins',   name:'Fill In 13',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:34, cat:'fillins',   name:'Fill In 14',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:35, cat:'fillins',   name:'Fill In 15',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:36, cat:'fillins',   name:'Fill In 16',  noteValue:'triplet',   hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:37, cat:'fillins',   name:'Fill In 17',  noteValue:'triplet',   hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:38, cat:'fillins',   name:'Fill In 18',  noteValue:'triplet',   hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:39, cat:'fillins',   name:'Fill In 19',  noteValue:'triplet',   hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:40, cat:'fillins',   name:'Fill In 20',  noteValue:'triplet',   hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
 
-    // ── RUDIMENTS (41–80) ───────────────────────────────────
-    {id:41, cat:'rudiments', name:'Rudiment 1',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:42, cat:'rudiments', name:'Rudiment 2',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:43, cat:'rudiments', name:'Rudiment 3',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:44, cat:'rudiments', name:'Rudiment 4',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:45, cat:'rudiments', name:'Rudiment 5',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:46, cat:'rudiments', name:'Rudiment 6',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:47, cat:'rudiments', name:'Rudiment 7',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:48, cat:'rudiments', name:'Rudiment 8',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:49, cat:'rudiments', name:'Rudiment 9',  minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:50, cat:'rudiments', name:'Rudiment 10', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:51, cat:'rudiments', name:'Rudiment 11', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:52, cat:'rudiments', name:'Rudiment 12', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:53, cat:'rudiments', name:'Rudiment 13', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:54, cat:'rudiments', name:'Rudiment 14', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:55, cat:'rudiments', name:'Rudiment 15', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:56, cat:'rudiments', name:'Rudiment 16', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:57, cat:'rudiments', name:'Rudiment 17', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:58, cat:'rudiments', name:'Rudiment 18', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:59, cat:'rudiments', name:'Rudiment 19', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:60, cat:'rudiments', name:'Rudiment 20', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:61, cat:'rudiments', name:'Rudiment 21', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:62, cat:'rudiments', name:'Rudiment 22', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:63, cat:'rudiments', name:'Rudiment 23', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:64, cat:'rudiments', name:'Rudiment 24', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:65, cat:'rudiments', name:'Rudiment 25', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:66, cat:'rudiments', name:'Rudiment 26', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:67, cat:'rudiments', name:'Rudiment 27', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:68, cat:'rudiments', name:'Rudiment 28', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:69, cat:'rudiments', name:'Rudiment 29', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:70, cat:'rudiments', name:'Rudiment 30', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:71, cat:'rudiments', name:'Rudiment 31', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:72, cat:'rudiments', name:'Rudiment 32', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:73, cat:'rudiments', name:'Rudiment 33', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:74, cat:'rudiments', name:'Rudiment 34', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:75, cat:'rudiments', name:'Rudiment 35', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:76, cat:'rudiments', name:'Rudiment 36', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:77, cat:'rudiments', name:'Rudiment 37', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:78, cat:'rudiments', name:'Rudiment 38', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:79, cat:'rudiments', name:'Rudiment 39', minBpm:60, maxBpm:230, step:5, beats:null},
-    {id:80, cat:'rudiments', name:'Rudiment 40', minBpm:60, maxBpm:230, step:5, beats:null}
+    // ── RUDIMENTS (41–80) — 16th-note alternating ───────────────
+    // factor 2.0 → BPM 60–200
+    {id:41, cat:'rudiments', name:'Rudiment 1',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:42, cat:'rudiments', name:'Rudiment 2',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:43, cat:'rudiments', name:'Rudiment 3',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:44, cat:'rudiments', name:'Rudiment 4',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:45, cat:'rudiments', name:'Rudiment 5',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:46, cat:'rudiments', name:'Rudiment 6',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:47, cat:'rudiments', name:'Rudiment 7',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:48, cat:'rudiments', name:'Rudiment 8',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:49, cat:'rudiments', name:'Rudiment 9',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:50, cat:'rudiments', name:'Rudiment 10', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:51, cat:'rudiments', name:'Rudiment 11', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:52, cat:'rudiments', name:'Rudiment 12', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:53, cat:'rudiments', name:'Rudiment 13', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:54, cat:'rudiments', name:'Rudiment 14', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:55, cat:'rudiments', name:'Rudiment 15', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:56, cat:'rudiments', name:'Rudiment 16', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:57, cat:'rudiments', name:'Rudiment 17', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:58, cat:'rudiments', name:'Rudiment 18', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:59, cat:'rudiments', name:'Rudiment 19', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:60, cat:'rudiments', name:'Rudiment 20', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:61, cat:'rudiments', name:'Rudiment 21', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:62, cat:'rudiments', name:'Rudiment 22', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:63, cat:'rudiments', name:'Rudiment 23', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:64, cat:'rudiments', name:'Rudiment 24', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:65, cat:'rudiments', name:'Rudiment 25', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:66, cat:'rudiments', name:'Rudiment 26', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:67, cat:'rudiments', name:'Rudiment 27', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:68, cat:'rudiments', name:'Rudiment 28', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:69, cat:'rudiments', name:'Rudiment 29', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:70, cat:'rudiments', name:'Rudiment 30', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:71, cat:'rudiments', name:'Rudiment 31', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:72, cat:'rudiments', name:'Rudiment 32', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:73, cat:'rudiments', name:'Rudiment 33', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:74, cat:'rudiments', name:'Rudiment 34', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:75, cat:'rudiments', name:'Rudiment 35', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:76, cat:'rudiments', name:'Rudiment 36', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:77, cat:'rudiments', name:'Rudiment 37', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:78, cat:'rudiments', name:'Rudiment 38', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:79, cat:'rudiments', name:'Rudiment 39', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:80, cat:'rudiments', name:'Rudiment 40', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null}
   ];
 
   // ── Section aus URL ──────────────────────────────────────────
   var _section = (new URLSearchParams(location.search).get('section') || 'grooves').toLowerCase();
 
-  // ── Alle Lektionen für diese Section ─────────────────────────
+  // ── Alle Lektionen — BPM wird aus SPHM automatisch berechnet ─
   var LESSONS = (function() {
     var list = [];
     EXERCISES.filter(function(e) { return e.cat === _section; })
       .forEach(function(ex) {
-        for (var b = ex.minBpm; b <= ex.maxBpm; b += ex.step)
-          list.push({exercise: ex, bpm: b});
+        var minB = sphmToBpm(ex.minSPHM, ex, ex.step);
+        var maxB = sphmToBpm(ex.maxSPHM, ex, ex.step);
+        for (var b = minB; b <= maxB; b += ex.step)
+          list.push({exercise: ex, bpm: b, sphm: bpmToSphm(b, ex)});
       });
     return list;
   })();
@@ -946,8 +989,10 @@ body {
   function updateBpm() {
     blocks = getBlocks(tBpm);
     pauses = getPauses(tBpm, blocks.length);
+    var _curLesson = (typeof LESSONS !== 'undefined' && LESSONS[_lessonIdx]);
+    var _sphmStr = _curLesson ? '  ·  '+_curLesson.sphm+' SPHM' : '';
     document.getElementById('dgSub').textContent =
-      tBpm+' BPM — '+blocks.length+' Block'+(blocks.length>1?'s':'');
+      tBpm+' BPM'+_sphmStr+' — '+blocks.length+' Block'+(blocks.length>1?'s':'');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
