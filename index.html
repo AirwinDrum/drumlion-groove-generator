@@ -779,7 +779,7 @@ body {
 
   var INTRO_INTERVAL = 20;   // neue Übung alle N Lektionen
   var START_COUNT    = 1;    // G1 startet sofort (weitere Kategorien folgen wenn Content da)
-  var COURSE_KEY     = 'drumlion_v1_course';
+  var COURSE_KEY     = 'drumlion_v2_course';
 
   // Einführungsreihenfolge: nur Grooves (Fill Ins / Rudiments folgen wenn Content geliefert)
   function _buildIntroQueue() {
@@ -889,7 +889,7 @@ body {
   function _updateNavButtons() {
     var prev = document.getElementById('dgNavPrev');
     var next = document.getElementById('dgNavNext');
-    if (prev) prev.style.visibility = (_navPos > 0) ? 'visible' : 'hidden';
+    if (prev) { prev.style.visibility = 'visible'; prev.disabled = (_navPos <= 0); }
     if (next) {
       next.style.visibility = 'visible';
       next.textContent = (_navPos < _navHistory.length - 1) ? 'Next →' : 'Skip →';
