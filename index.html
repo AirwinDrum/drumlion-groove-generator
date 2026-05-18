@@ -950,6 +950,7 @@ body {
       tBpm+' BPM — '+blocks.length+' Block'+(blocks.length>1?'s':'');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
+    renderNot(-1, false);
     if (typeof _updateNavUI === 'function') _updateNavUI();
   }
 
@@ -1052,7 +1053,7 @@ body {
     renderBlocksBar();
 
     var cb            = blocks[bIdx];
-    var isTimingBlock = (bIdx > 0);          // Timing Training ab Block 2
+    var isTimingBlock = (cb.bpm >= 60);       // Timing Training ab 60 BPM
     var totalBars     = cb.bars;
     var eighthMs      = (60 / cb.bpm / 2) * 1000;
     var eighthsLeft   = totalBars * 8;
