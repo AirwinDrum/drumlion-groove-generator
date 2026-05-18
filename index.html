@@ -263,7 +263,6 @@ body {
     <div class="dg-header">
       <h2 id="dgName">Groove 1</h2>
       <div class="subtitle" id="dgSub">Target: 100 BPM — 3 Blocks</div>
-      <div class="subtitle" id="dgRepLine" style="font-size:0.78em;opacity:0.6;margin-top:2px;"></div>
     </div>
 
     <div class="notation-box">
@@ -908,18 +907,9 @@ body {
     tBpm = h.bpm;
     if (ex.beats) GROOVE.beats = ex.beats;
     document.getElementById('dgName').textContent = ex.name;
-    _updateRepLine(ex.id);
     _updateNavButtons();
     updateBpm();
     if (autoStart) setTimeout(startExercise, 80);
-  }
-
-  // Wiederholungszeile aktualisieren
-  function _updateRepLine(id) {
-    var el = document.getElementById('dgRepLine');
-    if (!el) return;
-    var r = (_cState.reps && _cState.reps[id]) ? _cState.reps[id] : 0;
-    el.textContent = r === 0 ? 'First time 🎯' : (r === 1 ? 'Played 1×' : 'Played ' + r + '×');
   }
 
   // Aktuelle Lektion in den Player laden
@@ -940,9 +930,6 @@ body {
   function _updateCourseUI() {
     var lesson = _peekLesson();
     if (!lesson) return;
-    // Wiederholungszähler
-    _updateRepLine(lesson.entry.id);
-    // Nav-Buttons
     _updateNavButtons();
     _updateLevelUI();
   }
@@ -1409,8 +1396,13 @@ body {
     pauses = getPauses(tBpm, blocks.length);
     var _curLesson = (typeof _peekLesson === 'function') ? _peekLesson() : null;
     var _sphmStr = _curLesson ? '  ·  '+_curLesson.sphm+' SPHM' : '';
+    var _repStr = '';
+    if (_curLesson && typeof _cState !== 'undefined' && _cState.reps) {
+      var _r = _cState.reps[_curLesson.entry.id] || 0;
+      _repStr = _r === 0 ? '  ·  First time 🎯' : '  ·  Played '+_r+'×';
+    }
     document.getElementById('dgSub').textContent =
-      tBpm+' BPM'+_sphmStr+' — '+blocks.length+' Block'+(blocks.length>1?'s':'');
+      tBpm+' BPM'+_sphmStr+' — '+blocks.length+' Block'+(blocks.length>1?'s':'')+_repStr;
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
