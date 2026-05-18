@@ -208,6 +208,37 @@ body {
 .badge-done-anim {
   animation: dgBadgePulse 1.2s ease-in-out 3;
 }
+
+/* Navigation */
+.nav-row {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.nav-btn {
+  padding: clamp(10px,2vh,14px) clamp(16px,4vw,28px);
+  border-radius: 10px; border: 1px solid #333; background: #161616;
+  color: #ffffff; font-size: clamp(13px,2.5vw,16px); font-weight: 600;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.nav-btn:hover:not(:disabled) { background: #242424; }
+.nav-btn:disabled { opacity: 0.25; cursor: default; }
+.lesson-counter {
+  font-size: clamp(11px,2vw,13px); color: #aaa;
+  text-align: center; white-space: nowrap; flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+.progress-wrap {
+  width: 100%; height: 3px; background: #222; border-radius: 2px; overflow: hidden;
+}
+.progress-bar {
+  height: 100%; background: #C9A84C;
+  border-radius: 2px; transition: width 0.4s ease;
+  width: 0%;
+}
+.section-badge {
+  text-align: center; font-size: clamp(9px,1.6vw,11px);
+  color: #666; text-transform: uppercase; letter-spacing: 2px;
+}
 </style>
 </head>
 <body>
@@ -234,9 +265,15 @@ body {
 
     <div id="dgBlocks"></div>
 
-    <div class="controls" id="dgCtrl">
-      <button class="btn-go" id="dgStart">▶ Start</button>
+    <div class="nav-row">
+      <button class="nav-btn" id="dgNavPrev">← Prev</button>
+      <div class="controls" id="dgCtrl" style="flex:1;justify-content:center;">
+        <button class="btn-go" id="dgStart">▶ Start</button>
+      </div>
+      <button class="nav-btn" id="dgNavNext">Next →</button>
     </div>
+    <div class="lesson-counter" id="dgLessonNum">Lesson 1 / —</div>
+    <div class="progress-wrap"><div class="progress-bar" id="dgProgress"></div></div>
 
     <div class="total-timer" id="dgTotal" style="display:none;"></div>
     <div class="space-hint">Spacebar = Start / Stop</div>
@@ -306,6 +343,148 @@ body {
       [{ inst:'hh',   line:-0.5, head:'x'  }]
     ]
   };
+
+  // ============================================================
+  // EXERCISE LIBRARY
+  // ============================================================
+
+  // Alle Übungen — beats:null = aktueller GROOVE wird verwendet
+  // beats:[...] = eigene Notation (wird nach Definition gesetzt)
+  var EXERCISES = [
+    // ── GROOVES (1–20) ──────────────────────────────────────
+    {id:1,  cat:'grooves',   name:'Groove 1',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:2,  cat:'grooves',   name:'Groove 2',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:3,  cat:'grooves',   name:'Groove 3',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:4,  cat:'grooves',   name:'Groove 4',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:5,  cat:'grooves',   name:'Groove 5',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:6,  cat:'grooves',   name:'Groove 6',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:7,  cat:'grooves',   name:'Groove 7',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:8,  cat:'grooves',   name:'Groove 8',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:9,  cat:'grooves',   name:'Groove 9',    minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:10, cat:'grooves',   name:'Groove 10',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:11, cat:'grooves',   name:'Groove 11',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:12, cat:'grooves',   name:'Groove 12',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:13, cat:'grooves',   name:'Groove 13',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:14, cat:'grooves',   name:'Groove 14',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:15, cat:'grooves',   name:'Groove 15',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:16, cat:'grooves',   name:'Groove 16',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:17, cat:'grooves',   name:'Groove 17',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:18, cat:'grooves',   name:'Groove 18',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:19, cat:'grooves',   name:'Groove 19',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:20, cat:'grooves',   name:'Groove 20',   minBpm:60, maxBpm:230, step:5, beats:null},
+
+    // ── FILL INS (21–40) ────────────────────────────────────
+    {id:21, cat:'fillins',   name:'Fill In 1',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:22, cat:'fillins',   name:'Fill In 2',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:23, cat:'fillins',   name:'Fill In 3',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:24, cat:'fillins',   name:'Fill In 4',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:25, cat:'fillins',   name:'Fill In 5',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:26, cat:'fillins',   name:'Fill In 6',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:27, cat:'fillins',   name:'Fill In 7',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:28, cat:'fillins',   name:'Fill In 8',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:29, cat:'fillins',   name:'Fill In 9',   minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:30, cat:'fillins',   name:'Fill In 10',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:31, cat:'fillins',   name:'Fill In 11',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:32, cat:'fillins',   name:'Fill In 12',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:33, cat:'fillins',   name:'Fill In 13',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:34, cat:'fillins',   name:'Fill In 14',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:35, cat:'fillins',   name:'Fill In 15',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:36, cat:'fillins',   name:'Fill In 16',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:37, cat:'fillins',   name:'Fill In 17',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:38, cat:'fillins',   name:'Fill In 18',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:39, cat:'fillins',   name:'Fill In 19',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:40, cat:'fillins',   name:'Fill In 20',  minBpm:60, maxBpm:230, step:5, beats:null},
+
+    // ── RUDIMENTS (41–80) ───────────────────────────────────
+    {id:41, cat:'rudiments', name:'Rudiment 1',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:42, cat:'rudiments', name:'Rudiment 2',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:43, cat:'rudiments', name:'Rudiment 3',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:44, cat:'rudiments', name:'Rudiment 4',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:45, cat:'rudiments', name:'Rudiment 5',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:46, cat:'rudiments', name:'Rudiment 6',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:47, cat:'rudiments', name:'Rudiment 7',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:48, cat:'rudiments', name:'Rudiment 8',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:49, cat:'rudiments', name:'Rudiment 9',  minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:50, cat:'rudiments', name:'Rudiment 10', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:51, cat:'rudiments', name:'Rudiment 11', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:52, cat:'rudiments', name:'Rudiment 12', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:53, cat:'rudiments', name:'Rudiment 13', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:54, cat:'rudiments', name:'Rudiment 14', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:55, cat:'rudiments', name:'Rudiment 15', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:56, cat:'rudiments', name:'Rudiment 16', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:57, cat:'rudiments', name:'Rudiment 17', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:58, cat:'rudiments', name:'Rudiment 18', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:59, cat:'rudiments', name:'Rudiment 19', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:60, cat:'rudiments', name:'Rudiment 20', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:61, cat:'rudiments', name:'Rudiment 21', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:62, cat:'rudiments', name:'Rudiment 22', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:63, cat:'rudiments', name:'Rudiment 23', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:64, cat:'rudiments', name:'Rudiment 24', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:65, cat:'rudiments', name:'Rudiment 25', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:66, cat:'rudiments', name:'Rudiment 26', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:67, cat:'rudiments', name:'Rudiment 27', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:68, cat:'rudiments', name:'Rudiment 28', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:69, cat:'rudiments', name:'Rudiment 29', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:70, cat:'rudiments', name:'Rudiment 30', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:71, cat:'rudiments', name:'Rudiment 31', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:72, cat:'rudiments', name:'Rudiment 32', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:73, cat:'rudiments', name:'Rudiment 33', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:74, cat:'rudiments', name:'Rudiment 34', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:75, cat:'rudiments', name:'Rudiment 35', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:76, cat:'rudiments', name:'Rudiment 36', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:77, cat:'rudiments', name:'Rudiment 37', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:78, cat:'rudiments', name:'Rudiment 38', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:79, cat:'rudiments', name:'Rudiment 39', minBpm:60, maxBpm:230, step:5, beats:null},
+    {id:80, cat:'rudiments', name:'Rudiment 40', minBpm:60, maxBpm:230, step:5, beats:null}
+  ];
+
+  // ── Section aus URL ──────────────────────────────────────────
+  var _section = (new URLSearchParams(location.search).get('section') || 'grooves').toLowerCase();
+
+  // ── Alle Lektionen für diese Section ─────────────────────────
+  var LESSONS = (function() {
+    var list = [];
+    EXERCISES.filter(function(e) { return e.cat === _section; })
+      .forEach(function(ex) {
+        for (var b = ex.minBpm; b <= ex.maxBpm; b += ex.step)
+          list.push({exercise: ex, bpm: b});
+      });
+    return list;
+  })();
+
+  // ── Fortschritt aus localStorage ─────────────────────────────
+  var _progKey = 'drumlion_v1_' + _section;
+  var _lessonIdx = Math.min(
+    parseInt(localStorage.getItem(_progKey) || '0'),
+    Math.max(0, LESSONS.length - 1)
+  );
+
+  function _saveProgress() {
+    try { localStorage.setItem(_progKey, String(_lessonIdx)); } catch(e) {}
+  }
+
+  function _updateNavUI() {
+    if (!LESSONS.length) return;
+    var n = _lessonIdx + 1, total = LESSONS.length;
+    document.getElementById('dgLessonNum').textContent = 'Lesson ' + n + ' / ' + total;
+    document.getElementById('dgNavPrev').disabled = (_lessonIdx === 0);
+    document.getElementById('dgNavNext').disabled = (_lessonIdx >= total - 1);
+    document.getElementById('dgProgress').style.width = (n / total * 100).toFixed(1) + '%';
+  }
+
+  function loadLesson(idx, doStart) {
+    if (idx < 0 || idx >= LESSONS.length) return;
+    if (playing) stopExercise();
+    _lessonIdx = idx;
+    var L = LESSONS[idx];
+    tBpm = L.bpm;
+    if (L.exercise.beats) GROOVE.beats = L.exercise.beats;
+    document.getElementById('dgName').textContent = L.exercise.name;
+    _saveProgress();
+    _updateNavUI();
+    updateBpm();
+    if (doStart) setTimeout(startExercise, 80);
+  }
 
   // ============================================================
   // BPM DURATION TABLE — exakt aus Groove_BPM_Bauplan.csv
@@ -695,7 +874,7 @@ body {
       }
       h += '<div class="block-seg" style="flex:'+Math.round(b.dur)+';background:'+bg+';border-color:'+bc+';">';
       h += '<span class="b-bpm" style="color:'+tc+'">'+b.bpm+' bpm</span>';
-      h += '<span class="b-dur" style="color:'+tc+'">'+b.bars+' Bars</span></div>';
+      h += '<span class="b-dur" style="color:'+tc+'">'+b.bars+' Takte</span></div>';
       if (i < blocks.length-1 && pauses[i]) {
         var pa = (i===bIdx-1 && phase==='pause');
         h += '<div class="pause-seg" style="color:'+(pa?'#C9A84C':'#666')+'">'+pauses[i]+'s</div>';
@@ -771,6 +950,7 @@ body {
       tBpm+' BPM — '+blocks.length+' Block'+(blocks.length>1?'s':'');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
+    if (typeof _updateNavUI === 'function') _updateNavUI();
   }
 
   // ============================================================
@@ -998,10 +1178,18 @@ body {
     renderBlocksBar(); renderNot(-1, false); stopTotal();
     document.getElementById('dgTotal').style.display='block';
     document.getElementById('dgCtrl').innerHTML =
-      '<button class="btn-go" id="dgAgain">▶ Again</button>'+
+      '<button class="btn-stp" id="dgAgain">▶ Again</button>'+
+      (_lessonIdx < LESSONS.length - 1
+        ? '<button class="btn-go" id="dgNextLesson">Next Lesson →</button>'
+        : '<button class="btn-go" id="dgNextLesson" style="background:#66bb6a">🎉 Complete!</button>')+
       '<button class="btn-stp" id="dgClose">✕ Reset</button>';
     document.getElementById('dgAgain').addEventListener('click', startExercise);
     document.getElementById('dgClose').addEventListener('click', stopExercise);
+    if (_lessonIdx < LESSONS.length - 1) {
+      document.getElementById('dgNextLesson').addEventListener('click', function() {
+        loadLesson(_lessonIdx + 1, true);
+      });
+    }
   }
 
   function stopExercise() {
@@ -1027,9 +1215,15 @@ body {
   // EVENTS & INIT
   // ============================================================
   document.getElementById('dgStart').addEventListener('click', startExercise);
+  document.getElementById('dgNavPrev').addEventListener('click', function() {
+    loadLesson(_lessonIdx - 1, false);
+  });
+  document.getElementById('dgNavNext').addEventListener('click', function() {
+    loadLesson(_lessonIdx + 1, false);
+  });
 
-  updateBpm();
-  renderNot(-1, false);
+  // Init: Lektion aus localStorage laden
+  loadLesson(_lessonIdx, false);
 
 })();
 </script>
