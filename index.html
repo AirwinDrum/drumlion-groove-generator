@@ -1247,7 +1247,7 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}]
         ]},
-    {id:48, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 28', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R",null,"R","L","R",null], beats:[
+    {id:48, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 28', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R",null,"R","L","R",null], groups:[[0,3],[4,7]], beats:[
           [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1258,11 +1258,11 @@ body {
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
           [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'kick',line:3.5,head:'oval'}]
         ]},
@@ -1916,7 +1916,7 @@ body {
 
     // showLabels: show instrument name for fill notes (at/after fillStart)
     // stickings:  per-beat sticking string array for bar 2
-    function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff) {
+    function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff, groups) {
       var n = beatsArr.length;
       var bW = n * bs;
       var fs = fillStart || 0;
@@ -2036,6 +2036,17 @@ body {
       var sX2  = midX + 22;
       var vbW  = sX2 + bW2 + 22;
       svg.setAttribute('viewBox', '0 0 ' + vbW + ' 108');
+
+      // Pattern group overlays (filled rounded rect per group)
+      if (GROOVE.groups && GROOVE.groups.length) {
+        var gy1 = sY - 22;
+        var gh  = 4 * ls + 30;
+        GROOVE.groups.forEach(function(g) {
+          var gx = sX2 + 16 + g[0] * bs2 - 12;
+          var gw = (g[1] - g[0]) * bs2 + 30;
+          h += '<rect x="'+gx+'" y="'+gy1+'" width="'+gw+'" height="'+gh+'" rx="14" ry="14" fill="rgba(201,168,76,0.12)" stroke="rgba(201,168,76,0.35)" stroke-width="0.8"/>';
+        });
+      }
 
       // Repeat sign left
       h += '<line x1="'+(sX1-10)+'" y1="'+sY+'" x2="'+(sX1-10)+'" y2="'+(sY+4*ls)+
