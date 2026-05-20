@@ -803,7 +803,7 @@ body {
         ], beats2:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
           [],
@@ -820,7 +820,7 @@ body {
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [],
           [{inst:'tom2',line:1.0,head:'oval'}],
           [],
@@ -841,9 +841,9 @@ body {
         ], beats2:[
           [{inst:'snare',line:1.5,head:'oval'}],
           [],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [],
-          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom2',line:1.0,head:'oval'}],
           [],
           [{inst:'tom3',line:2.5,head:'oval'}],
           []
@@ -1993,20 +1993,41 @@ body {
                       '" rx="4" fill="#1a3d6e" opacity="0.35"/>';
         h += '<text x="'+x+'" y="'+(sY-27)+'" text-anchor="middle" fill="'+lc+
              '" font-size="11" font-family="DM Sans,sans-serif" font-weight="'+(isA?700:400)+'">'+lbl[bi]+'</text>';
-        bn.forEach(function(n) { h += drawLedgerLines(n.line, x, nc, op); });
-        bn.forEach(function(n) {
+        // Chord offset: benachbarte Noten (Abstand < 1 Linie) → obere links, untere rechts
+        var sortedBn = bn.slice().sort(function(a,b){ return a.line - b.line; });
+        var offArr = sortedBn.map(function(n, ci) { return 0; });
+        for (var ci = 0; ci < sortedBn.length - 1; ci++) {
+          if (Math.abs(sortedBn[ci+1].line - sortedBn[ci].line) < 1.0) {
+            offArr[ci]   =  0;  // obere Note → normal am Notenhals
+            offArr[ci+1] = 10;  // untere Note → rechts versetzt
+          }
+        }
+        sortedBn.forEach(function(n) { h += drawLedgerLines(n.line, x, nc, op); });
+        sortedBn.forEach(function(n, ci) {
           var y = sY + n.line * ls;
-          h += drawNoteHead(n, x, y, nc, op);
+          h += drawNoteHead(n, x + offArr[ci], y, nc, op);
         });
-        // Instrument label: only on fill notes (bi >= fillStart), one per beat
+        // Instrument label: neben dem jeweiligen Notenkopf
         if (showLabels && bi >= fs && bn.length > 0) {
-          var lname = LABEL_MAP[bn[0].inst] || bn[0].inst;
-          h += '<text x="'+x+'" y="'+(sY+5*ls+7)+'" text-anchor="middle" fill="'+nc+
-               '" font-size="8" font-family="DM Sans,sans-serif" opacity="'+(dimmed?0.2:0.75)+'">'+lname+'</text>';
+          var labelInsts = sortedBn.filter(function(n){ return n.inst !== 'hh' && n.inst !== 'hhPedal' && n.inst !== 'hhOpen' && n.inst !== 'hhClosing'; });
+          labelInsts.forEach(function(n, ci) {
+            var lname = LABEL_MAP[n.inst] || n.inst;
+            var ly = sY + n.line * ls + 3;
+            var off = offArr[ci];
+            if (off < 0) {
+              // links versetzt → Label links davon, rechtsbündig
+              h += '<text x="'+(x+off-6)+'" y="'+ly+'" text-anchor="end" fill="'+nc+
+                   '" font-size="7.5" font-family="DM Sans,sans-serif" opacity="'+(dimmed?0.2:1.0)+'">'+lname+'</text>';
+            } else {
+              // rechts versetzt oder mittig → Label rechts, linksbündig
+              h += '<text x="'+(x+off+8)+'" y="'+ly+'" text-anchor="start" fill="'+nc+
+                   '" font-size="7.5" font-family="DM Sans,sans-serif" opacity="'+(dimmed?0.2:1.0)+'">'+lname+'</text>';
+            }
+          });
         }
         // Sticking: below label
         if (stickings && stickings[bi]) {
-          h += '<text x="'+x+'" y="'+(sY+5*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:0.8)+')" font-size="9" font-family="DM Sans,sans-serif" font-style="italic">'+stickings[bi]+'</text>';
+          h += '<text x="'+x+'" y="'+(sY+5*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="9" font-family="DM Sans,sans-serif" font-style="italic">'+stickings[bi]+'</text>';
         }
         if (bn.length > 0) {
           var maxLine = Math.max.apply(null, bn.map(function(n) { return n.line; }));
