@@ -2234,16 +2234,29 @@ body {
       return Math.floor((b - 8) / 2) % 2 !== 0;
     }
 
-    function infoLine(b) {
-      var base = cb.bpm + ' BPM — Bar ' + (b + 1) + ' / ' + totalBars;
+    // Für Fills: jede Phrase = 2 echte Takte → totalRealBars = totalBars * 2
+    var totalRealBars = isFill ? totalBars * 2 : totalBars;
+
+    function infoLine(br, bt) {
+      var realBar;
+      if (isFill) {
+        // br = Phrase-Index, bt = Position in Phrase
+        // Groove-Takt = br*2+1, Fill-Takt = br*2+2
+        realBar = br * 2 + (bt < n1 ? 1 : 2);
+      } else {
+        realBar = br + 1;
+      }
+      var base = cb.bpm + ' BPM — Bar ' + realBar + ' / ' + totalRealBars;
       if (!isTimingBlock) return base;
-      if (b < 8) return base + '  |  Groove';
-      return base + (grooveOn(b) ? '  |  Groove  🥁' : '  |  Click only  🎵');
+      if (br < 8) return base + '  |  Groove';
+      return base + (grooveOn(br) ? '  |  Groove  🥁' : '  |  Click only  🎵');
     }
 
     function tickAndRender(bt, br) {
       if (isFill) {
         // bt = position within phrase (0..phraseLen-1)
+        // Update info when bar changes within phrase (beat 0 = groove bar, beat n1 = fill bar)
+        if (bt === 0 || bt === n1) setInfo(infoLine(br, bt));
         if (bt < n1) {
           // Groove bar
           if (grooveOn(br)) {
@@ -2259,6 +2272,7 @@ body {
           renderNot(bt, false);
         }
       } else {
+        if (bt === 0) setInfo(infoLine(br, bt));
         if (grooveOn(br)) {
           if (bt < GROOVE.beats.length) playBeat(bt);
         } else {
@@ -2268,7 +2282,7 @@ body {
       }
     }
 
-    setInfo(infoLine(bar));
+    setInfo(infoLine(bar, beat));
     setCountdown(eighthsLeft * eighthMs / 1000);
 
     if (intId) clearInterval(intId);
@@ -2294,8 +2308,6 @@ body {
             if (bIdx < blocks.length-1) startPause();
             else finishExercise();
           }, eighthMs);
-        } else {
-          setInfo(infoLine(bar));
         }
       }
     }, eighthMs);
