@@ -2281,7 +2281,7 @@ body {
 
     // Adaptive tick interval: derive from beat count per bar (4/4 assumed)
     // 4 beats = quarter, 8 = eighth, 16 = sixteenth, etc.
-    var ticksPerBeat = phraseLen / 4;
+    var ticksPerBeat = n1 / 4;  // immer aus einem Takt ableiten (nicht Gesamtphrase)
     var eighthMs     = (60 / cb.bpm / ticksPerBeat) * 1000;
     var eighthsLeft = totalBars * phraseLen;
 
