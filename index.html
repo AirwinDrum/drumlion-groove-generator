@@ -28,30 +28,30 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(16px, 3vw, 40px) clamp(16px, 5vw, 80px);
+  padding: clamp(8px, 1.5vw, 20px) clamp(8px, 2vw, 32px);
   overflow: hidden;
 }
 
 .dg-inner {
   width: 100%;
-  max-width: min(1200px, 96vw);
+  max-width: min(1400px, 98vw);
   display: flex;
   flex-direction: column;
-  gap: clamp(6px, 1.2vh, 14px);
+  gap: clamp(8px, 1.5vh, 18px);
 }
 
 /* Header */
 .dg-header { text-align: center; }
 .dg-header h2 {
   color: #C9A84C;
-  font-size: clamp(24px, 4.5vw, 36px);
+  font-size: clamp(28px, 5.5vw, 46px);
   font-weight: 700;
   letter-spacing: -0.5px;
   line-height: 1;
 }
 .dg-header .subtitle {
   color: #ffffff;
-  font-size: clamp(15px, 2.8vw, 20px);
+  font-size: clamp(17px, 3.2vw, 24px);
   margin-top: 4px;
   font-weight: 500;
 }
@@ -915,7 +915,7 @@ body {
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'},{inst:'tom2',line:1.0,head:'oval'}],
           [],
           [{inst:'kick',line:3.5,head:'oval'}],
           [],
@@ -925,7 +925,7 @@ body {
           []
         ]},
     {id:31, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 11', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,"R","L"], beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -944,7 +944,7 @@ body {
           [{inst:'snare',line:1.5,head:'oval'}]
         ]},
     {id:32, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 12', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,"R","L"], beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -963,7 +963,7 @@ body {
           [{inst:'snare',line:1.5,head:'oval'}]
         ]},
     {id:33, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 13', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,"L/R","L/R"], beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -982,7 +982,7 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}]
         ]},
     {id:34, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 14', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,"R","L","R","L"], beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1000,8 +1000,8 @@ body {
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}]
         ]},
-    {id:35, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 15', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:35, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 15', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,"R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1016,11 +1016,11 @@ body {
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}]
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}]
         ]},
-    {id:36, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 16', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:36, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 16', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,"R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1034,12 +1034,12 @@ body {
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}]
         ]},
-    {id:37, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 17', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:37, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 17', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,"L/R","L/R","L/R","L/R"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1053,96 +1053,88 @@ body {
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          []
-        ]},
-    {id:38, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 18', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}]
-        ], beats2:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}]
-        ]},
-    {id:39, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 19', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}]
-        ], beats2:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
-          [{inst:'tom3',line:2.5,head:'oval'}],
-          [{inst:'tom3',line:2.5,head:'oval'}]
-        ]},
-    {id:40, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 20', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}]
-        ], beats2:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
-          [{inst:'tom3',line:2.5,head:'oval'}],
-          [{inst:'tom3',line:2.5,head:'oval'}]
-        ]},
-    {id:41, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 21', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}]
-        ], beats2:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}]
         ]},
-    {id:42, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 22', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:38, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 18', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,"R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}]
+        ]},
+    {id:39, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 19', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,"R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}]
+        ]},
+    {id:40, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 20', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,"R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}]
+        ]},
+    {id:41, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 21', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,"L/R","L/R","L/R","L/R","L/R","L/R"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}]
+        ]},
+    {id:42, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 22', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1160,8 +1152,8 @@ body {
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}]
         ]},
-    {id:43, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 23', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:43, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 23', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1179,8 +1171,8 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}]
         ]},
-    {id:44, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 24', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:44, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 24', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1191,15 +1183,15 @@ body {
         ], beats2:[
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [{inst:'tom2',line:1.0,head:'oval'}],
           [{inst:'tom2',line:1.0,head:'oval'}],
-          [],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}]
         ]},
-    {id:45, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 25', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:45, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 25', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1213,12 +1205,12 @@ body {
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}]
         ]},
     {id:46, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 26', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["L/R","L/R","L/R","L/R","L/R","L/R","L/R","L/R"], beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1228,24 +1220,16 @@ body {
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
-          []
+          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}]
         ]},
-    {id:47, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 27', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:47, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 27', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R","L","R","L","R","L"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1257,14 +1241,14 @@ body {
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
           [{inst:'tom2',line:1.0,head:'oval'}],
-          [],
           [{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'}]
         ]},
     {id:48, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 28', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["R","L","R",null,"R","L","R",null], beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1282,8 +1266,8 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'}],
           [{inst:'kick',line:3.5,head:'oval'}]
         ]},
-    {id:49, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 29', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:49, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 29', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:[null,"L/R","L/R",null,"L/R",null,"L/R","L/R"], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1301,8 +1285,8 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}]
         ]},
-    {id:50, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 30', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:null, beats:[
-          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+    {id:50, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 30', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:["L/R",null,null,"L/R","L/R",null,"L/R",null], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
@@ -1784,8 +1768,10 @@ body {
 
   function playSound(key) {
     if (!aCtx) return;
-    var vol = (key === 'crash1' || key === 'crash2') ? 0.8
-            : (key === 'hh' || key === 'hhOpen' || key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing') ? 0.8
+    var vol = (key === 'crash1' || key === 'crash2') ? 0.48
+            : (key === 'ride') ? 0.70
+            : (key === 'hhOpen') ? 0.48
+            : (key === 'hh' || key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing') ? 0.56
             : 1.0;
     if (playBuf(WAVS[key], vol)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
@@ -2027,7 +2013,7 @@ body {
         }
         // Sticking: below label
         if (stickings && stickings[bi]) {
-          h += '<text x="'+x+'" y="'+(sY+5*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="9" font-family="DM Sans,sans-serif" font-style="italic">'+stickings[bi]+'</text>';
+          h += '<text x="'+x+'" y="'+(sY+5*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
         if (bn.length > 0) {
           var maxLine = Math.max.apply(null, bn.map(function(n) { return n.line; }));
