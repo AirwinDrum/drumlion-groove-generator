@@ -3268,7 +3268,6 @@ body {
   // ============================================================
   function playCountVoice(num) {
     if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
     var u = new SpeechSynthesisUtterance(num);
     u.lang   = 'en-US';
     u.rate   = 1.3;
@@ -3356,6 +3355,9 @@ body {
     phase='countIn'; setBadge('countIn'); setInfo('Get ready…');
     var bpm    = blocks[bIdx].bpm;
     var beatMs = (60 / bpm) * 1000;
+    // TTS Vorlaufzeit: Stimme wird beatMs-VOICE_LEAD ms VOR dem nächsten Beat
+    // angestoßen, damit sie trotz Startup-Latenz pünktlich landet
+    var VOICE_LEAD = Math.min(130, beatMs * 0.3);
 
     var seq;
     if (bpm >= 60) {
@@ -3378,11 +3380,23 @@ body {
       ];
     }
 
-    var ci = 0;
-    showCountIn(seq[0].num);
-    if (seq[0].click) playCountClick(seq[0].accent);
-    if (seq[0].num) playCountVoice(seq[0].num);
+    // Beat i feuern: Klick sofort, Stimme für Beat i+1 schon vorplanen
+    function fireBeat(i) {
+      var s = seq[i];
+      showCountIn(s.num);
+      if (s.click) playCountClick(s.accent);
+      // Nächsten Voice-Call früh einplanen damit er pünktlich landet
+      var next = seq[i + 1];
+      if (next && next.num) {
+        setTimeout(function() { playCountVoice(next.num); }, beatMs - VOICE_LEAD);
+      }
+    }
 
+    // Beat 0: Stimme sofort (akzeptierbare minimale Verzögerung beim ersten Schlag)
+    if (seq[0].num) playCountVoice(seq[0].num);
+    fireBeat(0);
+
+    var ci = 0;
     if (intId) clearInterval(intId);
     intId = setInterval(function() {
       if (!playing) return;
@@ -3392,10 +3406,7 @@ body {
         hideCountIn();
         startPlaying();
       } else {
-        var s = seq[ci];
-        showCountIn(s.num);
-        if (s.click) playCountClick(s.accent);
-        if (s.num) playCountVoice(s.num);
+        fireBeat(ci); // Klick sofort, nächste Stimme vorausgeplant
       }
     }, beatMs);
   }
