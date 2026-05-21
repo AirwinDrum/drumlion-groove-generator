@@ -334,6 +334,10 @@ body {
     <div class="total-timer" id="dgTotal" style="display:none;"></div>
     <div class="space-hint">Spacebar = Start / Stop</div>
 
+    <div style="text-align:center;margin-top:18px;">
+      <button id="dgDevReset" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.05em;">↺ Reset Course</button>
+    </div>
+
   </div>
 </div>
 
@@ -2798,10 +2802,11 @@ body {
 
   function playSound(key) {
     if (!aCtx) return;
-    var vol = (key === 'crash1' || key === 'crash2') ? 0.48
+    var vol = (key === 'crash1' || key === 'crash2') ? 0.38
             : (key === 'ride') ? 0.70
             : (key === 'hhOpen') ? 0.48
-            : (key === 'hh' || key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
+            : (key === 'hh') ? 0.45
+            : (key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
             : 1.0;
     if (playBuf(WAVS[key], vol)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
@@ -2835,12 +2840,12 @@ body {
     }
   }
 
-  function playCountClick(accent) {
+  function playCountClick(accent, vol) {
     if (!aCtx) return;
     var o = aCtx.createOscillator(), g = aCtx.createGain();
     o.connect(g); g.connect(aCtx.destination);
     o.frequency.value = accent ? 1500 : 1100;
-    g.gain.setValueAtTime(0.35, aCtx.currentTime);
+    g.gain.setValueAtTime(vol !== undefined ? vol : 0.46, aCtx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, aCtx.currentTime + 0.06);
     o.type = 'sine'; o.start(aCtx.currentTime); o.stop(aCtx.currentTime + 0.06);
   }
@@ -2926,7 +2931,7 @@ body {
     return h;
   }
 
-  function renderNot(curBeat, dimmed) {
+  function renderNot(curBeat, dimmed) { dimmed = false;
     var svg  = document.getElementById('dgSvg');
     var lbl8  = ['1', '&', '2', '&', '3', '&', '4', '&'];
     var lbl16 = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
@@ -3262,13 +3267,26 @@ body {
   // FRAUENSTIMME — Pre-recorded via AudioContext (tight timing)
   // ============================================================
   function playCountVoice(num) {
-    if (!aCtx) return;
-    var key = 'count' + num;
-    if (!WAVS[key]) return;
-    var src = aCtx.createBufferSource();
-    src.buffer = WAVS[key];
-    src.connect(aCtx.destination);
-    src.start(aCtx.currentTime);
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(num);
+    u.lang   = 'en-US';
+    u.rate   = 1.3;
+    u.pitch  = 1.2;
+    u.volume = 1.0;
+    // Freundliche Frauenstimme wählen
+    var voices = window.speechSynthesis.getVoices();
+    var female = voices.find(function(v) {
+      return v.lang.startsWith('en') && /samantha|zira|susan|karen|moira|victoria|fiona|allison|ava|siri|google us english/i.test(v.name);
+    });
+    if (!female) female = voices.find(function(v) {
+      return v.lang.startsWith('en') && /female|woman/i.test(v.name);
+    });
+    if (!female) female = voices.find(function(v) {
+      return v.lang.startsWith('en');
+    });
+    if (female) u.voice = female;
+    window.speechSynthesis.speak(u);
   }
 
   function updateBpm() {
@@ -3330,7 +3348,7 @@ body {
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ Stop</button>';
     document.getElementById('dgStop').addEventListener('click', stopExercise);
-    renderBlocksBar(); renderNot(-1, true); startTotal(); startCountIn();
+    renderBlocksBar(); renderNot(-1, false); startTotal(); startCountIn();
   }
 
   // Vorzähler: ab 60 BPM = 2 Takte (8 Viertel), unter 60 BPM = 1 Takt (4 Viertel)
@@ -3400,7 +3418,9 @@ body {
     // 4 beats = quarter, 8 = eighth, 16 = sixteenth, etc.
     var ticksPerBeat = n1 / 4;  // immer aus einem Takt ableiten (nicht Gesamtphrase)
     var eighthMs     = (60 / cb.bpm / ticksPerBeat) * 1000;
-    var eighthsLeft = totalBars * phraseLen;
+    // Fills haben phraseLen = 2 Takte → loopBars halbieren damit Gesamtzeit gleich bleibt
+    var loopBars    = isFill ? Math.ceil(totalBars / 2) : totalBars;
+    var eighthsLeft = loopBars * phraseLen;
 
     // Timing-Training: Takte 1-8 voller Groove, dann alternierend Klick/Groove
     function grooveOn(b) {
@@ -3409,8 +3429,8 @@ body {
       return Math.floor((b - 8) / 2) % 2 !== 0;
     }
 
-    // Für Fills: jede Phrase = 2 echte Takte → totalRealBars = totalBars * 2
-    var totalRealBars = isFill ? totalBars * 2 : totalBars;
+    // totalRealBars = tatsächliche Takte (für Info-Anzeige)
+    var totalRealBars = totalBars;
 
     function infoLine(br, bt) {
       var realBar;
@@ -3436,14 +3456,14 @@ body {
           // Groove bar
           if (grooveOn(br)) {
             GROOVE.beats[bt].forEach(function(n) { playSound(n.inst); });
-          } else if (bt % 2 === 0) { playCountClick(bt === 0); }
+          } else if (bt % 2 === 0) { playCountClick(bt === 0, 0.69); }
           renderNot(bt, false);
         } else {
           // Fill bar
           var fb = bt - n1;
           if (grooveOn(br)) {
             GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst); });
-          } else if (fb % 2 === 0) { playCountClick(fb === 0); }
+          } else if (fb % 2 === 0) { playCountClick(fb === 0, 0.69); }
           renderNot(bt, false);
         }
       } else {
@@ -3451,7 +3471,7 @@ body {
         if (grooveOn(br)) {
           if (bt < GROOVE.beats.length) playBeat(bt);
         } else {
-          if (bt % 2 === 0) playCountClick(bt === 0);
+          if (bt % 2 === 0) playCountClick(bt === 0, 0.69);
         }
         renderNot(bt, false);
       }
@@ -3476,7 +3496,7 @@ body {
       beat++;
       if (beat >= phraseLen) {
         beat = 0; bar++;
-        if (bar >= totalBars) {
+        if (bar >= loopBars) {
           clearInterval(intId);
           setTimeout(function() {
             playBlockEnd();
@@ -3492,7 +3512,7 @@ body {
     phase='pause';
     var pd = pauses[bIdx] || 10;
     setBadge('pause'); setInfo('Next: '+blocks[bIdx+1].bpm+' BPM');
-    renderNot(-1, true); bIdx++; renderBlocksBar();
+    renderNot(-1, false); bIdx++; renderBlocksBar();
     var left = pd; setCountdown(left);
     if (intId) clearInterval(intId);
     intId = setInterval(function() {
@@ -3678,6 +3698,14 @@ body {
   // EVENTS & INIT
   // ============================================================
   document.getElementById('dgStart').addEventListener('click', startExercise);
+
+  // Dev: Reset Course
+  document.getElementById('dgDevReset').addEventListener('click', function() {
+    if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) {
+      localStorage.removeItem(COURSE_KEY);
+      location.reload();
+    }
+  });
 
   // Prev = zurück in der History
   document.getElementById('dgNavPrev').addEventListener('click', function() {

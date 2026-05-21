@@ -66,7 +66,8 @@ Located at: `/Users/erwineitsen/Desktop/Projekte/Drumlion/Drumlion Sounds/Drumli
 
 ## Open — Vor Launch
 - [ ] Systeme.io Kursstruktur entfernen — Groove Generator als iFrame einbetten (Login-Schutz bleibt über Systeme.io)
-- [ ] USt-IdNr eintragen: Impressum, Stripe, PayPal, Systeme.io (#15)
+- [ ] USt-IdNr eintragen: Impressum, Stripe, PayPal (DE410250170)
+  - [x] Systeme.io ✓ (Sales invoice footer)
 - [ ] Cookiebot-Abschnitt in Privacy Policy ergänzen
 - [ ] Launch-Emails senden (3 Newsletter-Emails vorbereitet, noch nicht gesendet)
 - [ ] Launch-Datum festlegen
@@ -75,6 +76,14 @@ Located at: `/Users/erwineitsen/Desktop/Projekte/Drumlion/Drumlion Sounds/Drumli
 ## Roadmap 2026
 - **Launch 01.06.** — Groove Generator als iFrame in Systeme.io, Login über Systeme.io Membership
 - **Ende 2026** — Eigene App-Lösung: Login, serverseitiger Fortschritt (geräteübergreifend), kein Systeme.io mehr
+
+## Open — Steuer / Finanzen
+- [x] USt-IdNr: **DE410250170**
+- [ ] OSS-Verfahren anmelden (BZSt) — für digitale Produkte an EU-Privatkunden
+- [ ] Geschäftskonto einrichten — Kontist (Konto + auto. Steuerrücklage) oder Qonto
+- [ ] Accountable einrichten (Buchhaltung + Steuer, integriert mit Kontist)
+- [ ] Ab ~60-80k Gewinn: UG/GmbH prüfen (Steueroptimierung Gehalt vs. Gewinn)
+- [ ] Steuerberater als Kontrolleur einschalten (Spezialisierung: Online-Business / digital)
 
 ## Open — Nach Launch
 - [ ] DSGVO-Audit komplett (#3)
