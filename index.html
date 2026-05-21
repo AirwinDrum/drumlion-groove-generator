@@ -3021,13 +3021,15 @@ body {
         var lc  = isA ? A : (dimmed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)');
         if (isA) h += '<rect x="'+(x-14)+'" y="'+(sY-23)+'" width="28" height="'+(7*ls+16)+
                       '" rx="4" fill="#1a3d6e" opacity="0.35"/>';
-        var lblY = (GROOVE.catLabel && (
-                     GROOVE.catLabel.indexOf('Hi-Hat Opening') === 0 ||
-                     GROOVE.catLabel === 'Downbeat Accents' ||
-                     GROOVE.catLabel === 'Upbeat Accents'
-                   ))
-                   ? (sY + 4*ls + 13)
-                   : (sY - 27);
+        var lblY = (GROOVE.cat === 'fillins')
+                   ? (sY - 27)
+                   : (GROOVE.catLabel && (
+                       GROOVE.catLabel.indexOf('Hi-Hat Opening') === 0 ||
+                       GROOVE.catLabel === 'Downbeat Accents' ||
+                       GROOVE.catLabel === 'Upbeat Accents'
+                     ))
+                     ? (sY + 4*ls + 13)
+                     : (sY - 27);
         h += '<text x="'+x+'" y="'+lblY+'" text-anchor="middle" fill="'+lc+
              '" font-size="11" font-family="DM Sans,sans-serif" font-weight="'+(isA?700:400)+'">'+lbl[bi]+'</text>';
         // Chord offset: benachbarte Noten (Abstand < 1 Linie) → obere links, untere rechts
