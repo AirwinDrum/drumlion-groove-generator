@@ -1,7 +1,6 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # iFrame-Einbettung von Systeme.io erlauben
-    X-Frame-Options = "ALLOW-FROM https://drumlion.com"
-    Content-Security-Policy = "frame-ancestors 'self' https://drumlion.com https://*.systeme.io https://*.systemeio.com"
+    # iFrame-Einbettung von überall erlauben (für Tests)
+    Content-Security-Policy = "frame-ancestors *"
     X-Content-Type-Options = "nosniff"
