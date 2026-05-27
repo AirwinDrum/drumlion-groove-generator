@@ -66,8 +66,9 @@ Located at: `/Users/erwineitsen/Desktop/Projekte/Drumlion/Drumlion Sounds/Drumli
 
 ## Open — Vor Launch
 - [ ] Systeme.io Kursstruktur entfernen — Groove Generator als iFrame einbetten (Login-Schutz bleibt über Systeme.io)
-- [ ] USt-IdNr eintragen: Impressum, Stripe, PayPal (DE410250170)
+- [x] USt-IdNr eintragen: Impressum, Stripe, PayPal (DE410250170)
   - [x] Systeme.io ✓ (Sales invoice footer)
+  - [x] Impressum HTML ✓
 - [ ] Cookiebot-Abschnitt in Privacy Policy ergänzen
 - [ ] Launch-Emails senden (3 Newsletter-Emails vorbereitet, noch nicht gesendet)
 - [ ] Launch-Datum festlegen
