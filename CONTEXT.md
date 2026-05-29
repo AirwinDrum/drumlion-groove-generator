@@ -72,7 +72,16 @@ Located at: `/Users/erwineitsen/Desktop/Projekte/Drumlion/Drumlion Sounds/Drumli
 - [ ] Cookiebot-Abschnitt in Privacy Policy ergänzen
 - [ ] Launch-Emails senden (3 Newsletter-Emails vorbereitet, noch nicht gesendet)
 - [ ] Launch-Datum festlegen
-- [ ] Adressänderung ab 01.08.2026 beachten (#4)
+- [ ] Adressänderung ab 01.08.2026 beachten: BOP/BZSt, Finanzamt, Impressum, Stripe, PayPal, Systeme.io, **Accountable**
+
+## Langfristiges Ziel: 50.000€/Monat
+- Drumlion Abo (1.000-1.500 Member) → ~15-20k/mo
+- YouTube AdSense (500k+ Views/mo) → ~2-5k/mo
+- YouTube Sponsorings → ~3-10k/mo
+- Merch → ~2-5k/mo
+- Premium Drumpad (200€/Stück, 25-50/mo) → ~5-10k/mo
+- Affiliate/Kooperationen → ~2-5k/mo
+→ **Nach Launch: Langfristige Strategie ausarbeiten**
 
 ## Roadmap 2026
 - **Launch 01.06.** — Groove Generator als iFrame in Systeme.io, Login über Systeme.io Membership
@@ -80,6 +89,10 @@ Located at: `/Users/erwineitsen/Desktop/Projekte/Drumlion/Drumlion Sounds/Drumli
 
 ## Open — Steuer / Finanzen
 - [x] USt-IdNr: **DE410250170**
+- [x] OSS-Verfahren angemeldet (28.05.2026)
+  - Transferticket: **ep1480yomq02ot2kgh4s8hbg1hskd0qd**
+  - Registrierungsbeginn: **01.06.2026**
+  - Steuernummer: 08/036/53123 (Finanzamt Bingen-Alzey)
 - [ ] OSS-Verfahren anmelden (BZSt) — für digitale Produkte an EU-Privatkunden
 - [ ] Geschäftskonto einrichten — Kontist (Konto + auto. Steuerrücklage) oder Qonto
 - [ ] Accountable einrichten (Buchhaltung + Steuer, integriert mit Kontist)

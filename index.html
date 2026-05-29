@@ -53,11 +53,26 @@ body {
   letter-spacing: -0.5px;
   line-height: 1;
 }
-.dg-header .subtitle {
+.dg-header .subtitle { display: none; }
+
+/* Info bar above notation */
+.notation-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 4px;
+  min-height: clamp(24px, 3.5vh, 34px);
+}
+.notation-info-left {
   color: #ffffff;
-  font-size: clamp(20px, 3.8vw, 30px);
-  margin-top: 4px;
+  font-size: clamp(17px, 3vw, 24px);
+  font-weight: 600;
+}
+.notation-info-right {
+  color: rgba(255,255,255,0.6);
+  font-size: clamp(14px, 2.2vw, 18px);
   font-weight: 500;
+  text-align: right;
 }
 
 /* Notation box */
@@ -290,6 +305,54 @@ body {
   text-align: center; font-size: clamp(9px,1.6vw,11px);
   color: #666; text-transform: uppercase; letter-spacing: 2px;
 }
+
+/* Drum Legend */
+.legend-btn {
+  position: absolute; top: 8px; right: 10px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600;
+  width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  z-index: 10;
+}
+.legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
+
+.legend-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.legend-overlay.open { display: flex; }
+.legend-modal {
+  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; padding: 28px 32px; min-width: 280px; max-width: 360px;
+  position: relative;
+}
+.legend-modal h3 {
+  color: #C9A84C; font-size: 16px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px;
+  text-align: center;
+}
+.legend-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none; color: rgba(255,255,255,0.4);
+  font-size: 20px; cursor: pointer; line-height: 1;
+  transition: color 0.15s;
+}
+.legend-close:hover { color: #fff; }
+.legend-table { width: 100%; border-collapse: collapse; }
+.legend-table tr td {
+  padding: 7px 6px; font-size: 14px; color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.legend-table tr:last-child td { border-bottom: none; }
+.legend-table .leg-sym {
+  width: 44px; text-align: center;
+}
+.legend-table .leg-name { color: rgba(255,255,255,0.85); }
+.legend-table .leg-pos { color: rgba(255,255,255,0.35); font-size: 12px; text-align: right; }
 </style>
 </head>
 <body>
@@ -302,10 +365,56 @@ body {
       <div class="subtitle" id="dgSub">Target: 100 BPM — 3 Blocks</div>
     </div>
 
-    <div class="notation-box">
+    <div class="notation-info">
+      <span class="notation-info-left" id="dgInfoLeft"></span>
+      <span class="notation-info-right" id="dgInfoRight"></span>
+    </div>
+
+    <div class="notation-box" style="position:relative;">
       <svg id="dgSvg" viewBox="0 -10 560 108"></svg>
       <div class="countin-overlay" id="dgCountIn" style="display:none;">
         <div class="countin-number" id="dgCountNum">1</div>
+      </div>
+      <button class="legend-btn" id="dgLegendBtn" title="Drum-Legende">?</button>
+    </div>
+
+    <!-- Drum Legend Modal -->
+    <div class="legend-overlay" id="dgLegendOverlay">
+      <div class="legend-modal">
+        <button class="legend-close" id="dgLegendClose">×</button>
+        <h3>🥁 Drum-Legende</h3>
+        <table class="legend-table">
+          <tr>
+            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="7" fill="none" stroke="white" stroke-width="1.8"/><line x1="7" y1="7" x2="15" y2="15" stroke="white" stroke-width="1.8"/><line x1="15" y1="7" x2="7" y2="15" stroke="white" stroke-width="1.8"/></svg></td>
+            <td class="leg-name">Crash</td>
+            <td class="leg-pos">über dem System</td>
+          </tr>
+          <tr>
+            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><line x1="5" y1="5" x2="17" y2="17" stroke="white" stroke-width="2"/><line x1="17" y1="5" x2="5" y2="17" stroke="white" stroke-width="2"/></svg></td>
+            <td class="leg-name">Hi-Hat</td>
+            <td class="leg-pos">über dem System</td>
+          </tr>
+          <tr>
+            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8" ry="5.5" fill="white"/></svg></td>
+            <td class="leg-name">Snare</td>
+            <td class="leg-pos">Linie 3</td>
+          </tr>
+          <tr>
+            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8" ry="5.5" fill="white"/></svg></td>
+            <td class="leg-name">Tom 1 / Tom 2 / Tom 3</td>
+            <td class="leg-pos">Linie 1–2–4</td>
+          </tr>
+          <tr>
+            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8" ry="5.5" fill="white"/></svg></td>
+            <td class="leg-name">Bass Drum</td>
+            <td class="leg-pos">Linie 4–5</td>
+          </tr>
+          <tr>
+            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><line x1="5" y1="5" x2="17" y2="17" stroke="white" stroke-width="2"/><line x1="17" y1="5" x2="5" y2="17" stroke="white" stroke-width="2"/></svg></td>
+            <td class="leg-name">Hi-Hat Pedal</td>
+            <td class="leg-pos">unter dem System</td>
+          </tr>
+        </table>
       </div>
     </div>
 
@@ -1164,34 +1273,34 @@ body {
 
         // ── HI-HAT OPENINGS 2 (91–110): Achtel Bassdrum + Öffnungen ──
     {id:91, cat:'grooves', name:'Groove 61', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:92, cat:'grooves', name:'Groove 62', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:93, cat:'grooves', name:'Groove 63', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:94, cat:'grooves', name:'Groove 64', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1204,14 +1313,14 @@ body {
           [{inst:'hhClose',line:-0.5,head:'x'}]
         ]},
     {id:95, cat:'grooves', name:'Groove 65', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:96, cat:'grooves', name:'Groove 66', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1224,34 +1333,34 @@ body {
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:97, cat:'grooves', name:'Groove 67', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}]
         ]},
     {id:98, cat:'grooves', name:'Groove 68', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:99, cat:'grooves', name:'Groove 69', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:100, cat:'grooves', name:'Groove 70', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1264,24 +1373,24 @@ body {
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:101, cat:'grooves', name:'Groove 71', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:102, cat:'grooves', name:'Groove 72', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
-          [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:103, cat:'grooves', name:'Groove 73', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1314,14 +1423,14 @@ body {
           [{inst:'hhOpen',line:-0.5,head:'x'}]
         ]},
     {id:106, cat:'grooves', name:'Groove 76', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'kick',line:3.5,head:'oval'},{inst:'hhOpen',line:-0.5,head:'x'}]
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
     {id:107, cat:'grooves', name:'Groove 77', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Hi-Hat Openings 2', minBPM:45, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hhClose',line:-0.5,head:'x'}],
@@ -3307,10 +3416,11 @@ body {
     var _repStr = '';
     if (_curLesson) {
       var _step = _curLesson.entry.bpmStep || 0;
-      _repStr = _step === 0 ? '  ·  First time 🎯' : '  ·  Rep '+_step;
+      _repStr = _step === 0 ? 'First time 🎯' : 'Rep '+_step;
     }
-    document.getElementById('dgSub').textContent =
-      tBpm+' BPM — '+blocks.length+' Block'+(blocks.length>1?'s':'')+_repStr;
+    document.getElementById('dgInfoLeft').textContent = tBpm + ' BPM';
+    document.getElementById('dgInfoRight').textContent =
+      blocks.length + ' Block' + (blocks.length > 1 ? 's' : '') + (_repStr ? '  ·  ' + _repStr : '');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
@@ -3461,16 +3571,18 @@ body {
     function infoLine(br, bt) {
       var realBar;
       if (isFill) {
-        // br = Phrase-Index, bt = Position in Phrase
-        // Groove-Takt = br*2+1, Fill-Takt = br*2+2
         realBar = br * 2 + (bt < n1 ? 1 : 2);
       } else {
         realBar = br + 1;
       }
-      var base = cb.bpm + ' BPM — Bar ' + realBar + '/' + totalRealBars;
-      if (!isTimingBlock) return base;
-      if (br < 8) return base + ' · Groove';
-      return base + (grooveOn(br) ? ' · Groove 🥁' : ' · Click only 🎵');
+      var rightStr = 'Bar ' + realBar + '/' + totalRealBars;
+      if (isTimingBlock) {
+        if (br < 8) rightStr += ' · Groove';
+        else rightStr += (grooveOn(br) ? ' · Groove 🥁' : ' · Click only 🎵');
+      }
+      document.getElementById('dgInfoLeft').textContent = cb.bpm + ' BPM';
+      document.getElementById('dgInfoRight').textContent = rightStr;
+      return '';
     }
 
     function tickAndRender(bt, br) {
@@ -3793,6 +3905,20 @@ body {
   // Init: erste Lektion aus Course-State laden
   _loadCurrentLesson(false);
   _updateLevelUI();
+
+  // Drum Legend Modal
+  var legendBtn = document.getElementById('dgLegendBtn');
+  var legendOverlay = document.getElementById('dgLegendOverlay');
+  var legendClose = document.getElementById('dgLegendClose');
+  legendBtn.addEventListener('click', function() {
+    legendOverlay.classList.add('open');
+  });
+  legendClose.addEventListener('click', function() {
+    legendOverlay.classList.remove('open');
+  });
+  legendOverlay.addEventListener('click', function(e) {
+    if (e.target === legendOverlay) legendOverlay.classList.remove('open');
+  });
 
 })();
 </script>
