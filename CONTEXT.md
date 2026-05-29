@@ -4,8 +4,9 @@
 Erwin Eitsen — Drumlion brand
 
 ## Working File
-- **Development:** `/Users/erwineitsen/Downloads/drumlion_groove_generator_v6.html`
-- **Deploy target:** `/Users/erwineitsen/Desktop/Projekte/Drumlion/groove-generator/index.html`
+- **Edit here:** `/Users/erwineitsen/Desktop/Projekte/Drumlion/groove-generator/index.html`
+- **Dev preview (immer synchron halten):** `/Users/erwineitsen/Downloads/drumlion_groove_generator_v6.html`
+  - Nach jeder Änderung: `cp /Users/erwineitsen/Desktop/Projekte/Drumlion/groove-generator/index.html /Users/erwineitsen/Downloads/drumlion_groove_generator_v6.html`
 - **GitHub:** AirwinDrum/drumlion-groove-generator (private)
 - **Netlify:** Auto-deploys from GitHub (only deploy when user explicitly says "deploy" or "push")
 

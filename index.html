@@ -45,21 +45,21 @@ body {
 }
 
 /* Header */
-.dg-header { text-align: center; }
-.dg-header h2 {
-  color: #C9A84C;
-  font-size: clamp(34px, 6.5vw, 56px);
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  line-height: 1;
-}
-.dg-header .subtitle { display: none; }
-
-/* Info bar above notation */
-.notation-info {
+/* Notation group — tight stack above staff */
+.notation-group {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: clamp(4px, 0.8vh, 8px);
+}
+
+.dg-header { display: none; }
+
+/* Info bar above notation — 3-column: BPM | Title | Blocks */
+.notation-info {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
   padding: 0 4px;
   min-height: clamp(24px, 3.5vh, 34px);
 }
@@ -67,12 +67,40 @@ body {
   color: #ffffff;
   font-size: clamp(17px, 3vw, 24px);
   font-weight: 600;
+  white-space: nowrap;
+}
+.notation-info-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  overflow: hidden;
+  min-width: 0;
+}
+.notation-info-cat {
+  font-size: clamp(11px, 1.8vw, 15px);
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.notation-info-title {
+  font-size: clamp(24px, 4.5vw, 42px);
+  font-weight: 700;
+  color: #C9A84C;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .notation-info-right {
   color: rgba(255,255,255,0.6);
   font-size: clamp(14px, 2.2vw, 18px);
   font-weight: 500;
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Notation box */
@@ -319,6 +347,18 @@ body {
 }
 .legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
 
+.metro-btn {
+  position: absolute; top: 6px; left: 8px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.35);
+  width: 32px; height: 32px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s;
+  z-index: 10; padding: 0;
+}
+.metro-btn:hover { color: rgba(201,168,76,0.8); }
+.metro-btn.active { color: #C9A84C; }
+
 .legend-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.7); z-index: 1000;
@@ -327,7 +367,9 @@ body {
 .legend-overlay.open { display: flex; }
 .legend-modal {
   background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px; padding: 28px 32px; min-width: 280px; max-width: 360px;
+  border-radius: 14px; padding: 20px 24px;
+  width: min(620px, 94vw);
+  max-width: 94vw;
   position: relative;
 }
 .legend-modal h3 {
@@ -359,62 +401,131 @@ body {
 <div class="dg-wrap">
   <div class="dg-inner">
 
-    <div class="dg-header">
-      <div id="dgCatLabel" style="font-size:clamp(13px,2vw,18px);color:#888;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;"></div>
-      <h2 id="dgName">Groove 1</h2>
-      <div class="subtitle" id="dgSub">Target: 100 BPM — 3 Blocks</div>
-    </div>
+    <div class="notation-group">
+      <div class="notation-info">
+        <span class="notation-info-left" id="dgInfoLeft"></span>
+        <div class="notation-info-center">
+          <span class="notation-info-cat" id="dgCatLabel"></span>
+          <span class="notation-info-title" id="dgName">Groove 1</span>
+        </div>
+        <span class="notation-info-right" id="dgInfoRight"></span>
+      </div>
 
-    <div class="notation-info">
-      <span class="notation-info-left" id="dgInfoLeft"></span>
-      <span class="notation-info-right" id="dgInfoRight"></span>
-    </div>
-
-    <div class="notation-box" style="position:relative;">
+      <div class="notation-box" style="position:relative;">
       <svg id="dgSvg" viewBox="0 -10 560 108"></svg>
       <div class="countin-overlay" id="dgCountIn" style="display:none;">
         <div class="countin-number" id="dgCountNum">1</div>
       </div>
-      <button class="legend-btn" id="dgLegendBtn" title="Drum-Legende">?</button>
+      <!-- Metronome toggle (left) -->
+      <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF">
+        <svg viewBox="0 0 20 22" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3,20 L17,20 L13.5,2 L6.5,2 Z"/>
+          <line x1="10" y1="18" x2="15.5" y2="6"/>
+          <circle cx="10" cy="18" r="1.2" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+      <!-- Drum Key (right) -->
+      <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
+        <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="6.5" cy="11.5" r="3.5"/>
+          <line x1="9.5" y1="8.5" x2="15.5" y2="2.5"/>
+          <line x1="13" y1="5" x2="15.5" y2="7.5"/>
+          <line x1="11.5" y1="6.5" x2="14" y2="9"/>
+        </svg>
+      </button>
     </div>
+    </div><!-- /notation-group -->
 
     <!-- Drum Legend Modal -->
     <div class="legend-overlay" id="dgLegendOverlay">
       <div class="legend-modal">
         <button class="legend-close" id="dgLegendClose">×</button>
-        <h3>🥁 Drum-Legende</h3>
-        <table class="legend-table">
-          <tr>
-            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="7" fill="none" stroke="white" stroke-width="1.8"/><line x1="7" y1="7" x2="15" y2="15" stroke="white" stroke-width="1.8"/><line x1="15" y1="7" x2="7" y2="15" stroke="white" stroke-width="1.8"/></svg></td>
-            <td class="leg-name">Crash</td>
-            <td class="leg-pos">über dem System</td>
-          </tr>
-          <tr>
-            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><line x1="5" y1="5" x2="17" y2="17" stroke="white" stroke-width="2"/><line x1="17" y1="5" x2="5" y2="17" stroke="white" stroke-width="2"/></svg></td>
-            <td class="leg-name">Hi-Hat</td>
-            <td class="leg-pos">über dem System</td>
-          </tr>
-          <tr>
-            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8" ry="5.5" fill="white"/></svg></td>
-            <td class="leg-name">Snare</td>
-            <td class="leg-pos">Linie 3</td>
-          </tr>
-          <tr>
-            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8" ry="5.5" fill="white"/></svg></td>
-            <td class="leg-name">Tom 1 / Tom 2 / Tom 3</td>
-            <td class="leg-pos">Linie 1–2–4</td>
-          </tr>
-          <tr>
-            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8" ry="5.5" fill="white"/></svg></td>
-            <td class="leg-name">Bass Drum</td>
-            <td class="leg-pos">Linie 4–5</td>
-          </tr>
-          <tr>
-            <td class="leg-sym"><svg width="22" height="22" viewBox="0 0 22 22"><line x1="5" y1="5" x2="17" y2="17" stroke="white" stroke-width="2"/><line x1="17" y1="5" x2="5" y2="17" stroke="white" stroke-width="2"/></svg></td>
-            <td class="leg-name">Hi-Hat Pedal</td>
-            <td class="leg-pos">unter dem System</td>
-          </tr>
-        </table>
+        <h3 style="margin-bottom:14px;">🥁 Drum Key</h3>
+        <!-- Staff 1: lines y=88,104,120,136,152 (staffTop=88, spacing=16)
+             Staff 2: lines y=196,212,228,244,260 (staffTop=196)
+             All stems go UP from the RIGHT EDGE of the notehead. -->
+        <svg viewBox="0 0 560 316" width="100%" style="display:block;">
+
+          <!-- ═══ STAFF 1 ═══ -->
+          <line x1="20" y1="88"  x2="430" y2="88"  stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="104" x2="430" y2="104" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="120" x2="430" y2="120" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="136" x2="430" y2="136" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="152" x2="430" y2="152" stroke="white" stroke-width="1.2"/>
+
+          <!-- 1. Crash — pos −1.5 → y=64, cx=58 — circledX, ledger @ pos−1 y=72 -->
+          <!-- ledger line -->
+          <line x1="47" y1="72" x2="70" y2="72" stroke="white" stroke-width="1.3"/>
+          <!-- circle head -->
+          <circle cx="58" cy="64" r="7.5" fill="none" stroke="white" stroke-width="1.8"/>
+          <!-- inner × -->
+          <line x1="52" y1="58" x2="64" y2="70" stroke="white" stroke-width="1.6"/>
+          <line x1="64" y1="58" x2="52" y2="70" stroke="white" stroke-width="1.6"/>
+          <!-- stem UP from right edge (cx+7.5, cy) -->
+          <line x1="65.5" y1="64" x2="65.5" y2="26" stroke="white" stroke-width="1.4"/>
+          <text x="58" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Crash</text>
+
+          <!-- 2. Hi-Hat — pos −0.5 → y=80, cx=140 — × head -->
+          <!-- × lines: size 8 from center -->
+          <line x1="132" y1="72" x2="148" y2="88" stroke="white" stroke-width="2"/>
+          <line x1="148" y1="72" x2="132" y2="88" stroke="white" stroke-width="2"/>
+          <!-- stem UP from right corner of × (cx+8, cy−8) going up -->
+          <line x1="148" y1="72" x2="148" y2="34" stroke="white" stroke-width="1.4"/>
+          <text x="140" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Hi-Hat</text>
+
+          <!-- 3. Tom 1 — pos 0.5 → y=96, cx=225 — oval -->
+          <ellipse cx="225" cy="96" rx="8.5" ry="5.5" fill="white"/>
+          <!-- stem UP from right edge (cx+8.5, cy) -->
+          <line x1="233.5" y1="96" x2="233.5" y2="58" stroke="white" stroke-width="1.4"/>
+          <text x="225" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Tom 1</text>
+
+          <!-- 4. Tom 2 — pos 1.0 → y=104, cx=315 — oval (on line 2) -->
+          <ellipse cx="315" cy="104" rx="8.5" ry="5.5" fill="white"/>
+          <!-- stem UP from right edge -->
+          <line x1="323.5" y1="104" x2="323.5" y2="66" stroke="white" stroke-width="1.4"/>
+          <text x="315" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Tom 2</text>
+
+          <!-- 5. Snare — pos 1.5 → y=112, cx=400 — oval -->
+          <ellipse cx="400" cy="112" rx="8.5" ry="5.5" fill="white"/>
+          <!-- stem UP from right edge -->
+          <line x1="408.5" y1="112" x2="408.5" y2="74" stroke="white" stroke-width="1.4"/>
+          <text x="400" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Snare</text>
+
+          <!-- ═══ STAFF 2 ═══ (staffTop=196) -->
+          <line x1="20" y1="196" x2="500" y2="196" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="212" x2="500" y2="212" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="228" x2="500" y2="228" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="244" x2="500" y2="244" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="260" x2="500" y2="260" stroke="white" stroke-width="1.2"/>
+
+          <!-- 6. Tom 3 — pos 2.5 → y=236, cx=65 — oval (between lines 3–4) -->
+          <ellipse cx="65" cy="236" rx="8.5" ry="5.5" fill="white"/>
+          <!-- stem UP from right edge -->
+          <line x1="73.5" y1="236" x2="73.5" y2="198" stroke="white" stroke-width="1.4"/>
+          <text x="65" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Tom 3</text>
+
+          <!-- 7. Bass Drum — pos 3.5 → y=252, cx=190 — oval (between lines 4–5) -->
+          <ellipse cx="190" cy="252" rx="8.5" ry="5.5" fill="white"/>
+          <!-- stem UP from right edge -->
+          <line x1="198.5" y1="252" x2="198.5" y2="214" stroke="white" stroke-width="1.4"/>
+          <text x="190" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Bass Drum</text>
+
+          <!-- 8. Bass Drum 2 — pos 4.0 → y=260, cx=330 — oval (on line 5) -->
+          <ellipse cx="330" cy="260" rx="8.5" ry="5.5" fill="white"/>
+          <!-- stem UP from right edge -->
+          <line x1="338.5" y1="260" x2="338.5" y2="222" stroke="white" stroke-width="1.4"/>
+          <text x="330" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,sans-serif">Bass Drum 2</text>
+
+          <!-- 9. Hi-Hat Pedal — pos 5.5 → y=284, cx=455 — × head, ledger @ pos5.0 y=276 -->
+          <!-- ledger line -->
+          <line x1="444" y1="276" x2="467" y2="276" stroke="white" stroke-width="1.3"/>
+          <!-- × head: size 8 -->
+          <line x1="447" y1="276" x2="463" y2="292" stroke="white" stroke-width="2"/>
+          <line x1="463" y1="276" x2="447" y2="292" stroke="white" stroke-width="2"/>
+          <!-- stem UP from right corner of × (cx+8=463, cy−8=276) going up through staff -->
+          <line x1="463" y1="276" x2="463" y2="230" stroke="white" stroke-width="1.4"/>
+          <text x="455" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="10" font-family="DM Sans,sans-serif">Hi-Hat Pedal</text>
+        </svg>
       </div>
     </div>
 
@@ -526,6 +637,37 @@ body {
     fillStart: 0,
     stickings2: null
   };
+
+  // ============================================================
+  // METRONOME STATE
+  // ============================================================
+  var metronomeOn = false;
+
+  function updateMetroBtn() {
+    var btn = document.getElementById('dgMetroBtn');
+    if (!btn) return;
+    if (metronomeOn) {
+      btn.classList.add('active');
+      btn.title = 'Metronome: ON';
+    } else {
+      btn.classList.remove('active');
+      btn.title = 'Metronome: OFF';
+    }
+  }
+
+  // Returns true on beats that correspond to quarter-note positions
+  function isMetronomeBeat(bt) {
+    var n = GROOVE.beats.length;
+    if (n <= 4)  return true;        // quarter/half/whole: every beat = 1 quarter
+    if (n <= 8)  return bt % 2 === 0; // eighth notes: every 2 = 1 quarter
+    return bt % 4 === 0;              // sixteenth: every 4 = 1 quarter
+  }
+
+  // Sets metronome default based on exercise category and updates button
+  function setMetronomeDefault(cat) {
+    metronomeOn = (cat === 'rudiments' || cat === 'notes');
+    updateMetroBtn();
+  }
 
   // ============================================================
   // EXERCISE LIBRARY
@@ -2457,7 +2599,7 @@ body {
 
     // ── RUDIMENTS (41–80) — 16th-note alternating ───────────────
     // factor 2.0 → BPM 60–200
-    {id:101, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1001, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','R','L','R','L','R','L','R','L','R','L','R','L','R','L'],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],
@@ -2477,45 +2619,144 @@ body {
         [{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
-    {id:102, cat:'rudiments', name:'Rudiment 2',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:103, cat:'rudiments', name:'Rudiment 3',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:104, cat:'rudiments', name:'Rudiment 4',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:105, cat:'rudiments', name:'Rudiment 5',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:106, cat:'rudiments', name:'Rudiment 6',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:107, cat:'rudiments', name:'Rudiment 7',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:108, cat:'rudiments', name:'Rudiment 8',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:109, cat:'rudiments', name:'Rudiment 9',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:110, cat:'rudiments', name:'Rudiment 10', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:111, cat:'rudiments', name:'Rudiment 11', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:112, cat:'rudiments', name:'Rudiment 12', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:113, cat:'rudiments', name:'Rudiment 13', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:114, cat:'rudiments', name:'Rudiment 14', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:115, cat:'rudiments', name:'Rudiment 15', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:116, cat:'rudiments', name:'Rudiment 16', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:117, cat:'rudiments', name:'Rudiment 17', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:118, cat:'rudiments', name:'Rudiment 18', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:119, cat:'rudiments', name:'Rudiment 19', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:120, cat:'rudiments', name:'Rudiment 20', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:121, cat:'rudiments', name:'Rudiment 21', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:122, cat:'rudiments', name:'Rudiment 22', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:123, cat:'rudiments', name:'Rudiment 23', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:124, cat:'rudiments', name:'Rudiment 24', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:125, cat:'rudiments', name:'Rudiment 25', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:126, cat:'rudiments', name:'Rudiment 26', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:127, cat:'rudiments', name:'Rudiment 27', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:128, cat:'rudiments', name:'Rudiment 28', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:129, cat:'rudiments', name:'Rudiment 29', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:130, cat:'rudiments', name:'Rudiment 30', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:131, cat:'rudiments', name:'Rudiment 31', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:132, cat:'rudiments', name:'Rudiment 32', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:133, cat:'rudiments', name:'Rudiment 33', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:134, cat:'rudiments', name:'Rudiment 34', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:135, cat:'rudiments', name:'Rudiment 35', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:136, cat:'rudiments', name:'Rudiment 36', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:137, cat:'rudiments', name:'Rudiment 37', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:138, cat:'rudiments', name:'Rudiment 38', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:139, cat:'rudiments', name:'Rudiment 39', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:140, cat:'rudiments', name:'Rudiment 40', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null}
+    {id:1002, cat:'rudiments', name:'Rudiment 2',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1003, cat:'rudiments', name:'Rudiment 3',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1004, cat:'rudiments', name:'Rudiment 4',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1005, cat:'rudiments', name:'Rudiment 5',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1006, cat:'rudiments', name:'Rudiment 6',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1007, cat:'rudiments', name:'Rudiment 7',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1008, cat:'rudiments', name:'Rudiment 8',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1009, cat:'rudiments', name:'Rudiment 9',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1010, cat:'rudiments', name:'Rudiment 10', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1011, cat:'rudiments', name:'Rudiment 11', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1012, cat:'rudiments', name:'Rudiment 12', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1013, cat:'rudiments', name:'Rudiment 13', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1014, cat:'rudiments', name:'Rudiment 14', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1015, cat:'rudiments', name:'Rudiment 15', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1016, cat:'rudiments', name:'Rudiment 16', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1017, cat:'rudiments', name:'Rudiment 17', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1018, cat:'rudiments', name:'Rudiment 18', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1019, cat:'rudiments', name:'Rudiment 19', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1020, cat:'rudiments', name:'Rudiment 20', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1021, cat:'rudiments', name:'Rudiment 21', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1022, cat:'rudiments', name:'Rudiment 22', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1023, cat:'rudiments', name:'Rudiment 23', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1024, cat:'rudiments', name:'Rudiment 24', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1025, cat:'rudiments', name:'Rudiment 25', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1026, cat:'rudiments', name:'Rudiment 26', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1027, cat:'rudiments', name:'Rudiment 27', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1028, cat:'rudiments', name:'Rudiment 28', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1029, cat:'rudiments', name:'Rudiment 29', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1030, cat:'rudiments', name:'Rudiment 30', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1031, cat:'rudiments', name:'Rudiment 31', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1032, cat:'rudiments', name:'Rudiment 32', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1033, cat:'rudiments', name:'Rudiment 33', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1034, cat:'rudiments', name:'Rudiment 34', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1035, cat:'rudiments', name:'Rudiment 35', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1036, cat:'rudiments', name:'Rudiment 36', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1037, cat:'rudiments', name:'Rudiment 37', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1038, cat:'rudiments', name:'Rudiment 38', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1039, cat:'rudiments', name:'Rudiment 39', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1040, cat:'rudiments', name:'Rudiment 40', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+
+    // ── NOTE READING ─────────────────────────────────────────────
+    // IDs 201+. 4-beat arrays (quarter-note grid). BPM steps: 60, 90, 120.
+    {id:201, cat:'notes', name:'Whole Note', noteValue:'whole', hihatHands:'one',
+     catLabel:'Note Reading',
+     minBPM:60, maxBPM:120, step:30,
+     stickings:['R', null, null, null],
+     beats:[
+       [{inst:'snare', line:1.5, head:'whole'}],
+       [], [], []
+     ]
+    },
+    {id:202, cat:'notes', name:'Half Notes', noteValue:'half', hihatHands:'one',
+     catLabel:'Note Reading',
+     minBPM:60, maxBPM:120, step:30,
+     stickings:['R', null, 'L', null],
+     beats:[
+       [{inst:'snare', line:1.5, head:'half'}],
+       [],
+       [{inst:'snare', line:1.5, head:'half'}],
+       []
+     ]
+    },
+    // ── Quarter Notes ─────────────────────────────────────────
+    {id:203, cat:'notes', name:'1 2 3 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:204, cat:'notes', name:'1 2 3 –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R','L','R',null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    {id:205, cat:'notes', name:'1 2 – 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R','L',null,'L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:206, cat:'notes', name:'1 – 3 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R',null,'R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:207, cat:'notes', name:'– 2 3 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,'L','R','L'],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:208, cat:'notes', name:'1 – 3 –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R',null,'R',null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    {id:209, cat:'notes', name:'– 2 – 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,'L',null,'L'],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:210, cat:'notes', name:'1 2 – –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R','L',null,null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    {id:211, cat:'notes', name:'– – 3 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,null,'R','L'],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:212, cat:'notes', name:'1 – – 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R',null,null,'L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:213, cat:'notes', name:'– 2 3 –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,'L','R',null],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    {id:214, cat:'notes', name:'1 – – –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:['R',null,null,null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[] ]
+    },
+    {id:215, cat:'notes', name:'– 2 – –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,'L',null,null],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    {id:216, cat:'notes', name:'– – 3 –', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,null,'R',null],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    {id:217, cat:'notes', name:'– – – 4', noteValue:'quarter', hihatHands:'one',
+     catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
+     stickings:[null,null,null,'L'],
+     beats:[ [],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
   ];
 
   // ── Section aus URL ──────────────────────────────────────────
@@ -2535,15 +2776,20 @@ body {
 
   // Einführungsreihenfolge: Grooves + Fills interleaved, dann Rudiments am Ende (Level-5-Gate)
   function _buildIntroQueue() {
-    var g = EXERCISES.filter(function(e){ return e.cat === 'grooves'; });
-    var f = EXERCISES.filter(function(e){ return e.cat === 'fillins' && e.beats; });
-    var r = EXERCISES.filter(function(e){ return e.cat === 'rudiments'; });
+    var g  = EXERCISES.filter(function(e){ return e.cat === 'grooves'; });
+    var f  = EXERCISES.filter(function(e){ return e.cat === 'fillins' && e.beats; });
+    var r  = EXERCISES.filter(function(e){ return e.cat === 'rudiments'; });
+    var nt = EXERCISES.filter(function(e){ return e.cat === 'notes'; });
     var q = [], len = Math.max(g.length, f.length);
+    var ni = 0; // Note Reading index — interleave early (1 note per G+F pair)
     for (var i = 0; i < len; i++) {
       if (g[i]) q.push(g[i]);
       if (f[i]) q.push(f[i]);
+      if (ni < nt.length) { q.push(nt[ni]); ni++; }
     }
-    // Rudiments nach Grooves/Fills — werden erst ab Level 3 (200h) eingeführt
+    // remaining notes (if more notes than G/F pairs)
+    while (ni < nt.length) { q.push(nt[ni]); ni++; }
+    // Rudiments — werden erst ab Level 3 (200h) eingeführt
     for (var j = 0; j < r.length; j++) { q.push(r[j]); }
     return q;
   }
@@ -2695,6 +2941,7 @@ body {
     GROOVE.showLabels = !!(ex.showLabels);
     document.getElementById('dgName').textContent = ex.name;
     var _cl = document.getElementById('dgCatLabel'); if (_cl) _cl.textContent = ex.catLabel || '';
+    setMetronomeDefault(ex.cat);
     _updateNavButtons();
     updateBpm();
     _showCompletedBanner(ex.id);
@@ -2715,6 +2962,7 @@ body {
     GROOVE.showLabels = !!(lesson.ex.showLabels);
     document.getElementById('dgName').textContent = lesson.ex.name;
     var _cl = document.getElementById('dgCatLabel'); if (_cl) _cl.textContent = lesson.ex.catLabel || '';
+    setMetronomeDefault(lesson.ex.cat);
     // Always reset ctrl to Start button (e.g. after "Mark as Completed" transition)
     if (!autoStart) {
       document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
@@ -2907,71 +3155,74 @@ body {
     });
   }
 
-  function playBuf(buf, vol) {
+  function playBuf(buf, vol, when) {
     if (!buf || !aCtx) return false;
+    var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     var src = aCtx.createBufferSource(), g = aCtx.createGain();
     src.buffer = buf; g.gain.value = vol !== undefined ? vol : 1.0;
     src.connect(g); g.connect(aCtx.destination);
-    src.start(aCtx.currentTime); return true;
+    src.start(t); return true;
   }
 
   function playKick() { playSound('kick'); }
   function playSnare() { playSound('snare'); }
   function playHiHat() { playSound('hh'); }
 
-  function playSound(key) {
+  function playSound(key, when) {
     if (!aCtx) return;
+    var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     var vol = (key === 'crash1' || key === 'crash2') ? 0.38
             : (key === 'ride') ? 0.70
             : (key === 'hhOpen') ? 0.48
             : (key === 'hh') ? 0.45
             : (key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
             : 1.0;
-    if (playBuf(WAVS[key], vol)) return;
+    if (playBuf(WAVS[key], vol, t)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
     if (key === 'kick' || key === 'kick2') {
       var o = aCtx.createOscillator(), g = aCtx.createGain();
       o.connect(g); g.connect(aCtx.destination);
-      o.frequency.setValueAtTime(160, aCtx.currentTime);
-      o.frequency.exponentialRampToValueAtTime(40, aCtx.currentTime + 0.12);
-      g.gain.setValueAtTime(0.8, aCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, aCtx.currentTime + 0.25);
-      o.type = 'sine'; o.start(aCtx.currentTime); o.stop(aCtx.currentTime + 0.25);
+      o.frequency.setValueAtTime(160, t);
+      o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+      g.gain.setValueAtTime(0.8, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o.type = 'sine'; o.start(t); o.stop(t + 0.25);
     } else if (key === 'snare' || key === 'snareAccent' || key === 'crossStick') {
       var sz = aCtx.sampleRate * 0.1, buf = aCtx.createBuffer(1, sz, aCtx.sampleRate);
       var d = buf.getChannelData(0);
       for (var i = 0; i < sz; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
       var n = aCtx.createBufferSource(); n.buffer = buf;
       var gn = aCtx.createGain();
-      gn.gain.setValueAtTime(0.6, aCtx.currentTime);
-      gn.gain.exponentialRampToValueAtTime(0.001, aCtx.currentTime + 0.12);
-      n.connect(gn); gn.connect(aCtx.destination); n.start(aCtx.currentTime);
+      gn.gain.setValueAtTime(0.6, t);
+      gn.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      n.connect(gn); gn.connect(aCtx.destination); n.start(t);
     } else if (key === 'hh' || key === 'hhOpen' || key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') {
       var sz = aCtx.sampleRate * 0.05, buf = aCtx.createBuffer(1, sz, aCtx.sampleRate);
       var d = buf.getChannelData(0);
       for (var i = 0; i < sz; i++) d[i] = (Math.random() * 2 - 1) * 0.3;
       var n = aCtx.createBufferSource(); n.buffer = buf;
       var g = aCtx.createGain();
-      g.gain.setValueAtTime(0.25, aCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, aCtx.currentTime + 0.04);
+      g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
       var hp = aCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
-      n.connect(hp); hp.connect(g); g.connect(aCtx.destination); n.start(aCtx.currentTime);
+      n.connect(hp); hp.connect(g); g.connect(aCtx.destination); n.start(t);
     }
   }
 
-  function playCountClick(accent, vol) {
+  function playCountClick(accent, vol, when) {
     if (!aCtx) return;
+    var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     var o = aCtx.createOscillator(), g = aCtx.createGain();
     o.connect(g); g.connect(aCtx.destination);
     o.frequency.value = accent ? 1500 : 1100;
-    g.gain.setValueAtTime(vol !== undefined ? vol : 0.46, aCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, aCtx.currentTime + 0.06);
-    o.type = 'sine'; o.start(aCtx.currentTime); o.stop(aCtx.currentTime + 0.06);
+    g.gain.setValueAtTime(vol !== undefined ? vol : 0.46, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    o.type = 'sine'; o.start(t); o.stop(t + 0.06);
   }
 
-  function playBeat(bi) {
+  function playBeat(bi, when) {
     GROOVE.beats[bi].forEach(function(n) {
-      playSound(n.inst);
+      playSound(n.inst, when);
     });
   }
 
@@ -3042,6 +3293,14 @@ body {
       h += '<ellipse cx="'+x+'" cy="'+y+'" rx="4" ry="2.8" fill="'+color+
            '" transform="rotate(-15 '+x+' '+y+')" opacity="'+opacity+'"/>';
       h += '<text x="'+(x+3)+'" y="'+(y+3)+'" fill="'+color+'" font-size="10" opacity="'+opacity+'">) </text>';
+    } else if (head === 'whole') {
+      // Ganze Note: offene Ellipse, kein Hals
+      h += '<ellipse cx="'+x+'" cy="'+y+'" rx="6.5" ry="4.5" fill="none" stroke="'+color+
+           '" stroke-width="1.5" transform="rotate(-15 '+x+' '+y+')" opacity="'+opacity+'"/>';
+    } else if (head === 'half') {
+      // Halbe Note: offene Ellipse mit Hals
+      h += '<ellipse cx="'+x+'" cy="'+y+'" rx="5" ry="3.5" fill="none" stroke="'+color+
+           '" stroke-width="1.5" transform="rotate(-15 '+x+' '+y+')" opacity="'+opacity+'"/>';
     } else {
       // Standard ovaler Kopf (Snare, Kick, Toms, ...)
       h += '<ellipse cx="'+x+'" cy="'+y+'" rx="5" ry="3.5" fill="'+color+
@@ -3052,6 +3311,7 @@ body {
 
   function renderNot(curBeat, dimmed) { dimmed = false;
     var svg  = document.getElementById('dgSvg');
+    var lbl4  = ['1', '2', '3', '4'];
     var lbl8  = ['1', '&', '2', '&', '3', '&', '4', '&'];
     var lbl16 = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
     var lbl   = lbl8;
@@ -3075,7 +3335,7 @@ body {
     function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff, groups) {
       var n = beatsArr.length;
       var bW = n * bs;
-      var lbl = n === 16 ? lbl16 : lbl8;
+      var lbl = (n === 16) ? lbl16 : (n === 4) ? lbl4 : lbl8;
       var fs = fillStart || 0;
       // Staff lines (skipped when caller draws them across full width)
       if (!skipStaff) {
@@ -3218,7 +3478,13 @@ body {
         if (stickings && stickings[bi]) {
           h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
-        if (bn.length > 0) {
+        // Quarter rest symbol for note-reading exercises
+        if (GROOVE.cat === 'notes' && bn.length === 0) {
+          h += '<text x="'+x+'" y="'+(sY+3*ls)+'" text-anchor="middle"'+
+               ' font-family="Bravura,Apple Symbols,Segoe UI Symbol,FreeSerif,Symbola,serif"'+
+               ' font-size="26" fill="'+nc+'" opacity="'+op+'">𝄽</text>';
+        }
+        if (bn.length > 0 && !bn.some(function(n){ return n.head === 'whole'; })) {
           var maxLine = Math.max.apply(null, bn.map(function(n) { return n.line; }));
           var stemBot = sY + maxLine * ls;
           h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+(sY-18)+
@@ -3282,7 +3548,7 @@ body {
     } else {
       // Single bar — adaptive spacing based on beat count
       var _nb = GROOVE.beats.length;
-      var bs = _nb <= 4 ? 100 : (_nb <= 8 ? 60 : 30);
+      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : 30);
       var bW = bs * _nb;
       var sX = 42;
       svg.setAttribute('viewBox', '0 -10 560 108');
@@ -3418,7 +3684,7 @@ body {
       var _step = _curLesson.entry.bpmStep || 0;
       _repStr = _step === 0 ? 'First time 🎯' : 'Rep '+_step;
     }
-    document.getElementById('dgInfoLeft').textContent = tBpm + ' BPM';
+    document.getElementById('dgInfoLeft').textContent = tBpm + ' BPM' + (GROOVE.cat === 'notes' ? '  4/4' : '');
     document.getElementById('dgInfoRight').textContent =
       blocks.length + ' Block' + (blocks.length > 1 ? 's' : '') + (_repStr ? '  ·  ' + _repStr : '');
     bIdx=0; phase='idle';
@@ -3505,11 +3771,13 @@ body {
       ];
     }
 
-    // Beat i feuern: Klick sofort, Stimme für Beat i+1 schon vorplanen
+    // Beat i feuern: Klick präzise geplant per Web Audio, Stimme vorausgeplant
+    var ciNextTime = aCtx ? aCtx.currentTime : 0;
+
     function fireBeat(i) {
       var s = seq[i];
       showCountIn(s.num);
-      if (s.click) playCountClick(s.accent);
+      if (s.click) playCountClick(s.accent, undefined, ciNextTime);
       // Nächsten Voice-Call früh einplanen damit er pünktlich landet
       var next = seq[i + 1];
       if (next && next.num) {
@@ -3520,6 +3788,7 @@ body {
     // Beat 0: Stimme sofort (akzeptierbare minimale Verzögerung beim ersten Schlag)
     if (seq[0].num) playCountVoice(seq[0].num);
     fireBeat(0);
+    ciNextTime += beatMs / 1000;
 
     var ci = 0;
     if (intId) clearInterval(intId);
@@ -3531,7 +3800,8 @@ body {
         hideCountIn();
         startPlaying();
       } else {
-        fireBeat(ci); // Klick sofort, nächste Stimme vorausgeplant
+        fireBeat(ci); // Klick präzise, nächste Stimme vorausgeplant
+        ciNextTime += beatMs / 1000;
       }
     }, beatMs);
   }
@@ -3580,36 +3850,40 @@ body {
         if (br < 8) rightStr += ' · Groove';
         else rightStr += (grooveOn(br) ? ' · Groove 🥁' : ' · Click only 🎵');
       }
-      document.getElementById('dgInfoLeft').textContent = cb.bpm + ' BPM';
+      document.getElementById('dgInfoLeft').textContent = cb.bpm + ' BPM' + (GROOVE.cat === 'notes' ? '  4/4' : '');
       document.getElementById('dgInfoRight').textContent = rightStr;
       return '';
     }
 
-    function tickAndRender(bt, br) {
+    // Tight scheduling: track exact audio time per beat (eliminates setInterval jitter)
+    var nextBeatTime = aCtx ? aCtx.currentTime : 0;
+
+    function tickAndRender(bt, br, when) {
       if (isFill) {
-        // bt = position within phrase (0..phraseLen-1)
-        // Update info when bar changes within phrase (beat 0 = groove bar, beat n1 = fill bar)
         if (bt === 0 || bt === n1) setInfo(infoLine(br, bt));
         if (bt < n1) {
           // Groove bar
           if (grooveOn(br)) {
-            GROOVE.beats[bt].forEach(function(n) { playSound(n.inst); });
-          } else if (bt % 2 === 0) { playCountClick(bt === 0, 0.69); }
+            GROOVE.beats[bt].forEach(function(n) { playSound(n.inst, when); });
+            if (metronomeOn && bt % 2 === 0) playCountClick(bt === 0, 1.0, when);
+          } else if (bt % 2 === 0) { playCountClick(bt === 0, 1.0, when); }
           renderNot(bt, false);
         } else {
           // Fill bar
           var fb = bt - n1;
           if (grooveOn(br)) {
-            GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst); });
-          } else if (fb % 2 === 0) { playCountClick(fb === 0, 0.69); }
+            GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst, when); });
+            if (metronomeOn && fb % 2 === 0) playCountClick(fb === 0, 1.0, when);
+          } else if (fb % 2 === 0) { playCountClick(fb === 0, 1.0, when); }
           renderNot(bt, false);
         }
       } else {
         if (bt === 0) setInfo(infoLine(br, bt));
         if (grooveOn(br)) {
-          if (bt < GROOVE.beats.length) playBeat(bt);
+          if (bt < GROOVE.beats.length) playBeat(bt, when);
+          if (metronomeOn && isMetronomeBeat(bt)) playCountClick(bt === 0, 1.0, when);
         } else {
-          if (bt % 2 === 0) playCountClick(bt === 0, 0.69);
+          if (isMetronomeBeat(bt)) playCountClick(bt === 0, 1.0, when);
         }
         renderNot(bt, false);
       }
@@ -3621,14 +3895,16 @@ body {
     if (intId) clearInterval(intId);
 
     // Erster Schlag sofort
-    tickAndRender(0, bar);
+    tickAndRender(0, bar, nextBeatTime);
+    nextBeatTime += eighthMs / 1000;
     eighthsLeft--;
     setCountdown(eighthsLeft * eighthMs / 1000);
     beat = 1;
 
     intId = setInterval(function() {
       if (!playing) return;
-      tickAndRender(beat, bar);
+      tickAndRender(beat, bar, nextBeatTime);
+      nextBeatTime += eighthMs / 1000;
       eighthsLeft--;
       setCountdown(eighthsLeft * eighthMs / 1000);
       beat++;
@@ -3755,6 +4031,10 @@ body {
     if (e.code === 'Space') {
       e.preventDefault();
       if (!playing) startExercise(); else stopExercise();
+    } else if (e.code === 'KeyK') {
+      e.preventDefault();
+      metronomeOn = !metronomeOn;
+      updateMetroBtn();
     } else if (e.code === 'ArrowRight') {
       e.preventDefault();
       document.getElementById('dgNavNext').click();
@@ -3782,8 +4062,8 @@ body {
       'color:#fff'
     ].join(';');
 
-    var cats = ['grooves','fillins','rudiments'];
-    var labels = {grooves:'Grooves', fillins:'Fills', rudiments:'Rudiments'};
+    var cats = ['grooves','fillins','notes','rudiments'];
+    var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments'};
     var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
              + '<span style="font-size:18px;font-weight:700;color:#C9A84C;">DEV — Exercise Picker</span>'
              + '<span style="font-size:12px;color:#666;">Taste D zum Schließen</span>'
@@ -3825,6 +4105,7 @@ body {
       GROOVE.showLabels = !!(ex.showLabels);
       document.getElementById('dgName').textContent = ex.name;
       var cl = document.getElementById('dgCatLabel'); if (cl) cl.textContent = ex.catLabel || '';
+      setMetronomeDefault(ex.cat);
       document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
       document.getElementById('dgStart2').addEventListener('click', startExercise);
       updateBpm();
@@ -3893,7 +4174,21 @@ body {
       var bpm = _exBpm(ex, entry.bpmStep);
       _pushHistory({ entry: entry, bpm: bpm });
       GROOVE = ex;
-      _renderLesson({ entry: entry, bpm: bpm });
+      tBpm = bpm;
+      if (ex.beats) GROOVE.beats = ex.beats;
+      GROOVE.beats2 = ex.beats2 || null;
+      GROOVE.fillStart = ex.fillStart || 0;
+      GROOVE.stickings2 = ex.stickings2 || null;
+      GROOVE.stickings  = ex.stickings  || null;
+      GROOVE.showLabels = !!(ex.showLabels);
+      document.getElementById('dgName').textContent = ex.name;
+      var _cl2 = document.getElementById('dgCatLabel'); if (_cl2) _cl2.textContent = ex.catLabel || '';
+      setMetronomeDefault(ex.cat);
+      document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+      document.getElementById('dgStart2').addEventListener('click', startExercise);
+      updateBpm();
+      renderNot(-1, false);
+      _showCompletedBanner(ex.id);
       _updateNavButtons();
     }
     var btnPrev = document.getElementById('dgLvlPrev');
@@ -3905,6 +4200,12 @@ body {
   // Init: erste Lektion aus Course-State laden
   _loadCurrentLesson(false);
   _updateLevelUI();
+
+  // Metronome Toggle
+  document.getElementById('dgMetroBtn').addEventListener('click', function() {
+    metronomeOn = !metronomeOn;
+    updateMetroBtn();
+  });
 
   // Drum Legend Modal
   var legendBtn = document.getElementById('dgLegendBtn');
