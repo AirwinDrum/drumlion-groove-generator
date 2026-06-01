@@ -395,6 +395,53 @@ body {
 }
 .legend-table .leg-name { color: rgba(255,255,255,0.85); }
 .legend-table .leg-pos { color: rgba(255,255,255,0.35); font-size: 12px; text-align: right; }
+
+/* Daily celebration overlay */
+#dgCelebOverlay {
+  display: none; position: fixed; inset: 0; z-index: 9500;
+  background: rgba(0,0,0,0.82);
+  align-items: center; justify-content: center; flex-direction: column;
+}
+#dgCelebOverlay.show { display: flex; }
+#dgCelebCard {
+  background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  border: 2px solid rgba(201,168,76,0.6);
+  border-radius: 24px; padding: 40px 52px; text-align: center;
+  box-shadow: 0 0 60px rgba(201,168,76,0.25), 0 20px 60px rgba(0,0,0,0.6);
+  position: relative; z-index: 2;
+  animation: dgCelebPop 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes dgCelebPop {
+  0%   { transform: scale(0.5) translateY(40px); opacity: 0; }
+  70%  { transform: scale(1.06) translateY(-4px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+#dgCelebEmoji { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+#dgCelebTitle {
+  font-size: clamp(24px, 5vw, 32px); font-weight: 800;
+  color: #C9A84C; letter-spacing: 0.5px; margin-bottom: 8px;
+}
+#dgCelebSub {
+  font-size: clamp(14px, 2.5vw, 17px); color: rgba(255,255,255,0.7);
+  margin-bottom: 20px;
+}
+#dgCelebDismiss {
+  background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.4);
+  color: #C9A84C; font-size: 14px; padding: 8px 24px;
+  border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; letter-spacing: 0.5px;
+}
+#dgCelebDismiss:hover { background: rgba(201,168,76,0.25); }
+.dgConfettiPiece {
+  position: fixed; top: -20px; width: 10px; height: 10px;
+  opacity: 0; border-radius: 2px;
+  animation: dgConfettiFall linear forwards;
+}
+@keyframes dgConfettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
 </style>
 </head>
 <body>
@@ -733,6 +780,8 @@ body {
   })();
   var _timeKey    = 'drumlion_v1_totalMinutes' + _urlUser;
   var _lessonsKey = 'drumlion_v1_totalLessons' + _urlUser;
+  var _dailyDateKey = 'drumlion_v1_dailyDate' + _urlUser;
+  var _dailyMinsKey = 'drumlion_v1_dailyMins' + _urlUser;
 
   function _getTotalMinutes()  { return parseFloat(localStorage.getItem(_timeKey)    || '0'); }
   function _getTotalLessons()  { return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
@@ -788,6 +837,73 @@ body {
     if (typeof blocks !== 'undefined') blocks.forEach(function(b) { secs += b.dur; });
     if (typeof pauses !== 'undefined') pauses.forEach(function(p) { if (p) secs += p; });
     return secs / 60;
+  }
+
+  // ── DAILY PRACTICE TRACKING ──────────────────────────────────
+  function _getDailyMins() {
+    var today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(_dailyDateKey) !== today) {
+      localStorage.setItem(_dailyDateKey, today);
+      localStorage.setItem(_dailyMinsKey, '0');
+      return 0;
+    }
+    return parseFloat(localStorage.getItem(_dailyMinsKey) || '0');
+  }
+
+  function _addDailyTime(mins) {
+    var prev = _getDailyMins();
+    var next = prev + mins;
+    localStorage.setItem(_dailyMinsKey, String(next));
+    var milestones = [10, 20, 30];
+    for (var i = 0; i < milestones.length; i++) {
+      if (prev < milestones[i] && next >= milestones[i]) return milestones[i];
+    }
+    return null;
+  }
+
+  function _showDailyCelebration(milestone) {
+    var configs = {
+      10: { emoji: '⭐', title: '10 Minutes Today!', sub: 'Great start — keep the momentum going!' },
+      20: { emoji: '🔥', title: '20 Minutes Today!', sub: 'You crushed your daily goal!' },
+      30: { emoji: '🏆', title: '30 Minutes Today!', sub: 'Absolutely on fire. Legendary session!' }
+    };
+    var cfg = configs[milestone] || configs[20];
+
+    var overlay = document.getElementById('dgCelebOverlay');
+    document.getElementById('dgCelebEmoji').textContent  = cfg.emoji;
+    document.getElementById('dgCelebTitle').textContent  = cfg.title;
+    document.getElementById('dgCelebSub').textContent    = cfg.sub;
+
+    // spawn confetti
+    var colors = ['#C9A84C','#e85d8a','#5b8fd9','#66bb6a','#ff7043','#ab47bc'];
+    for (var c = 0; c < 55; c++) {
+      var piece = document.createElement('div');
+      piece.className = 'dgConfettiPiece';
+      var xStart = Math.random() * 100;
+      var duration = 2.4 + Math.random() * 2.0;
+      var delay    = Math.random() * 1.2;
+      var size     = 7 + Math.random() * 9;
+      piece.style.cssText = [
+        'left:' + xStart + 'vw',
+        'width:' + size + 'px',
+        'height:' + (size * (0.4 + Math.random() * 0.8)) + 'px',
+        'background:' + colors[Math.floor(Math.random() * colors.length)],
+        'animation-duration:' + duration + 's',
+        'animation-delay:' + delay + 's',
+        'border-radius:' + (Math.random() > 0.5 ? '50%' : '2px')
+      ].join(';');
+      overlay.appendChild(piece);
+    }
+
+    overlay.classList.add('show');
+
+    function dismiss() {
+      overlay.classList.remove('show');
+      overlay.querySelectorAll('.dgConfettiPiece').forEach(function(p){ p.remove(); });
+    }
+    document.getElementById('dgCelebDismiss').onclick = dismiss;
+    overlay.onclick = function(e){ if (e.target === overlay) dismiss(); };
+    setTimeout(dismiss, 5000);
   }
 
   // ── EXERCISES ───────────────────────────────────────────────
@@ -2661,8 +2777,8 @@ body {
 
     // ── NOTE READING ─────────────────────────────────────────────
     // IDs 201+. 4-beat arrays (quarter-note grid). BPM steps: 60, 90, 120.
-    {id:201, cat:'notes', name:'Whole Note', noteValue:'whole', hihatHands:'one',
-     catLabel:'Note Reading',
+    {id:201, cat:'notes', name:'Stave 1', noteValue:'whole', hihatHands:'one',
+     catLabel:'Whole Note',
      minBPM:60, maxBPM:120, step:30,
      stickings:['R', null, null, null],
      beats:[
@@ -2670,89 +2786,102 @@ body {
        [], [], []
      ]
     },
-    {id:202, cat:'notes', name:'Half Notes', noteValue:'half', hihatHands:'one',
-     catLabel:'Note Reading',
-     minBPM:60, maxBPM:120, step:30,
+    {id:202, cat:'notes', name:'Stave 2', noteValue:'half', hihatHands:'one',
+     catLabel:'Half Notes', minBPM:60, maxBPM:120, step:30,
      stickings:['R', null, 'L', null],
      beats:[
-       [{inst:'snare', line:1.5, head:'half'}],
-       [],
-       [{inst:'snare', line:1.5, head:'half'}],
-       []
+       [{inst:'snare', line:1.5, head:'half'}], [],
+       [{inst:'snare', line:1.5, head:'half'}], []
+     ]
+    },
+    {id:218, cat:'notes', name:'Stave 3', noteValue:'half', hihatHands:'one',
+     catLabel:'Half Notes', minBPM:60, maxBPM:120, step:30,
+     stickings:['R', null, null, null],
+     beats:[
+       [{inst:'snare', line:1.5, head:'half'}], [],
+       [{rest:'half'}], []
+     ]
+    },
+    {id:219, cat:'notes', name:'Stave 4', noteValue:'half', hihatHands:'one',
+     catLabel:'Half Notes', minBPM:60, maxBPM:120, step:30,
+     stickings:[null, null, 'L', null],
+     beats:[
+       [{rest:'half'}], [],
+       [{inst:'snare', line:1.5, head:'half'}], []
      ]
     },
     // ── Quarter Notes ─────────────────────────────────────────
-    {id:203, cat:'notes', name:'1 2 3 4', noteValue:'quarter', hihatHands:'one',
+    {id:203, cat:'notes', name:'Stave 5', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R','L','R','L'],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:204, cat:'notes', name:'1 2 3 –', noteValue:'quarter', hihatHands:'one',
+    {id:204, cat:'notes', name:'Stave 6', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R','L','R',null],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[] ]
     },
-    {id:205, cat:'notes', name:'1 2 – 4', noteValue:'quarter', hihatHands:'one',
+    {id:205, cat:'notes', name:'Stave 7', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R','L',null,'L'],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:206, cat:'notes', name:'1 – 3 4', noteValue:'quarter', hihatHands:'one',
+    {id:206, cat:'notes', name:'Stave 8', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R',null,'R','L'],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:207, cat:'notes', name:'– 2 3 4', noteValue:'quarter', hihatHands:'one',
+    {id:207, cat:'notes', name:'Stave 9', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,'L','R','L'],
      beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:208, cat:'notes', name:'1 – 3 –', noteValue:'quarter', hihatHands:'one',
+    {id:208, cat:'notes', name:'Stave 10', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R',null,'R',null],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
     },
-    {id:209, cat:'notes', name:'– 2 – 4', noteValue:'quarter', hihatHands:'one',
+    {id:209, cat:'notes', name:'Stave 11', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,'L',null,'L'],
      beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:210, cat:'notes', name:'1 2 – –', noteValue:'quarter', hihatHands:'one',
+    {id:210, cat:'notes', name:'Stave 12', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R','L',null,null],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
     },
-    {id:211, cat:'notes', name:'– – 3 4', noteValue:'quarter', hihatHands:'one',
+    {id:211, cat:'notes', name:'Stave 13', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,null,'R','L'],
      beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:212, cat:'notes', name:'1 – – 4', noteValue:'quarter', hihatHands:'one',
+    {id:212, cat:'notes', name:'Stave 14', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R',null,null,'L'],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
-    {id:213, cat:'notes', name:'– 2 3 –', noteValue:'quarter', hihatHands:'one',
+    {id:213, cat:'notes', name:'Stave 15', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,'L','R',null],
      beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[] ]
     },
-    {id:214, cat:'notes', name:'1 – – –', noteValue:'quarter', hihatHands:'one',
+    {id:214, cat:'notes', name:'Stave 16', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:['R',null,null,null],
      beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[] ]
     },
-    {id:215, cat:'notes', name:'– 2 – –', noteValue:'quarter', hihatHands:'one',
+    {id:215, cat:'notes', name:'Stave 17', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,'L',null,null],
      beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
     },
-    {id:216, cat:'notes', name:'– – 3 –', noteValue:'quarter', hihatHands:'one',
+    {id:216, cat:'notes', name:'Stave 18', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,null,'R',null],
      beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
     },
-    {id:217, cat:'notes', name:'– – – 4', noteValue:'quarter', hihatHands:'one',
+    {id:217, cat:'notes', name:'Stave 19', noteValue:'quarter', hihatHands:'one',
      catLabel:'Quarter Notes', minBPM:40, maxBPM:120, step:20,
      stickings:[null,null,null,'L'],
      beats:[ [],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
@@ -3222,7 +3351,7 @@ body {
 
   function playBeat(bi, when) {
     GROOVE.beats[bi].forEach(function(n) {
-      playSound(n.inst, when);
+      if (!n.rest) playSound(n.inst, when);
     });
   }
 
@@ -3411,8 +3540,16 @@ body {
                      : (sY - 27);
         h += '<text x="'+x+'" y="'+lblY+'" text-anchor="middle" fill="'+lc+
              '" font-size="11" font-family="DM Sans,sans-serif" font-weight="'+(isA?700:400)+'">'+lbl[bi]+'</text>';
+        // Half rest marker: {rest:'half'} in beats array
+        var isHalfRest = bn.length > 0 && bn[0].rest === 'half';
+        if (isHalfRest) {
+          // Half rest = filled rectangle sitting ON TOP of middle staff line (line 3)
+          h += '<rect x="'+(x-8)+'" y="'+(sY+2*ls-6)+'" width="16" height="6"'+
+               ' fill="'+nc+'" rx="1" opacity="'+op+'"/>';
+        }
         // Chord offset: benachbarte Noten (Abstand < 1 Linie) → obere links, untere rechts
-        var sortedBn = bn.slice().sort(function(a,b){ return a.line - b.line; });
+        var noteBn = isHalfRest ? [] : bn;
+        var sortedBn = noteBn.slice().sort(function(a,b){ return a.line - b.line; });
         var offArr = sortedBn.map(function(n, ci) { return 0; });
         for (var ci = 0; ci < sortedBn.length - 1; ci++) {
           if (Math.abs(sortedBn[ci+1].line - sortedBn[ci].line) < 1.0) {
@@ -3478,13 +3615,26 @@ body {
         if (stickings && stickings[bi]) {
           h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
-        // Quarter rest symbol for note-reading exercises
-        if (GROOVE.cat === 'notes' && bn.length === 0) {
-          h += '<text x="'+x+'" y="'+(sY+3*ls)+'" text-anchor="middle"'+
-               ' font-family="Bravura,Apple Symbols,Segoe UI Symbol,FreeSerif,Symbola,serif"'+
-               ' font-size="26" fill="'+nc+'" opacity="'+op+'">𝄽</text>';
+        // Quarter rest symbol — nur bei noteValue:'quarter', klassisches Zeichen
+        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'quarter' && bn.length === 0) {
+          var rx = x, ry = sY + ls * 0.5;
+          h += '<path d="' +
+            'M '+(rx+3)+','+(ry+0)+' ' +
+            'C '+(rx+8)+','+(ry-1)+' '+(rx+8)+','+(ry+5)+' '+(rx+4)+','+(ry+8)+' ' +
+            'L '+(rx-1)+','+(ry+14)+' ' +
+            'C '+(rx-2)+','+(ry+12)+' '+(rx+2)+','+(ry+12)+' '+(rx+3)+','+(ry+16)+' ' +
+            'C '+(rx+5)+','+(ry+19)+' '+(rx+4)+','+(ry+24)+' '+(rx+0)+','+(ry+25)+' ' +
+            'Q '+(rx-3)+','+(ry+25)+' '+(rx-2)+','+(ry+27)+' ' +
+            'Q '+(rx+0)+','+(ry+29)+' '+(rx+4)+','+(ry+28)+' ' +
+            'C '+(rx+7)+','+(ry+27)+' '+(rx+6)+','+(ry+22)+' '+(rx+4)+','+(ry+19)+' ' +
+            'L '+(rx+5)+','+(ry+15)+' ' +
+            'C '+(rx+6)+','+(ry+12)+' '+(rx+4)+','+(ry+11)+' '+(rx+2)+','+(ry+14)+' ' +
+            'L '+(rx+7)+','+(ry+8)+' ' +
+            'C '+(rx+9)+','+(ry+5)+' '+(rx+8)+','+(ry+0)+' '+(rx+5)+','+(ry+0)+' ' +
+            'Z" fill="'+nc+'" opacity="'+op+'"/>';
         }
-        if (bn.length > 0 && !bn.some(function(n){ return n.head === 'whole'; })) {
+        // Stem — nicht für whole notes, nicht für half rests
+        if (!isHalfRest && bn.length > 0 && !bn.some(function(n){ return n.head === 'whole'; })) {
           var maxLine = Math.max.apply(null, bn.map(function(n) { return n.line; }));
           var stemBot = sY + maxLine * ls;
           h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+(sY-18)+
@@ -3992,6 +4142,8 @@ body {
     _updateLevelUI();
     if (_milestone === 'level')   setTimeout(function(){ setInfo('🎯 Level complete!');   }, 800);
     if (_milestone === 'chapter') setTimeout(function(){ setInfo('⭐ Chapter complete!'); }, 800);
+    var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
+    if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
     document.getElementById('dgTotal').style.display='inline';
     document.getElementById('dgCtrl').innerHTML =
       '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>Again</button>'+
@@ -4223,5 +4375,15 @@ body {
 
 })();
 </script>
+
+<div id="dgCelebOverlay">
+  <div id="dgCelebCard">
+    <div id="dgCelebEmoji">🔥</div>
+    <div id="dgCelebTitle">20 Minutes Today!</div>
+    <div id="dgCelebSub">You crushed your daily goal!</div>
+    <button id="dgCelebDismiss">Keep going!</button>
+  </div>
+</div>
+
 </body>
 </html>
