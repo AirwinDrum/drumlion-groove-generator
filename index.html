@@ -28,7 +28,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: clamp(16px, 2.5vw, 36px) clamp(16px, 4vw, 60px);
+  padding: 0 clamp(16px, 4vw, 60px);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -40,7 +40,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 2vh, 24px);
-  padding-top: clamp(8px, 1.5vh, 20px);
+  padding-top: 0;
   padding-bottom: clamp(8px, 1.5vh, 20px);
 }
 
@@ -52,7 +52,28 @@ body {
   gap: clamp(4px, 0.8vh, 8px);
 }
 
-.dg-header { display: none; }
+.dg-header {
+  position: fixed; top: 0; left: 0; right: 0; height: 56px;
+  background: #0a0a0a; z-index: 9999;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-sizing: border-box;
+}
+.dg-header-logo {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+}
+.dg-header-logo img { height: 32px; width: 32px; object-fit: contain; }
+.dg-header-logo span {
+  color: #fff; font-weight: 800; font-size: 16px;
+  letter-spacing: 0.5px; font-family: 'DM Sans', sans-serif; white-space: nowrap;
+}
+.dg-header-logo span em { color: #C9A84C; font-style: normal; }
+.dg-header-logout {
+  color: rgba(255,255,255,0.45); text-decoration: none;
+  display: flex; align-items: center; padding: 8px;
+}
+.dg-header-logout:hover { color: #C9A84C; }
 
 /* Info bar above notation — 3-column: BPM | Title | Blocks */
 .notation-info {
@@ -79,7 +100,7 @@ body {
 }
 .notation-info-cat {
   font-size: clamp(11px, 1.8vw, 15px);
-  color: #666;
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 2px;
   line-height: 1;
@@ -96,7 +117,7 @@ body {
   max-width: 100%;
 }
 .notation-info-right {
-  color: rgba(255,255,255,0.6);
+  color: #ffffff;
   font-size: clamp(14px, 2.2vw, 18px);
   font-weight: 500;
   text-align: right;
@@ -301,7 +322,7 @@ body {
 .level-display strong { color: #C9A84C; font-weight: 700; }
 .level-nav-btn {
   background: none; border: 1px solid #333; border-radius: 6px;
-  color: #888; font-size: 12px; cursor: pointer;
+  color: #ffffff; font-size: 12px; cursor: pointer;
   padding: 2px 8px; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s; line-height: 1.4; flex-shrink: 0;
 }
@@ -321,24 +342,25 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .progress-wrap {
-  flex: 1; height: 4px; background: #222; border-radius: 2px; overflow: hidden;
+  flex: 1; height: 6px; display: flex; align-items: stretch;
 }
-.progress-bar {
-  height: 100%; background: #C9A84C;
-  border-radius: 2px; transition: width 0.5s ease;
-  width: 0%;
+.progress-segs {
+  display: flex; gap: 2px; flex: 1; height: 100%;
 }
-.progress-bar.level-bar { background: #2c5aa3; }
+.progress-segs.dense { gap: 1px; }
+.progress-seg {
+  flex: 1; border-radius: 1px; background: #2a2a2a; transition: background 0.3s ease;
+}
 .section-badge {
   text-align: center; font-size: clamp(9px,1.6vw,11px);
-  color: #666; text-transform: uppercase; letter-spacing: 2px;
+  color: #ffffff; text-transform: uppercase; letter-spacing: 2px;
 }
 
 /* Drum Legend */
 .legend-btn {
   position: absolute; top: 8px; right: 10px;
   background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.5); font-size: 13px; font-weight: 600;
+  color: #ffffff; font-size: 13px; font-weight: 600;
   width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   display: flex; align-items: center; justify-content: center;
@@ -350,7 +372,7 @@ body {
 .metro-btn {
   position: absolute; top: 6px; left: 8px;
   background: none; border: none;
-  color: rgba(255,255,255,0.35);
+  color: #ffffff;
   width: 32px; height: 32px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: color 0.15s;
@@ -394,7 +416,7 @@ body {
   width: 44px; text-align: center;
 }
 .legend-table .leg-name { color: rgba(255,255,255,0.85); }
-.legend-table .leg-pos { color: rgba(255,255,255,0.35); font-size: 12px; text-align: right; }
+.legend-table .leg-pos { color: #ffffff; font-size: 12px; text-align: right; }
 
 /* Daily celebration overlay */
 #dgCelebOverlay {
@@ -445,7 +467,21 @@ body {
 </style>
 </head>
 <body>
-<div class="dg-wrap">
+<header class="dg-header">
+  <a href="https://www.drumlion.com" class="dg-header-logo">
+    <img src="https://d1yei2z3i6k35z.cloudfront.net/8934610/69b7d2bf446e07.84737786_DrumlionL%C3%B6wewei%C3%9F.png" alt="Drumlion">
+    <span>DRUM<em>LION</em></span>
+  </a>
+  <a href="https://www.drumlion.com/dashboard/logout" class="dg-header-logout" title="Ausloggen">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  </a>
+</header>
+
+<div class="dg-wrap" style="padding-top:56px;">
   <div class="dg-inner">
 
     <div class="notation-group">
@@ -599,13 +635,18 @@ body {
     </div>
     <div class="progress-row">
       <span class="progress-lbl">Chapter</span>
-      <div class="progress-wrap"><div class="progress-bar" id="dgChapterBar"></div></div>
-      <span class="progress-pct" id="dgChapterPct">0%</span>
+      <div class="progress-wrap"><div class="progress-segs" id="dgChapterSegs"></div></div>
+      <span class="progress-pct" id="dgChapterPct">0</span>
     </div>
     <div class="progress-row">
       <span class="progress-lbl">Level</span>
-      <div class="progress-wrap"><div class="progress-bar level-bar" id="dgLevelBar"></div></div>
-      <span class="progress-pct" id="dgLevelPct">0%</span>
+      <div class="progress-wrap"><div class="progress-segs" id="dgLevelSegs"></div></div>
+      <span class="progress-pct" id="dgLevelPct">0</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-lbl">Academy</span>
+      <div class="progress-wrap"><div class="progress-segs dense" id="dgAcademySegs"></div></div>
+      <span class="progress-pct" id="dgAcademyPct">0</span>
     </div>
 
     <div class="space-hint"><span id="dgTotal" style="display:none;"></span>Space = Start / Stop &nbsp;·&nbsp; ← Prev &nbsp;·&nbsp; → Skip</div>
@@ -801,34 +842,78 @@ body {
     var prevLevel   = Math.floor(prevHours / HOURS_PER_LEVEL);
     var newLevel    = Math.floor(newHours  / HOURS_PER_LEVEL);
     if (newLevel > prevLevel)        return 'level';
-    if (newChapter > prevChapter)    return 'chapter';
+    if (newChapter > prevChapter) {
+      // Chapter-Lektionszähler zurücksetzen
+      _cState.chapterLessons = 0;
+      _saveState();
+      return 'chapter';
+    }
     return null;
   }
 
   function _getLevelInfo() {
-    var totalMins  = _getTotalMinutes();
-    var totalHours = totalMins / 60;
-    var level      = Math.min(100, Math.floor(totalHours / HOURS_PER_LEVEL) + 1);
-    var chapter    = Math.min(10,  Math.floor((totalHours % HOURS_PER_LEVEL) / HOURS_PER_CHAPTER) + 1);
-    var levelPct   = ((totalHours % HOURS_PER_LEVEL)   / HOURS_PER_LEVEL)   * 100;
-    var chapterPct = ((totalHours % HOURS_PER_CHAPTER) / HOURS_PER_CHAPTER) * 100;
-    var lessons    = _getTotalLessons() + 1;
-    return { level: level, chapter: chapter, levelPct: levelPct, chapterPct: chapterPct, lessons: lessons };
+    var totalMins       = _getTotalMinutes();
+    var totalHours      = totalMins / 60;
+    var level           = Math.min(100, Math.floor(totalHours / HOURS_PER_LEVEL) + 1);
+    var chapter         = Math.min(10,  Math.floor((totalHours % HOURS_PER_LEVEL) / HOURS_PER_CHAPTER) + 1);
+    var levelPct        = ((totalHours % HOURS_PER_LEVEL)   / HOURS_PER_LEVEL)   * 100;
+    var chapterPct      = ((totalHours % HOURS_PER_CHAPTER) / HOURS_PER_CHAPTER) * 100;
+    var lessons         = _getTotalLessons() + 1;
+    var chapterLessons  = (_cState && _cState.chapterLessons) ? _cState.chapterLessons : 0;
+    // Academy: Fortschritt durch alle 100 Level (0–10.000h)
+    var academyPct      = Math.min(100, totalHours / (HOURS_PER_LEVEL * 100) * 100);
+    return { level: level, chapter: chapter, levelPct: levelPct, chapterPct: chapterPct,
+             lessons: lessons, chapterLessons: chapterLessons, academyPct: academyPct };
+  }
+
+  // Segmentierte Bar rendern: total Blöcke, davon filled voll gefüllt,
+  // der nächste (filled-te) Block teilweise gefüllt mit partialPct (0-100)
+  function _renderSegBar(segsId, total, filled, partialPct, colorFull, colorPartial) {
+    var el = document.getElementById(segsId);
+    if (!el) return;
+    var html = '';
+    for (var i = 0; i < total; i++) {
+      if (i < filled) {
+        html += '<div class="progress-seg" style="background:' + colorFull + '"></div>';
+      } else if (i === filled && partialPct > 0) {
+        html += '<div class="progress-seg" style="background:linear-gradient(to right,' +
+          colorPartial + ' ' + partialPct.toFixed(1) + '%,#2a2a2a ' + partialPct.toFixed(1) + '%)"></div>';
+      } else {
+        html += '<div class="progress-seg"></div>';
+      }
+    }
+    el.innerHTML = html;
   }
 
   function _updateLevelUI() {
     var info = _getLevelInfo();
+
+    // Titelzeile
     var el = document.getElementById('dgLvlText');
     if (el) el.innerHTML =
       '<strong>Level ' + info.level + '</strong> · Chapter ' + info.chapter + ' · Lesson ' + info.lessons;
-    var cb = document.getElementById('dgChapterBar');
-    var lb = document.getElementById('dgLevelBar');
+
+    // CHAPTER bar: normaler Progressbar (chapterPct%)
+    var chSegs = document.getElementById('dgChapterSegs');
+    if (chSegs) {
+      chSegs.style.display = 'block';
+      chSegs.style.background = '#2a2a2a';
+      chSegs.style.borderRadius = '3px';
+      chSegs.style.overflow = 'hidden';
+      chSegs.innerHTML = '<div style="height:100%;width:' + info.chapterPct.toFixed(1) + '%;background:#C9A84C;border-radius:3px;transition:width 0.5s ease;"></div>';
+    }
     var cp = document.getElementById('dgChapterPct');
-    var lp = document.getElementById('dgLevelPct');
-    if (cb) cb.style.width = info.chapterPct.toFixed(1) + '%';
-    if (lb) lb.style.width = info.levelPct.toFixed(1)   + '%';
     if (cp) cp.textContent = Math.round(info.chapterPct) + '%';
-    if (lp) lp.textContent = Math.round(info.levelPct)   + '%';
+
+    // LEVEL bar: 10 Abschnitte = 10 Chapter pro Level
+    _renderSegBar('dgLevelSegs', 10, info.chapter - 1, info.chapterPct, '#4a7fd4', '#4a7fd4');
+    var lp = document.getElementById('dgLevelPct');
+    if (lp) lp.textContent = Math.round(info.levelPct) + '%';
+
+    // ACADEMY bar: 100 Abschnitte = 100 Level
+    _renderSegBar('dgAcademySegs', 100, info.level - 1, info.levelPct, '#C9A84C', 'rgba(201,168,76,0.5)');
+    var ap = document.getElementById('dgAcademyPct');
+    if (ap) ap.textContent = Math.round(info.academyPct) + '%';
   }
 
   // Calculate actual lesson duration from blocks + pauses (in minutes)
@@ -2142,7 +2227,7 @@ body {
 
         // ── FILL INS (21–50) ────────────────────────────────────────
     // Quarter Fills 1–10, Eighth Note Fills 11–30
-    {id:21, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 1', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,'R',null], beats:[
+    {id:21, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 1', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,'R',null], beats:[
           [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -2161,7 +2246,7 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'}],
           []
         ]},
-    {id:22, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 2', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,'L/R',null], beats:[
+    {id:22, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 2', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,'L/R',null], beats:[
           [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -2180,7 +2265,7 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
           []
         ]},
-    {id:23, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 3', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,'L/R',null,'L/R',null], beats:[
+    {id:23, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 3', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,'L/R',null,'L/R',null], beats:[
           [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -2199,7 +2284,7 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
           []
         ]},
-    {id:24, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 4', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,'R',null,'L/R',null,'L/R',null], beats:[
+    {id:24, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 4', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,'R',null,'L/R',null,'L/R',null], beats:[
           [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -2218,7 +2303,7 @@ body {
           [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
           []
         ]},
-    {id:25, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 5', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:['R',null,'R',null,'L/R',null,'L/R',null], beats:[
+    {id:25, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 5', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:0, stickings2:['R',null,'R',null,'L/R',null,'L/R',null], beats:[
           [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -2892,67 +2977,89 @@ body {
   // ============================================================
   // COURSE DISTRIBUTION ALGORITHM
   // ============================================================
-  // • 3 Start-Übungen (G1, F1, R1), danach +1 alle 20 Lektionen
-  // • Boost-Sequenz: Lücke nach n Auftritten = n Lektionen
-  // • Steady-State: ~31 Übungen gleichzeitig aktiv
-  // • Übungen graduieren nach letztem BPM-Schritt
-  // • Einführungsreihenfolge: G → F → R → G → F → R → ...
+  // • Feste Rotation: Grooves → Notes → Fills → (Rudiments ab 200h)
+  // • Pro Kategorie: alle 5 Erscheinungen kommt nächste Übung dazu
+  // • Max 50 aktive Übungen pro Kategorie
+  // • Innerhalb Kategorie: Round-Robin, dieselbe nie zweimal hintereinander
   // ============================================================
 
-  var INTRO_INTERVAL = 20;   // neue Übung alle N Lektionen
-  var START_COUNT    = 1;    // G1 startet sofort (weitere Kategorien folgen wenn Content da)
-  var COURSE_KEY     = 'drumlion_v4_course' + _urlUser;
+  var STEPS_PER_NEW_EX  = 5;   // alle N Kategorie-Erscheinungen → neue Übung
+  var MAX_ACTIVE_PER_CAT = 50;  // max aktive Übungen pro Kategorie
+  var COURSE_KEY = 'drumlion_v4_course' + _urlUser;
 
-  // Einführungsreihenfolge: Grooves + Fills interleaved, dann Rudiments am Ende (Level-5-Gate)
-  function _buildIntroQueue() {
-    var g  = EXERCISES.filter(function(e){ return e.cat === 'grooves'; });
-    var f  = EXERCISES.filter(function(e){ return e.cat === 'fillins' && e.beats; });
-    var r  = EXERCISES.filter(function(e){ return e.cat === 'rudiments'; });
-    var nt = EXERCISES.filter(function(e){ return e.cat === 'notes'; });
-    var q = [], len = Math.max(g.length, f.length);
-    var ni = 0; // Note Reading index — interleave early (1 note per G+F pair)
-    for (var i = 0; i < len; i++) {
-      if (g[i]) q.push(g[i]);
-      if (f[i]) q.push(f[i]);
-      if (ni < nt.length) { q.push(nt[ni]); ni++; }
-    }
-    // remaining notes (if more notes than G/F pairs)
-    while (ni < nt.length) { q.push(nt[ni]); ni++; }
-    // Rudiments — werden erst ab Level 3 (200h) eingeführt
-    for (var j = 0; j < r.length; j++) { q.push(r[j]); }
-    return q;
+  // Übungen pro Kategorie, sortiert nach ID
+  // Pillars: Grooves → Notes → Fills → Coordination → Rudiments (ab 200h)
+  // Songs: eigene Rotation, kommt später
+  var _catPool = {
+    grooves:       EXERCISES.filter(function(e){ return e.cat === 'grooves'; }),
+    notes:         EXERCISES.filter(function(e){ return e.cat === 'notes'; }),
+    fillins:       EXERCISES.filter(function(e){ return e.cat === 'fillins' && e.beats; }),
+    coordination:  EXERCISES.filter(function(e){ return e.cat === 'coordination'; }),
+    rudiments:     EXERCISES.filter(function(e){ return e.cat === 'rudiments'; })
+  };
+
+  function _getRotation() {
+    var hours = _getTotalMinutes() / 60;
+    var r = ['grooves', 'notes', 'fillins'];
+    // Coordination ab Level 2 (100h) — nur wenn Inhalt vorhanden
+    if (_catPool.coordination.length && hours >= 100) r.push('coordination');
+    // Rudiments ab Level 3 (200h)
+    if (_catPool.rudiments.length && hours >= 200) r.push('rudiments');
+    return r;
   }
-  var _introQueue = _buildIntroQueue();
+
+  function _initCat(cat) {
+    var first = _catPool[cat] && _catPool[cat][0];
+    return { active: first ? [{id: first.id, bpmStep: 0}] : [],
+             introIdx: first ? 1 : 0, counter: 0, lastId: null };
+  }
 
   // Navigations-History für Prev/Next
   var _navHistory = [];
   var _navPos     = -1;
 
-  // Anzahl BPM-Schritte für eine Übung
+  // Anzahl BPM-Schritte für eine Übung (optional: warmup-Phase)
   function _exSteps(ex) {
     var minB = (ex.minBPM != null) ? ex.minBPM : sphmToBpm(ex.minSPHM, ex, ex.step);
     var maxB = (ex.maxBPM != null) ? ex.maxBPM : sphmToBpm(ex.maxSPHM, ex, ex.step);
-    return Math.max(1, Math.round((maxB - minB) / ex.step) + 1);
+    var normal = Math.max(1, Math.round((maxB - minB) / ex.step) + 1);
+    if (ex.warmup) {
+      var wSteps = Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
+      return wSteps + normal;
+    }
+    return normal;
   }
 
-  // BPM für einen bestimmten Schritt-Index
+  // BPM für einen bestimmten Schritt-Index (optional: warmup-Phase)
   function _exBpm(ex, stepIdx) {
     var minB = (ex.minBPM != null) ? ex.minBPM : sphmToBpm(ex.minSPHM, ex, ex.step);
+    if (ex.warmup) {
+      var wSteps = Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
+      if (stepIdx < wSteps) return ex.warmup.minBPM + stepIdx * ex.warmup.step;
+      return minB + (stepIdx - wSteps) * ex.step;
+    }
     return minB + stepIdx * ex.step;
   }
 
   // Initial State aufbauen
   function _initState() {
-    var active = _introQueue.slice(0, START_COUNT).map(function(ex) {
-      return {id: ex.id, bpmStep: 0, appearances: 0, lessonsDue: 0};
-    });
-    return {active: active, total: 0, nextIntro: INTRO_INTERVAL, introIdx: START_COUNT, reps: {}, history: [], completed: []};
+    return {
+      rotationPos: 0,
+      cats: {
+        grooves:      _initCat('grooves'),
+        notes:        _initCat('notes'),
+        fillins:      _initCat('fillins'),
+        coordination: _initCat('coordination'),  // leer bis Inhalt da ist
+        rudiments:    { active: [], introIdx: 0, counter: 0, lastId: null }
+      },
+      completed: [], total: 0, chapterLessons: 0, history: []
+    };
   }
 
   function _loadState() {
     try {
       var s = localStorage.getItem(COURSE_KEY);
-      if (s) { var p = JSON.parse(s); if (p && p.active) return p; }
+      if (s) { var p = JSON.parse(s); if (p && p.cats) return p; }
     } catch(e) {}
     return _initState();
   }
@@ -2962,67 +3069,80 @@ body {
   }
 
   var _cState = _loadState();
-  // Restore nav history from state
-  if (_cState.history && _cState.history.length) {
-    _navHistory = _cState.history;
-    _navPos = _navHistory.length - 1;
-    _cState.history = _navHistory.slice(-100); // keep last 100
-    _saveState();
-  }
 
   // Nächste Lektion ermitteln (ohne State zu ändern)
   function _peekLesson() {
-    if (!_cState.active.length) return null;
-    var sorted = _cState.active.slice().sort(function(a,b) {
-      if (a.lessonsDue !== b.lessonsDue) return a.lessonsDue - b.lessonsDue;
-      if (a.appearances !== b.appearances) return a.appearances - b.appearances;
-      return a.id - b.id;
-    });
-    var entry = sorted[0];
-    var ex    = EXERCISES.find(function(e){ return e.id === entry.id; });
-    if (!ex) return null;
-    var bpm   = _exBpm(ex, entry.bpmStep);
-    return {ex: ex, bpm: bpm, sphm: bpmToSphm(bpm, ex), entry: entry};
+    var rotation = _getRotation();
+    // Suche aktive Kategorie ab rotationPos (überspringe leere)
+    for (var i = 0; i < rotation.length; i++) {
+      var cat = rotation[(_cState.rotationPos + i) % rotation.length];
+      var cs  = _cState.cats[cat];
+      if (cs && cs.active.length) {
+        // Round-Robin innerhalb Kategorie: nächste nach lastId
+        var active = cs.active;
+        var lastIdx = -1;
+        for (var j = 0; j < active.length; j++) {
+          if (active[j].id === cs.lastId) { lastIdx = j; break; }
+        }
+        var entry = active[(lastIdx + 1) % active.length];
+        var ex = EXERCISES.find(function(e){ return e.id === entry.id; });
+        if (!ex) continue;
+        return { ex: ex, bpm: _exBpm(ex, entry.bpmStep),
+                 sphm: bpmToSphm(_exBpm(ex, entry.bpmStep), ex),
+                 entry: entry, cat: cat };
+      }
+    }
+    return null;
   }
 
   // Lektion abschließen: State vorwärts
   function _advanceState() {
     var lesson = _peekLesson();
     if (!lesson) return;
-    var id    = lesson.entry.id;
-    var entry = _cState.active.find(function(e){ return e.id === id; });
+    var cat = lesson.cat;
+    var cs  = _cState.cats[cat];
+    var entry = cs.active.find(function(e){ return e.id === lesson.entry.id; });
 
-    entry.appearances++;
     entry.bpmStep++;
-    entry.lessonsDue = entry.appearances;   // Lücke wächst mit jeder Wiederholung
+    cs.lastId  = entry.id;
+    cs.counter = (cs.counter || 0) + 1;
 
-    // Wiederholungszähler pro Übung
-    if (!_cState.reps) _cState.reps = {};
-    _cState.reps[id] = (_cState.reps[id] || 0) + 1;
-
-    // Graduation: alle BPM-Schritte gespielt
+    // Graduation
     if (entry.bpmStep >= _exSteps(lesson.ex)) {
-      _cState.active = _cState.active.filter(function(e){ return e.id !== id; });
-      if (!_cState.completed) _cState.completed = [];
-      if (_cState.completed.indexOf(id) === -1) _cState.completed.push(id);
+      cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
+      if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
     }
 
-    // Alle anderen Übungen: Lücke -1
-    _cState.active.forEach(function(e) {
-      if (e.id !== id) e.lessonsDue = Math.max(0, e.lessonsDue - 1);
+    // Neue Übung in dieser Kategorie alle STEPS_PER_NEW_EX Erscheinungen
+    if (cs.counter % STEPS_PER_NEW_EX === 0 &&
+        cs.active.length < MAX_ACTIVE_PER_CAT &&
+        cs.introIdx < _catPool[cat].length) {
+      cs.active.push({ id: _catPool[cat][cs.introIdx].id, bpmStep: 0 });
+      cs.introIdx++;
+    }
+
+    // Coordination/Rudiments lazy-initialisieren wenn Level-Gate erreicht
+    ['coordination', 'rudiments'].forEach(function(cat) {
+      var cs = _cState.cats[cat];
+      if (cs && !cs.active.length && !cs.introIdx && _catPool[cat].length) {
+        var hours = _getTotalMinutes() / 60;
+        var gate = (cat === 'coordination') ? 100 : 200;
+        if (hours >= gate) {
+          cs.active.push({ id: _catPool[cat][0].id, bpmStep: 0 });
+          cs.introIdx = 1;
+        }
+      }
     });
 
-    _cState.total++;
+    // Rotation weiterschieben
+    var rotation = _getRotation();
+    _cState.rotationPos = (_cState.rotationPos + 1) % rotation.length;
 
-    // Neue Übung einführen wenn fällig
-    while (_cState.total >= _cState.nextIntro && _cState.introIdx < _introQueue.length) {
-      var newEx = _introQueue[_cState.introIdx];
-      // Rudiments erst ab Level 3 (200h) einführen
-      if (newEx.cat === 'rudiments' && (_getTotalMinutes() / 60) < 200) break;
-      _cState.active.push({id: newEx.id, bpmStep: 0, appearances: 0, lessonsDue: 0});
-      _cState.introIdx++;
-      _cState.nextIntro += INTRO_INTERVAL;
-    }
+    _cState.total++;
+    _cState.chapterLessons = (_cState.chapterLessons || 0) + 1;
+    if (!_cState.history) _cState.history = [];
+    _cState.history.push({ id: entry.id });
+    if (_cState.history.length > 10) _cState.history = _cState.history.slice(-10);
 
     _saveState();
   }
@@ -3083,12 +3203,7 @@ body {
     var lesson = _peekLesson();
     if (!lesson) return;
     tBpm = lesson.bpm;
-    if (lesson.ex.beats) GROOVE.beats = lesson.ex.beats;
-    GROOVE.beats2 = lesson.ex.beats2 || null;
-    GROOVE.fillStart = lesson.ex.fillStart || 0;
-    GROOVE.stickings2 = lesson.ex.stickings2 || null;
-    GROOVE.stickings  = lesson.ex.stickings  || null;
-    GROOVE.showLabels = !!(lesson.ex.showLabels);
+    GROOVE = lesson.ex;
     document.getElementById('dgName').textContent = lesson.ex.name;
     var _cl = document.getElementById('dgCatLabel'); if (_cl) _cl.textContent = lesson.ex.catLabel || '';
     setMetronomeDefault(lesson.ex.cat);
@@ -3297,6 +3412,8 @@ body {
   function playSnare() { playSound('snare'); }
   function playHiHat() { playSound('hh'); }
 
+  var _hhOpenGain = null; // aktuell spielender hhOpen GainNode (für Cutoff)
+
   function playSound(key, when) {
     if (!aCtx) return;
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
@@ -3306,6 +3423,30 @@ body {
             : (key === 'hh') ? 0.45
             : (key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
             : 1.0;
+
+    // hhOpen: eigenen GainNode erstellen und tracken für späteren Cutoff
+    if (key === 'hhOpen' && WAVS['hhOpen']) {
+      var src = aCtx.createBufferSource(), g = aCtx.createGain();
+      src.buffer = WAVS['hhOpen']; g.gain.value = vol;
+      src.connect(g); g.connect(aCtx.destination);
+      src.start(t);
+      _hhOpenGain = g;
+      return;
+    }
+
+    // hhClose: hhOpen sofort schneiden + hhPedal (Fuß-Schließen) mitspielen
+    if (key === 'hhClose') {
+      if (_hhOpenGain) {
+        try {
+          _hhOpenGain.gain.cancelScheduledValues(t);
+          _hhOpenGain.gain.setValueAtTime(0.001, t);
+        } catch(e) {}
+        _hhOpenGain = null;
+      }
+      playSound('hhPedal', when); // Fuß-Sound zusätzlich
+      // Weiter → hh-Sound für den + Schlag selbst
+    }
+
     if (playBuf(WAVS[key], vol, t)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
     if (key === 'kick' || key === 'kick2') {
@@ -3529,13 +3670,12 @@ body {
         var lc  = isA ? A : (dimmed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)');
         if (isA) h += '<rect x="'+(x-14)+'" y="'+(sY-23)+'" width="28" height="'+(7*ls+16)+
                       '" rx="4" fill="#1a3d6e" opacity="0.35"/>';
+        var _hhCat = GROOVE.catLabel && GROOVE.catLabel.indexOf('Hi-Hat Opening') !== -1;
         var lblY = (GROOVE.cat === 'fillins')
                    ? (sY - 27)
-                   : (GROOVE.catLabel && (
-                       GROOVE.catLabel.indexOf('Hi-Hat Opening') === 0 ||
+                   : (_hhCat ||
                        GROOVE.catLabel === 'Downbeat Accents' ||
-                       GROOVE.catLabel === 'Upbeat Accents'
-                     ))
+                       GROOVE.catLabel === 'Upbeat Accents')
                      ? (sY + 4*ls + 13)
                      : (sY - 27);
         h += '<text x="'+x+'" y="'+lblY+'" text-anchor="middle" fill="'+lc+
