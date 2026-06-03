@@ -3445,7 +3445,7 @@ body {
         _hhOpenGain = null;
       }
       playSound('hhPedal', when);                          // Fuß
-      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol, t);   // Hand-Schließen
+      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol * 0.7, t);   // Hand-Schließen (30% leiser)
       return;
     }
 
@@ -3482,9 +3482,15 @@ body {
     }
   }
 
+  // MP3-Encoder-Delay-Kompensation: MP3-Samples haben ~26ms Stille am Anfang.
+  // Click (Oszillator) hat 0ms Latenz → muss verzögert werden damit er mit den
+  // Drum-Samples zusammen klingt. Wert in Sekunden.
+  var CLICK_OFFSET = 0.026;
+
   function playCountClick(accent, vol, when) {
     if (!aCtx) return;
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
+    t += CLICK_OFFSET; // Kompensation für MP3-Encoder-Delay
     var o = aCtx.createOscillator(), g = aCtx.createGain();
     o.connect(g); g.connect(aCtx.destination);
     o.frequency.value = accent ? 1500 : 1100;
@@ -3884,8 +3890,7 @@ body {
         bg='#161616'; bc='#2a2a2a'; tc='#aaa';
       }
       h += '<div class="block-seg" style="flex:'+Math.round(b.dur)+';background:'+bg+';border-color:'+bc+';">';
-      var isFill2 = !!(GROOVE.beats2 && GROOVE.beats2.length);
-      var dispBars = isFill2 ? b.bars * 2 : b.bars;
+      var dispBars = b.bars;
       h += '<span class="b-bpm" style="color:'+tc+'">'+b.bpm+' BPM</span>';
       h += '<span class="b-dur" style="color:'+tc+'">'+dispBars+' bars</span></div>';
       if (i < blocks.length-1 && pauses[i]) {
@@ -3944,28 +3949,23 @@ body {
   function hideCountIn() { document.getElementById('dgCountIn').style.display = 'none'; }
 
   // ============================================================
-  // FRAUENSTIMME — Pre-recorded via AudioContext (tight timing)
+  // ZÄHL-STIMME — synthetisierte Töne statt TTS (tight timing)
+  // Verschiedene Frequenzen für 1, 2, 3, 4 — klingt klar und präzise
   // ============================================================
-  function playCountVoice(num) {
-    if (!window.speechSynthesis) return;
-    var u = new SpeechSynthesisUtterance(num);
-    u.lang   = 'en-US';
-    u.rate   = 1.3;
-    u.pitch  = 1.2;
-    u.volume = 1.0;
-    // Freundliche Frauenstimme wählen
-    var voices = window.speechSynthesis.getVoices();
-    var female = voices.find(function(v) {
-      return v.lang.startsWith('en') && /samantha|zira|susan|karen|moira|victoria|fiona|allison|ava|siri|google us english/i.test(v.name);
-    });
-    if (!female) female = voices.find(function(v) {
-      return v.lang.startsWith('en') && /female|woman/i.test(v.name);
-    });
-    if (!female) female = voices.find(function(v) {
-      return v.lang.startsWith('en');
-    });
-    if (female) u.voice = female;
-    window.speechSynthesis.speak(u);
+  var COUNT_FREQS = { '1': 880, '2': 660, '3': 660, '4': 660 }; // 1 = höher (Akzent)
+
+  function playCountVoice(num, when) {
+    if (!aCtx || !num) return;
+    var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
+    t += CLICK_OFFSET; // gleiche Kompensation wie Click
+    var freq = COUNT_FREQS[num] || 660;
+    var o = aCtx.createOscillator(), g = aCtx.createGain();
+    o.connect(g); g.connect(aCtx.destination);
+    o.type = 'triangle'; // weicher als Sinus, trotzdem klar
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.22, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    o.start(t); o.stop(t + 0.08);
   }
 
   function updateBpm() {
@@ -4071,35 +4071,38 @@ body {
       var s = seq[i];
       showCountIn(s.num);
       if (s.click) playCountClick(s.accent, undefined, ciNextTime);
-      // Nächsten Voice-Call früh einplanen damit er pünktlich landet
-      var next = seq[i + 1];
-      if (next && next.num) {
-        setTimeout(function() { playCountVoice(next.num); }, beatMs - VOICE_LEAD);
-      }
+      if (s.num) playCountVoice(s.num, ciNextTime);
     }
 
-    // Beat 0: Stimme sofort (akzeptierbare minimale Verzögerung beim ersten Schlag)
-    if (seq[0].num) playCountVoice(seq[0].num);
+    // Lookahead-Scheduler für Count-In (eliminiert setInterval-Jitter)
+    var CI_LOOKAHEAD_MS = 25;
+    var CI_SCHEDULE_AHEAD = 0.1;
+    var ci = 0;
+
     fireBeat(0);
     ciNextTime += beatMs / 1000;
+    ci = 1;
 
-    var ci = 0;
     if (intId) clearInterval(intId);
-    intId = setInterval(function() {
+    function ciScheduleLoop() {
       if (!playing) return;
-      ci++;
-      if (ci >= seq.length) {
-        clearInterval(intId);
-        hideCountIn();
-        startPlaying();
-      } else {
-        fireBeat(ci); // Klick präzise, nächste Stimme vorausgeplant
+      while (ciNextTime < aCtx.currentTime + CI_SCHEDULE_AHEAD) {
+        if (ci >= seq.length) {
+          clearInterval(intId);
+          hideCountIn();
+          startPlaying(ciNextTime);
+          return;
+        }
+        fireBeat(ci);
         ciNextTime += beatMs / 1000;
+        ci++;
       }
-    }, beatMs);
+    }
+    intId = setInterval(ciScheduleLoop, CI_LOOKAHEAD_MS);
+    ciScheduleLoop();
   }
 
-  function startPlaying() {
+  function startPlaying(inheritedTime) {
     phase='playing'; setBadge('playing'); beat=0; bar=0;
     renderBlocksBar();
 
@@ -4148,8 +4151,8 @@ body {
       return '';
     }
 
-    // Tight scheduling: track exact audio time per beat (eliminates setInterval jitter)
-    var nextBeatTime = aCtx ? aCtx.currentTime : 0;
+    // Tight scheduling: übernimm exakte Zeit vom Count-In (nahtloser Übergang)
+    var nextBeatTime = inheritedTime || (aCtx ? aCtx.currentTime : 0);
 
     function tickAndRender(bt, br, when) {
       if (isFill) {
@@ -4187,32 +4190,36 @@ body {
 
     if (intId) clearInterval(intId);
 
-    // Erster Schlag sofort
-    tickAndRender(0, bar, nextBeatTime);
-    nextBeatTime += eighthMs / 1000;
-    eighthsLeft--;
-    setCountdown(eighthsLeft * eighthMs / 1000);
-    beat = 1;
+    // Lookahead-Scheduler: plant Beats im Voraus, eliminiert setInterval-Jitter
+    var LOOKAHEAD_MS = 25;   // Wie oft der Scheduler prüft (ms)
+    var SCHEDULE_AHEAD = 0.1; // Wie weit voraus geplant wird (Sekunden)
 
-    intId = setInterval(function() {
+    function scheduleLoop() {
       if (!playing) return;
-      tickAndRender(beat, bar, nextBeatTime);
-      nextBeatTime += eighthMs / 1000;
-      eighthsLeft--;
-      setCountdown(eighthsLeft * eighthMs / 1000);
-      beat++;
-      if (beat >= phraseLen) {
-        beat = 0; bar++;
-        if (bar >= loopBars) {
-          clearInterval(intId);
-          setTimeout(function() {
-            playBlockEnd();
-            if (bIdx < blocks.length-1) startPause();
-            else finishExercise();
-          }, eighthMs);
+      while (nextBeatTime < aCtx.currentTime + SCHEDULE_AHEAD) {
+        tickAndRender(beat, bar, nextBeatTime);
+        nextBeatTime += eighthMs / 1000;
+        eighthsLeft--;
+        beat++;
+        if (beat >= phraseLen) {
+          beat = 0; bar++;
+          if (bar >= loopBars) {
+            clearInterval(intId);
+            setCountdown(0);
+            setTimeout(function() {
+              playBlockEnd();
+              if (bIdx < blocks.length-1) startPause();
+              else finishExercise();
+            }, eighthMs);
+            return;
+          }
         }
       }
-    }, eighthMs);
+      setCountdown(eighthsLeft * eighthMs / 1000);
+    }
+
+    intId = setInterval(scheduleLoop, LOOKAHEAD_MS);
+    scheduleLoop(); // sofort ersten Batch planen
   }
 
   function startPause() {
