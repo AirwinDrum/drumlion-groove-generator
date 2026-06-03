@@ -3424,17 +3424,18 @@ body {
             : (key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
             : 1.0;
 
-    // hhOpen: eigenen GainNode erstellen und tracken für späteren Cutoff
-    if (key === 'hhOpen' && WAVS['hhOpen']) {
-      var src = aCtx.createBufferSource(), g = aCtx.createGain();
-      src.buffer = WAVS['hhOpen']; g.gain.value = vol;
-      src.connect(g); g.connect(aCtx.destination);
-      src.start(t);
-      _hhOpenGain = g;
+    // hhOpen: GainNode tracken für Cutoff beim hhClose
+    if (key === 'hhOpen') {
+      if (WAVS['hhOpen']) {
+        var src = aCtx.createBufferSource(), g = aCtx.createGain();
+        src.buffer = WAVS['hhOpen']; g.gain.value = vol;
+        src.connect(g); g.connect(aCtx.destination);
+        src.start(t); _hhOpenGain = g;
+      }
       return;
     }
 
-    // hhClose: hhOpen sofort schneiden + hhPedal (Fuß-Schließen) mitspielen
+    // hhClose: hhOpen schneiden + hhPedal (Fuß) + hhClosing-Sound (Hand)
     if (key === 'hhClose') {
       if (_hhOpenGain) {
         try {
@@ -3443,10 +3444,12 @@ body {
         } catch(e) {}
         _hhOpenGain = null;
       }
-      playSound('hhPedal', when); // Fuß-Sound zusätzlich
-      // Weiter → hh-Sound für den + Schlag selbst
+      playSound('hhPedal', when);                          // Fuß
+      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol, t);   // Hand-Schließen
+      return;
     }
 
+    // hh → hh-Sound, hhAccent → hhAccent-Sound, hhPedal → hhPedal-Sound
     if (playBuf(WAVS[key], vol, t)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
     if (key === 'kick' || key === 'kick2') {
