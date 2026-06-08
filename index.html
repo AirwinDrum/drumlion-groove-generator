@@ -3158,9 +3158,8 @@ body {
   function _updateNavButtons() {
     var prev = document.getElementById('dgNavPrev');
     var next = document.getElementById('dgNavNext');
-    if (prev) { prev.style.visibility = 'visible'; prev.disabled = (_navPos <= 0); }
+    if (prev) { prev.disabled = (_navPos <= 0); }
     if (next) {
-      next.style.visibility = 'visible';
       next.textContent = (_navPos < _navHistory.length - 1) ? 'Next →' : 'Skip →';
     }
   }
