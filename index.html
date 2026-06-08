@@ -809,11 +809,25 @@ body {
   // ============================================================
   // LEVEL / CHAPTER / LESSON SYSTEM
   // ============================================================
-  // 100 Levels × 100h each = 10.000h total
-  // 10 Chapters per Level × 10h each
+  // 100 Levels, 10 Chapters per Level — content-basiert
+  // Level-Grenzen passen sich dynamisch an Gesamtmenge des Contents an
   // ============================================================
-  var HOURS_PER_LEVEL   = 100;
-  var HOURS_PER_CHAPTER = 10;
+  var TOTAL_LEVELS   = 100;
+  var CHAPTERS_PER_LEVEL = 10;
+
+  // Gesamtzahl aller Lektionen (BPM-Schritte) im Content berechnen
+  function _calcTotalContentLessons() {
+    var total = 0;
+    EXERCISES.forEach(function(ex) {
+      if (ex.cat === 'fillins' && !ex.beats) return;
+      var minB = ex.minBPM, maxB = ex.maxBPM, s = ex.step;
+      var normal = (!minB || !maxB || !s) ? 1 : Math.max(1, Math.round((maxB - minB) / s) + 1);
+      if (ex.warmup) normal += Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
+      total += normal;
+    });
+    return total;
+  }
+  // TOTAL_CONTENT_LESSONS wird nach EXERCISES-Definition berechnet (s. unten)
   // URL-Parameter ?user=EMAIL → pro-User localStorage Namespace
   var _urlUser = (function() {
     var p = new URLSearchParams(window.location.search).get('user') || '';
@@ -828,22 +842,20 @@ body {
   function _getTotalLessons()  { return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
 
   function _addLessonTime(mins) {
-    var prevHours = _getTotalMinutes() / 60;
-    var newMins   = _getTotalMinutes() + mins;
-    var newHours  = newMins / 60;
-    var lessons   = _getTotalLessons() + 1;
+    var prevLessons = _getTotalLessons();
+    var newMins     = _getTotalMinutes() + mins;
+    var newLessons  = prevLessons + 1;
     try {
       localStorage.setItem(_timeKey,    String(newMins));
-      localStorage.setItem(_lessonsKey, String(lessons));
+      localStorage.setItem(_lessonsKey, String(newLessons));
     } catch(e) {}
-    // detect chapter / level crossings
-    var prevChapter = Math.floor(prevHours / HOURS_PER_CHAPTER);
-    var newChapter  = Math.floor(newHours  / HOURS_PER_CHAPTER);
-    var prevLevel   = Math.floor(prevHours / HOURS_PER_LEVEL);
-    var newLevel    = Math.floor(newHours  / HOURS_PER_LEVEL);
+    // detect chapter / level crossings (lektionsbasiert)
+    var prevChapter = Math.floor(prevLessons / LESSONS_PER_CHAPTER);
+    var newChapter  = Math.floor(newLessons  / LESSONS_PER_CHAPTER);
+    var prevLevel   = Math.floor(prevLessons / LESSONS_PER_LEVEL);
+    var newLevel    = Math.floor(newLessons  / LESSONS_PER_LEVEL);
     if (newLevel > prevLevel)        return 'level';
     if (newChapter > prevChapter) {
-      // Chapter-Lektionszähler zurücksetzen
       _cState.chapterLessons = 0;
       _saveState();
       return 'chapter';
@@ -852,16 +864,15 @@ body {
   }
 
   function _getLevelInfo() {
-    var totalMins       = _getTotalMinutes();
-    var totalHours      = totalMins / 60;
-    var level           = Math.min(100, Math.floor(totalHours / HOURS_PER_LEVEL) + 1);
-    var chapter         = Math.min(10,  Math.floor((totalHours % HOURS_PER_LEVEL) / HOURS_PER_CHAPTER) + 1);
-    var levelPct        = ((totalHours % HOURS_PER_LEVEL)   / HOURS_PER_LEVEL)   * 100;
-    var chapterPct      = ((totalHours % HOURS_PER_CHAPTER) / HOURS_PER_CHAPTER) * 100;
-    var lessons         = _getTotalLessons() + 1;
+    var totalLessons    = _getTotalLessons();
+    var level           = Math.min(TOTAL_LEVELS, Math.floor(totalLessons / LESSONS_PER_LEVEL) + 1);
+    var lessonsInLevel  = totalLessons % LESSONS_PER_LEVEL;
+    var chapter         = Math.min(CHAPTERS_PER_LEVEL, Math.floor(lessonsInLevel / LESSONS_PER_CHAPTER) + 1);
+    var levelPct        = (lessonsInLevel / LESSONS_PER_LEVEL) * 100;
+    var chapterPct      = ((lessonsInLevel % LESSONS_PER_CHAPTER) / LESSONS_PER_CHAPTER) * 100;
+    var lessons         = totalLessons + 1;
     var chapterLessons  = (_cState && _cState.chapterLessons) ? _cState.chapterLessons : 0;
-    // Academy: Fortschritt durch alle 100 Level (0–10.000h)
-    var academyPct      = Math.min(100, totalHours / (HOURS_PER_LEVEL * 100) * 100);
+    var academyPct      = Math.min(100, (totalLessons / TOTAL_CONTENT_LESSONS) * 100);
     return { level: level, chapter: chapter, levelPct: levelPct, chapterPct: chapterPct,
              lessons: lessons, chapterLessons: chapterLessons, academyPct: academyPct };
   }
@@ -2973,6 +2984,11 @@ body {
     },
   ];
 
+  // Level-Berechnung: content-basiert, dynamisch an Gesamtmenge angepasst
+  var TOTAL_CONTENT_LESSONS = _calcTotalContentLessons();
+  var LESSONS_PER_LEVEL   = Math.max(1, Math.ceil(TOTAL_CONTENT_LESSONS / TOTAL_LEVELS));
+  var LESSONS_PER_CHAPTER = Math.max(1, Math.ceil(LESSONS_PER_LEVEL / CHAPTERS_PER_LEVEL));
+
   // ── Section aus URL ──────────────────────────────────────────
   // ============================================================
   // COURSE DISTRIBUTION ALGORITHM
@@ -3113,8 +3129,8 @@ body {
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
     }
 
-    // Neue Übung in dieser Kategorie alle STEPS_PER_NEW_EX Erscheinungen
-    if (cs.counter % STEPS_PER_NEW_EX === 0 &&
+    // Neue Übung einführen: alle STEPS_PER_NEW_EX Erscheinungen ODER wenn keine aktive mehr
+    if ((cs.counter % STEPS_PER_NEW_EX === 0 || cs.active.length === 0) &&
         cs.active.length < MAX_ACTIVE_PER_CAT &&
         cs.introIdx < _catPool[cat].length) {
       cs.active.push({ id: _catPool[cat][cs.introIdx].id, bpmStep: 0 });
@@ -3764,7 +3780,7 @@ body {
           h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
         // Quarter rest symbol — nur bei noteValue:'quarter', klassisches Zeichen
-        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'quarter' && bn.length === 0) {
+        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'quarter' && bn.length === 0 && !isHalfRest) {
           var rx = x, ry = sY + ls * 0.5;
           h += '<path d="' +
             'M '+(rx+3)+','+(ry+0)+' ' +
