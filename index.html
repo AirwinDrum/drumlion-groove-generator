@@ -3188,6 +3188,17 @@ body {
     if (isDone) setBadge('done');
   }
 
+  // Zentrale Funktion: Exercise → GROOVE laden (einzige Stelle die GROOVE setzt)
+  function _setGroove(ex, bpm) {
+    GROOVE = ex;
+    tBpm = bpm;
+    document.getElementById('dgName').textContent = ex.name;
+    var _cl = document.getElementById('dgCatLabel');
+    if (_cl) _cl.textContent = ex.catLabel || '';
+    setMetronomeDefault(ex.cat);
+    updateBpm();
+  }
+
   // Aus History-Position laden (ohne State zu ändern)
   function _loadHistoryLesson(pos, autoStart) {
     if (playing) stopExercise();
@@ -3196,18 +3207,8 @@ body {
     var ex = EXERCISES.find(function(e){ return e.id === h.id; });
     if (!ex) return;
     _navPos = pos;
-    tBpm = h.bpm;
-    if (ex.beats) GROOVE.beats = ex.beats;
-    GROOVE.beats2 = ex.beats2 || null;
-    GROOVE.fillStart = ex.fillStart || 0;
-    GROOVE.stickings2 = ex.stickings2 || null;
-    GROOVE.stickings  = ex.stickings  || null;
-    GROOVE.showLabels = !!(ex.showLabels);
-    document.getElementById('dgName').textContent = ex.name;
-    var _cl = document.getElementById('dgCatLabel'); if (_cl) _cl.textContent = ex.catLabel || '';
-    setMetronomeDefault(ex.cat);
+    _setGroove(ex, h.bpm);
     _updateNavButtons();
-    updateBpm();
     _showCompletedBanner(ex.id);
     if (autoStart) setTimeout(startExercise, 80);
   }
@@ -3217,11 +3218,7 @@ body {
     if (playing) stopExercise();
     var lesson = _peekLesson();
     if (!lesson) return;
-    tBpm = lesson.bpm;
-    GROOVE = lesson.ex;
-    document.getElementById('dgName').textContent = lesson.ex.name;
-    var _cl = document.getElementById('dgCatLabel'); if (_cl) _cl.textContent = lesson.ex.catLabel || '';
-    setMetronomeDefault(lesson.ex.cat);
+    _setGroove(lesson.ex, lesson.bpm);
     // Always reset ctrl to Start button (e.g. after "Mark as Completed" transition)
     if (!autoStart) {
       document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
@@ -3459,8 +3456,8 @@ body {
         } catch(e) {}
         _hhOpenGain = null;
       }
-      playSound('hhPedal', when);                          // Fuß
-      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol * 0.7, t);   // Hand-Schließen (30% leiser)
+      playBuf(WAVS['hhPedal'], vol * 0.5, t);               // Fuß (50% leiser)
+      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol * 0.5, t);   // Hand-Schließen (50% leiser)
       return;
     }
 
@@ -4412,17 +4409,7 @@ body {
       var ex = EXERCISES.find(function(e){ return e.id === id; });
       if (!ex) return;
       if (playing) stopExercise();
-      GROOVE = ex;
-      tBpm = ex.minBPM;
-      if (ex.beats) GROOVE.beats = ex.beats;
-      GROOVE.beats2 = ex.beats2 || null;
-      GROOVE.fillStart = ex.fillStart || 0;
-      GROOVE.stickings2 = ex.stickings2 || null;
-      GROOVE.stickings  = ex.stickings  || null;
-      GROOVE.showLabels = !!(ex.showLabels);
-      document.getElementById('dgName').textContent = ex.name;
-      var cl = document.getElementById('dgCatLabel'); if (cl) cl.textContent = ex.catLabel || '';
-      setMetronomeDefault(ex.cat);
+      _setGroove(ex, ex.minBPM);
       document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
       document.getElementById('dgStart2').addEventListener('click', startExercise);
       updateBpm();
@@ -4490,20 +4477,9 @@ body {
       var entry = _cState.active.find(function(e){ return e.id === ex.id; }) || {id:ex.id, bpmStep:0};
       var bpm = _exBpm(ex, entry.bpmStep);
       _pushHistory({ entry: entry, bpm: bpm });
-      GROOVE = ex;
-      tBpm = bpm;
-      if (ex.beats) GROOVE.beats = ex.beats;
-      GROOVE.beats2 = ex.beats2 || null;
-      GROOVE.fillStart = ex.fillStart || 0;
-      GROOVE.stickings2 = ex.stickings2 || null;
-      GROOVE.stickings  = ex.stickings  || null;
-      GROOVE.showLabels = !!(ex.showLabels);
-      document.getElementById('dgName').textContent = ex.name;
-      var _cl2 = document.getElementById('dgCatLabel'); if (_cl2) _cl2.textContent = ex.catLabel || '';
-      setMetronomeDefault(ex.cat);
+      _setGroove(ex, bpm);
       document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
       document.getElementById('dgStart2').addEventListener('click', startExercise);
-      updateBpm();
       renderNot(-1, false);
       _showCompletedBanner(ex.id);
       _updateNavButtons();
