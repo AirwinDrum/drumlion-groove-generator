@@ -503,6 +503,12 @@ body {
   .notation-box { padding-left: 8px; padding-right: 8px; }
   .phase-info { min-height: 0; }
   .phase-badge { padding: 8px 20px; font-size: 18px; }
+  /* Unsichtbare Prev/Skip-Buttons reservieren keinen Platz mehr;
+     Again + Done teilen sich die volle Breite */
+  .nav-row { display: flex; gap: 8px; min-height: 0; }
+  .nav-btn { display: none; }
+  .controls { gap: 8px; }
+  .btn-go, .btn-stp { min-width: 0; flex: 1; padding-left: 12px; padding-right: 12px; }
 }
 </style>
 </head>
