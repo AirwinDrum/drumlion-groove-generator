@@ -57,22 +57,6 @@ body {
   flex-direction: column;
   gap: clamp(8px, 1.5vh, 18px);
 }
-@media (max-width: 768px), (max-height: 500px) {
-  .dg-wrap { padding-top: 8px; }
-  .dg-inner { gap: 4px; }
-  .dg-body { gap: 4px; padding-left: 8px; padding-right: 8px; }
-  .notation-info {
-    padding-left: 40px; padding-right: 40px;
-    display: flex; justify-content: center; position: relative;
-  }
-  .notation-info-left, .notation-info-right { display: none; }
-  .notation-info #dgMetroBtn { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
-  .notation-info #dgLegendBtn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
-  .notation-box { padding-left: 8px; padding-right: 8px; }
-  .phase-info { min-height: 0 !important; }
-  .phase-badge { padding: 8px 20px; font-size: 18px; }
-}
-
 /* Header */
 /* Notation group — tight stack above staff */
 .notation-group {
@@ -501,6 +485,24 @@ body {
   0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
   80%  { opacity: 1; }
   100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Mobile (Hochformat ≤768px oder Querformat ≤500px hoch) ──
+   Muss am Ende des Stylesheets stehen, damit es die Basis-Regeln überschreibt */
+@media (max-width: 768px), (max-height: 500px) {
+  .dg-wrap { padding-top: 8px; }
+  .dg-inner { gap: 4px; }
+  .dg-body { gap: 4px; padding-left: 8px; padding-right: 8px; }
+  .notation-info {
+    padding-left: 40px; padding-right: 40px;
+    display: flex; justify-content: center; position: relative;
+  }
+  .notation-info-left, .notation-info-right { display: none; }
+  .notation-info #dgMetroBtn { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
+  .notation-info #dgLegendBtn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+  .notation-box { padding-left: 8px; padding-right: 8px; }
+  .phase-info { min-height: 0; }
+  .phase-badge { padding: 8px 20px; font-size: 18px; }
 }
 </style>
 </head>
