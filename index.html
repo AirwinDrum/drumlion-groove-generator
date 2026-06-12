@@ -13,6 +13,10 @@ html, body {
   background: #0a0a0a;
   overflow: hidden;
 }
+@media (max-height: 500px) {
+  html, body { overflow: auto; }
+  .dg-wrap { min-height: unset; overflow: visible; }
+}
 
 body {
   display: flex;
