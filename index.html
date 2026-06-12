@@ -61,9 +61,13 @@ body {
   .dg-wrap { padding-top: 8px; }
   .dg-inner { gap: 4px; }
   .dg-body { gap: 4px; padding-left: 8px; padding-right: 8px; }
-  .notation-info { padding-left: 8px; padding-right: 8px; grid-template-columns: 32px 1fr 32px; }
+  .notation-info {
+    padding-left: 40px; padding-right: 40px;
+    display: flex; justify-content: center; position: relative;
+  }
   .notation-info-left, .notation-info-right { display: none; }
-  .notation-info-center { text-align: center; width: 100%; }
+  .notation-info #dgMetroBtn { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
+  .notation-info #dgLegendBtn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
   .notation-box { padding-left: 8px; padding-right: 8px; }
   .phase-info { min-height: 0 !important; }
   .phase-badge { padding: 8px 20px; font-size: 18px; }
