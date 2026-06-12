@@ -28,20 +28,30 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0 clamp(16px, 4vw, 60px);
+  padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
 }
 
 .dg-inner {
   width: 100%;
-  max-width: min(1400px, 98vw);
-  margin: auto;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(10px, 2vh, 24px);
+  gap: clamp(8px, 1.5vh, 18px);
   padding-top: 0;
-  padding-bottom: clamp(8px, 1.5vh, 20px);
+  padding-bottom: clamp(16px, 2vh, 28px);
+}
+
+/* Zentrierte Hülle für alles unterhalb der Notation */
+.dg-body {
+  width: 100%;
+  max-width: min(860px, 100%);
+  margin: 0 auto;
+  padding: 0 clamp(16px, 3vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.5vh, 18px);
 }
 
 /* Header */
@@ -81,7 +91,7 @@ body {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
-  padding: 0 4px;
+  padding: 0 clamp(16px, 3vw, 40px);
   min-height: clamp(24px, 3.5vh, 34px);
 }
 .notation-info-left {
@@ -124,15 +134,16 @@ body {
   white-space: nowrap;
 }
 
-/* Notation box */
+/* Notation box — volle Breite, kein seitlicher Radius */
 .notation-box {
   background: #141414;
-  border-radius: 14px;
-  padding: clamp(6px, 1.2vh, 12px) clamp(6px, 1.5vw, 14px);
-  border: 1px solid #222;
+  border-radius: 0;
+  padding: clamp(6px, 1.2vh, 12px) clamp(12px, 2vw, 24px);
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
   position: relative;
   overflow: hidden;
-  flex: 1;
+  width: 100%;
   display: flex;
   align-items: flex-start;
 }
@@ -380,6 +391,13 @@ body {
 }
 .metro-btn:hover { color: rgba(201,168,76,0.8); }
 .metro-btn.active { color: #C9A84C; }
+.metro-div-btn {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.55); border-radius: 20px;
+  padding: 3px 12px; font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.metro-div-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
+.metro-div-btn.active { background: rgba(201,168,76,0.2); border-color: #C9A84C; color: #C9A84C; }
 
 .legend-overlay {
   display: none; position: fixed; inset: 0;
@@ -612,6 +630,17 @@ body {
       </div>
     </div>
 
+    <!-- Metronome subdivision row -->
+    <div id="dgMetroDivRow" style="display:none; gap:6px; justify-content:center; flex-wrap:wrap; padding:6px 0;">
+      <button class="metro-div-btn" data-div="quarter">4tel</button>
+      <button class="metro-div-btn" data-div="eighth">8tel</button>
+      <button class="metro-div-btn" data-div="sixteenth">16tel</button>
+      <button class="metro-div-btn" data-div="triplet">Triolen</button>
+      <button class="metro-div-btn" data-div="voice">Stimme</button>
+    </div>
+
+    <div class="dg-body">
+
     <div class="phase-row">
       <span class="phase-badge" id="dgBadge" style="background:rgba(255,255,255,0.05);color:#888;">READY</span>
       <div class="countdown" id="dgCountdown"></div>
@@ -629,9 +658,9 @@ body {
       <button class="nav-btn" id="dgNavNext" style="visibility:hidden;">Skip →</button>
     </div>
     <div class="level-display" id="dgLevelDisplay">
-      <button class="level-nav-btn" id="dgLvlPrev" title="Previous Chapter">‹</button>
+      <button class="level-nav-btn" id="dgLvlPrev" style="display:none;"></button>
       <span id="dgLvlText"><strong>Level 1</strong> · Chapter 1 · Lesson 1</span>
-      <button class="level-nav-btn" id="dgLvlNext" title="Next Chapter">›</button>
+      <button class="level-nav-btn" id="dgLvlNext" style="display:none;"></button>
     </div>
     <div class="progress-row">
       <span class="progress-lbl">Chapter</span>
@@ -649,11 +678,11 @@ body {
       <span class="progress-pct" id="dgAcademyPct">0</span>
     </div>
 
-    <div class="space-hint"><span id="dgTotal" style="display:none;"></span>Space = Start / Stop &nbsp;·&nbsp; ← Prev &nbsp;·&nbsp; → Skip</div>
+    <div class="space-hint"><span id="dgTotal" style="display:none;"></span></div>
 
-    <div style="text-align:center;margin-top:8px;">
-      <button id="dgDevReset" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.05em;">↺ Reset Course</button>
-    </div>
+    <div id="dgDevReset" style="display:none;"></div>
+
+    </div><!-- /dg-body -->
 
   </div>
 </div>
@@ -729,7 +758,8 @@ body {
   // ============================================================
   // METRONOME STATE
   // ============================================================
-  var metronomeOn = false;
+  var metronomeOn  = false;
+  var metronomeDiv = 'quarter'; // 'quarter' | 'eighth' | 'sixteenth' | 'triplet' | 'voice'
 
   function updateMetroBtn() {
     var btn = document.getElementById('dgMetroBtn');
@@ -741,6 +771,12 @@ body {
       btn.classList.remove('active');
       btn.title = 'Metronome: OFF';
     }
+    var row = document.getElementById('dgMetroDivRow');
+    if (row) row.style.display = metronomeOn ? 'flex' : 'none';
+    // Active pill
+    document.querySelectorAll('.metro-div-btn').forEach(function(b) {
+      b.classList.toggle('active', b.getAttribute('data-div') === metronomeDiv);
+    });
   }
 
   // Returns true on beats that correspond to quarter-note positions
@@ -849,12 +885,12 @@ body {
       localStorage.setItem(_timeKey,    String(newMins));
       localStorage.setItem(_lessonsKey, String(newLessons));
     } catch(e) {}
-    // detect chapter / level crossings (lektionsbasiert)
-    var prevChapter = Math.floor(prevLessons / LESSONS_PER_CHAPTER);
-    var newChapter  = Math.floor(newLessons  / LESSONS_PER_CHAPTER);
+    // detect chapter / level crossings — chapter relativ zum Level (gleiche Basis wie der Balken)
     var prevLevel   = Math.floor(prevLessons / LESSONS_PER_LEVEL);
     var newLevel    = Math.floor(newLessons  / LESSONS_PER_LEVEL);
-    if (newLevel > prevLevel)        return 'level';
+    if (newLevel > prevLevel) return 'level';
+    var prevChapter = Math.floor((prevLessons % LESSONS_PER_LEVEL) / LESSONS_PER_CHAPTER);
+    var newChapter  = Math.floor((newLessons  % LESSONS_PER_LEVEL) / LESSONS_PER_CHAPTER);
     if (newChapter > prevChapter) {
       _cState.chapterLessons = 0;
       _saveState();
@@ -863,14 +899,14 @@ body {
     return null;
   }
 
-  function _getLevelInfo() {
-    var totalLessons    = _getTotalLessons();
+  function _getLevelInfo(offset) {
+    var totalLessons    = _getTotalLessons() + (offset || 0);
     var level           = Math.min(TOTAL_LEVELS, Math.floor(totalLessons / LESSONS_PER_LEVEL) + 1);
     var lessonsInLevel  = totalLessons % LESSONS_PER_LEVEL;
     var chapter         = Math.min(CHAPTERS_PER_LEVEL, Math.floor(lessonsInLevel / LESSONS_PER_CHAPTER) + 1);
     var levelPct        = (lessonsInLevel / LESSONS_PER_LEVEL) * 100;
     var chapterPct      = ((lessonsInLevel % LESSONS_PER_CHAPTER) / LESSONS_PER_CHAPTER) * 100;
-    var lessons         = totalLessons + 1;
+    var lessons         = (lessonsInLevel % LESSONS_PER_CHAPTER) + 1;
     var chapterLessons  = (_cState && _cState.chapterLessons) ? _cState.chapterLessons : 0;
     var academyPct      = Math.min(100, (totalLessons / TOTAL_CONTENT_LESSONS) * 100);
     return { level: level, chapter: chapter, levelPct: levelPct, chapterPct: chapterPct,
@@ -896,8 +932,8 @@ body {
     el.innerHTML = html;
   }
 
-  function _updateLevelUI() {
-    var info = _getLevelInfo();
+  function _updateLevelUI(offset) {
+    var info = _getLevelInfo(offset || 0);
 
     // Titelzeile
     var el = document.getElementById('dgLvlText');
@@ -2831,45 +2867,49 @@ body {
         [{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
-    {id:1002, cat:'rudiments', name:'Rudiment 2',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1003, cat:'rudiments', name:'Rudiment 3',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1004, cat:'rudiments', name:'Rudiment 4',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1005, cat:'rudiments', name:'Rudiment 5',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1006, cat:'rudiments', name:'Rudiment 6',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1007, cat:'rudiments', name:'Rudiment 7',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1008, cat:'rudiments', name:'Rudiment 8',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1009, cat:'rudiments', name:'Rudiment 9',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1010, cat:'rudiments', name:'Rudiment 10', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1011, cat:'rudiments', name:'Rudiment 11', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1012, cat:'rudiments', name:'Rudiment 12', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1013, cat:'rudiments', name:'Rudiment 13', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1014, cat:'rudiments', name:'Rudiment 14', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1015, cat:'rudiments', name:'Rudiment 15', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1016, cat:'rudiments', name:'Rudiment 16', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1017, cat:'rudiments', name:'Rudiment 17', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1018, cat:'rudiments', name:'Rudiment 18', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1019, cat:'rudiments', name:'Rudiment 19', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1020, cat:'rudiments', name:'Rudiment 20', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1021, cat:'rudiments', name:'Rudiment 21', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1022, cat:'rudiments', name:'Rudiment 22', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1023, cat:'rudiments', name:'Rudiment 23', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1024, cat:'rudiments', name:'Rudiment 24', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1025, cat:'rudiments', name:'Rudiment 25', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1026, cat:'rudiments', name:'Rudiment 26', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1027, cat:'rudiments', name:'Rudiment 27', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1028, cat:'rudiments', name:'Rudiment 28', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1029, cat:'rudiments', name:'Rudiment 29', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1030, cat:'rudiments', name:'Rudiment 30', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1031, cat:'rudiments', name:'Rudiment 31', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1032, cat:'rudiments', name:'Rudiment 32', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1033, cat:'rudiments', name:'Rudiment 33', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1034, cat:'rudiments', name:'Rudiment 34', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1035, cat:'rudiments', name:'Rudiment 35', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1036, cat:'rudiments', name:'Rudiment 36', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1037, cat:'rudiments', name:'Rudiment 37', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1038, cat:'rudiments', name:'Rudiment 38', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1039, cat:'rudiments', name:'Rudiment 39', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1040, cat:'rudiments', name:'Rudiment 40', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Roll Rudiments
+    {id:1002, cat:'rudiments', name:'Single Stroke Four',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1003, cat:'rudiments', name:'Single Stroke Seven',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1004, cat:'rudiments', name:'Multiple Bounce Roll',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1005, cat:'rudiments', name:'Triple Stroke Roll',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1006, cat:'rudiments', name:'Double Stroke Roll',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1007, cat:'rudiments', name:'Five Stroke Roll',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1008, cat:'rudiments', name:'Six Stroke Roll',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1009, cat:'rudiments', name:'Seven Stroke Roll',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1010, cat:'rudiments', name:'Nine Stroke Roll',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1011, cat:'rudiments', name:'Ten Stroke Roll',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1012, cat:'rudiments', name:'Eleven Stroke Roll',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1013, cat:'rudiments', name:'Thirteen Stroke Roll',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1014, cat:'rudiments', name:'Fifteen Stroke Roll',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1015, cat:'rudiments', name:'Seventeen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Diddle Rudiments
+    {id:1016, cat:'rudiments', name:'Single Paradiddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1017, cat:'rudiments', name:'Double Paradiddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1018, cat:'rudiments', name:'Triple Paradiddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1019, cat:'rudiments', name:'Paradiddle-Diddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Flam Rudiments
+    {id:1020, cat:'rudiments', name:'Flam',                  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1021, cat:'rudiments', name:'Flam Accent',           noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1022, cat:'rudiments', name:'Flam Tap',              noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1023, cat:'rudiments', name:'Flamacue',              noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1024, cat:'rudiments', name:'Flam Paradiddle',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1025, cat:'rudiments', name:'Flammed Mill',          noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1026, cat:'rudiments', name:'Flam Paradiddle-Diddle',noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1027, cat:'rudiments', name:'Pataflafla',            noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1028, cat:'rudiments', name:'Swiss Army Triplet',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1029, cat:'rudiments', name:'Inverted Flam Tap',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1030, cat:'rudiments', name:'Flam Drag',             noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Drag Rudiments
+    {id:1031, cat:'rudiments', name:'Drag',                  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1032, cat:'rudiments', name:'Single Drag Tap',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1033, cat:'rudiments', name:'Double Drag Tap',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1034, cat:'rudiments', name:'Lesson 25',             noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1035, cat:'rudiments', name:'Single Dragadiddle',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1036, cat:'rudiments', name:'Drag Paradiddle #1',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1037, cat:'rudiments', name:'Drag Paradiddle #2',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1038, cat:'rudiments', name:'Single Ratamacue',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1039, cat:'rudiments', name:'Double Ratamacue',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    {id:1040, cat:'rudiments', name:'Triple Ratamacue',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
 
     // ── NOTE READING ─────────────────────────────────────────────
     // IDs 201+. 4-beat arrays (quarter-note grid). BPM steps: 60, 90, 120.
@@ -2982,6 +3022,246 @@ body {
      stickings:[null,null,null,'L'],
      beats:[ [],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
+    // ── Eighth Notes ──────────────────────────────────────────
+    // BPM: 50, 75, 90, 105, 120, 135 (warmup 50→75, then step 15)
+    // 8 Positionen: 1 & 2 & 3 & 4 &
+    {id:220, cat:'notes', name:'Stave 20', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L','R','L','R','L'],
+     beats:[
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+     ]
+    },
+    {id:221, cat:'notes', name:'Stave 21', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L','R','L','R',null],
+     beats:[
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[]
+     ]
+    },
+    {id:222, cat:'notes', name:'Stave 22', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L','R','L',null,'L'],
+     beats:[
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [],[{inst:'snare',line:1.5,head:'oval'}]
+     ]
+    },
+    {id:223, cat:'notes', name:'Stave 23', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L','R',null,'R','L'],
+     beats:[
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+     ]
+    },
+    {id:224, cat:'notes', name:'Stave 24', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L',null,'L','R','L'],
+     beats:[
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+       [],[{inst:'snare',line:1.5,head:'oval'}],
+       [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+     ]
+    },
+    // ── Eighth Notes ── Single Rests (continued) ──────────────
+    {id:225, cat:'notes', name:'Stave 25', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R',null,'R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:226, cat:'notes', name:'Stave 26', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L',null,'L','R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:227, cat:'notes', name:'Stave 27', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R',null,'R','L','R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:228, cat:'notes', name:'Stave 28', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:[null,'L','R','L','R','L','R','L'],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // ── Double Consecutive Rests ──────────────────────────────
+    {id:229, cat:'notes', name:'Stave 29', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L','R','L',null,null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    {id:230, cat:'notes', name:'Stave 30', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L','R',null,null,'L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:231, cat:'notes', name:'Stave 31', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R','L',null,null,'R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:232, cat:'notes', name:'Stave 32', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L','R',null,null,'L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:233, cat:'notes', name:'Stave 33', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L',null,null,'R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:234, cat:'notes', name:'Stave 34', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R',null,null,'L','R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:235, cat:'notes', name:'Stave 35', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:[null,null,'R','L','R','L','R','L'],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // ── Quad Rest Patterns ────────────────────────────────────
+    {id:236, cat:'notes', name:'Stave 36', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L',null,null,'R','L',null,null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    {id:237, cat:'notes', name:'Stave 37', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:[null,null,'R','L',null,null,'R','L'],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:238, cat:'notes', name:'Stave 38', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R','L',null,null,null,null,'R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    {id:239, cat:'notes', name:'Stave 39', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:[null,null,'R','L','R','L',null,null],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    // Stave 40: 1-2-3-4- (downbeats only)
+    {id:240, cat:'notes', name:'Stave 40', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:['R',null,'R',null,'R',null,'R',null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    // Stave 41: -&-&-&-& (upbeats only)
+    {id:241, cat:'notes', name:'Stave 41', noteValue:'eighth', hihatHands:'one',
+     catLabel:'Eighth Notes', minBPM:75, maxBPM:135, step:15, warmup:{minBPM:50,step:25},
+     stickings:[null,'L',null,'L',null,'L',null,'L'],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // ── Sixteenth Notes ───────────────────────────────────────
+    // BPM: 40, 55, 65, 75, 85, 95 (warmup 40→55, then step 10)
+    // 16 Positionen: 1 e & a 2 e & a 3 e & a 4 e & a
+    // Fix alternation: R L R L R L R L R L R L R L R L
+    // Gleichen Pattern auf allen 4 Beats
+    // S = snare, - = rest
+    // ──────────────────────────────────────────────────────────
+    // Stave 42: 1e&a 2e&a 3e&a 4e&a (all sixteenths)
+    {id:250, cat:'notes', name:'Stave 42', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R','L','R','L','R','L','R','L','R','L','R','L','R','L','R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 43: 1e&- (rest on a)
+    {id:251, cat:'notes', name:'Stave 43', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R','L','R',null,'R','L','R',null,'R','L','R',null,'R','L','R',null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    // Stave 44: 1e-a (rest on &)
+    {id:252, cat:'notes', name:'Stave 44', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R','L',null,'L','R','L',null,'L','R','L',null,'L','R','L',null,'L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 45: 1-&a (rest on e)
+    {id:253, cat:'notes', name:'Stave 45', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R',null,'R','L','R',null,'R','L','R',null,'R','L','R',null,'R','L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 46: -e&a (rest on 1)
+    {id:254, cat:'notes', name:'Stave 46', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,'L','R','L',null,'L','R','L',null,'L','R','L',null,'L','R','L'],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 47: 1e-- (rest on & and a)
+    {id:255, cat:'notes', name:'Stave 47', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R','L',null,null,'R','L',null,null,'R','L',null,null,'R','L',null,null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    // Stave 48: 1--a (rest on e and &)
+    {id:256, cat:'notes', name:'Stave 48', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R',null,null,'L','R',null,null,'L','R',null,null,'L','R',null,null,'L'],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 49: 1-&- (rest on e and a)
+    {id:257, cat:'notes', name:'Stave 49', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R',null,'R',null,'R',null,'R',null,'R',null,'R',null,'R',null,'R',null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    // Stave 50: -e-a (rest on 1 and &)
+    {id:258, cat:'notes', name:'Stave 50', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,'L',null,'L',null,'L',null,'L',null,'L',null,'L',null,'L',null,'L'],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 51: -e&- (rest on 1 and a)
+    {id:259, cat:'notes', name:'Stave 51', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,'L','R',null,null,'L','R',null,null,'L','R',null,null,'L','R',null],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    // Stave 52: --&a (rest on 1 and e)
+    {id:260, cat:'notes', name:'Stave 52', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,null,'R','L',null,null,'R','L',null,null,'R','L',null,null,'R','L'],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[],[],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
+    // Stave 53: 1--- (only downbeats)
+    {id:261, cat:'notes', name:'Stave 53', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:['R',null,null,null,'R',null,null,null,'R',null,null,null,'R',null,null,null],
+     beats:[ [{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[] ]
+    },
+    // Stave 54: -e-- (only e's)
+    {id:262, cat:'notes', name:'Stave 54', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,'L',null,null,null,'L',null,null,null,'L',null,null,null,'L',null,null],
+     beats:[ [],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[] ]
+    },
+    // Stave 55: --&- (only &'s)
+    {id:263, cat:'notes', name:'Stave 55', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,null,'R',null,null,null,'R',null,null,null,'R',null,null,null,'R',null],
+     beats:[ [],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[] ]
+    },
+    // Stave 56: ---a (only a's)
+    {id:264, cat:'notes', name:'Stave 56', noteValue:'sixteenth', hihatHands:'one',
+     catLabel:'Sixteenth Notes', minBPM:55, maxBPM:95, step:10, warmup:{minBPM:40,step:15},
+     stickings:[null,null,null,'L',null,null,null,'L',null,null,null,'L',null,null,null,'L'],
+     beats:[ [],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
+    },
   ];
 
   // Level-Berechnung: content-basiert, dynamisch an Gesamtmenge angepasst
@@ -3015,12 +3295,10 @@ body {
   };
 
   function _getRotation() {
-    var hours = _getTotalMinutes() / 60;
+    var level = _getLevelInfo().level;
     var r = ['grooves', 'notes', 'fillins'];
-    // Coordination ab Level 2 (100h) — nur wenn Inhalt vorhanden
-    if (_catPool.coordination.length && hours >= 100) r.push('coordination');
-    // Rudiments ab Level 3 (200h)
-    if (_catPool.rudiments.length && hours >= 200) r.push('rudiments');
+    if (_catPool.coordination.length && level >= 2) r.push('coordination');
+    if (_catPool.rudiments.length    && level >= 3) r.push('rudiments');
     return r;
   }
 
@@ -3055,6 +3333,30 @@ body {
       return minB + (stepIdx - wSteps) * ex.step;
     }
     return minB + stepIdx * ex.step;
+  }
+
+  // ── Speed-Bremse: Groove 1 als Tempo-Gate ───────────────────
+  // SPHM-Cap = Groove 1's aktuelles BPM × 2 (8tel, eine Hand).
+  // Sobald Groove 1 graduated ist → kein Cap mehr.
+  var _NOTES_PER_BEAT = { quarter:1, eighth:2, sixteenth:4, triplet:3, sixteenthTriplet:6 };
+
+  function _getSphmCap() {
+    if (_cState.completed && _cState.completed.indexOf(1) !== -1) return null; // Groove 1 fertig
+    var cs = _cState.cats.grooves;
+    var g1entry = cs && cs.active && cs.active.find(function(e){ return e.id === 1; });
+    var g1ex = EXERCISES.find(function(e){ return e.id === 1; });
+    if (!g1entry || !g1ex) return null;
+    return _exBpm(g1ex, g1entry.bpmStep) * 2; // 8tel, eine Hand → ×2
+  }
+
+  function _capBpm(ex, bpm) {
+    var cap = _getSphmCap();
+    if (cap === null) return bpm;
+    var npb   = _NOTES_PER_BEAT[ex.noteValue] || 2;
+    var hands = (ex.hihatHands === 'alternate') ? 2 : 1;
+    var maxBpm = Math.floor(cap / (npb / hands));
+    var minBpm = (ex.minBPM != null) ? ex.minBPM : 30;
+    return Math.max(minBpm, Math.min(bpm, maxBpm));
   }
 
   // Initial State aufbauen
@@ -3103,8 +3405,10 @@ body {
         var entry = active[(lastIdx + 1) % active.length];
         var ex = EXERCISES.find(function(e){ return e.id === entry.id; });
         if (!ex) continue;
-        return { ex: ex, bpm: _exBpm(ex, entry.bpmStep),
-                 sphm: bpmToSphm(_exBpm(ex, entry.bpmStep), ex),
+        var rawBpm = _exBpm(ex, entry.bpmStep);
+        var bpm    = _capBpm(ex, rawBpm);
+        return { ex: ex, bpm: bpm,
+                 sphm: bpmToSphm(bpm, ex),
                  entry: entry, cat: cat };
       }
     }
@@ -3317,6 +3621,16 @@ body {
   }
 
   function getBlocks(t) {
+    // Notes-Pillar: 1 Block, ~60 Sekunden, aufgerundet auf volle 4-Takt-Phrasen
+    if (GROOVE.cat === 'notes') {
+      var secPerBar = 4 * 60 / t;  // Sekunden pro Takt (4/4)
+      var barsFor60 = Math.ceil(60 / secPerBar);
+      // Auf nächstes Vielfaches von 4 aufrunden
+      var bars = Math.ceil(barsFor60 / 4) * 4;
+      bars = Math.max(4, bars); // mindestens 4 Takte
+      return [{ bpm: t, bars: bars, dur: bars * secPerBar }];
+    }
+
     var bpms, baseDurs;
     // Block-BPMs und Basis-Dauern direkt aus Speed Tabelle
     if      (t <= 50)  { bpms=[t];                        baseDurs=[30];             }
@@ -3338,6 +3652,7 @@ body {
   }
 
   function getPauses(t, n) {
+    if (GROOVE.cat === 'notes') return [];  // Notes: 1 Block, keine Pausen
     if (t <= 80)  return [];
     if (t <= 90)  return [15];
     if (t <= 100) return [10,15];
@@ -3511,6 +3826,55 @@ body {
     o.type = 'sine'; o.start(t); o.stop(t + 0.06);
   }
 
+  // Zählende Stimme via Web Speech API (best-effort)
+  function speakBeat(num, when) {
+    if (!aCtx) return;
+    var delay = Math.max(0, (when - aCtx.currentTime) * 1000 - 40);
+    setTimeout(function() {
+      var u = new SpeechSynthesisUtterance(String(num));
+      u.rate = 2.5; u.pitch = 1.1; u.volume = 1.0;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    }, delay);
+  }
+
+  // Metronom-Clicks für Tick bt schedulen
+  function scheduleMetroClicks(bt, tickSec, qTicks, when) {
+    if (!metronomeOn) return;
+    var beatInBar = Math.floor(bt / qTicks) % 4;
+    var posInQ    = bt % qTicks;
+    var qSec      = tickSec * qTicks;
+    var accent    = (posInQ === 0 && beatInBar === 0);
+    var H = 1.0, M = 0.5, L = 0.28;
+
+    if (metronomeDiv === 'voice') {
+      if (posInQ === 0) speakBeat(beatInBar + 1, when);
+      return;
+    }
+    if (metronomeDiv === 'quarter') {
+      if (posInQ === 0) playCountClick(accent, H, when);
+    } else if (metronomeDiv === 'eighth') {
+      var half = qTicks / 2;
+      if (half >= 1 && qTicks % 2 === 0) {
+        if (posInQ % half === 0) playCountClick(accent, posInQ === 0 ? H : L, when);
+      } else {
+        if (posInQ === 0) { playCountClick(accent, H, when); playCountClick(false, L, when + qSec/2); }
+      }
+    } else if (metronomeDiv === 'sixteenth') {
+      var qtr = qTicks / 4;
+      if (qtr >= 1 && qTicks % 4 === 0) {
+        if (posInQ % qtr === 0) playCountClick(accent, posInQ===0?H:(posInQ===qTicks/2?M:L), when);
+      } else if (qTicks === 2) {
+        playCountClick(accent, posInQ===0?H:M, when);
+        playCountClick(false, L, when + tickSec/2);
+      } else {
+        if (posInQ === 0) { playCountClick(accent,H,when); playCountClick(false,L,when+qSec/4); playCountClick(false,M,when+qSec/2); playCountClick(false,L,when+qSec*3/4); }
+      }
+    } else if (metronomeDiv === 'triplet') {
+      if (posInQ === 0) { playCountClick(accent,H,when); playCountClick(false,L,when+qSec/3); playCountClick(false,L,when+qSec*2/3); }
+    }
+  }
+
   function playBeat(bi, when) {
     GROOVE.beats[bi].forEach(function(n) {
       if (!n.rest) playSound(n.inst, when);
@@ -3600,6 +3964,22 @@ body {
     return h;
   }
 
+  // ── Authentische Notenschrift-Glyphs (Bravura, SMuFL-Standard) ──
+  // 1000-unit em, 250 units = 1 Notenlinien-Abstand (ls), Y-Achse zeigt nach oben.
+  // Render: scale(ls/250, -ls/250) flippt Y und skaliert auf unser System.
+  var BRAVURA = {
+    rest8th:     'M134 107v-10c33 0 83 60 90 66c6 4 9 4 11 4c2 -1 12 -6 12 -16c-1 -5 -6 -21 -10 -39c0 0 -98 -351 -101 -353c-10 -8 -24 -10 -35 -10c-6 0 -29 1 -29 13c18 66 90 265 93 280c1 4 1 8 1 11c0 5 -1 9 -5 9c-1 0 -3 0 -5 -1c-13 -7 -22 -11 -36 -15c-11 -4 -25 -7 -39 -7c-19 0 -38 6 -54 17c-15 12 -27 30 -27 51c0 37 30 67 67 67s67 -30 67 -67z',
+    restQuarter: 'M78 -38l-49 60s-10 10 -10 24c0 8 4 19 14 29c45 47 60 90 60 127c0 72 -57 123 -61 134c-3 6 -4 11 -4 16c0 14 10 21 20 21c6 0 13 -3 18 -8c17 -17 165 -193 165 -193s4 -9 4 -19c0 -5 -1 -10 -4 -15c-26 -41 -62 -89 -66 -147v-3l-1 -7v-3c0 -56 31 -93 69 -139c11 -12 37 -45 37 -57c0 -3 -2 -4 -5 -4c-2 0 -4 0 -8 1l-1 1c-17 6 -50 17 -79 17c-42 0 -63 -32 -63 -73c0 -9 1 -18 4 -26c2 -9 13 -36 26 -36c8 -7 16 -15 16 -24c0 -2 -1 -4 -2 -7c-1 -4 -8 -6 -15 -6c-8 0 -18 3 -26 9c-73 56 -116 105 -116 155c0 49 34 96 86 96l8 -3h4c4 -1 12 -3 16 -3c5 0 9 1 11 5c1 1 1 3 1 4c0 2 -4 10 -6 14c-13 21 -27 40 -43 60z',
+    flag8thUp:   'M238 -790c-5 -17 -22 -23 -28 -19s-16 13 -16 29c0 4 1 9 3 15c17 45 24 92 24 137c0 59 -9 116 -24 150c-36 85 -131 221 -197 233v239c0 12 8 15 19 15c10 0 18 -6 21 -22c16 -96 58 -182 109 -261c63 -100 115 -218 115 -343c0 -78 -26 -173 -26 -173z',
+    rest16th:    'M208 111v-10c34 1 84 61 91 67c3 2 6 4 11 4c2 -1 10 -5 10 -11c0 -1 -1 -2 -1 -4c-2 -13 -27 -101 -27 -101s-19 -67 -45 -152l-116 -381c-4 -11 -9 -23 -38 -23c-22 0 -31 10 -31 19l1 1v1l95 283v1l1 1c0 4 -2 6 -4 6c-23 -12 -49 -21 -75 -21c-38 0 -80 27 -80 68c0 38 30 68 68 68c37 0 68 -30 68 -68c0 -3 0 -6 -1 -10c14 0 41 12 49 31c7 15 58 164 58 180c0 5 -2 7 -5 7c-2 0 -4 -1 -7 -2c-23 -13 -51 -22 -78 -22c-38 0 -80 27 -80 68c0 38 31 68 68 68c38 0 68 -30 68 -68z',
+    flag16thUp:  'M272 -796c-6 -13 -13 -17 -20 -17c-14 0 -22 13 -22 26c0 3 0 5 1 9c5 30 8 60 8 89c0 52 -9 101 -32 149c-69 140 -140 142 -202 144h-5v388c0 7 11 10 17 10s18 -2 20 -13c17 -106 73 -122 127 -180c72 -78 98 -106 108 -174c2 -12 3 -23 3 -36c0 -61 -22 -121 -25 -127c-1 -3 -1 -5 -1 -7c0 -4 1 -6 1 -9c18 -37 29 -78 29 -120v-22c0 -48 -3 -105 -7 -110zM209 -459c2 -3 4 -4 7 -4c5 0 12 3 13 6c5 8 5 18 7 26c1 7 1 13 1 20c0 32 -9 63 -27 89c-33 49 -87 105 -148 105h-8c-8 0 -14 -6 -14 -10c0 -1 0 -2 1 -3c21 -82 67 -106 114 -160c21 -24 38 -44 54 -69z'
+  };
+  function bravuraGlyph(name, originX, originY, color, opacity) {
+    var s = 8 / 250; // ls / 250
+    return '<g transform="translate('+originX+','+originY+') scale('+s+','+(-s)+')">' +
+           '<path d="'+BRAVURA[name]+'" fill="'+color+'" opacity="'+opacity+'"/></g>';
+  }
+
   function renderNot(curBeat, dimmed) { dimmed = false;
     var svg  = document.getElementById('dgSvg');
     var lbl4  = ['1', '2', '3', '4'];
@@ -3609,7 +3989,7 @@ body {
     var sY   = 40, ls = 8;
     var op   = dimmed ? 0.2 : 1;
     var W    = '#ffffff';
-    var A    = '#5b8fd9';
+    var A    = '#C9A84C';  // Drumlion Gold für aktive Note
     var h    = '';
     var twoBar = !!(GROOVE.beats2 && GROOVE.beats2.length);
 
@@ -3662,13 +4042,24 @@ body {
           }
           if (allHaveNotes) {
             var x1 = sX+16+g[0]*bs+5, x2 = sX+16+g[1]*bs+5;
-            // Beam 1 (oben)
             h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                  '" fill="'+W+'" opacity="'+op+'"/>';
-            // Beam 2 (zweiter Balken, 1.5px Abstand)
             var BT2 = sY - 18 + BH + 1.5;
             h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                  '" fill="'+W+'" opacity="'+op+'"/>';
+          } else {
+            // Partial: Untergruppen [0,1] und [2,3] innerhalb des Beats prüfen
+            [[g[0],g[0]+1],[g[0]+2,g[1]]].forEach(function(p) {
+              if (beatsArr[p[0]] && beatsArr[p[0]].length > 0 &&
+                  beatsArr[p[1]] && beatsArr[p[1]].length > 0) {
+                var x1 = sX+16+p[0]*bs+5, x2 = sX+16+p[1]*bs+5;
+                h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                     '" fill="'+W+'" opacity="'+op+'"/>';
+                var BT2 = sY - 18 + BH + 1.5;
+                h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                     '" fill="'+W+'" opacity="'+op+'"/>';
+              }
+            });
           }
         });
       } else if (n > 4) {
@@ -3690,7 +4081,7 @@ body {
         var nc  = isA ? A : W;
         var lc  = isA ? A : (dimmed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)');
         if (isA) h += '<rect x="'+(x-14)+'" y="'+(sY-23)+'" width="28" height="'+(7*ls+16)+
-                      '" rx="4" fill="#1a3d6e" opacity="0.35" stroke="#ffffff" stroke-width="0.8"/>';
+                      '" rx="4" fill="rgba(201,168,76,0.15)" stroke="rgba(201,168,76,0.6)" stroke-width="0.8"/>';
         var _hhCat = GROOVE.catLabel && GROOVE.catLabel.indexOf('Hi-Hat Opening') !== -1;
         var lblY = (GROOVE.cat === 'fillins')
                    ? (sY - 27)
@@ -3705,6 +4096,9 @@ body {
         var isHalfRest = bn.length > 0 && bn[0].rest === 'half';
         if (isHalfRest) {
           // Half rest = filled rectangle sitting ON TOP of middle staff line (line 3)
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls-3)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += '<rect x="'+(x-8)+'" y="'+(sY+2*ls-6)+'" width="16" height="6"'+
                ' fill="'+nc+'" rx="1" opacity="'+op+'"/>';
         }
@@ -3721,6 +4115,13 @@ body {
         sortedBn.forEach(function(n) { h += drawLedgerLines(n.line, x, nc, op); });
         sortedBn.forEach(function(n, ci) {
           var y = sY + n.line * ls;
+          // Flash-Glow bei aktiver Note: kurzes Aufleuchten das schnell verblasst
+          if (isA && bn.length > 0) {
+            h += '<circle cx="'+(x + offArr[ci])+'" cy="'+y+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                 '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                 '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/>' +
+                 '</circle>';
+          }
           h += drawNoteHead(n, x + offArr[ci], y, nc, op);
         });
         // Articulation marks (o = HH open, + = HH close) — als SVG-Shapes über dem Balken
@@ -3776,30 +4177,54 @@ body {
         if (stickings && stickings[bi]) {
           h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
-        // Quarter rest symbol — nur bei noteValue:'quarter', klassisches Zeichen
+        // Eighth rest symbol — authentisches Bravura-Glyph
+        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'eighth' && bn.length === 0) {
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
+        }
+        // Sixteenth rest symbol — authentisches Bravura-Glyph
+        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'sixteenth' && bn.length === 0) {
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          h += bravuraGlyph('rest16th', x - 5, sY + 2*ls, nc, op);
+        }
+        // Quarter rest symbol — authentisches Bravura-Glyph
         if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'quarter' && bn.length === 0 && !isHalfRest) {
-          var rx = x, ry = sY + ls * 0.5;
-          h += '<path d="' +
-            'M '+(rx+3)+','+(ry+0)+' ' +
-            'C '+(rx+8)+','+(ry-1)+' '+(rx+8)+','+(ry+5)+' '+(rx+4)+','+(ry+8)+' ' +
-            'L '+(rx-1)+','+(ry+14)+' ' +
-            'C '+(rx-2)+','+(ry+12)+' '+(rx+2)+','+(ry+12)+' '+(rx+3)+','+(ry+16)+' ' +
-            'C '+(rx+5)+','+(ry+19)+' '+(rx+4)+','+(ry+24)+' '+(rx+0)+','+(ry+25)+' ' +
-            'Q '+(rx-3)+','+(ry+25)+' '+(rx-2)+','+(ry+27)+' ' +
-            'Q '+(rx+0)+','+(ry+29)+' '+(rx+4)+','+(ry+28)+' ' +
-            'C '+(rx+7)+','+(ry+27)+' '+(rx+6)+','+(ry+22)+' '+(rx+4)+','+(ry+19)+' ' +
-            'L '+(rx+5)+','+(ry+15)+' ' +
-            'C '+(rx+6)+','+(ry+12)+' '+(rx+4)+','+(ry+11)+' '+(rx+2)+','+(ry+14)+' ' +
-            'L '+(rx+7)+','+(ry+8)+' ' +
-            'C '+(rx+9)+','+(ry+5)+' '+(rx+8)+','+(ry+0)+' '+(rx+5)+','+(ry+0)+' ' +
-            'Z" fill="'+nc+'" opacity="'+op+'"/>';
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, nc, op);
         }
         // Stem — nicht für whole notes, nicht für half rests
         if (!isHalfRest && bn.length > 0 && !bn.some(function(n){ return n.head === 'whole'; })) {
           var maxLine = Math.max.apply(null, bn.map(function(n) { return n.line; }));
           var stemBot = sY + maxLine * ls;
-          h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+(sY-18)+
+          var stemTop = sY - 18;
+          h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+stemTop+
                '" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
+          // Fähnchen für einzelne Noten ohne Balken-Partner — Bravura-Glyphs
+          if (GROOVE.cat === 'notes') {
+            if (n === 8) {
+              // Achtel: Paar-Check (2er-Gruppen)
+              var pairIdx = Math.floor(bi / 2) * 2;
+              var partner = (bi % 2 === 0) ? pairIdx + 1 : pairIdx;
+              var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
+              if (!hasPartner) {
+                h += bravuraGlyph('flag8thUp', x + 5, stemTop, nc, op);
+              }
+            } else if (n === 16) {
+              // Sechzehntel: 2er-Paar-Check — Fähnchen wenn kein Balken-Partner im Paar
+              var pairStart = Math.floor(bi / 2) * 2;
+              var partner = (bi % 2 === 0) ? pairStart + 1 : pairStart;
+              var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
+              if (!hasPartner) {
+                h += bravuraGlyph('flag16thUp', x + 5, stemTop, nc, op);
+              }
+            }
+          }
         }
       });
     }
@@ -3894,10 +4319,10 @@ body {
     blocks.forEach(function(b, i) {
       var bg, bc, tc;
       if (i < bIdx) {
-        bg='#2c5aa3'; bc='#2c5aa3'; tc='#E8E4DB';
+        bg='rgba(201,168,76,0.2)'; bc='#C9A84C'; tc='#E8E4DB';
       } else if (i === bIdx && (phase==='playing' || phase==='countIn')) {
-        bg = phase==='countIn' ? 'rgba(201,168,76,0.25)' : '#2c5aa3';
-        bc = phase==='countIn' ? '#C9A84C' : '#2c5aa3'; tc='#E8E4DB';
+        bg = phase==='countIn' ? 'rgba(201,168,76,0.25)' : 'rgba(201,168,76,0.2)';
+        bc = '#C9A84C'; tc='#E8E4DB';
       } else {
         bg='#161616'; bc='#2a2a2a'; tc='#aaa';
       }
@@ -4173,25 +4598,25 @@ body {
           // Groove bar
           if (grooveOn(br)) {
             GROOVE.beats[bt].forEach(function(n) { playSound(n.inst, when); });
-            if (metronomeOn && bt % 2 === 0) playCountClick(bt === 0, 1.0, when);
-          } else if (bt % 2 === 0) { playCountClick(bt === 0, 1.0, when); }
+            scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
+          } else { scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when); }
           renderNot(bt, false);
         } else {
           // Fill bar
           var fb = bt - n1;
           if (grooveOn(br)) {
             GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst, when); });
-            if (metronomeOn && fb % 2 === 0) playCountClick(fb === 0, 1.0, when);
-          } else if (fb % 2 === 0) { playCountClick(fb === 0, 1.0, when); }
+            scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when);
+          } else { scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when); }
           renderNot(bt, false);
         }
       } else {
         if (bt === 0) setInfo(infoLine(br, bt));
         if (grooveOn(br)) {
           if (bt < GROOVE.beats.length) playBeat(bt, when);
-          if (metronomeOn && isMetronomeBeat(bt)) playCountClick(bt === 0, 1.0, when);
+          scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
         } else {
-          if (isMetronomeBeat(bt)) playCountClick(bt === 0, 1.0, when);
+          scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
         }
         renderNot(bt, false);
       }
@@ -4301,7 +4726,7 @@ body {
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
     var _milestone = _addLessonTime(_lessonDurationMinutes());
-    _updateLevelUI();
+    _updateLevelUI(-1);
     if (_milestone === 'level')   setTimeout(function(){ setInfo('🎯 Level complete!');   }, 800);
     if (_milestone === 'chapter') setTimeout(function(){ setInfo('⭐ Chapter complete!'); }, 800);
     var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
@@ -4368,54 +4793,249 @@ body {
       'display:none',
       'position:fixed',
       'top:0','left:0','right:0','bottom:0',
-      'background:rgba(0,0,0,0.92)',
+      'background:rgba(0,0,0,0.95)',
       'z-index:9999',
       'overflow-y:auto',
       'padding:24px',
       'font-family:DM Sans,sans-serif',
-      'color:#fff'
+      'color:#E8E4DB'
     ].join(';');
 
-    var cats = ['grooves','fillins','notes','rudiments'];
-    var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments'};
-    var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">'
-             + '<span style="font-size:18px;font-weight:700;color:#C9A84C;">DEV — Exercise Picker</span>'
-             + '<span style="font-size:12px;color:#666;">Taste D zum Schließen</span>'
-             + '</div>';
+    // ── Tab-Styles (inline) ──────────────────────────────────
+    var tabStyle   = 'display:inline-block;padding:7px 18px;font-size:13px;cursor:pointer;border:1px solid #333;border-bottom:none;border-radius:6px 6px 0 0;background:#161616;color:#888;font-family:DM Sans,sans-serif;';
+    var tabActiveS = tabStyle + 'background:#1e1e1e;color:#E8E4DB;border-color:#444;';
 
-    cats.forEach(function(cat) {
-      var exs = EXERCISES.filter(function(e){ return e.cat === cat; });
-      if (!exs.length) return;
-      html += '<div style="margin-bottom:16px;">';
-      html += '<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;">' + labels[cat] + '</div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-      exs.forEach(function(ex) {
-        html += '<button data-exid="' + ex.id + '" style="'
-              + 'background:#1a1a1a;border:1px solid #333;border-radius:6px;'
-              + 'color:#fff;font-size:12px;padding:5px 10px;cursor:pointer;'
-              + 'font-family:DM Sans,sans-serif;'
-              + '">' + ex.name + '</button>';
+    // ── Reset-Handler ────────────────────────────────────────
+    function devReset() {
+      if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) {
+        localStorage.removeItem(COURSE_KEY);
+        location.reload();
+      }
+    }
+
+    // ── Hilfsfunktion: BPM-Schritte ─────────────────────────
+    function devExSteps(ex) {
+      var minB = (ex.minBPM != null) ? ex.minBPM : ex.minSPHM;
+      var maxB = (ex.maxBPM != null) ? ex.maxBPM : ex.maxSPHM;
+      var s    = ex.step || 5;
+      var normal = (minB != null && maxB != null) ? Math.max(1, Math.round((maxB - minB) / s) + 1) : 1;
+      if (ex.warmup) normal += Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
+      return normal;
+    }
+    function devExBpm(ex, stepIdx) {
+      var minB = (ex.minBPM != null) ? ex.minBPM : ex.minSPHM;
+      if (ex.warmup) {
+        var wSteps = Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
+        if (stepIdx < wSteps) return ex.warmup.minBPM + stepIdx * ex.warmup.step;
+        return minB + (stepIdx - wSteps) * (ex.step || 5);
+      }
+      return (minB || 60) + stepIdx * (ex.step || 5);
+    }
+
+    // ── Course-Map Simulation ────────────────────────────────
+    function buildCourseMap() {
+      // Rotation ab Start: nur Grooves, Notes, Fills
+      // Coordination ab 100h, Rudiments ab 200h → werden hier nicht simuliert
+      var rotation = ['grooves', 'notes', 'fillins'];
+
+      // Initialer State (Kopie, nicht der echte)
+      var cats = {};
+      rotation.forEach(function(cat) {
+        var pool = _catPool[cat] || [];
+        var first = pool[0];
+        cats[cat] = {
+          pool: pool,
+          active: first ? [{id: first.id, bpmStep: 0}] : [],
+          introIdx: first ? 1 : 0,
+          counter: 0,
+          lastId: null
+        };
       });
-      html += '</div></div>';
-    });
 
-    panel.innerHTML = html;
+      var lessons = [];
+      var maxLessons = TOTAL_CONTENT_LESSONS + 10;
+      var rotPos = 0;
+      var safety = 0;
+      var rudimentsAdded = false;
+
+      while (lessons.length < maxLessons && safety < maxLessons * 2) {
+        safety++;
+        // Rudiments ab Level 3 einschalten
+        if (!rudimentsAdded && lessons.length >= 2 * LESSONS_PER_LEVEL && _catPool.rudiments.length) {
+          rotation.push('rudiments');
+          cats['rudiments'] = {
+            pool: _catPool.rudiments,
+            active: _catPool.rudiments[0] ? [{id: _catPool.rudiments[0].id, bpmStep: 0}] : [],
+            introIdx: _catPool.rudiments[0] ? 1 : 0,
+            counter: 0, lastId: null
+          };
+          rudimentsAdded = true;
+        }
+        var foundCat = null;
+        for (var i = 0; i < rotation.length; i++) {
+          var cat = rotation[(rotPos + i) % rotation.length];
+          var cs  = cats[cat];
+          if (cs && cs.active.length) { foundCat = cat; break; }
+        }
+        if (!foundCat) break;
+
+        var cs   = cats[foundCat];
+        var active = cs.active;
+        var lastIdx = -1;
+        for (var j = 0; j < active.length; j++) {
+          if (active[j].id === cs.lastId) { lastIdx = j; break; }
+        }
+        var entry = active[(lastIdx + 1) % active.length];
+        var ex    = EXERCISES.find(function(e){ return e.id === entry.id; });
+        if (!ex) { rotPos++; continue; }
+
+        var bpm = devExBpm(ex, entry.bpmStep);
+        lessons.push({ cat: foundCat, ex: ex, bpm: bpm, stepIdx: entry.bpmStep });
+
+        // Advance
+        entry.bpmStep++;
+        cs.lastId  = entry.id;
+        cs.counter = (cs.counter || 0) + 1;
+
+        if (entry.bpmStep >= devExSteps(ex)) {
+          cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
+        }
+        if ((cs.counter % 5 === 0 || cs.active.length === 0) &&
+            cs.active.length < 50 && cs.introIdx < cs.pool.length) {
+          cs.active.push({ id: cs.pool[cs.introIdx].id, bpmStep: 0 });
+          cs.introIdx++;
+        }
+        rotPos = (rotPos + 1) % rotation.length;
+      }
+      return lessons;
+    }
+
+    // ── HTML: Tab-Header ─────────────────────────────────────
+    function renderHeader(activeTab) {
+      return '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">'
+           + '<div>'
+           + '<button id="devTabPicker" style="' + (activeTab==='picker' ? tabActiveS : tabStyle) + '">Exercise Picker</button>'
+           + '<button id="devTabMap"    style="' + (activeTab==='map'    ? tabActiveS : tabStyle) + '">Course Map</button>'
+           + '</div>'
+           + '<span style="font-size:12px;color:#555;padding-bottom:6px;">Taste D schließen</span>'
+           + '</div>'
+           + '<div style="border-top:1px solid #333;margin-bottom:20px;"></div>';
+    }
+
+    // ── HTML: Exercise Picker ────────────────────────────────
+    function renderPicker() {
+      var cats2 = ['grooves','fillins','notes','rudiments'];
+      var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments'};
+      var h = '';
+      cats2.forEach(function(cat) {
+        var exs = EXERCISES.filter(function(e){ return e.cat === cat; });
+        if (!exs.length) return;
+        h += '<div style="margin-bottom:18px;">';
+        h += '<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;">' + labels[cat] + '</div>';
+        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+        exs.forEach(function(ex) {
+          h += '<button data-exid="' + ex.id + '" style="background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#E8E4DB;font-size:12px;padding:5px 10px;cursor:pointer;font-family:DM Sans,sans-serif;">'
+             + ex.name + '</button>';
+        });
+        h += '</div></div>';
+      });
+      return h;
+    }
+
+    // ── HTML: Course Map ─────────────────────────────────────
+    function renderCourseMap() {
+      var lessons = buildCourseMap();
+      var lpl = LESSONS_PER_LEVEL;
+      var lpc = LESSONS_PER_CHAPTER;
+      var catColor = { grooves:'#C9A84C', notes:'#4a7fd4', fillins:'#559955', rudiments:'#aa5555', coordination:'#888' };
+      var catShort = { grooves:'G', notes:'N', fillins:'F', rudiments:'R', coordination:'C' };
+
+      var h = '<div style="font-size:12px;color:#666;margin-bottom:8px;">'
+            + 'Simulation ab Kurs-Start · ' + lessons.length + ' Lektionen · '
+            + TOTAL_LEVELS + ' Levels · ' + CHAPTERS_PER_LEVEL + ' Chapters/Level · '
+            + lpl + ' Lektionen/Level · ' + lpc + ' Lektionen/Chapter'
+            + '</div>'
+            + '<div style="font-size:11px;color:#555;margin-bottom:16px;">'
+            + '🔒 Coordination ab Level 2 &nbsp;·&nbsp; Rudiments ab Level 3 (in Simulation enthalten)'
+            + '</div>';
+
+      var currentLevel = -1, currentChapter = -1;
+
+      for (var i = 0; i < lessons.length; i++) {
+        var l = lessons[i];
+        var lvl     = Math.floor(i / lpl) + 1;
+        var chInLvl = Math.floor((i % lpl) / lpc) + 1;
+        var lesInCh = (i % lpc) + 1;
+
+        if (lvl !== currentLevel) {
+          if (currentLevel !== -1) h += '</div></div>'; // close chapter+level
+          else if (currentChapter !== -1) h += '</div>'; // close chapter only
+          currentLevel   = lvl;
+          currentChapter = -1;
+          h += '<div style="margin-bottom:10px;">';
+          h += '<div style="font-size:13px;font-weight:700;color:#C9A84C;margin-bottom:8px;padding:8px 12px;background:#1a1a1a;border-radius:6px;border-left:3px solid #C9A84C;">'
+             + 'Level ' + lvl + '</div>';
+        }
+
+        if (chInLvl !== currentChapter) {
+          if (currentChapter !== -1) h += '</div>'; // close prev chapter
+          currentChapter = chInLvl;
+          h += '<div style="margin-bottom:8px;margin-left:12px;">';
+          h += '<div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#666;margin-bottom:6px;padding:4px 8px;background:#161616;border-radius:4px;">'
+             + 'Chapter ' + chInLvl + '</div>';
+          h += '<div style="display:flex;flex-wrap:wrap;gap:4px;padding-left:8px;">';
+        }
+
+        var col = catColor[l.cat] || '#888';
+        var bpmText = l.bpm ? ' <span style="color:#555;font-size:10px;">@ ' + l.bpm + ' BPM</span>' : '';
+        h += '<div data-exid="' + l.ex.id + '" data-bpm="' + l.bpm + '" style="cursor:pointer;background:#1a1a1a;border:1px solid #252525;border-radius:5px;padding:5px 9px;font-size:11px;display:flex;align-items:center;gap:6px;" title="' + l.ex.name + ' · ' + l.cat + '">'
+           + '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:' + col + '22;border:1px solid ' + col + '66;color:' + col + ';font-size:9px;font-weight:700;text-align:center;line-height:14px;">' + catShort[l.cat] + '</span>'
+           + '<span style="color:#E8E4DB;">' + l.ex.name + '</span>'
+           + bpmText
+           + '</div>';
+      }
+      // close last chapter + level
+      h += '</div></div></div>';
+
+      return h;
+    }
+
+    // ── HTML: Footer mit Reset ───────────────────────────────
+    function renderFooter() {
+      return '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #1e1e1e;text-align:right;">'
+           + '<button onclick="(function(){if(confirm(\'Kurs zurücksetzen? Alle Fortschritte werden gelöscht.\')){localStorage.removeItem(\''+COURSE_KEY+'\');location.reload();}})()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:DM Sans,sans-serif;letter-spacing:0.05em;">↺ Reset Course</button>'
+           + '</div>';
+    }
+
+    // ── Init ─────────────────────────────────────────────────
+    function showTab(tab) {
+      var h = renderHeader(tab);
+      h += (tab === 'picker') ? renderPicker() : renderCourseMap();
+      h += renderFooter();
+      panel.innerHTML = h;
+
+      document.getElementById('devTabPicker').onclick = function(){ showTab('picker'); };
+      document.getElementById('devTabMap').onclick    = function(){ showTab('map'); };
+
+      panel.onclick = function(e) {
+        var btn = e.target.closest('[data-exid]');
+        if (!btn) return;
+        var id  = parseInt(btn.getAttribute('data-exid'));
+        var bpm = parseFloat(btn.getAttribute('data-bpm')) || null;
+        var ex  = EXERCISES.find(function(e){ return e.id === id; });
+        if (!ex) return;
+        if (playing) stopExercise();
+        _setGroove(ex, bpm || ex.minBPM);
+        document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+        document.getElementById('dgStart2').addEventListener('click', startExercise);
+        updateBpm();
+        renderNot(-1, false);
+        panel.style.display = 'none';
+      };
+    }
+
     document.body.appendChild(panel);
-
-    panel.addEventListener('click', function(e) {
-      var btn = e.target.closest('[data-exid]');
-      if (!btn) return;
-      var id = parseInt(btn.getAttribute('data-exid'));
-      var ex = EXERCISES.find(function(e){ return e.id === id; });
-      if (!ex) return;
-      if (playing) stopExercise();
-      _setGroove(ex, ex.minBPM);
-      document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
-      document.getElementById('dgStart2').addEventListener('click', startExercise);
-      updateBpm();
-      renderNot(-1, false);
-      panel.style.display = 'none';
-    });
+    showTab('picker');
 
     document.addEventListener('keydown', function(e) {
       if (e.code !== 'KeyD') return;
@@ -4498,6 +5118,12 @@ body {
   document.getElementById('dgMetroBtn').addEventListener('click', function() {
     metronomeOn = !metronomeOn;
     updateMetroBtn();
+  });
+  document.querySelectorAll('.metro-div-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      metronomeDiv = btn.getAttribute('data-div');
+      updateMetroBtn();
+    });
   });
 
   // Drum Legend Modal
