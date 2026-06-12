@@ -209,6 +209,7 @@ body {
   font-variant-numeric: tabular-nums; color: #ffffff;
   min-width: 52px; text-align: center;
 }
+.countdown:empty { display: none; }
 .phase-info {
   color: #ffffff;
   font-size: clamp(17px, 3vw, 22px);
@@ -510,7 +511,7 @@ body {
     <div class="notation-group">
       <div class="notation-info">
         <!-- Metronome toggle -->
-        <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF" style="position:static;width:28px;height:28px;flex-shrink:0;">
+        <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF">
           <svg viewBox="0 0 20 22" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3,20 L17,20 L13.5,2 L6.5,2 Z"/>
             <line x1="10" y1="18" x2="15.5" y2="6"/>
@@ -524,7 +525,7 @@ body {
         </div>
         <span class="notation-info-right" id="dgInfoRight"></span>
         <!-- Drum Key -->
-        <button class="legend-btn" id="dgLegendBtn" title="Drum Key" style="position:static;flex-shrink:0;">
+        <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
           <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="6.5" cy="11.5" r="3.5"/>
             <line x1="9.5" y1="8.5" x2="15.5" y2="2.5"/>
