@@ -53,8 +53,13 @@ body {
   flex-direction: column;
   gap: clamp(8px, 1.5vh, 18px);
 }
-@media (max-width: 768px) {
-  .dg-body, .notation-info { padding-left: 8px; padding-right: 8px; }
+@media (max-width: 768px), (max-height: 500px) {
+  .dg-wrap { padding-top: 8px; }
+  .dg-inner { gap: 4px; }
+  .dg-body { gap: 6px; padding-left: 8px; padding-right: 8px; }
+  .notation-info { padding-left: 8px; padding-right: 8px; }
+  .notation-box { padding-left: 8px; padding-right: 8px; }
+  .phase-info { min-height: 0; }
 }
 
 /* Header */
@@ -91,13 +96,13 @@ body {
 /* Info bar above notation — 3-column: BPM | Title | Blocks */
 .notation-info {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 28px auto 1fr auto 32px;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   max-width: min(860px, 100%);
   margin: 0 auto;
-  padding: 0 clamp(16px, 3vw, 40px);
+  padding: 0 clamp(8px, 2vw, 24px);
   min-height: clamp(24px, 3.5vh, 34px);
 }
 .notation-info-left {
@@ -375,25 +380,22 @@ body {
 
 /* Drum Legend */
 .legend-btn {
-  position: absolute; top: 8px; right: 10px;
   background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
   color: #ffffff; font-size: 13px; font-weight: 600;
   width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s, color 0.15s;
-  z-index: 10;
 }
 .legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
 
 .metro-btn {
-  position: absolute; top: 6px; left: 8px;
   background: none; border: none;
   color: #ffffff;
-  width: 32px; height: 32px; cursor: pointer;
+  width: 28px; height: 28px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: color 0.15s;
-  z-index: 10; padding: 0;
+  padding: 0;
 }
 .metro-btn:hover { color: rgba(201,168,76,0.8); }
 .metro-btn.active { color: #C9A84C; }
@@ -496,12 +498,29 @@ body {
 
     <div class="notation-group">
       <div class="notation-info">
+        <!-- Metronome toggle -->
+        <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF" style="position:static;width:28px;height:28px;flex-shrink:0;">
+          <svg viewBox="0 0 20 22" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3,20 L17,20 L13.5,2 L6.5,2 Z"/>
+            <line x1="10" y1="18" x2="15.5" y2="6"/>
+            <circle cx="10" cy="18" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
         <span class="notation-info-left" id="dgInfoLeft"></span>
         <div class="notation-info-center">
           <span class="notation-info-cat" id="dgCatLabel"></span>
           <span class="notation-info-title" id="dgName">Groove 1</span>
         </div>
         <span class="notation-info-right" id="dgInfoRight"></span>
+        <!-- Drum Key -->
+        <button class="legend-btn" id="dgLegendBtn" title="Drum Key" style="position:static;flex-shrink:0;">
+          <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6.5" cy="11.5" r="3.5"/>
+            <line x1="9.5" y1="8.5" x2="15.5" y2="2.5"/>
+            <line x1="13" y1="5" x2="15.5" y2="7.5"/>
+            <line x1="11.5" y1="6.5" x2="14" y2="9"/>
+          </svg>
+        </button>
       </div>
 
       <div class="notation-box" style="position:relative;">
@@ -509,23 +528,6 @@ body {
       <div class="countin-overlay" id="dgCountIn" style="display:none;">
         <div class="countin-number" id="dgCountNum">1</div>
       </div>
-      <!-- Metronome toggle (left) -->
-      <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF">
-        <svg viewBox="0 0 20 22" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3,20 L17,20 L13.5,2 L6.5,2 Z"/>
-          <line x1="10" y1="18" x2="15.5" y2="6"/>
-          <circle cx="10" cy="18" r="1.2" fill="currentColor" stroke="none"/>
-        </svg>
-      </button>
-      <!-- Drum Key (right) -->
-      <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
-        <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="6.5" cy="11.5" r="3.5"/>
-          <line x1="9.5" y1="8.5" x2="15.5" y2="2.5"/>
-          <line x1="13" y1="5" x2="15.5" y2="7.5"/>
-          <line x1="11.5" y1="6.5" x2="14" y2="9"/>
-        </svg>
-      </button>
     </div>
     </div><!-- /notation-group -->
 
