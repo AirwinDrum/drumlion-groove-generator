@@ -1,0 +1,13 @@
+# ACHTUNG: Dieses Repo ist PUBLIC (GitHub Pages).
+# Alles, was hier nicht ignoriert wird, ist im Netz lesbar.
+
+# Interne Business-Kontexte für Claude (Preise, USt, Launch-Strategie, E2Drums-Regeln)
+.claude/skills/
+
+# Interne Planungsdokumente
+docs/
+drumlion-claude-code-setup/
+CONTEXT.md
+
+# macOS
+.DS_Store
