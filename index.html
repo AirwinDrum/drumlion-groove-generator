@@ -3652,7 +3652,7 @@ body {
   // ── Speed-Bremse: Groove 1 als Tempo-Gate ───────────────────
   // SPHM-Cap = Groove 1's aktuelles BPM × 2 (8tel, eine Hand).
   // Sobald Groove 1 graduated ist → kein Cap mehr.
-  var _NOTES_PER_BEAT = { quarter:1, eighth:2, sixteenth:4, triplet:3, sixteenthTriplet:6 };
+  var _NOTES_PER_BEAT = { whole:0.25, half:0.5, quarter:1, eighth:2, sixteenth:4, triplet:3, sixteenthTriplet:6 };
 
   function _getSphmCap() {
     if (_cState.completed && _cState.completed.indexOf(1) !== -1) return null; // Groove 1 fertig
@@ -3669,8 +3669,12 @@ body {
     var npb   = _NOTES_PER_BEAT[ex.noteValue] || 2;
     var hands = (ex.hihatHands === 'alternate') ? 2 : 1;
     var maxBpm = Math.floor(cap / (npb / hands));
-    var minBpm = (ex.minBPM != null) ? ex.minBPM : 30;
-    return Math.max(minBpm, Math.min(bpm, maxBpm));
+    // Absolute Untergrenze der Übung: bei Warmup dessen minBPM, sonst ex.minBPM.
+    // Der Cap darf NUR nach unten begrenzen — niemals ein geplantes BPM anheben
+    // (sonst würde die Warmup-Rampe 30→40 auf 40 hochgezogen und verschwinden).
+    var floorBpm = ex.warmup ? ex.warmup.minBPM
+                             : ((ex.minBPM != null) ? ex.minBPM : 30);
+    return Math.min(bpm, Math.max(maxBpm, floorBpm));
   }
 
   // Initial State aufbauen
