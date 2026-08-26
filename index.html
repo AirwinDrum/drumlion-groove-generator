@@ -403,6 +403,59 @@ body {
 .metro-div-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
 .metro-div-btn.active { background: rgba(201,168,76,0.2); border-color: #C9A84C; color: #C9A84C; }
 
+/* ── Sync UI ── */
+.sync-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #111; border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 10px 16px; z-index: 900; font-size: 13px;
+  color: rgba(255,255,255,0.5); transition: opacity 0.3s;
+}
+.sync-bar.hidden { display: none; }
+.sync-bar-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #555; flex-shrink: 0;
+}
+.sync-bar-dot.ok  { background: #4caf50; }
+.sync-bar-dot.err { background: #e53935; }
+.sync-bar-dot.spin {
+  background: none; border: 2px solid #C9A84C;
+  border-top-color: transparent; border-radius: 50%;
+  animation: syncSpin 0.7s linear infinite;
+}
+@keyframes syncSpin { to { transform: rotate(360deg); } }
+.sync-bar-link { color: #C9A84C; cursor: pointer; text-decoration: underline; font-size: 13px; }
+.sync-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 1100;
+  align-items: center; justify-content: center;
+}
+.sync-overlay.open { display: flex; }
+.sync-modal {
+  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%;
+}
+.sync-modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.sync-modal p  { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px; line-height: 1.5; }
+.sync-input {
+  width: 100%; background: #111; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 14px;
+  font-family: inherit; outline: none; margin-bottom: 12px;
+}
+.sync-input:focus { border-color: #C9A84C; }
+.sync-btn {
+  width: 100%; background: #C9A84C; color: #000; border: none;
+  border-radius: 10px; padding: 11px; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.sync-btn:hover { background: #d4b05a; }
+.sync-btn-skip {
+  width: 100%; background: none; border: none; color: rgba(255,255,255,0.35);
+  font-size: 12px; margin-top: 10px; cursor: pointer; font-family: inherit;
+  padding: 4px;
+}
+.sync-btn-skip:hover { color: rgba(255,255,255,0.6); }
+.sync-error { color: #e53935; font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
+
 .legend-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.7); z-index: 1000;
@@ -513,6 +566,26 @@ body {
 </style>
 </head>
 <body>
+
+<!-- Sync Bar -->
+<div class="sync-bar hidden" id="syncBar">
+  <div class="sync-bar-dot" id="syncDot"></div>
+  <span id="syncMsg">Fortschritt nicht gespeichert</span>
+  <span class="sync-bar-link" id="syncOpenLink">Sync aktivieren</span>
+</div>
+
+<!-- Sync Modal -->
+<div class="sync-overlay" id="syncOverlay">
+  <div class="sync-modal">
+    <h3>☁️ Fortschritt sichern</h3>
+    <p>Gib deine Drumlion-Email ein. Dein Fortschritt wird automatisch auf allen Geräten synchronisiert.</p>
+    <input class="sync-input" id="syncEmailInput" type="email" placeholder="deine@email.com" autocomplete="email"/>
+    <div class="sync-error" id="syncError" style="display:none;"></div>
+    <button class="sync-btn" id="syncSubmitBtn">Fortschritt sichern</button>
+    <button class="sync-btn-skip" id="syncSkipBtn">Später</button>
+  </div>
+</div>
+
 <div class="dg-wrap" style="padding-top:0;">
   <div class="dg-inner">
 
@@ -714,6 +787,8 @@ body {
     kick2:       { line: 4.0,  head: 'oval',         sound: 'kick'   }, // Bassdrum 2 — linker Fuß
     snare:       { line: 1.5,  head: 'oval',         sound: 'snare'  }, // Snare normal
     snareAccent: { line: 1.5,  head: 'oval',         sound: 'snare', articulation: '>' }, // Snare Accent
+    snareFlam:   { line: 1.5,  head: 'oval',         sound: 'snareFlam', flam: true }, // Snare Flam (Grace + Hauptschlag im Sample)
+    snareFlamAccent: { line: 1.5, head: 'oval',      sound: 'snareFlamAccent', flam: true, articulation: '>' }, // Snare Flam akzentuiert
     ghost:       { line: 1.5,  head: 'oval-ghost',   sound: 'snare'  }, // Snare Ghostnote
     crossStick:  { line: 1.5,  head: 'x',            sound: 'snare'  }, // Cross Stick
     hh:          { line: -0.5, head: 'x',            sound: 'hh'     }, // Hi-Hat geschlossen
@@ -772,7 +847,7 @@ body {
   // ============================================================
   // METRONOME STATE
   // ============================================================
-  var metronomeOn  = false;
+  var metronomeOn  = true;      // Default: Klick immer an
   var metronomeDiv = 'quarter'; // 'quarter' | 'eighth' | 'sixteenth' | 'triplet' | 'voice'
 
   function updateMetroBtn() {
@@ -801,9 +876,11 @@ body {
     return bt % 4 === 0;              // sixteenth: every 4 = 1 quarter
   }
 
-  // Sets metronome default based on exercise category and updates button
+  // Metronome default: immer an — unabhängig von der Kategorie.
+  // metronomeDiv wird hier NICHT zurückgesetzt, damit eine vom User gewählte
+  // Unterteilung über den Übungswechsel hinweg erhalten bleibt (Start = 'quarter').
   function setMetronomeDefault(cat) {
-    metronomeOn = (cat === 'rudiments' || cat === 'notes');
+    metronomeOn = true;
     updateMetroBtn();
   }
 
@@ -2882,10 +2959,37 @@ body {
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Roll Rudiments
-    {id:1002, cat:'rudiments', name:'Single Stroke Four',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1003, cat:'rudiments', name:'Single Stroke Seven',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Single Stroke Four: 8tel-Triole + Schlag auf der nächsten Zählzeit, alternierende Führhand
+    {id:1002, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Four', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','L','R','L',null,null,'L','R','L','R',null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval',quarter:true}],[],[],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval',quarter:true}],[],[]
+      ]},
+    // Single Stroke Seven: Sextole + Schlag auf der nächsten Zählzeit, alternierende Führhand
+    {id:1003, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Seven', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','L','R','L','R','L','R',null,null,null,null,null,'L','R','L','R','L','R','L',null,null,null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[],[],[],[],[],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[],[],[],[],[]
+      ]},
+    // Multiple Bounce Roll: braucht Buzz-Sound + Buzz-Notation — noch nicht baubar
     {id:1004, cat:'rudiments', name:'Multiple Bounce Roll',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1005, cat:'rudiments', name:'Triple Stroke Roll',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Triple Stroke Roll: 8tel-Triolen, drei Schläge pro Hand
+    {id:1005, cat:'rudiments', catLabel:'Rudiments', name:'Triple Stroke Roll', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','R','L','L','L','R','R','R','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
     {id:1006, cat:'rudiments', catLabel:'Rudiments', name:'Double Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L','L'],
       beats:[
@@ -2906,14 +3010,69 @@ body {
         [{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
-    {id:1007, cat:'rudiments', name:'Five Stroke Roll',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1008, cat:'rudiments', name:'Six Stroke Roll',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1009, cat:'rudiments', name:'Seven Stroke Roll',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1010, cat:'rudiments', name:'Nine Stroke Roll',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1011, cat:'rudiments', name:'Ten Stroke Roll',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1012, cat:'rudiments', name:'Eleven Stroke Roll',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1013, cat:'rudiments', name:'Thirteen Stroke Roll',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1014, cat:'rudiments', name:'Fifteen Stroke Roll',   noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Stroke Rolls: ausgeschriebene Form in 16teln (Doppelschläge + akzentuierter Abschluss)
+    {id:1007, cat:'rudiments', catLabel:'Rudiments', name:'Five Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R',null,null,null,'L','L','R','R','L',null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[]
+      ]},
+    {id:1008, cat:'rudiments', catLabel:'Rudiments', name:'Six Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','L','L','R','R','L',null,null,'R','L','L','R','R','L',null,null],
+      beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[]
+      ]},
+    {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L',null,'L','L','R','R','L','L','R',null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[]
+      ]},
+    {id:1010, cat:'rudiments', catLabel:'Rudiments', name:'Nine Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L','L','R',null,null,null,null,null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],[],[],[],[]
+      ]},
+    {id:1011, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L','L','R','L',null,null,null,null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],[],[],[]
+      ]},
+    {id:1012, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L','L','R','R','L',null,null,null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],[],[]
+      ]},
+    {id:1013, cat:'rudiments', catLabel:'Rudiments', name:'Thirteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[]
+      ]},
+    {id:1014, cat:'rudiments', catLabel:'Rudiments', name:'Fifteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L',null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[]
+      ]},
+    // Seventeen Stroke Roll: 17 Schläge passen nicht in einen 4/4-Takt aus 16teln (bräuchte 32tel)
     {id:1015, cat:'rudiments', name:'Seventeen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
     // Diddle Rudiments
     {id:1016, cat:'rudiments', catLabel:'Rudiments', name:'Single Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
@@ -2936,20 +3095,123 @@ body {
         [{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
-    {id:1017, cat:'rudiments', name:'Double Paradiddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1018, cat:'rudiments', name:'Triple Paradiddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1019, cat:'rudiments', name:'Paradiddle-Diddle',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    // Flam Rudiments
-    {id:1020, cat:'rudiments', name:'Flam',                  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1021, cat:'rudiments', name:'Flam Accent',           noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1022, cat:'rudiments', name:'Flam Tap',              noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1023, cat:'rudiments', name:'Flamacue',              noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1024, cat:'rudiments', name:'Flam Paradiddle',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1025, cat:'rudiments', name:'Flammed Mill',          noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1026, cat:'rudiments', name:'Flam Paradiddle-Diddle',noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1027, cat:'rudiments', name:'Pataflafla',            noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1028, cat:'rudiments', name:'Swiss Army Triplet',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1029, cat:'rudiments', name:'Inverted Flam Tap',     noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Double Paradiddle: 6er-Gruppen (Triolen-Grid), Akzent auf 1. Schlag jeder Gruppe
+    {id:1017, cat:'rudiments', catLabel:'Rudiments', name:'Double Paradiddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','L','R','L','R','R','L','R','L','R','L','L'],
+      beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Triple Paradiddle: 8er-Gruppen in 16teln, Akzent auf 1. Schlag jeder Gruppe
+    {id:1018, cat:'rudiments', catLabel:'Rudiments', name:'Triple Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','L','R','L','R','L','R','R','L','R','L','R','L','R','L','L'],
+      beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Paradiddle-Diddle: 6er-Gruppen (Triolen-Grid), gleichbleibende Führhand, Akzent auf 1
+    {id:1019, cat:'rudiments', catLabel:'Rudiments', name:'Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','L','R','R','L','L','R','L','R','R','L','L'],
+      beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Flam Rudiments — Sticking-Schreibweise: Kleinbuchstabe = Grace Note (z.B. lR = Flam rechts)
+    // Flam: alternierende Flams auf Vierteln
+    {id:1020, cat:'rudiments', catLabel:'Rudiments', name:'Flam', noteValue:'quarter', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','rL','lR','rL'],
+      beats:[
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}]
+      ]},
+    // Flam Accent: 8tel-Triolen, Flam + Akzent auf 1. Note jeder Triole, alternierend
+    {id:1021, cat:'rudiments', catLabel:'Rudiments', name:'Flam Accent', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','L','R','rL','R','L','lR','L','R','rL','R','L'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Flam Tap: 8tel, Flam + Akzent auf 1. Note jedes Doppelschlags
+    {id:1022, cat:'rudiments', catLabel:'Rudiments', name:'Flam Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','R','rL','L','lR','R','rL','L'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Flamacue: Flam, Akzent auf 2. Note, Abschluss-Flam auf der nächsten Zählzeit, alternierend
+    {id:1023, cat:'rudiments', catLabel:'Rudiments', name:'Flamacue', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','L','R','L','lR',null,null,null,'rL','R','L','R','rL',null,null,null],
+      beats:[
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[],[],[],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[],[],[]
+      ]},
+    // Flam Paradiddle: Paradiddle mit Flam + Akzent auf 1. Schlag jeder 4er-Gruppe
+    {id:1024, cat:'rudiments', catLabel:'Rudiments', name:'Flam Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','L','R','R','rL','R','L','L','lR','L','R','R','rL','R','L','L'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Flammed Mill: umgekehrter Paradiddle (RRLR) mit Flam + Akzent vorne
+    {id:1025, cat:'rudiments', catLabel:'Rudiments', name:'Flammed Mill', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','R','L','R','rL','L','R','L','lR','R','L','R','rL','L','R','L'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Flam Paradiddle-Diddle: 6er-Gruppen (Triolen-Grid), Flam + Akzent auf 1, alternierend
+    {id:1026, cat:'rudiments', catLabel:'Rudiments', name:'Flam Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','L','R','R','L','L','rL','R','L','L','R','R'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Pataflafla: 16tel-Single-Strokes mit Flam auf 1. und 4. Note jeder 4er-Gruppe
+    {id:1027, cat:'rudiments', catLabel:'Rudiments', name:'Pataflafla', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','L','R','rL','lR','L','R','rL','lR','L','R','rL','lR','L','R','rL'],
+      beats:[
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}],
+        [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}]
+      ]},
+    // Swiss Army Triplet: 8tel-Triolen, Flam + Akzent auf 1, gleichbleibende Führhand
+    {id:1028, cat:'rudiments', catLabel:'Rudiments', name:'Swiss Army Triplet', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','R','L','lR','R','L','lR','R','L','lR','R','L'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Inverted Flam Tap: 8tel, Doppelschläge über die Zählzeit versetzt, Flam + Akzent auf den Zählzeiten
+    {id:1029, cat:'rudiments', catLabel:'Rudiments', name:'Inverted Flam Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['lR','L','rL','R','lR','L','rL','R'],
+      beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    // Flam Drag: braucht Drag-Sounds — noch nicht baubar
     {id:1030, cat:'rudiments', name:'Flam Drag',             noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
     // Drag Rudiments
     {id:1031, cat:'rudiments', name:'Drag',                  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
@@ -3343,7 +3605,7 @@ body {
     notes:         EXERCISES.filter(function(e){ return e.cat === 'notes'; }),
     fillins:       EXERCISES.filter(function(e){ return e.cat === 'fillins' && e.beats; }),
     coordination:  EXERCISES.filter(function(e){ return e.cat === 'coordination'; }),
-    rudiments:     EXERCISES.filter(function(e){ return e.cat === 'rudiments'; })
+    rudiments:     EXERCISES.filter(function(e){ return e.cat === 'rudiments' && e.beats; })
   };
 
   function _getRotation() {
@@ -3436,9 +3698,93 @@ body {
 
   function _saveState() {
     try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
+    _syncPush();
   }
 
   var _cState = _loadState();
+
+  // ============================================================
+  // CLOUD SYNC — Supabase (Fortschritt geräteübergreifend)
+  // ============================================================
+  var _SB_URL = 'https://SUPABASE_PROJECT_URL.supabase.co';
+  var _SB_KEY = 'SUPABASE_ANON_KEY';
+  var _SYNC_EMAIL_KEY = 'drumlion_sync_email_v1';
+
+  var _syncEmail = (function() {
+    try {
+      var u = new URLSearchParams(window.location.search).get('u') || '';
+      if (u && u.indexOf('@') !== -1) {
+        localStorage.setItem(_SYNC_EMAIL_KEY, u.toLowerCase());
+        return u.toLowerCase();
+      }
+      return localStorage.getItem(_SYNC_EMAIL_KEY) || '';
+    } catch(e) { return ''; }
+  })();
+
+  function _syncSetEmail(email) {
+    _syncEmail = email;
+    try { localStorage.setItem(_SYNC_EMAIL_KEY, email); } catch(e) {}
+  }
+
+  function _syncSetStatus(state, msg) {
+    var bar  = document.getElementById('syncBar');
+    var dot  = document.getElementById('syncDot');
+    var txt  = document.getElementById('syncMsg');
+    var link = document.getElementById('syncOpenLink');
+    if (!bar) return;
+    bar.classList.remove('hidden');
+    dot.className = 'sync-bar-dot ' + (state === 'ok' ? 'ok' : state === 'err' ? 'err' : state === 'spin' ? 'spin' : '');
+    txt.textContent = msg;
+    if (link) link.style.display = (state === 'none') ? 'inline' : 'none';
+    if (state === 'ok') { setTimeout(function(){ bar.classList.add('hidden'); }, 3000); }
+  }
+
+  function _syncPush() {
+    if (!_syncEmail || _SB_URL.indexOf('SUPABASE_PROJECT_URL') !== -1) return;
+    _syncSetStatus('spin', 'Speichern…');
+    var payload = JSON.stringify({ total: _cState.total || 0, ts: Date.now() });
+    fetch(_SB_URL + '/rest/v1/user_progress', {
+      method: 'POST',
+      headers: {
+        'apikey': _SB_KEY,
+        'Authorization': 'Bearer ' + _SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ email: _syncEmail, state: JSON.stringify(_cState), updated_at: new Date().toISOString() })
+    })
+    .then(function(r) {
+      if (r.ok) { _syncSetStatus('ok', 'Gespeichert ✓'); }
+      else { _syncSetStatus('err', 'Sync-Fehler'); }
+    })
+    .catch(function() { _syncSetStatus('err', 'Offline'); });
+  }
+
+  function _syncPull(onDone) {
+    if (!_syncEmail || _SB_URL.indexOf('SUPABASE_PROJECT_URL') !== -1) { onDone(false); return; }
+    _syncSetStatus('spin', 'Lade Fortschritt…');
+    fetch(_SB_URL + '/rest/v1/user_progress?email=eq.' + encodeURIComponent(_syncEmail) + '&select=state', {
+      headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      if (!rows || !rows.length) { _syncSetStatus('ok', 'Neu angelegt ✓'); onDone(false); return; }
+      try {
+        var remote = JSON.parse(rows[0].state);
+        if (remote && remote.cats && (remote.total || 0) > (_cState.total || 0)) {
+          _cState = remote;
+          try { localStorage.setItem(COURSE_KEY, rows[0].state); } catch(e) {}
+          _syncSetStatus('ok', 'Fortschritt geladen ✓');
+          onDone(true); // state changed, needs UI reload
+        } else {
+          _syncSetStatus('ok', 'Aktuell ✓');
+          if ((remote && (remote.total || 0) < (_cState.total || 0))) _syncPush();
+          onDone(false);
+        }
+      } catch(e) { _syncSetStatus('err', 'Sync-Fehler'); onDone(false); }
+    })
+    .catch(function() { _syncSetStatus('err', 'Offline'); onDone(false); });
+  }
 
   // Nächste Lektion ermitteln (ohne State zu ändern)
   function _peekLesson() {
@@ -3494,12 +3840,12 @@ body {
     }
 
     // Coordination/Rudiments lazy-initialisieren wenn Level-Gate erreicht
+    var _curLevel = _getLevelInfo().level;
     ['coordination', 'rudiments'].forEach(function(cat) {
       var cs = _cState.cats[cat];
       if (cs && !cs.active.length && !cs.introIdx && _catPool[cat].length) {
-        var hours = _getTotalMinutes() / 60;
-        var gate = (cat === 'coordination') ? 100 : 200;
-        if (hours >= gate) {
+        var gate = (cat === 'coordination') ? 2 : 3;
+        if (_curLevel >= gate) {
           cs.active.push({ id: _catPool[cat][0].id, bpmStep: 0 });
           cs.introIdx = 1;
         }
@@ -3891,8 +4237,8 @@ body {
   }
 
   // Metronom-Clicks für Tick bt schedulen
-  function scheduleMetroClicks(bt, tickSec, qTicks, when) {
-    if (!metronomeOn) return;
+  function scheduleMetroClicks(bt, tickSec, qTicks, when, forceClick) {
+    if (!metronomeOn && !forceClick) return;
     var beatInBar = Math.floor(bt / qTicks) % 4;
     var posInQ    = bt % qTicks;
     var qSec      = tickSec * qTicks;
@@ -4037,6 +4383,8 @@ body {
     var lbl4  = ['1', '2', '3', '4'];
     var lbl8  = ['1', '&', '2', '&', '3', '&', '4', '&'];
     var lbl16 = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
+    var lbl12 = ['1', '&', 'a', '2', '&', 'a', '3', '&', 'a', '4', '&', 'a'];
+    var lbl24 = ['1','','','&','','', '2','','','&','','', '3','','','&','','', '4','','','&','',''];
     var lbl   = lbl8;
     var sY   = 40, ls = 8;
     var op   = dimmed ? 0.2 : 1;
@@ -4058,7 +4406,7 @@ body {
     function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff, groups) {
       var n = beatsArr.length;
       var bW = n * bs;
-      var lbl = (n === 16) ? lbl16 : (n === 4) ? lbl4 : lbl8;
+      var lbl = (n === 16) ? lbl16 : (n === 12) ? lbl12 : (n === 24) ? lbl24 : (n === 4) ? lbl4 : lbl8;
       var fs = fillStart || 0;
       // Staff lines (skipped when caller draws them across full width)
       if (!skipStaff) {
@@ -4114,6 +4462,37 @@ body {
             });
           }
         });
+      } else if (n === 12 || n === 24) {
+        // Triolen (3er-Gruppen, 1 Balken) / Sextolen (6er-Gruppen, 2 Balken)
+        // Innerhalb jeder Gruppe: zusammenhängende Noten-Runs balken,
+        // volle Gruppen bekommen die Tuplet-Zahl (3 bzw. 6) über dem Balken
+        var gsz = n / 4;
+        var dbl = (n === 24);
+        for (var g0 = 0; g0 < n; g0 += gsz) {
+          var runStart = -1;
+          for (var gi = g0; gi <= g0 + gsz; gi++) {
+            var hasNote = gi < g0 + gsz && beatsArr[gi] && beatsArr[gi].length > 0;
+            if (hasNote && runStart === -1) runStart = gi;
+            if (!hasNote && runStart !== -1) {
+              var runEnd = gi - 1;
+              if (runEnd > runStart) {
+                var x1 = sX+16+runStart*bs+5, x2 = sX+16+runEnd*bs+5;
+                h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                     '" fill="'+W+'" opacity="'+op+'"/>';
+                if (dbl) {
+                  var BT2 = sY - 18 + BH + 1.5;
+                  h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                       '" fill="'+W+'" opacity="'+op+'"/>';
+                }
+                if (runEnd - runStart === gsz - 1) {
+                  h += '<text x="'+((x1+x2)/2)+'" y="'+(BT-3)+'" text-anchor="middle" fill="'+W+
+                       '" font-size="9" font-style="italic" font-family="DM Sans,sans-serif" opacity="'+(op*0.8)+'">'+gsz+'</text>';
+                }
+              }
+              runStart = -1;
+            }
+          }
+        }
       } else if (n > 4) {
         // Fallback: groups of 2, 1 beam
         for (var gi = 0; gi < n-1; gi += 2) {
@@ -4141,7 +4520,9 @@ body {
                        GROOVE.catLabel === 'Downbeat Accents' ||
                        GROOVE.catLabel === 'Upbeat Accents')
                      ? (sY + 4*ls + 13)
-                     : (sY - 27);
+                     : (GROOVE.cat === 'rudiments')
+                       ? (sY - 38)
+                       : (sY - 27);
         h += '<text x="'+x+'" y="'+lblY+'" text-anchor="middle" fill="'+lc+
              '" font-size="11" font-family="DM Sans,sans-serif" font-weight="'+(isA?700:400)+'">'+lbl[bi]+'</text>';
         // Half rest marker: {rest:'half'} in beats array
@@ -4207,6 +4588,20 @@ body {
             }
           }
         });
+        // Flam: kleine Vorschlagnote (Grace Note) links vor dem Hauptschlag
+        sortedBn.forEach(function(n) {
+          var dm = DRUM_MAP[n.inst];
+          if (dm && dm.flam) {
+            var gy = sY + n.line * ls;
+            var gx = x - 11;
+            h += '<ellipse cx="'+gx+'" cy="'+gy+'" rx="3.2" ry="2.3" fill="'+nc+
+                 '" transform="rotate(-20 '+gx+' '+gy+')" opacity="'+op+'"/>';
+            h += '<line x1="'+(gx+3)+'" y1="'+gy+'" x2="'+(gx+3)+'" y2="'+(gy-13)+
+                 '" stroke="'+nc+'" stroke-width="1" opacity="'+op+'"/>';
+            h += '<line x1="'+gx+'" y1="'+(gy-10)+'" x2="'+(gx+6)+'" y2="'+(gy-15)+
+                 '" stroke="'+nc+'" stroke-width="0.9" opacity="'+op+'"/>';
+          }
+        });
         // Instrument label: neben dem jeweiligen Notenkopf
         if (showLabels && bi >= fs && bn.length > 0) {
           var labelInsts = sortedBn.filter(function(n){ return n.inst !== 'hh' && n.inst !== 'hhPedal' && n.inst !== 'hhOpen' && n.inst !== 'hhClose' && n.inst !== 'hhClosing' && n.inst !== 'hhAccent'; });
@@ -4229,15 +4624,28 @@ body {
         if (stickings && stickings[bi]) {
           h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
+        // Check if empty slot is covered by a preceding quarter note in the same group
+        var coveredByQuarter = false;
+        if (bn.length === 0) {
+          var _gsz = _nb / 4;
+          var _grpStart = Math.floor(bi / _gsz) * _gsz;
+          for (var _gi = _grpStart; _gi < bi; _gi++) {
+            if (beatsArr[_gi] && beatsArr[_gi].some(function(nn){ return nn.quarter; })) {
+              coveredByQuarter = true; break;
+            }
+          }
+        }
         // Eighth rest symbol — authentisches Bravura-Glyph
-        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'eighth' && bn.length === 0) {
+        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
+            (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet') && bn.length === 0 && !coveredByQuarter) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
         // Sixteenth rest symbol — authentisches Bravura-Glyph
-        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'sixteenth' && bn.length === 0) {
+        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
+            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') && bn.length === 0) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
@@ -4258,22 +4666,34 @@ body {
           h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+stemTop+
                '" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
           // Fähnchen für einzelne Noten ohne Balken-Partner — Bravura-Glyphs
-          if (GROOVE.cat === 'notes') {
-            if (n === 8) {
-              // Achtel: Paar-Check (2er-Gruppen)
-              var pairIdx = Math.floor(bi / 2) * 2;
-              var partner = (bi % 2 === 0) ? pairIdx + 1 : pairIdx;
-              var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
-              if (!hasPartner) {
-                h += bravuraGlyph('flag8thUp', x + 5, stemTop, nc, op);
-              }
-            } else if (n === 16) {
-              // Sechzehntel: 2er-Paar-Check — Fähnchen wenn kein Balken-Partner im Paar
-              var pairStart = Math.floor(bi / 2) * 2;
-              var partner = (bi % 2 === 0) ? pairStart + 1 : pairStart;
-              var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
-              if (!hasPartner) {
-                h += bravuraGlyph('flag16thUp', x + 5, stemTop, nc, op);
+          if (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') {
+            var isQuarterNote = bn.some(function(nn){ return nn.quarter; });
+            if (!isQuarterNote) {
+              if (n === 8) {
+                // Achtel: Paar-Check (2er-Gruppen)
+                var pairIdx = Math.floor(bi / 2) * 2;
+                var partner = (bi % 2 === 0) ? pairIdx + 1 : pairIdx;
+                var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
+                if (!hasPartner) {
+                  h += bravuraGlyph('flag8thUp', x + 5, stemTop, nc, op);
+                }
+              } else if (n === 16) {
+                // Sechzehntel: 2er-Paar-Check — Fähnchen wenn kein Balken-Partner im Paar
+                var pairStart = Math.floor(bi / 2) * 2;
+                var partner = (bi % 2 === 0) ? pairStart + 1 : pairStart;
+                var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
+                if (!hasPartner) {
+                  h += bravuraGlyph('flag16thUp', x + 5, stemTop, nc, op);
+                }
+              } else if (n === 12 || n === 24) {
+                // Triolen/Sextolen: Fähnchen wenn kein direkter Nachbar in der Gruppe
+                var gsz2 = n / 4;
+                var gst = Math.floor(bi / gsz2) * gsz2;
+                var hasL = bi > gst && beatsArr[bi-1] && beatsArr[bi-1].length > 0;
+                var hasR = bi < gst + gsz2 - 1 && beatsArr[bi+1] && beatsArr[bi+1].length > 0;
+                if (!hasL && !hasR) {
+                  h += bravuraGlyph(n === 12 ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
+                }
               }
             }
           }
@@ -4336,7 +4756,7 @@ body {
     } else {
       // Single bar — adaptive spacing based on beat count
       var _nb = GROOVE.beats.length;
-      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : 30);
+      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : (_nb <= 12 ? 40 : (_nb <= 16 ? 30 : 20)));
       var bW = bs * _nb;
       var sX = 42;
       svg.setAttribute('viewBox', '0 -10 560 108');
@@ -4648,27 +5068,30 @@ body {
         if (bt === 0 || bt === n1) setInfo(infoLine(br, bt));
         if (bt < n1) {
           // Groove bar
+          var clickOnly = isTimingBlock && !grooveOn(br);
           if (grooveOn(br)) {
             GROOVE.beats[bt].forEach(function(n) { playSound(n.inst, when); });
             scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
-          } else { scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when); }
+          } else { scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly); }
           renderNot(bt, false);
         } else {
           // Fill bar
           var fb = bt - n1;
+          var clickOnly = isTimingBlock && !grooveOn(br);
           if (grooveOn(br)) {
             GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst, when); });
             scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when);
-          } else { scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when); }
+          } else { scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when, clickOnly); }
           renderNot(bt, false);
         }
       } else {
         if (bt === 0) setInfo(infoLine(br, bt));
+        var clickOnly = isTimingBlock && !grooveOn(br);
         if (grooveOn(br)) {
           if (bt < GROOVE.beats.length) playBeat(bt, when);
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
         } else {
-          scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
+          scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly);
         }
         renderNot(bt, false);
       }
@@ -5177,6 +5600,86 @@ body {
       updateMetroBtn();
     });
   });
+
+  // ── Sync UI ──
+  (function() {
+    var bar      = document.getElementById('syncBar');
+    var overlay  = document.getElementById('syncOverlay');
+    var openLink = document.getElementById('syncOpenLink');
+    var input    = document.getElementById('syncEmailInput');
+    var submitBtn= document.getElementById('syncSubmitBtn');
+    var skipBtn  = document.getElementById('syncSkipBtn');
+    var errDiv   = document.getElementById('syncError');
+
+    function openModal() { if (overlay) overlay.classList.add('open'); }
+    function closeModal(){ if (overlay) overlay.classList.remove('open'); }
+
+    var _fromUrl = !!(new URLSearchParams(window.location.search).get('u'));
+
+    if (_syncEmail && _fromUrl) {
+      // Email kam direkt aus Systeme.io-URL → kein Modal, kein Bar nötig
+      // Sync läuft still (push/pull wird weiter unten gestartet)
+    } else if (!_syncEmail) {
+      // Kein Sync aktiv → Bar zeigen
+      if (bar) {
+        bar.classList.remove('hidden');
+        var dot = document.getElementById('syncDot');
+        var msg = document.getElementById('syncMsg');
+        if (dot) dot.className = 'sync-bar-dot';
+        if (msg) msg.textContent = 'Fortschritt nicht gespeichert';
+        if (openLink) openLink.style.display = 'inline';
+      }
+    }
+
+    if (openLink) openLink.addEventListener('click', openModal);
+
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function() {
+        var email = (input ? input.value.trim() : '').toLowerCase();
+        if (!email || !email.includes('@')) {
+          if (errDiv) { errDiv.textContent = 'Bitte gültige Email eingeben.'; errDiv.style.display = 'block'; }
+          return;
+        }
+        if (errDiv) errDiv.style.display = 'none';
+        _syncSetEmail(email);
+        closeModal();
+        _syncPull(function(changed) {
+          if (changed) {
+            _loadCurrentLesson(false);
+            _updateLevelUI();
+          } else {
+            _syncPush();
+          }
+        });
+      });
+    }
+
+    if (skipBtn) skipBtn.addEventListener('click', closeModal);
+
+    // Auto-open modal nach 8s — nur wenn kein Sync und nicht aus URL
+    if (!_syncEmail && !_fromUrl) {
+      var _syncPromptShown = false;
+      try { _syncPromptShown = !!localStorage.getItem('drumlion_sync_skipped'); } catch(e) {}
+      if (!_syncPromptShown) {
+        setTimeout(function() {
+          if (!_syncEmail) {
+            openModal();
+            try { localStorage.setItem('drumlion_sync_skipped', '1'); } catch(e) {}
+          }
+        }, 8000);
+      }
+    }
+  })();
+
+  // Startup-Pull: Supabase-Fortschritt laden wenn Email vorhanden
+  if (_syncEmail && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
+    _syncPull(function(changed) {
+      if (changed) {
+        _loadCurrentLesson(false);
+        _updateLevelUI();
+      }
+    });
+  }
 
   // Drum Legend Modal
   var legendBtn = document.getElementById('dgLegendBtn');
