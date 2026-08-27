@@ -27,10 +27,11 @@ body {
 }
 
 .dg-wrap {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
+  min-height: 100dvh; /* dvh: Browser-Leisten auf dem Handy einrechnen */
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
   padding: 0;
   overflow-x: hidden;
@@ -40,22 +41,54 @@ body {
 .dg-inner {
   width: 100%;
   max-width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 1.5vh, 18px);
-  padding-top: 0;
-  padding-bottom: clamp(16px, 2vh, 28px);
+  /* Luft über der Kategoriezeile — sie klebte vorher am oberen Rand */
+  padding-top: clamp(10px, 2.2vh, 28px);
+  /* Platz für die fixierte Sync-Leiste am unteren Rand */
+  padding-bottom: calc(clamp(16px, 2vh, 28px) + env(safe-area-inset-bottom, 0px));
 }
 
-/* Zentrierte Hülle für alles unterhalb der Notation */
+/* Zentrierte Hülle für alles unterhalb der Notation.
+   flex:1 + space-evenly verteilt die Steuerelemente über die verfügbare
+   Höhe, statt sie oben zusammenzudrängen und darunter eine Leere zu lassen.
+   Die Bedienelemente rutschen dadurch auf hohen Displays in Daumenreichweite. */
 .dg-body {
   width: 100%;
   max-width: min(860px, 100%);
   margin: 0 auto;
   padding: 0 clamp(16px, 3vw, 40px);
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.5vh, 18px);
+  justify-content: flex-start;
+  gap: clamp(6px, 1.2vh, 14px);
+}
+
+/* Zwei auto-Margins teilen den freien Platz: der Bedienblock steht mittig
+   zwischen Notation und Fortschritt, der Fortschritt sitzt unten.
+   Auf niedrigen Displays fallen beide auf 0 zusammen — dort bleibt das
+   Layout unverändert kompakt. */
+.dg-body .phase-row     { margin-top: auto; }
+.dg-body .nav-row       { margin-top: clamp(4px, 2vh, 24px); }
+.dg-body .level-display { margin-top: auto; padding-top: clamp(8px, 2vh, 24px); }
+
+/* Die fixierte Sync-Leiste darf den Fortschrittsblock nicht überdecken.
+   Der Zuschlag greift nur, solange die Leiste sichtbar ist. */
+body:has(.sync-bar:not(.hidden)) .dg-inner {
+  padding-bottom: calc(clamp(16px, 2vh, 28px) + 46px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Ab Tablet-Breite darf der Inhalt mitwachsen — sonst wirken die
+   Bedienelemente neben der randlosen Notation verloren. */
+@media (min-width: 900px) {
+  .dg-body { max-width: min(1040px, 88vw); }
+}
+@media (min-width: 1400px) {
+  .dg-body { max-width: min(1180px, 78vw); }
 }
 /* Header */
 /* Notation group — tight stack above staff */
@@ -90,8 +123,12 @@ body {
 
 /* Info bar above notation — 3-column: BPM | Title | Blocks */
 .notation-info {
+  /* Eigener Stapelkontext über der Notenbox — sonst überdeckt deren
+     Hintergrund das aufgeklappte Unterteilungs-Menü. */
+  position: relative;
+  z-index: 20;
   display: grid;
-  grid-template-columns: 28px auto 1fr auto 32px;
+  grid-template-columns: auto auto 1fr auto 32px;
   align-items: center;
   gap: 6px;
   width: 100%;
@@ -385,23 +422,104 @@ body {
 }
 .legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
 
+/* ── Metronom-Cluster: Toggle + Unterteilungs-Auswahl ──
+   Beide Teile sitzen in einer gemeinsamen Pille — sie gehören inhaltlich
+   zusammen (Klick an/aus + wie der Klick unterteilt ist). Eine Trennlinie
+   markiert die zwei Funktionen, ohne sie optisch auseinanderzureißen.
+   --metro-h steuert die Größe des gesamten Clusters über alle Breakpoints. */
+.metro-cluster {
+  --metro-h: clamp(30px, 4.4vw, 42px);
+  display: inline-flex; align-items: stretch;
+  height: var(--metro-h);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: calc(var(--metro-h) / 2);
+  overflow: visible;
+  transition: border-color 0.15s, background 0.15s;
+}
+.metro-cluster.on {
+  background: rgba(201,168,76,0.12);
+  border-color: rgba(201,168,76,0.55);
+}
+
 .metro-btn {
   background: none; border: none;
-  color: #ffffff;
-  width: 28px; height: 28px; cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  width: var(--metro-h); height: 100%;
+  cursor: pointer; padding: 0;
   display: flex; align-items: center; justify-content: center;
-  transition: color 0.15s;
-  padding: 0;
+  border-radius: calc(var(--metro-h) / 2) 0 0 calc(var(--metro-h) / 2);
+  transition: color 0.15s, background 0.15s;
 }
-.metro-btn:hover { color: rgba(201,168,76,0.8); }
+.metro-btn svg { width: 58%; height: 58%; }
+.metro-btn:hover { color: rgba(201,168,76,0.85); background: rgba(255,255,255,0.05); }
 .metro-btn.active { color: #C9A84C; }
-.metro-div-btn {
-  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.55); border-radius: 20px;
-  padding: 3px 12px; font-size: 12px; cursor: pointer; transition: all 0.15s;
+
+.metro-select { position: relative; display: flex; }
+
+.metro-div-trigger {
+  display: flex; align-items: center; gap: 5px;
+  height: 100%; padding: 0 clamp(8px, 1.2vw, 14px) 0 clamp(7px, 1vw, 11px);
+  background: none; border: none;
+  border-left: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.62);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(11px, 1.35vw, 15px); font-weight: 600;
+  letter-spacing: 0.3px; white-space: nowrap; cursor: pointer;
+  border-radius: 0 calc(var(--metro-h) / 2) calc(var(--metro-h) / 2) 0;
+  transition: color 0.15s, background 0.15s;
 }
-.metro-div-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
-.metro-div-btn.active { background: rgba(201,168,76,0.2); border-color: #C9A84C; color: #C9A84C; }
+.metro-cluster.on .metro-div-trigger { color: #C9A84C; border-left-color: rgba(201,168,76,0.4); }
+.metro-div-trigger:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.metro-div-glyph { font-variant-numeric: tabular-nums; }
+/* Der Wortlaut verschwindet erst, wenn die Kopfzeile wirklich eng wird —
+   das Kürzel allein bleibt eindeutig. */
+.metro-div-text  { display: none; }
+@media (min-width: 620px) {
+  .metro-div-text  { display: inline; }
+  .metro-div-glyph { display: none; }
+}
+.metro-div-caret {
+  width: clamp(8px, 0.9vw, 11px); height: auto; flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+.metro-select.open .metro-div-caret { transform: rotate(180deg); }
+
+.metro-div-menu {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  min-width: max(150px, 100%);
+  background: #16161a;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  padding: 5px;
+  display: none; flex-direction: column;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.65);
+  z-index: 1200;
+}
+.metro-select.open .metro-div-menu { display: flex; }
+
+.metro-div-opt {
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: none; width: 100%;
+  padding: clamp(7px, 1vh, 10px) 11px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.72);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(13px, 1.3vw, 15px); font-weight: 500;
+  text-align: left; white-space: nowrap; cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.metro-div-opt .opt-glyph {
+  min-width: 30px; text-align: center;
+  font-size: 0.82em; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255,255,255,0.4);
+  transition: color 0.12s;
+}
+.metro-div-opt:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.metro-div-opt:hover .opt-glyph { color: rgba(255,255,255,0.7); }
+.metro-div-opt.active { background: rgba(201,168,76,0.16); color: #C9A84C; }
+.metro-div-opt.active .opt-glyph { color: #C9A84C; }
 
 /* ── Sync UI ── */
 .sync-bar {
@@ -543,7 +661,8 @@ body {
 /* ── Mobile (Hochformat ≤768px oder Querformat ≤500px hoch) ──
    Muss am Ende des Stylesheets stehen, damit es die Basis-Regeln überschreibt */
 @media (max-width: 768px), (max-height: 500px) {
-  .dg-wrap { padding-top: 8px; }
+  /* Abstand steuert .dg-inner (siehe oben) — hier nichts doppelt aufschlagen */
+  .dg-wrap { padding-top: 0; }
   .dg-inner { gap: 4px; }
   .dg-body { gap: 4px; padding-left: 8px; padding-right: 8px; }
   .notation-info {
@@ -551,7 +670,7 @@ body {
     display: flex; justify-content: center; position: relative;
   }
   .notation-info-left, .notation-info-right { display: none; }
-  .notation-info #dgMetroBtn { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
+  .notation-info #dgMetroCluster { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); }
   .notation-info #dgLegendBtn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
   .notation-box { padding-left: 8px; padding-right: 8px; }
   .phase-info { min-height: 0; }
@@ -562,6 +681,75 @@ body {
   .nav-btn { display: none; }
   .controls { gap: 8px; }
   .btn-go, .btn-stp { min-width: 0; flex: 1; padding-left: 12px; padding-right: 12px; }
+}
+
+/* Ab Tablet-Breite darf der Hauptbutton nicht mehr über die volle Breite
+   laufen — die Mobil-Regel oben (flex:1) lässt ihn sonst bis 768px+ strecken. */
+@media (min-width: 600px) {
+  .btn-go, .btn-stp {
+    flex: 0 1 auto;
+    min-width: clamp(200px, 30vw, 320px);
+    max-width: 420px;
+  }
+}
+
+/* ── Mittlere Höhen bei Laptop-Breite (z.B. 1366x768, 1024x768) ──
+   Zwischenstufe: hier passt der volle Hoch-Layout-Abstand nicht mehr, die
+   harte Querformat-Kompression wäre aber übertrieben. Ohne diese Stufe
+   rutschen die Fortschrittszeilen unter die Sync-Leiste.
+   min-width:900px ist wichtig — sonst greift die Stufe auch bei hohen
+   Handys (375x812) und hebt dort die auto-Margins auf, die den Inhalt
+   über die Höhe verteilen. */
+@media (min-height: 561px) and (max-height: 820px) and (min-width: 900px) {
+  .dg-inner { gap: clamp(4px, 0.8vh, 10px); padding-top: clamp(8px, 1.4vh, 16px); }
+  .dg-body  { gap: clamp(4px, 0.8vh, 10px); }
+  .dg-body .phase-row     { margin-top: clamp(4px, 1vh, 12px); }
+  .dg-body .nav-row       { margin-top: clamp(4px, 1vh, 12px); }
+  .dg-body .level-display { margin-top: clamp(4px, 1vh, 12px); padding-top: 0; }
+  /* Auf breiten, flachen Laptops (1366x768) wird die Notenzeile allein durch
+     die Breite so hoch, dass unten Zeilen unter die Sync-Leiste rutschen. */
+  .notation-box svg { max-height: 32dvh; }
+}
+
+/* ── Flache Displays (Handy im Querformat, kleine Laptops) ──
+   Hier ist die Höhe der Engpass: der Inhalt braucht sonst mehr Platz als da
+   ist und Start rutscht aus dem Bild. Notation wird gedeckelt, alle
+   vertikalen Abstände schrumpfen. */
+@media (max-height: 560px) {
+  .dg-wrap  { align-items: flex-start; }
+  /* min-height bleibt bei 100dvh: zusammen mit border-box liegt das
+     padding-bottom dann INNERHALB der Höhe und hält die Sync-Leiste frei.
+     Ohne das enden die Kinder genau hinter der Leiste. */
+  .dg-inner { gap: 2px; padding-top: 6px; padding-bottom: 6px; }
+  .dg-body  { gap: 2px; justify-content: flex-start; }
+  /* auto-Margins ausschalten — auf flachen Displays gibt es nichts zu verteilen */
+  .dg-body .phase-row     { margin-top: 0; }
+  .dg-body .nav-row       { margin-top: 4px; }
+  .dg-body .level-display { margin-top: 0; padding-top: 0; }
+
+  /* Sync-Leiste auch hier freihalten — die Regel oben wird vom
+     kompakten padding-bottom dieses Blocks sonst überschrieben. */
+  body:has(.sync-bar:not(.hidden)) .dg-inner { padding-bottom: 44px; }
+
+  .notation-box     { padding-top: 4px; padding-bottom: 4px; }
+  /* Deckel bewusst nicht tiefer: die SVG behält ihr Seitenverhältnis, jede
+     Höhenbegrenzung verschmälert auch die Notenzeile. 28dvh ist der beste
+     Kompromiss zwischen lesbarer Breite und Platz für die Bedienelemente. */
+  .notation-box svg { max-height: 28dvh; }
+  .notation-info    { min-height: 0; }
+  .notation-info-title { font-size: clamp(17px, 2.6vw, 24px); }
+  .notation-info-cat   { font-size: clamp(9px, 1.3vw, 12px); letter-spacing: 1.5px; }
+
+  .phase-badge { font-size: 15px; padding: 5px 14px; }
+  .phase-info  { font-size: 14px; min-height: 0; }
+  .countdown   { font-size: 22px; }
+  .btn-go, .btn-stp { padding-top: 8px; padding-bottom: 8px; font-size: 16px; }
+  .level-display { font-size: clamp(13px, 2vw, 17px); }
+  .block-seg   { min-height: 26px; padding: 2px 6px; }
+  /* Die drei Fortschrittsbalken passen im Querformat nicht mehr über die
+     Sync-Leiste. Level/Chapter/Lesson bleibt als Orientierung stehen —
+     die Balken sind beim Üben die verzichtbarste Information. */
+  .progress-row { display: none; }
 }
 </style>
 </head>
@@ -586,19 +774,40 @@ body {
   </div>
 </div>
 
-<div class="dg-wrap" style="padding-top:0;">
+<div class="dg-wrap">
   <div class="dg-inner">
 
     <div class="notation-group">
       <div class="notation-info">
-        <!-- Metronome toggle -->
-        <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF">
-          <svg viewBox="0 0 20 22" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3,20 L17,20 L13.5,2 L6.5,2 Z"/>
-            <line x1="10" y1="18" x2="15.5" y2="6"/>
-            <circle cx="10" cy="18" r="1.2" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
+        <!-- Metronome toggle + click subdivision -->
+        <div class="metro-cluster" id="dgMetroCluster">
+          <button class="metro-btn" id="dgMetroBtn" title="Metronome: OFF" aria-pressed="true">
+            <svg viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3,20 L17,20 L13.5,2 L6.5,2 Z"/>
+              <line x1="10" y1="18" x2="15.5" y2="6"/>
+              <circle cx="10" cy="18" r="1.2" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <div class="metro-select">
+            <button class="metro-div-trigger" id="dgMetroDivBtn"
+                    aria-haspopup="listbox" aria-expanded="false" title="Click subdivision">
+              <span class="metro-div-glyph" id="dgMetroDivGlyph">1/4</span>
+              <span class="metro-div-text"  id="dgMetroDivText">Quarter</span>
+              <svg class="metro-div-caret" viewBox="0 0 10 6" aria-hidden="true">
+                <path d="M1 1 L5 5 L9 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="metro-div-menu" id="dgMetroDivMenu" role="listbox" aria-label="Click subdivision">
+              <button class="metro-div-opt" data-div="quarter"   data-glyph="1/4"   role="option"><span class="opt-glyph">1/4</span>Quarter</button>
+              <button class="metro-div-opt" data-div="eighth"    data-glyph="1/8"   role="option"><span class="opt-glyph">1/8</span>Eighth</button>
+              <button class="metro-div-opt" data-div="sixteenth" data-glyph="1/16"  role="option"><span class="opt-glyph">1/16</span>Sixteenth</button>
+              <button class="metro-div-opt" data-div="triplet"   data-glyph="3"     role="option"><span class="opt-glyph">3</span>Triplets</button>
+              <!-- Voice hat kein Notenwert-Kürzel; auf schmalen Displays zeigt
+                   der Auslöser deshalb das Wort selbst statt eines Zeichens. -->
+              <button class="metro-div-opt" data-div="voice"     data-glyph="Voice" role="option"><span class="opt-glyph"></span>Voice</button>
+            </div>
+          </div>
+        </div>
         <span class="notation-info-left" id="dgInfoLeft"></span>
         <div class="notation-info-center">
           <span class="notation-info-cat" id="dgCatLabel"></span>
@@ -715,15 +924,6 @@ body {
           <text x="455" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="10" font-family="DM Sans,sans-serif">Hi-Hat Pedal</text>
         </svg>
       </div>
-    </div>
-
-    <!-- Metronome subdivision row -->
-    <div id="dgMetroDivRow" style="display:none; gap:6px; justify-content:center; flex-wrap:wrap; padding:6px 0; width:100%; max-width:min(860px,100%); margin:0 auto;">
-      <button class="metro-div-btn" data-div="quarter">4tel</button>
-      <button class="metro-div-btn" data-div="eighth">8tel</button>
-      <button class="metro-div-btn" data-div="sixteenth">16tel</button>
-      <button class="metro-div-btn" data-div="triplet">Triolen</button>
-      <button class="metro-div-btn" data-div="voice">Stimme</button>
     </div>
 
     <div class="dg-body">
@@ -853,19 +1053,34 @@ body {
   function updateMetroBtn() {
     var btn = document.getElementById('dgMetroBtn');
     if (!btn) return;
-    if (metronomeOn) {
-      btn.classList.add('active');
-      btn.title = 'Metronome: ON';
-    } else {
-      btn.classList.remove('active');
-      btn.title = 'Metronome: OFF';
-    }
-    var row = document.getElementById('dgMetroDivRow');
-    if (row) row.style.display = metronomeOn ? 'flex' : 'none';
-    // Active pill
-    document.querySelectorAll('.metro-div-btn').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-div') === metronomeDiv);
+    btn.classList.toggle('active', metronomeOn);
+    btn.title = metronomeOn ? 'Metronome: ON' : 'Metronome: OFF';
+    btn.setAttribute('aria-pressed', metronomeOn ? 'true' : 'false');
+
+    var cluster = document.getElementById('dgMetroCluster');
+    if (cluster) cluster.classList.toggle('on', metronomeOn);
+
+    // Aktive Option markieren und die Beschriftung des Auslösers nachziehen
+    var active = null;
+    document.querySelectorAll('.metro-div-opt').forEach(function(o) {
+      var isOn = o.getAttribute('data-div') === metronomeDiv;
+      o.classList.toggle('active', isOn);
+      o.setAttribute('aria-selected', isOn ? 'true' : 'false');
+      if (isOn) active = o;
     });
+    if (active) {
+      var glyph = document.getElementById('dgMetroDivGlyph');
+      var text  = document.getElementById('dgMetroDivText');
+      if (glyph) glyph.textContent = active.getAttribute('data-glyph');
+      if (text)  text.textContent  = active.textContent.replace(active.querySelector('.opt-glyph').textContent, '').trim();
+    }
+  }
+
+  function _closeMetroMenu() {
+    var sel = document.querySelector('.metro-select');
+    var trg = document.getElementById('dgMetroDivBtn');
+    if (sel) sel.classList.remove('open');
+    if (trg) trg.setAttribute('aria-expanded', 'false');
   }
 
   // Returns true on beats that correspond to quarter-note positions
@@ -5634,12 +5849,37 @@ body {
     metronomeOn = !metronomeOn;
     updateMetroBtn();
   });
-  document.querySelectorAll('.metro-div-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      metronomeDiv = btn.getAttribute('data-div');
-      updateMetroBtn();
+  // ── Unterteilungs-Dropdown ──
+  (function() {
+    var trigger = document.getElementById('dgMetroDivBtn');
+    var select  = document.querySelector('.metro-select');
+    if (!trigger || !select) return;
+
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var open = select.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-  });
+
+    document.querySelectorAll('.metro-div-opt').forEach(function(opt) {
+      opt.addEventListener('click', function(e) {
+        e.stopPropagation();
+        metronomeDiv = opt.getAttribute('data-div');
+        // Eine Unterteilung zu wählen heißt: der Klick soll laufen.
+        if (!metronomeOn) metronomeOn = true;
+        _closeMetroMenu();
+        updateMetroBtn();
+      });
+    });
+
+    // Schließen per Klick daneben, Escape oder Leertaste-Start
+    document.addEventListener('click', function(e) {
+      if (!select.contains(e.target)) _closeMetroMenu();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') _closeMetroMenu();
+    });
+  })();
 
   // ── Sync UI ──
   (function() {
