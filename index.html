@@ -4932,6 +4932,37 @@ body {
   document.getElementById('dgName').textContent = _gName;
 
   var playing=false, intId=null;
+  // Visuelle Events werden mit ihrer Audio-Zeit gepuffert und erst von
+  // _drawLoop() gezeichnet, wenn aCtx.currentTime sie erreicht hat.
+  // Sonst liefe der Cursor dem Ton um bis zu SCHEDULE_AHEAD (0.1s) voraus.
+  var _visQ = [], _rafId = null;
+
+  function _visReset() {
+    _visQ.length = 0;
+    if (_rafId) { cancelAnimationFrame(_rafId); _rafId = null; }
+  }
+
+  // Zeichnet den zuletzt fälligen Event. Alle übersprungenen werden verworfen,
+  // damit der Cursor nach Frame-Drops oder Tab-Wechsel nicht nachzieht.
+  function _visDrain() {
+    if (!playing || !aCtx) return;
+    var now = aCtx.currentTime;
+    var ev = null;
+    while (_visQ.length && _visQ[0].t <= now) { ev = _visQ.shift(); }
+    if (ev) {
+      if (ev.info != null) setInfo(ev.info);
+      renderNot(ev.bt, false);
+    }
+  }
+
+  // rAF liefert die flüssige Darstellung, solange der Tab sichtbar ist.
+  // In versteckten Tabs drosselt der Browser rAF auf ~0 — dann übernimmt der
+  // Aufruf aus scheduleLoop(), damit der Cursor nicht einfriert.
+  function _drawLoop() {
+    if (!playing) { _rafId = null; return; }
+    _visDrain();
+    _rafId = requestAnimationFrame(_drawLoop);
+  }
   var blocks=[], pauses=[], bIdx=0, beat=0, bar=0, phase='idle';
 
   // ============================================================
@@ -5068,8 +5099,11 @@ body {
     var nextBeatTime = inheritedTime || (aCtx ? aCtx.currentTime : 0);
 
     function tickAndRender(bt, br, when) {
+      // Audio wird auf `when` geplant, das Bild geht in die Queue und wird
+      // von _drawLoop() erst zum selben Zeitpunkt gezeichnet.
+      var _info = null;
       if (isFill) {
-        if (bt === 0 || bt === n1) setInfo(infoLine(br, bt));
+        if (bt === 0 || bt === n1) _info = infoLine(br, bt);
         if (bt < n1) {
           // Groove bar
           var clickOnly = isTimingBlock && !grooveOn(br);
@@ -5077,7 +5111,6 @@ body {
             GROOVE.beats[bt].forEach(function(n) { playSound(n.inst, when); });
             scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
           } else { scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly); }
-          renderNot(bt, false);
         } else {
           // Fill bar
           var fb = bt - n1;
@@ -5086,10 +5119,9 @@ body {
             GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst, when); });
             scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when);
           } else { scheduleMetroClicks(fb, eighthMs/1000, ticksPerBeat, when, clickOnly); }
-          renderNot(bt, false);
         }
       } else {
-        if (bt === 0) setInfo(infoLine(br, bt));
+        if (bt === 0) _info = infoLine(br, bt);
         var clickOnly = isTimingBlock && !grooveOn(br);
         if (grooveOn(br)) {
           if (bt < GROOVE.beats.length) playBeat(bt, when);
@@ -5097,8 +5129,8 @@ body {
         } else {
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly);
         }
-        renderNot(bt, false);
       }
+      _visQ.push({ t: when, bt: bt, info: _info });
     }
 
     setInfo(infoLine(bar, beat));
@@ -5112,6 +5144,7 @@ body {
 
     function scheduleLoop() {
       if (!playing) return;
+      _visDrain(); // Fallback, falls rAF gedrosselt ist (Tab im Hintergrund)
       while (nextBeatTime < aCtx.currentTime + SCHEDULE_AHEAD) {
         tickAndRender(beat, bar, nextBeatTime);
         nextBeatTime += eighthMs / 1000;
@@ -5136,10 +5169,12 @@ body {
 
     intId = setInterval(scheduleLoop, LOOKAHEAD_MS);
     scheduleLoop(); // sofort ersten Batch planen
+    if (!_rafId) _rafId = requestAnimationFrame(_drawLoop);
   }
 
   function startPause() {
     phase='pause';
+    _visReset(); // Rest-Events des Blocks verwerfen
     var pd = pauses[bIdx] || 10;
     setBadge('pause'); setInfo('Next: '+blocks[bIdx+1].bpm+' BPM');
     renderNot(-1, false); bIdx++; renderBlocksBar();
@@ -5201,7 +5236,7 @@ body {
 
   function finishExercise() {
     playDoneSound();
-    playing=false; phase='done'; bIdx=blocks.length;
+    playing=false; _visReset(); phase='done'; bIdx=blocks.length;
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
     var _milestone = _addLessonTime(_lessonDurationMinutes());
@@ -5234,6 +5269,7 @@ body {
 
   function stopExercise() {
     playing=false;
+    _visReset();
     if (intId) clearInterval(intId);
     stopTotal(); hideCountIn(); phase='idle';
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
