@@ -4074,6 +4074,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
   var _SYNC_EMAIL_KEY = 'drumlion_sync_email_v1';
 
+  var _SYNC_UID_KEY = 'drumlion_sync_uid_v1';
+
+  // Identität des Users. Zwei Quellen, in dieser Reihenfolge:
+  //   ?uid=…  Systeme.io-Kunden-ID (sio_u_public) — bevorzugt, weil sie auch
+  //           dann stabil bleibt, wenn jemand seine Email-Adresse ändert
+  //   ?u=…    Email — Fallback und zugleich lesbare Beschriftung der Zeile
+  // Beide werden gespeichert, damit spätere Aufrufe ohne Parameter funktionieren.
   var _syncEmail = (function() {
     try {
       var u = new URLSearchParams(window.location.search).get('u') || '';
@@ -4084,6 +4091,22 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       return localStorage.getItem(_SYNC_EMAIL_KEY) || '';
     } catch(e) { return ''; }
   })();
+
+  var _syncUid = (function() {
+    try {
+      var id = (new URLSearchParams(window.location.search).get('uid') || '').trim();
+      // Nur plausible IDs übernehmen — ein nicht ersetzter Platzhalter wie
+      // {{ contact.id }} darf niemals als Schlüssel landen.
+      if (/^[A-Za-z0-9_-]{3,64}$/.test(id)) {
+        localStorage.setItem(_SYNC_UID_KEY, id);
+        return id;
+      }
+      return localStorage.getItem(_SYNC_UID_KEY) || '';
+    } catch(e) { return ''; }
+  })();
+
+  // Der Wert, unter dem der Fortschritt abgelegt wird.
+  function _syncKey() { return _syncUid || _syncEmail; }
 
   function _syncSetEmail(email) {
     _syncEmail = email;
@@ -4137,7 +4160,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   function _syncReady() {
-    return !!_syncEmail
+    return !!_syncKey()
         && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1
         && _SB_KEY.indexOf('SUPABASE_ANON_KEY') === -1;
   }
@@ -4170,8 +4193,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         'Prefer': 'resolution=merge-duplicates'
       }),
       body: JSON.stringify({
-        user_key:   _syncEmail,
-        email:      _syncEmail,
+        user_key:   _syncKey(),
+        email:      _syncEmail || null,
         state:      _syncSerialize(),
         updated_at: new Date().toISOString()
       })
@@ -4199,7 +4222,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _syncPull(onDone) {
     if (!_syncReady()) { onDone(false); return; }
     _syncSetStatus('spin', 'Lade Fortschritt…');
-    fetch(_SB_URL + '/rest/v1/user_progress?user_key=eq.' + encodeURIComponent(_syncEmail) + '&select=state', {
+    fetch(_SB_URL + '/rest/v1/user_progress?user_key=eq.' + encodeURIComponent(_syncKey()) + '&select=state', {
       headers: _sbHeaders()
     })
     .then(function(r) { return r.json(); })
@@ -6297,12 +6320,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     function openModal() { if (overlay) overlay.classList.add('open'); }
     function closeModal(){ if (overlay) overlay.classList.remove('open'); }
 
-    var _fromUrl = !!(new URLSearchParams(window.location.search).get('u'));
+    // Kam die Identität aus der URL? Dann nie nach der Email fragen.
+    var _p = new URLSearchParams(window.location.search);
+    var _fromUrl = !!(_p.get('u') || _p.get('uid'));
 
-    if (_syncEmail && _fromUrl) {
+    if (_syncKey() && _fromUrl) {
       // Email kam direkt aus Systeme.io-URL → kein Modal, kein Bar nötig
       // Sync läuft still (push/pull wird weiter unten gestartet)
-    } else if (!_syncEmail) {
+    } else if (!_syncKey()) {
       // Kein Sync aktiv → Bar zeigen
       if (bar) {
         bar.classList.remove('hidden');
@@ -6340,12 +6365,12 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     if (skipBtn) skipBtn.addEventListener('click', closeModal);
 
     // Auto-open modal nach 8s — nur wenn kein Sync und nicht aus URL
-    if (!_syncEmail && !_fromUrl) {
+    if (!_syncKey() && !_fromUrl) {
       var _syncPromptShown = false;
       try { _syncPromptShown = !!localStorage.getItem('drumlion_sync_skipped'); } catch(e) {}
       if (!_syncPromptShown) {
         setTimeout(function() {
-          if (!_syncEmail) {
+          if (!_syncKey()) {
             openModal();
             try { localStorage.setItem('drumlion_sync_skipped', '1'); } catch(e) {}
           }
@@ -6355,7 +6380,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   })();
 
   // Startup-Pull: Supabase-Fortschritt laden wenn Email vorhanden
-  if (_syncEmail && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
+  if (_syncKey() && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
     _syncPull(function(changed) {
       if (changed) {
         _loadCurrentLesson(false);
