@@ -4072,6 +4072,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     }
     setTimeout(function(){ location.reload(); }, 250);
   }
+  // Der Reset-Button im Dev-Panel wird als HTML-String erzeugt; sein
+  // onclick läuft im globalen Scope und käme sonst nicht an _resetAll heran.
+  window._dlResetAll = _resetAll;
 
   // ?reset=1 — Fortschritt auf diesem Gerät verwerfen und den Server-Stand
   // mit einem leeren überschreiben. Gedacht für Supportfälle und um
@@ -6142,7 +6145,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // ── HTML: Footer mit Reset ───────────────────────────────
     function renderFooter() {
       return '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #1e1e1e;text-align:right;">'
-           + '<button onclick="(function(){if(confirm(\'Kurs zurücksetzen? Alle Fortschritte werden gelöscht.\')){localStorage.removeItem(\''+COURSE_KEY+'\');location.reload();}})()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:DM Sans,sans-serif;letter-spacing:0.05em;">↺ Reset Course</button>'
+           + '<button onclick="if(confirm(\'Kurs zurücksetzen? Alle Fortschritte werden gelöscht.\')){window._dlResetAll();}" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:DM Sans,sans-serif;letter-spacing:0.05em;">↺ Reset Course</button>'
            + '</div>';
     }
 
