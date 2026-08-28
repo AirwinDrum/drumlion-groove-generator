@@ -3355,10 +3355,12 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[],[],[],[],[],
+        // siebter Schlag als Viertel — unterdrueckt Faehnchen und die
+        // nachfolgenden Pausenzeichen der Gruppe
+        [{inst:'snare',line:1.5,head:'oval',quarter:true}],[],[],[],[],[],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[],[],[],[],[]
+        [{inst:'snare',line:1.5,head:'oval',quarter:true}],[],[],[],[],[]
       ]},
     // Multiple Bounce Roll: braucht Buzz-Sound + Buzz-Notation — noch nicht baubar
     // Multiple Bounce Roll: gepresste Buzz-Schlaege, alternierend (Poster: 'z' ueber ganzer Note)
@@ -5440,8 +5442,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
         // Sixteenth rest symbol — authentisches Bravura-Glyph
+        // coveredByQuarter auch hier prüfen: eine Viertelnote deckt die
+        // folgenden Slots ihrer Gruppe ab, dort gehört keine Pause hin.
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
-            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') && bn.length === 0) {
+            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') &&
+            bn.length === 0 && !coveredByQuarter) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
