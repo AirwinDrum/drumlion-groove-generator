@@ -4053,6 +4053,21 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     _syncSchedule();
   }
 
+  // ?reset=1 — Fortschritt auf diesem Gerät verwerfen und den Server-Stand
+  // mit einem leeren überschreiben. Gedacht für Supportfälle und um
+  // Testdaten loszuwerden; muss VOR dem Laden des States laufen.
+  var _resetRequested = (function() {
+    try { return new URLSearchParams(window.location.search).get('reset') === '1'; }
+    catch(e) { return false; }
+  })();
+  if (_resetRequested) {
+    try {
+      localStorage.removeItem(COURSE_KEY);
+      localStorage.removeItem(_lessonsKey);
+      localStorage.removeItem(_timeKey);
+    } catch(e) {}
+  }
+
   var _cState = _loadState();
 
   // ============================================================
@@ -6379,8 +6394,15 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     }
   })();
 
-  // Startup-Pull: Supabase-Fortschritt laden wenn Email vorhanden
-  if (_syncKey() && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
+  if (_resetRequested) {
+    // Kein Pull — sonst käme der zu löschende Stand sofort zurück.
+    // Stattdessen den leeren Stand hochschieben, damit auch der Server sauber ist.
+    _loadCurrentLesson(false);
+    _updateLevelUI();
+    if (_syncReady()) _syncPush();
+    _syncSetStatus('ok', 'Fortschritt zurückgesetzt ✓');
+  } else if (_syncKey() && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
+    // Startup-Pull: Supabase-Fortschritt laden
     _syncPull(function(changed) {
       if (changed) {
         _loadCurrentLesson(false);
