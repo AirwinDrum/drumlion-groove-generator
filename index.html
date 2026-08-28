@@ -3410,9 +3410,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       stickings:['R','R','L','L','R',null,null,null,'L','L','R','R','L',null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],
+        [{inst:'snareAccent',line:1.5,head:'oval',quarter:true}],[],[],[],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[]
+        [{inst:'snareAccent',line:1.5,head:'oval',quarter:true}],[],[],[]
       ]},
     {id:1008, cat:'rudiments', catLabel:'Rudiments', name:'Six Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','L','R','R','L',null,null,'R','L','L','R','R','L',null,null],
@@ -4877,24 +4877,85 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     return buf;
   }
 
+  // Vorlaufstille pro Sample in Sekunden. MP3-Encoder hängen dem Signal vorne
+  // Nullen an (beim Snare-Sample gemessen: 22,46 ms), und Browser entfernen
+  // sie beim Dekodieren nicht. Wird der Puffer bei 0 gestartet, kommt der
+  // Schlag also um diesen Betrag zu spät — hörbar als "nicht tight".
+  var WAV_TRIM = {};
+  // Bei Flam-Samples steckt Vorschlag UND Hauptschlag in einer Datei. Auf die
+  // Zählzeit gehört der Hauptschlag, der Vorschlag davor. WAV_ANCHOR sagt,
+  // wie weit hinter dem ersten Impuls der Hauptschlag liegt (26–85 ms).
+  var WAV_ANCHOR = {};
+
+  // Nur die führende Digitalstille abschneiden, nicht den Anschlag: gesucht
+  // wird der erste Abtastwert über einer sehr kleinen Schwelle, gedeckelt auf
+  // 60 ms, damit ein weich einsetzender Klang nie beschnitten wird.
+  function measureLeadIn(buf) {
+    try {
+      var d = buf.getChannelData(0);
+      var maxScan = Math.min(d.length, Math.floor(buf.sampleRate * 0.06));
+      // Spitzenwert im Suchfenster als Bezug — eine feste Schwelle würde je
+      // nach Lautstärke des Samples zu früh oder zu spät greifen.
+      var peak = 0;
+      for (var i = 0; i < maxScan; i++) { var a = Math.abs(d[i]); if (a > peak) peak = a; }
+      if (peak <= 0) return 0;
+      // 5 % des Spitzenwerts: bei 2 % erwischt man bei Hi-Hat und Cross Stick
+      // noch das Encoder-Vorschwingen und schneidet dadurch zu wenig weg.
+      var thr = peak * 0.05;
+      for (var j = 0; j < maxScan; j++) {
+        if (Math.abs(d[j]) > thr) return j / buf.sampleRate;
+      }
+      return 0;
+    } catch (e) { return 0; }
+  }
+
   function loadWavs() {
     Object.keys(MP3_B64).forEach(function(k) {
       (function(key) {
         var ab = b64ToArrayBuffer(MP3_B64[key]);
         aCtx.decodeAudioData(ab, function(buf) {
           WAVS[key] = buf;
+          WAV_TRIM[key] = measureLeadIn(buf);
+          WAV_ANCHOR[key] = /Flam$/i.test(key) ? measureMainStroke(buf, WAV_TRIM[key]) : 0;
         }, function() {});
       })(k);
     });
   }
 
-  function playBuf(buf, vol, when) {
+  // Abstand vom ersten Impuls bis zum lautesten Schlag (= Hauptschlag des Flams)
+  function measureMainStroke(buf, trim) {
+    try {
+      var d = buf.getChannelData(0);
+      var win = Math.min(d.length, Math.floor(buf.sampleRate * 0.2));
+      var peak = 0, pi = 0;
+      for (var i = 0; i < win; i++) { var a = Math.abs(d[i]); if (a > peak) { peak = a; pi = i; } }
+      var anchor = pi / buf.sampleRate - trim;
+      return (anchor > 0.005 && anchor < 0.12) ? anchor : 0;
+    } catch (e) { return 0; }
+  }
+
+  // Puffer so starten, dass der maßgebliche Schlag exakt auf `t` liegt.
+  // Bei Flams heißt das: früher anfangen, damit der Vorschlag vor der
+  // Zählzeit liegt und der Hauptschlag darauf.
+  function startTrimmed(src, t, key) {
+    var trim   = (key && WAV_TRIM[key])   ? WAV_TRIM[key]   : 0;
+    var anchor = (key && WAV_ANCHOR[key]) ? WAV_ANCHOR[key] : 0;
+    var startAt = t - anchor;
+    if (startAt < aCtx.currentTime) {
+      // Zu spät zum Vorziehen (z.B. allererster Schlag): dann lieber den
+      // Hauptschlag minimal verspätet als den Vorschlag zu verschlucken.
+      startAt = aCtx.currentTime;
+    }
+    if (trim > 0) src.start(startAt, trim); else src.start(startAt);
+  }
+
+  function playBuf(buf, vol, when, key) {
     if (!buf || !aCtx) return false;
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     var src = aCtx.createBufferSource(), g = aCtx.createGain();
     src.buffer = buf; g.gain.value = vol !== undefined ? vol : 1.0;
     src.connect(g); g.connect(aCtx.destination);
-    src.start(t); return true;
+    startTrimmed(src, t, key); return true;
   }
 
   function playKick() { playSound('kick'); }
@@ -4924,7 +4985,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         var s2 = aCtx.createBufferSource(), gg = aCtx.createGain();
         s2.buffer = WAVS[g1]; gg.gain.value = 0.55;
         s2.connect(gg); gg.connect(aCtx.destination);
-        s2.start(Math.max(aCtx.currentTime, t - off));
+        startTrimmed(s2, Math.max(aCtx.currentTime, t - off), g1);
       });
       playSound(main, t);
       return;
@@ -4936,7 +4997,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         var src = aCtx.createBufferSource(), g = aCtx.createGain();
         src.buffer = WAVS['hhOpen']; g.gain.value = vol;
         src.connect(g); g.connect(aCtx.destination);
-        src.start(t); _hhOpenGain = g;
+        startTrimmed(src, t, 'hhOpen'); _hhOpenGain = g;
       }
       return;
     }
@@ -4950,13 +5011,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         } catch(e) {}
         _hhOpenGain = null;
       }
-      playBuf(WAVS['hhPedal'], vol * 0.5, t);               // Fuß (50% leiser)
-      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol * 0.5, t);   // Hand-Schließen (50% leiser)
+      playBuf(WAVS['hhPedal'], vol * 0.5, t, 'hhPedal');               // Fuß (50% leiser)
+      playBuf(WAVS['hhClosing'] || WAVS['hh'], vol * 0.5, t, WAVS['hhClosing'] ? 'hhClosing' : 'hh');   // Hand-Schließen (50% leiser)
       return;
     }
 
     // hh → hh-Sound, hhAccent → hhAccent-Sound, hhPedal → hhPedal-Sound
-    if (playBuf(WAVS[key], vol, t)) return;
+    if (playBuf(WAVS[key], vol, t, key)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
     if (key === 'kick' || key === 'kick2') {
       var o = aCtx.createOscillator(), g = aCtx.createGain();
@@ -4991,7 +5052,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // MP3-Encoder-Delay-Kompensation: MP3-Samples haben ~26ms Stille am Anfang.
   // Click (Oszillator) hat 0ms Latenz → muss verzögert werden damit er mit den
   // Drum-Samples zusammen klingt. Wert in Sekunden.
-  var CLICK_OFFSET = 0.026;
+  // Die Vorlaufstille wird jetzt aus den Samples geschnitten (WAV_TRIM),
+  // deshalb braucht der Klick keine Kompensation mehr.
+  var CLICK_OFFSET = 0;
 
   function playCountClick(accent, vol, when) {
     if (!aCtx) return;
@@ -6038,7 +6101,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     // Lookahead-Scheduler: plant Beats im Voraus, eliminiert setInterval-Jitter
     var LOOKAHEAD_MS = 25;   // Wie oft der Scheduler prüft (ms)
-    var SCHEDULE_AHEAD = 0.1; // Wie weit voraus geplant wird (Sekunden)
+    var SCHEDULE_AHEAD = 0.18; // Wie weit voraus geplant wird (Sekunden)
+                               // muss groesser sein als der laengste Flam-Vorlauf (85 ms)
 
     // Dauer eines Ticks. Im Rampen-Modus hängt sie vom Zeitpunkt ab, sonst
     // ist sie konstant. `when` ist die geplante Audio-Zeit des Ticks — dadurch
