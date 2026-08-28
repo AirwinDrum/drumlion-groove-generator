@@ -4053,6 +4053,26 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     _syncSchedule();
   }
 
+  // Fortschritt vollständig zurücksetzen: lokal UND am Server.
+  // Der Fortschritt steckt in drei Werten — Kurs-State plus die Zähler
+  // totalLessons/totalMinutes, aus denen Level, Chapter und die Balken kommen.
+  // Nur den Kurs-State zu löschen setzt die Anzeige NICHT zurück, und ohne
+  // den Server-Teil lädt der alte Stand beim nächsten Öffnen wieder herunter.
+  function _resetAll() {
+    try {
+      localStorage.removeItem(COURSE_KEY);
+      localStorage.removeItem(_lessonsKey);
+      localStorage.removeItem(_timeKey);
+    } catch(e) {}
+    // Leeren Stand hochschieben, damit auch die Cloud sauber ist. keepalive,
+    // damit der Request das folgende Neuladen überlebt.
+    if (typeof _syncReady === 'function' && _syncReady()) {
+      _cState = _initState();
+      _syncPush(true);
+    }
+    setTimeout(function(){ location.reload(); }, 250);
+  }
+
   // ?reset=1 — Fortschritt auf diesem Gerät verwerfen und den Server-Stand
   // mit einem leeren überschreiben. Gedacht für Supportfälle und um
   // Testdaten loszuwerden; muss VOR dem Laden des States laufen.
@@ -5925,8 +5945,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // ── Reset-Handler ────────────────────────────────────────
     function devReset() {
       if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) {
-        localStorage.removeItem(COURSE_KEY);
-        location.reload();
+        // Der Fortschritt steckt in drei Werten: Kurs-State plus die beiden
+        // Zähler, aus denen Level, Chapter und die Balken kommen. Nur den
+        // Kurs-State zu löschen lässt die Zahlen stehen.
+        _resetAll();
       }
     }
 
@@ -6168,10 +6190,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   // Dev: Reset Course
   document.getElementById('dgDevReset').addEventListener('click', function() {
-    if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) {
-      localStorage.removeItem(COURSE_KEY);
-      location.reload();
-    }
+    if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) _resetAll();
   });
 
   // Prev = zurück in der History
