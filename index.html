@@ -521,6 +521,105 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .metro-div-opt.active { background: rgba(201,168,76,0.16); color: #C9A84C; }
 .metro-div-opt.active .opt-glyph { color: #C9A84C; }
 
+/* ── Speed-Test-Rampe ── */
+.ramp-hud {
+  display: flex; flex-direction: column; align-items: center;
+  gap: clamp(2px, 0.8vh, 8px);
+  padding: clamp(10px, 2vh, 22px) 16px clamp(4px, 1vh, 10px);
+  text-align: center;
+}
+.ramp-hud.hidden { display: none; }
+.ramp-bpm-wrap { display: flex; align-items: baseline; gap: 8px; }
+.ramp-bpm {
+  font-size: clamp(56px, 15vw, 132px); font-weight: 700; line-height: 1;
+  color: #C9A84C; font-variant-numeric: tabular-nums;
+}
+.ramp-bpm-lbl {
+  font-size: clamp(14px, 2.5vw, 22px); font-weight: 600;
+  letter-spacing: 3px; color: rgba(255,255,255,0.5);
+}
+.ramp-hint { font-size: clamp(13px, 2vw, 17px); color: rgba(255,255,255,0.6); }
+.ramp-done {
+  margin-top: 6px; padding: 10px 16px; border-radius: 10px;
+  background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.45);
+  color: #E8E4DB; font-size: clamp(13px, 2vw, 16px); max-width: 460px;
+}
+.ramp-done.hidden { display: none; }
+/* Im Rampen-Modus bleibt nur Notation + Start/Stop stehen */
+body.ramp-mode .notation-info-left,
+body.ramp-mode .notation-info-right,
+body.ramp-mode .metro-cluster,
+body.ramp-mode .legend-btn,
+body.ramp-mode .phase-row,
+body.ramp-mode .phase-info,
+body.ramp-mode .blocks-bar,
+body.ramp-mode .level-display,
+body.ramp-mode .progress-row,
+body.ramp-mode .sync-bar,
+body.ramp-mode #dgCompletedBanner { display: none !important; }
+body.ramp-mode .dg-body .phase-row,
+body.ramp-mode .dg-body .level-display { margin-top: 0; }
+/* body ist sonst ein Flex-Container in Zeilenrichtung — die HUD stünde
+   neben der Notation statt darüber. */
+body.ramp-mode { flex-direction: column; align-items: stretch; }
+body.ramp-mode .ramp-hud { width: 100%; }
+body.ramp-mode .dg-wrap  { min-height: 0; }
+body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; }
+
+/* Eingabe nach dem Speed-Test */
+.ramp-ask {
+  position: fixed; inset: 0; z-index: 1500;
+  background: rgba(6,6,8,0.82);
+  display: flex; justify-content: center;
+  padding: 16px;
+  /* margin:auto am Kind statt align-items:center — zentriert bei Platz,
+     lässt aber scrollen statt oben/unten abzuschneiden (Handy quer). */
+  overflow-y: auto;
+}
+.ramp-ask.hidden { display: none; }
+.ramp-ask-card {
+  margin: auto;
+  background: #16161a; border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px; padding: clamp(18px, 3vw, 30px);
+  width: 100%; max-width: 400px; text-align: center;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.ramp-ask-card h3 { font-size: clamp(18px, 3vw, 23px); font-weight: 700; color: #C9A84C; }
+.ramp-ask-card p  { font-size: clamp(13px, 2vw, 15px); color: rgba(255,255,255,0.62); line-height: 1.5; }
+.ramp-ask-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.ramp-ask-input {
+  width: 150px; padding: 12px 14px; text-align: center;
+  background: #0d0d10; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px; color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 30px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ramp-ask-input:focus { outline: none; border-color: #C9A84C; }
+.ramp-ask-unit {
+  font-size: 14px; letter-spacing: 2px; color: rgba(255,255,255,0.45); font-weight: 600;
+}
+.ramp-ask-err { color: #e06a5a; font-size: 13.5px; min-height: 18px; }
+.ramp-ask-btn {
+  background: #C9A84C; color: #0a0a0a; border: none; border-radius: 10px;
+  padding: 14px; font-family: 'DM Sans', sans-serif;
+  font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.ramp-ask-btn:hover { background: #d4b85a; }
+.ramp-ask-skip {
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; padding: 4px;
+}
+.ramp-ask-skip:hover { color: #C9A84C; }
+/* Flache Fenster: Dialog kompakter, damit er ohne Scrollen passt */
+@media (max-height: 560px) {
+  .ramp-ask-card { padding: 14px 16px; gap: 8px; }
+  .ramp-ask-card p { font-size: 12.5px; line-height: 1.4; }
+  .ramp-ask-input { font-size: 24px; padding: 8px 12px; width: 130px; }
+  .ramp-ask-btn { padding: 11px; }
+  .ramp-ask-err { min-height: 0; }
+}
+
 /* ── Sync UI ── */
 .sync-bar {
   position: fixed; bottom: 0; left: 0; right: 0;
@@ -771,6 +870,38 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
     <div class="sync-error" id="syncError" style="display:none;"></div>
     <button class="sync-btn" id="syncSubmitBtn">Fortschritt sichern</button>
     <button class="sync-btn-skip" id="syncSkipBtn">Später</button>
+  </div>
+</div>
+
+<!-- Speed-Test-Rampe (nur bei ?ramp=…) -->
+<div class="ramp-hud hidden" id="rampHud">
+  <div class="ramp-bpm-wrap">
+    <span class="ramp-bpm" id="rampBpm">30</span>
+    <span class="ramp-bpm-lbl">BPM</span>
+  </div>
+  <div class="ramp-hint" id="rampHint">Play along as long as you can</div>
+  <div class="ramp-done hidden" id="rampDoneBox">
+    <strong>Test finished.</strong>
+    Remember the BPM where you dropped out — then enter it below.
+  </div>
+</div>
+
+<!-- Eingabe direkt nach dem Durchlauf -->
+<div class="ramp-ask hidden" id="rampAsk">
+  <div class="ramp-ask-card">
+    <h3 id="rampAskTitle">Where did you drop out?</h3>
+    <p>Enter the BPM at which you could no longer play along cleanly — whether
+       because of speed or because the coordination fell apart. Be honest, it
+       only helps you.</p>
+    <div class="ramp-ask-row">
+      <input class="ramp-ask-input" id="rampAskInput" type="number"
+             inputmode="numeric" min="30" max="200" step="1" placeholder="e.g. 95"/>
+      <span class="ramp-ask-unit">BPM</span>
+    </div>
+    <div class="ramp-ask-err" id="rampAskErr"></div>
+    <button class="ramp-ask-btn" id="rampAskSave">Save result</button>
+    <button class="ramp-ask-skip" id="rampAskFull">I made it to the end (200)</button>
+    <button class="ramp-ask-skip" id="rampAskRetry">Try again</button>
   </div>
 </div>
 
@@ -3916,8 +4047,10 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   }
 
   function _saveState() {
+    // localStorage sofort (kostet nichts, ist der Offline-Fallback),
+    // der Server-Schreibvorgang wird gedrosselt — siehe _syncSchedule().
     try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
-    _syncPush();
+    _syncSchedule();
   }
 
   var _cState = _loadState();
@@ -3925,8 +4058,20 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   // ============================================================
   // CLOUD SYNC — Supabase (Fortschritt geräteübergreifend)
   // ============================================================
-  var _SB_URL = 'https://SUPABASE_PROJECT_URL.supabase.co';
-  var _SB_KEY = 'SUPABASE_ANON_KEY';
+  var _SB_URL = 'https://kekjrchtvikyfjgvmqzw.supabase.co';
+  var _SB_KEY = 'sb_publishable_q1w7C7OY1WnxCJD-Lb5isA_numDVZ96';
+
+  // Header für die Supabase-REST-API.
+  // Die neuen `sb_publishable_…`-Schlüssel sind KEINE JWTs — werden sie
+  // zusätzlich als `Authorization: Bearer` gesendet, versucht die Plattform
+  // sie als JWT zu parsen und antwortet mit 401. Nur die alten anon-Keys
+  // (beginnen mit `eyJ`) erwarten den Bearer-Header.
+  function _sbHeaders(extra) {
+    var h = { 'apikey': _SB_KEY };
+    if (_SB_KEY.indexOf('eyJ') === 0) h['Authorization'] = 'Bearer ' + _SB_KEY;
+    if (extra) for (var k in extra) if (extra.hasOwnProperty(k)) h[k] = extra[k];
+    return h;
+  }
   var _SYNC_EMAIL_KEY = 'drumlion_sync_email_v1';
 
   var _syncEmail = (function() {
@@ -3958,46 +4103,131 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
     if (state === 'ok') { setTimeout(function(){ bar.classList.add('hidden'); }, 3000); }
   }
 
-  function _syncPush() {
-    if (!_syncEmail || _SB_URL.indexOf('SUPABASE_PROJECT_URL') !== -1) return;
-    _syncSetStatus('spin', 'Speichern…');
-    var payload = JSON.stringify({ total: _cState.total || 0, ts: Date.now() });
-    fetch(_SB_URL + '/rest/v1/user_progress', {
+  // ── Schreib-Drosselung ──
+  // Ohne sie schreibt jeder Zustandswechsel sofort zum Server. Bei vielen
+  // aktiven Usern ist das die klassische Ursache für explodierende Kosten.
+  // Mehrere Änderungen kurz hintereinander werden zu EINEM Schreibvorgang
+  // zusammengefasst; beim Verlassen der Seite wird sofort nachgeschoben,
+  // damit nichts verloren geht.
+  var _SYNC_DEBOUNCE_MS = 4000;
+  var _syncTimer = null;
+  var _syncPending = false;
+
+  // Der Fortschritt steckt in DREI Speicherwerten, nicht nur in _cState:
+  // Level/Chapter/Fortschrittsbalken lesen aus den Zählern totalLessons und
+  // totalMinutes. Würden nur _cState synchronisiert, käme auf einem zweiten
+  // Gerät die Kursposition an, aber Level und Balken stünden auf null.
+  function _syncSerialize() {
+    return JSON.stringify({
+      v: 2,
+      course:  _cState,
+      lessons: _getTotalLessons(),
+      minutes: _getTotalMinutes()
+    });
+  }
+
+  // Liest beide Formate: v2-Umschlag und den alten reinen _cState.
+  function _syncParse(raw) {
+    var p = JSON.parse(raw);
+    if (p && p.v === 2 && p.course) {
+      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0 };
+    }
+    // Altformat: nur der Kurs-State, Zähler unbekannt
+    return { course: p, lessons: null, minutes: null };
+  }
+
+  function _syncReady() {
+    return !!_syncEmail
+        && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1
+        && _SB_KEY.indexOf('SUPABASE_ANON_KEY') === -1;
+  }
+
+  function _syncSchedule() {
+    if (!_syncReady()) return;
+    _syncPending = true;
+    if (_syncTimer) clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function() {
+      _syncTimer = null;
+      _syncPush();
+    }, _SYNC_DEBOUNCE_MS);
+  }
+
+  // Ausstehenden Schreibvorgang sofort ausführen (Tab-Wechsel, Seite schließen)
+  function _syncFlush() {
+    if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    if (_syncPending) _syncPush(true);
+  }
+
+  function _syncPush(immediate) {
+    if (!_syncReady()) return;
+    if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    _syncPending = false;
+    if (!immediate) _syncSetStatus('spin', 'Speichern…');
+    var opts = {
       method: 'POST',
-      headers: {
-        'apikey': _SB_KEY,
-        'Authorization': 'Bearer ' + _SB_KEY,
+      headers: _sbHeaders({
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({ email: _syncEmail, state: JSON.stringify(_cState), updated_at: new Date().toISOString() })
-    })
+      }),
+      body: JSON.stringify({
+        user_key:   _syncEmail,
+        email:      _syncEmail,
+        state:      _syncSerialize(),
+        updated_at: new Date().toISOString()
+      })
+    };
+    // keepalive: der Request überlebt das Schließen des Tabs
+    if (immediate) opts.keepalive = true;
+    fetch(_SB_URL + '/rest/v1/user_progress', opts)
     .then(function(r) {
+      if (immediate) return;
       if (r.ok) { _syncSetStatus('ok', 'Gespeichert ✓'); }
       else { _syncSetStatus('err', 'Sync-Fehler'); }
     })
-    .catch(function() { _syncSetStatus('err', 'Offline'); });
+    .catch(function() {
+      // Fehlgeschlagen: erneut vormerken, localStorage hat den Stand ohnehin
+      _syncPending = true;
+      if (!immediate) _syncSetStatus('err', 'Offline');
+    });
   }
 
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') _syncFlush();
+  });
+  window.addEventListener('pagehide', _syncFlush);
+
   function _syncPull(onDone) {
-    if (!_syncEmail || _SB_URL.indexOf('SUPABASE_PROJECT_URL') !== -1) { onDone(false); return; }
+    if (!_syncReady()) { onDone(false); return; }
     _syncSetStatus('spin', 'Lade Fortschritt…');
-    fetch(_SB_URL + '/rest/v1/user_progress?email=eq.' + encodeURIComponent(_syncEmail) + '&select=state', {
-      headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY }
+    fetch(_SB_URL + '/rest/v1/user_progress?user_key=eq.' + encodeURIComponent(_syncEmail) + '&select=state', {
+      headers: _sbHeaders()
     })
     .then(function(r) { return r.json(); })
     .then(function(rows) {
       if (!rows || !rows.length) { _syncSetStatus('ok', 'Neu angelegt ✓'); onDone(false); return; }
       try {
-        var remote = JSON.parse(rows[0].state);
-        if (remote && remote.cats && (remote.total || 0) > (_cState.total || 0)) {
-          _cState = remote;
-          try { localStorage.setItem(COURSE_KEY, rows[0].state); } catch(e) {}
+        var remote = _syncParse(rows[0].state);
+        if (!remote.course || !remote.course.cats) {
+          _syncSetStatus('err', 'Sync-Fehler'); onDone(false); return;
+        }
+        // Vergleich über die abgeschlossenen Lektionen — das ist der Wert,
+        // der Level und Balken bestimmt. Fällt er weg (Altformat), zählt
+        // ersatzweise _cState.total.
+        var remoteCount = (remote.lessons != null) ? remote.lessons : (remote.course.total || 0);
+        var localCount  = _getTotalLessons() || (_cState.total || 0);
+
+        if (remoteCount > localCount) {
+          _cState = remote.course;
+          try {
+            localStorage.setItem(COURSE_KEY, JSON.stringify(remote.course));
+            if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(remote.lessons));
+            if (remote.minutes != null) localStorage.setItem(_timeKey,    String(remote.minutes));
+          } catch(e) {}
           _syncSetStatus('ok', 'Fortschritt geladen ✓');
           onDone(true); // state changed, needs UI reload
         } else {
           _syncSetStatus('ok', 'Aktuell ✓');
-          if ((remote && (remote.total || 0) < (_cState.total || 0))) _syncPush();
+          if (remoteCount < localCount) _syncPush();
           onDone(false);
         }
       } catch(e) { _syncSetStatus('err', 'Sync-Fehler'); onDone(false); }
@@ -5181,6 +5411,100 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   var blocks=[], pauses=[], bIdx=0, beat=0, bar=0, phase='idle';
 
   // ============================================================
+  // SPEED-TEST-RAMPE (für den Einstufungstest)
+  // ?ramp=single  → Single Stroke Roll (id 1001)
+  // ?ramp=groove  → Groove 1 (id 1)
+  // Tempo steigt linear von 30 auf 200 BPM in 60 Sekunden. Der User merkt
+  // sich die Zahl, bei der er rausfliegt, und trägt sie im Test ein.
+  // ============================================================
+  var RAMP_FROM = 30, RAMP_TO = 200, RAMP_SEC = 60;
+  var _rampMode = (function() {
+    try {
+      var r = new URLSearchParams(window.location.search).get('ramp') || '';
+      return (r === 'single' || r === 'groove') ? r : null;
+    } catch(e) { return null; }
+  })();
+  var _rampStartTime = 0;   // AudioContext-Zeit beim Start
+  var _rampDone = false;
+
+  // BPM zum Zeitpunkt t (Sekunden seit Rampenstart)
+  function _rampBpmAt(t) {
+    if (t <= 0) return RAMP_FROM;
+    if (t >= RAMP_SEC) return RAMP_TO;
+    return RAMP_FROM + (RAMP_TO - RAMP_FROM) * (t / RAMP_SEC);
+  }
+
+  // Aktuelles Tempo groß anzeigen, solange die Rampe läuft
+  function _rampTick() {
+    if (!_rampMode) return;
+    var el = document.getElementById('rampBpm');
+    if (el && playing && aCtx) {
+      el.textContent = Math.round(_rampBpmAt(aCtx.currentTime - _rampStartTime));
+    }
+    requestAnimationFrame(_rampTick);
+  }
+
+  function _rampFinish() {
+    playing = false;
+    _visReset();
+    if (intId) clearInterval(intId);
+    renderNot(-1, false);
+    var box = document.getElementById('rampDoneBox');
+    if (box) box.classList.remove('hidden');
+    var el = document.getElementById('rampBpm');
+    if (el) el.textContent = RAMP_TO;
+    var hint = document.getElementById('rampHint');
+    if (hint) hint.style.display = 'none';
+    // Erneut versuchen ermöglichen
+    var ctrl = document.getElementById('dgCtrl');
+    if (ctrl) {
+      ctrl.innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Try again</button>';
+      document.getElementById('dgStart2').addEventListener('click', function() {
+        if (box) box.classList.add('hidden');
+        if (hint) hint.style.display = '';
+        startExercise();
+      });
+    }
+    // Testseite informieren, dass der Durchlauf zu Ende ist
+    try { window.parent.postMessage({ drumlionRamp: 'done', mode: _rampMode }, '*'); } catch(e) {}
+    _rampAskOpen();
+  }
+
+  // ── Eingabe: bei welcher BPM ist der User rausgeflogen? ──
+  function _rampAskOpen() {
+    var ask = document.getElementById('rampAsk');
+    if (!ask) return;
+    var t = document.getElementById('rampAskTitle');
+    if (t) t.textContent = (_rampMode === 'single')
+      ? 'Single Stroke — where did you drop out?'
+      : 'Basic Groove — where did you drop out?';
+    document.getElementById('rampAskErr').textContent = '';
+    ask.classList.remove('hidden');
+    var inp = document.getElementById('rampAskInput');
+    if (inp) { inp.value = ''; setTimeout(function(){ inp.focus(); }, 60); }
+  }
+
+  function _rampAskClose() {
+    var ask = document.getElementById('rampAsk');
+    if (ask) ask.classList.add('hidden');
+  }
+
+  // Ergebnis an die Testseite melden und lokal sichern (falls direkt geöffnet)
+  function _rampSubmit(bpm) {
+    try {
+      localStorage.setItem('drumlion_speedtest_' + _rampMode, String(bpm));
+    } catch(e) {}
+    try {
+      window.parent.postMessage({ drumlionRamp: 'result', mode: _rampMode, bpm: bpm }, '*');
+    } catch(e) {}
+    _rampAskClose();
+    var hint = document.getElementById('rampHint');
+    if (hint) { hint.style.display = ''; hint.textContent = 'Saved: ' + bpm + ' BPM'; }
+    var box = document.getElementById('rampDoneBox');
+    if (box) box.classList.add('hidden');
+  }
+
+  // ============================================================
   // PLAYBACK
   // ============================================================
   function startExercise() {
@@ -5281,6 +5605,10 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
     var eighthMs     = (60 / cb.bpm / ticksPerBeat) * 1000;
     // Fills haben phraseLen = 2 Takte → loopBars halbieren damit Gesamtzeit gleich bleibt
     var loopBars    = isFill ? Math.ceil(totalBars / 2) : totalBars;
+    // Rampe endet ausschließlich über die Zeit (RAMP_SEC), nie über die Taktzahl.
+    // Ohne das beendet die reguläre Blocklänge den Test vorzeitig — beschleunigt
+    // sind die Takte deutlich früher durch als nach 60 Sekunden.
+    if (_rampMode) loopBars = 1e6;
     var eighthsLeft = loopBars * phraseLen;
 
     // Timing-Training: Takte 1-8 voller Groove, dann alternierend Klick/Groove
@@ -5312,6 +5640,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 
     // Tight scheduling: übernimm exakte Zeit vom Count-In (nahtloser Übergang)
     var nextBeatTime = inheritedTime || (aCtx ? aCtx.currentTime : 0);
+    if (_rampMode) { _rampStartTime = nextBeatTime; _rampDone = false; }
 
     function tickAndRender(bt, br, when) {
       // Audio wird auf `when` geplant, das Bild geht in die Queue und wird
@@ -5357,14 +5686,30 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
     var LOOKAHEAD_MS = 25;   // Wie oft der Scheduler prüft (ms)
     var SCHEDULE_AHEAD = 0.1; // Wie weit voraus geplant wird (Sekunden)
 
+    // Dauer eines Ticks. Im Rampen-Modus hängt sie vom Zeitpunkt ab, sonst
+    // ist sie konstant. `when` ist die geplante Audio-Zeit des Ticks — dadurch
+    // bleibt die Beschleunigung auch beim Vorausplanen glatt.
+    function tickSecAt(when) {
+      if (!_rampMode) return eighthMs / 1000;
+      var bpm = _rampBpmAt(when - _rampStartTime);
+      return (60 / bpm / ticksPerBeat);
+    }
+
     function scheduleLoop() {
       if (!playing) return;
       _visDrain(); // Fallback, falls rAF gedrosselt ist (Tab im Hintergrund)
       while (nextBeatTime < aCtx.currentTime + SCHEDULE_AHEAD) {
         tickAndRender(beat, bar, nextBeatTime);
-        nextBeatTime += eighthMs / 1000;
+        nextBeatTime += tickSecAt(nextBeatTime);
         eighthsLeft--;
         beat++;
+        // Rampe endet nach RAMP_SEC, nicht nach einer Taktzahl
+        if (_rampMode && (nextBeatTime - _rampStartTime) >= RAMP_SEC) {
+          clearInterval(intId);
+          _rampDone = true;
+          setTimeout(_rampFinish, 300);
+          return;
+        }
         if (beat >= phraseLen) {
           beat = 0; bar++;
           if (bar >= loopBars) {
@@ -5379,7 +5724,11 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
           }
         }
       }
-      setCountdown(eighthsLeft * eighthMs / 1000);
+      if (_rampMode) {
+        setCountdown(Math.max(0, Math.ceil(RAMP_SEC - (aCtx.currentTime - _rampStartTime))));
+      } else {
+        setCountdown(eighthsLeft * eighthMs / 1000);
+      }
     }
 
     intId = setInterval(scheduleLoop, LOOKAHEAD_MS);
@@ -5840,9 +6189,63 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
     if (btnNext) btnNext.addEventListener('click', function() { browseStep(1); });
   })();
 
-  // Init: erste Lektion aus Course-State laden
-  _loadCurrentLesson(false);
-  _updateLevelUI();
+  // Init: im Rampen-Modus die Testübung laden, sonst die Kurslektion
+  if (_rampMode) {
+    document.body.classList.add('ramp-mode');
+    var _rHud = document.getElementById('rampHud');
+    if (_rHud) _rHud.classList.remove('hidden');
+    var _rEx = EXERCISES.find(function(e) {
+      return e.id === (_rampMode === 'single' ? 1001 : 1);
+    });
+    if (_rEx) {
+      _setGroove(_rEx, RAMP_FROM);
+      // Eigene Benennung im Test — "Groove 1" und "Single Stroke Roll" sind
+      // Kursvokabular, im Einstufungstest heißen sie nach dem, was sie messen.
+      var _rName = document.getElementById('dgName');
+      var _rCat  = document.getElementById('dgCatLabel');
+      if (_rName) _rName.textContent = (_rampMode === 'single') ? 'Single Stroke' : 'Basic Groove';
+      if (_rCat)  _rCat.textContent  = 'Speed Test';
+      // Ein Block, lang genug für 60 s — die Rampe stoppt selbst nach der Zeit
+      blocks = [{ bpm: RAMP_FROM, bars: 400 }];
+      pauses = [];
+      bIdx = 0; phase = 'idle';
+      renderNot(-1, false);
+      metronomeOn = true;      // Klick als Orientierung, gerade wenn es schnell wird
+      metronomeDiv = 'quarter';
+      updateMetroBtn();
+    }
+    requestAnimationFrame(_rampTick);
+
+    // Eingabe-Dialog verdrahten
+    document.getElementById('rampAskSave').addEventListener('click', function() {
+      var inp = document.getElementById('rampAskInput');
+      var err = document.getElementById('rampAskErr');
+      var v = parseInt(inp.value, 10);
+      if (!inp.value || isNaN(v)) { err.textContent = 'Please enter a number.'; inp.focus(); return; }
+      if (v < RAMP_FROM || v > RAMP_TO) {
+        err.textContent = 'Enter a value between ' + RAMP_FROM + ' and ' + RAMP_TO + '.';
+        inp.focus(); return;
+      }
+      _rampSubmit(v);
+    });
+    document.getElementById('rampAskInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('rampAskSave').click();
+    });
+    document.getElementById('rampAskFull').addEventListener('click', function() {
+      _rampSubmit(RAMP_TO);
+    });
+    document.getElementById('rampAskRetry').addEventListener('click', function() {
+      _rampAskClose();
+      var box = document.getElementById('rampDoneBox');
+      if (box) box.classList.add('hidden');
+      var hint = document.getElementById('rampHint');
+      if (hint) { hint.style.display = ''; hint.textContent = 'Play along as long as you can'; }
+      startExercise();
+    });
+  } else {
+    _loadCurrentLesson(false);
+    _updateLevelUI();
+  }
 
   // Metronome Toggle
   document.getElementById('dgMetroBtn').addEventListener('click', function() {
