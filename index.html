@@ -1120,6 +1120,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     snareAccent: { line: 1.5,  head: 'oval',         sound: 'snare', articulation: '>' }, // Snare Accent
     snareFlam:   { line: 1.5,  head: 'oval',         sound: 'snareFlam', flam: true }, // Snare Flam (Grace + Hauptschlag im Sample)
     snareFlamAccent: { line: 1.5, head: 'oval',      sound: 'snareFlamAccent', flam: true, articulation: '>' }, // Snare Flam akzentuiert
+    snareDrag:   { line: 1.5,  head: 'oval',         sound: 'snareDrag', grace: 2 }, // Drag/Ruff — zwei Vorschlagnoten
+    snareDragAccent: { line: 1.5, head: 'oval',      sound: 'snareDragAccent', grace: 2, articulation: '>' },
+    snareBuzz:   { line: 1.5,  head: 'oval',         sound: 'snare', articulation: 'z' }, // Multiple Bounce (Buzz)
     ghost:       { line: 1.5,  head: 'oval-ghost',   sound: 'snare'  }, // Snare Ghostnote
     crossStick:  { line: 1.5,  head: 'x',            sound: 'snare'  }, // Cross Stick
     hh:          { line: -0.5, head: 'x',            sound: 'hh'     }, // Hi-Hat geschlossen
@@ -3326,7 +3329,19 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[],[],[],[],[]
       ]},
     // Multiple Bounce Roll: braucht Buzz-Sound + Buzz-Notation — noch nicht baubar
-    {id:1004, cat:'rudiments', name:'Multiple Bounce Roll',  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Multiple Bounce Roll: gepresste Buzz-Schlaege, alternierend (Poster: 'z' ueber ganzer Note)
+    {id:1004, cat:'rudiments', catLabel:'Rudiments', name:'Multiple Bounce Roll', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['R','L','R','L','R','L','R','L'],
+     beats:[
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}],
+        [{inst:'snareBuzz',line:1.5,head:'oval'}]
+     ]},
     // Triple Stroke Roll: 8tel-Triolen, drei Schläge pro Hand
     {id:1005, cat:'rudiments', catLabel:'Rudiments', name:'Triple Stroke Roll', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','R','L','L','L','R','R','R','L','L','L'],
@@ -3419,7 +3434,35 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[]
       ]},
     // Seventeen Stroke Roll: 17 Schläge passen nicht in einen 4/4-Takt aus 16teln (bräuchte 32tel)
-    {id:1015, cat:'rudiments', name:'Seventeen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Seventeen Stroke Roll: 8 Doppelschlaege + akzentuierter Abschluss (17 Schlaege), Sextolen
+    {id:1015, cat:'rudiments', catLabel:'Rudiments', name:'Seventeen Stroke Roll', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null,null,null,null,null],
+     beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+     ]},
     // Diddle Rudiments
     {id:1016, cat:'rudiments', catLabel:'Rudiments', name:'Single Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','R','R','L','R','L','L','R','L','R','R','L','R','L','L'],
@@ -3558,18 +3601,195 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Flam Drag: braucht Drag-Sounds — noch nicht baubar
-    {id:1030, cat:'rudiments', name:'Flam Drag',             noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Flam Drag: Flam - Drag - Tap je Triole, Haende wechseln pro Gruppe
+    {id:1030, cat:'rudiments', catLabel:'Rudiments', name:'Flam Drag', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['lR','rrL','R','rL','llR','L','lR','rrL','R','rL','llR','L'],
+     beats:[
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareFlamAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+     ]},
     // Drag Rudiments
-    {id:1031, cat:'rudiments', name:'Drag',                  noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1032, cat:'rudiments', name:'Single Drag Tap',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1033, cat:'rudiments', name:'Double Drag Tap',       noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1034, cat:'rudiments', name:'Lesson 25',             noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1035, cat:'rudiments', name:'Single Dragadiddle',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1036, cat:'rudiments', name:'Drag Paradiddle #1',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1037, cat:'rudiments', name:'Drag Paradiddle #2',    noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1038, cat:'rudiments', name:'Single Ratamacue',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1039, cat:'rudiments', name:'Double Ratamacue',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
-    {id:1040, cat:'rudiments', name:'Triple Ratamacue',      noteValue:'sixteenth', hihatHands:'alternate', minSPHM:120, maxSPHM:400, step:5, beats:null},
+    // Drag (Ruff): zwei Vorschlagnoten vor jedem Viertel, alternierend
+    {id:1031, cat:'rudiments', catLabel:'Rudiments', name:'Drag', noteValue:'quarter', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','rrL','llR','rrL'],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}]
+     ]},
+    // Single Drag Tap: Drag + akzentuierter Tap, Haende wechseln
+    {id:1032, cat:'rudiments', catLabel:'Rudiments', name:'Single Drag Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','L','rrL','R','llR','L','rrL','R'],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}]
+     ]},
+    // Double Drag Tap: zwei Drags + akzentuierter Tap je Triolengruppe
+    {id:1033, cat:'rudiments', catLabel:'Rudiments', name:'Double Drag Tap', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','llR','L','rrL','rrL','R','llR','llR','L','rrL','rrL','R'],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}]
+     ]},
+    // Lesson 25: Dreiergruppe mit Akzent am Ende, Drag am Anfang
+    {id:1034, cat:'rudiments', catLabel:'Rudiments', name:'Lesson 25', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','L','R','rrL','R','L','llR','L','R','rrL','R','L'],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}]
+     ]},
+    // Single Dragadiddle: Paradiddle mit vorangestelltem Doppelschlag
+    //   (Poster schreibt ihn aus, deshalb keine Vorschlagnoten)
+    {id:1035, cat:'rudiments', catLabel:'Rudiments', name:'Single Dragadiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['R','R','L','R','R',null,null,null,'L','L','R','L','L',null,null,null],
+     beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [],
+        [],
+        [],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [],
+        [],
+        []
+     ]},
+    // Drag Paradiddle #1: akzentuierte Achtel, dann Drag-Paradiddle in 16teln
+    {id:1036, cat:'rudiments', catLabel:'Rudiments', name:'Drag Paradiddle #1', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['R',null,'llR','L','R','R',null,null,'L',null,'rrL','R','L','L',null,null],
+     beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [],
+        [],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [],
+        []
+     ]},
+    // Drag Paradiddle #2: wie #1, aber mit zwei Drags
+    {id:1037, cat:'rudiments', catLabel:'Rudiments', name:'Drag Paradiddle #2', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['R',null,'llR','llR','L','R','R',null,'L',null,'rrL','rrL','R','L','L',null],
+     beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        []
+     ]},
+    // Single Ratamacue: Single Stroke Four mit Drag am Anfang und Akzent am Ende
+    {id:1038, cat:'rudiments', catLabel:'Rudiments', name:'Single Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','L','R','L',null,null,'rrL','R','L','R',null,null],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        []
+     ]},
+    // Double Ratamacue: zwei Drags vor der Figur
+    {id:1039, cat:'rudiments', catLabel:'Rudiments', name:'Double Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','llR','L','R','L',null,'rrL','rrL','R','L','R',null],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        []
+     ]},
+    // Triple Ratamacue: drei Drags vor der Figur
+    {id:1040, cat:'rudiments', catLabel:'Rudiments', name:'Triple Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+     stickings:['llR','llR','llR','L','R','L','rrL','rrL','rrL','R','L','R'],
+     beats:[
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snareDrag',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval'}]
+     ]},
 
     // ── NOTE READING ─────────────────────────────────────────────
     // IDs 201+. 4-beat arrays (quarter-note grid). BPM steps: 60, 90, 120.
@@ -4659,6 +4879,23 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             : (key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
             : 1.0;
 
+    // Drag/Ruff: es gibt kein eigenes Sample. Zwei leise Vorschläge dicht vor
+    // dem Hauptschlag ergeben den Ruff — zeitlich so eng, dass er als ein
+    // Klang wahrgenommen wird, aber hörbar dichter als ein Flam.
+    if (key === 'snareDrag' || key === 'snareDragAccent') {
+      var main = (key === 'snareDragAccent') ? 'snareAccent' : 'snare';
+      var g1 = WAVS['snareGhost'] ? 'snareGhost' : 'snare';
+      [0.052, 0.026].forEach(function(off) {
+        if (!WAVS[g1]) return;
+        var s2 = aCtx.createBufferSource(), gg = aCtx.createGain();
+        s2.buffer = WAVS[g1]; gg.gain.value = 0.55;
+        s2.connect(gg); gg.connect(aCtx.destination);
+        s2.start(Math.max(aCtx.currentTime, t - off));
+      });
+      playSound(main, t);
+      return;
+    }
+
     // hhOpen: GainNode tracken für Cutoff beim hhClose
     if (key === 'hhOpen') {
       if (WAVS['hhOpen']) {
@@ -5098,18 +5335,35 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             }
           }
         });
-        // Flam: kleine Vorschlagnote (Grace Note) links vor dem Hauptschlag
+        // Vorschlagnoten links vor dem Hauptschlag:
+        // Flam = eine, Drag/Ruff = zwei (mit Balken zwischen den Hälsen).
         sortedBn.forEach(function(n) {
           var dm = DRUM_MAP[n.inst];
-          if (dm && dm.flam) {
-            var gy = sY + n.line * ls;
-            var gx = x - 11;
+          if (!dm) return;
+          var cnt = dm.grace ? dm.grace : (dm.flam ? 1 : 0);
+          if (!cnt) return;
+          var gy = sY + n.line * ls;
+          // Bei zwei Vorschlagnoten weiter nach links rücken, damit beide Platz haben
+          var gx0 = x - (cnt === 2 ? 17 : 11);
+          var gsp = 6;   // Abstand zwischen den Vorschlagnoten
+          for (var gi = 0; gi < cnt; gi++) {
+            var gx = gx0 + gi * gsp;
             h += '<ellipse cx="'+gx+'" cy="'+gy+'" rx="3.2" ry="2.3" fill="'+nc+
                  '" transform="rotate(-20 '+gx+' '+gy+')" opacity="'+op+'"/>';
             h += '<line x1="'+(gx+3)+'" y1="'+gy+'" x2="'+(gx+3)+'" y2="'+(gy-13)+
                  '" stroke="'+nc+'" stroke-width="1" opacity="'+op+'"/>';
-            h += '<line x1="'+gx+'" y1="'+(gy-10)+'" x2="'+(gx+6)+'" y2="'+(gy-15)+
-                 '" stroke="'+nc+'" stroke-width="0.9" opacity="'+op+'"/>';
+            if (cnt === 1) {
+              // Flam: Fähnchen
+              h += '<line x1="'+gx+'" y1="'+(gy-10)+'" x2="'+(gx+6)+'" y2="'+(gy-15)+
+                   '" stroke="'+nc+'" stroke-width="0.9" opacity="'+op+'"/>';
+            }
+          }
+          if (cnt === 2) {
+            // Drag: doppelter Balken über beiden Hälsen (32tel-Vorschlag)
+            h += '<line x1="'+(gx0+3)+'" y1="'+(gy-13)+'" x2="'+(gx0+gsp+3)+'" y2="'+(gy-13)+
+                 '" stroke="'+nc+'" stroke-width="1.5" opacity="'+op+'"/>';
+            h += '<line x1="'+(gx0+3)+'" y1="'+(gy-10)+'" x2="'+(gx0+gsp+3)+'" y2="'+(gy-10)+
+                 '" stroke="'+nc+'" stroke-width="1.5" opacity="'+op+'"/>';
           }
         });
         // Instrument label: neben dem jeweiligen Notenkopf
