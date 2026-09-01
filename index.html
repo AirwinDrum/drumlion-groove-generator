@@ -4838,7 +4838,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // ============================================================
   // COURSE DISTRIBUTION ALGORITHM
   // ============================================================
-  // • Feste Rotation: Grooves → Notes → Fills → (Rudiments ab 200h)
+  // • Feste Rotation: Grooves → Notes → Fills → Coordination → (Rudiments ab Level 3)
   // • Pro Kategorie: alle 5 Erscheinungen kommt nächste Übung dazu
   // • Max 50 aktive Übungen pro Kategorie
   // • Innerhalb Kategorie: Round-Robin, dieselbe nie zweimal hintereinander
@@ -4862,7 +4862,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _getRotation() {
     var level = _getLevelInfo().level;
     var r = ['grooves', 'notes', 'fillins'];
-    if (_catPool.coordination.length && level >= 2) r.push('coordination');
+    // Unabhängigkeitsübungen laufen von Anfang an mit (Erwin, 01.09.2026):
+    // die erste ist Ride und Snare gemeinsam auf den Vierteln — das ist
+    // Level-1-Stoff und gehört nicht hinter ein Gate.
+    if (_catPool.coordination.length) r.push('coordination');
     if (_catPool.rudiments.length    && level >= 3) r.push('rudiments');
     return r;
   }
@@ -4954,7 +4957,18 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _loadState() {
     try {
       var s = localStorage.getItem(COURSE_KEY);
-      if (s) { var p = JSON.parse(s); if (p && p.cats) return p; }
+      if (s) {
+        var p = JSON.parse(s);
+        if (p && p.cats) {
+          // Kommt später eine Kategorie dazu, fehlt sie in allen gespeicherten
+          // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
+          // Kategorie bliebe für Bestandsnutzer für immer unsichtbar.
+          ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'].forEach(function(c) {
+            if (!p.cats[c]) p.cats[c] = { active: [], introIdx: 0, counter: 0, lastId: null };
+          });
+          return p;
+        }
+      }
     } catch(e) {}
     return _initState();
   }
@@ -5170,14 +5184,35 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   });
   window.addEventListener('pagehide', _syncFlush);
 
+  // Bis zum 28.08.2026 lief die Identifikation über die Email, seitdem über die
+  // Systeme.io-Kundennummer. Wer vorher schon geübt hat, dessen Fortschritt liegt
+  // unter dem alten Schlüssel — und wäre unter dem neuen unsichtbar. Deshalb wird
+  // zusätzlich unter der Email nachgesehen, und der weitere Stand gewinnt.
+  // Der alte Datensatz bleibt dabei liegen, es wird nichts gelöscht.
+  function _syncFetch(key) {
+    return fetch(_SB_URL + '/rest/v1/user_progress?user_key=eq.' + encodeURIComponent(key) + '&select=state', {
+      headers: _sbHeaders()
+    }).then(function(r) { return r.json(); })
+      .catch(function() { return null; });
+  }
+
   function _syncPull(onDone) {
     if (!_syncReady()) { onDone(false); return; }
     _syncSetStatus('spin', 'Lade Fortschritt…');
-    fetch(_SB_URL + '/rest/v1/user_progress?user_key=eq.' + encodeURIComponent(_syncKey()) + '&select=state', {
-      headers: _sbHeaders()
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(rows) {
+    var _alt = (_syncUid && _syncEmail && _syncEmail !== _syncKey()) ? _syncEmail : null;
+    Promise.all([_syncFetch(_syncKey()), _alt ? _syncFetch(_alt) : Promise.resolve(null)])
+    .then(function(res) {
+      // Von beiden Schlüsseln den Stand mit den meisten Lektionen nehmen
+      var rows = null, best = -1;
+      [res[0], res[1]].forEach(function(rs) {
+        if (!rs || !rs.length) return;
+        var c = -1;
+        try {
+          var p = _syncParse(rs[0].state);
+          c = (p.lessons != null) ? p.lessons : ((p.course && p.course.total) || 0);
+        } catch(e) { return; }
+        if (c > best) { best = c; rows = rs; }
+      });
       if (!rows || !rows.length) { _syncSetStatus('ok', 'Neu angelegt ✓'); onDone(false); return; }
       try {
         var remote = _syncParse(rows[0].state);
@@ -5267,7 +5302,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     ['coordination', 'rudiments'].forEach(function(cat) {
       var cs = _cState.cats[cat];
       if (cs && !cs.active.length && !cs.introIdx && _catPool[cat].length) {
-        var gate = (cat === 'coordination') ? 2 : 3;
+        var gate = (cat === 'coordination') ? 1 : 3;
         if (_curLevel >= gate) {
           cs.active.push({ id: _catPool[cat][0].id, bpmStep: 0 });
           cs.introIdx = 1;
@@ -7243,8 +7278,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // ── Course-Map Simulation ────────────────────────────────
     function buildCourseMap() {
       // Rotation ab Start: nur Grooves, Notes, Fills
-      // Coordination ab 100h, Rudiments ab 200h → werden hier nicht simuliert
+      // Coordination läuft ab Level 1 mit, Rudiments kommen ab Level 3 dazu
       var rotation = ['grooves', 'notes', 'fillins'];
+      if ((_catPool.coordination || []).length) rotation.push('coordination');
 
       // Initialer State (Kopie, nicht der echte)
       var cats = {};
@@ -7364,7 +7400,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             + lpl + ' Lektionen/Level · ' + lpc + ' Lektionen/Chapter'
             + '</div>'
             + '<div style="font-size:11px;color:#555;margin-bottom:16px;">'
-            + '🔒 Coordination ab Level 2 &nbsp;·&nbsp; Rudiments ab Level 3 (in Simulation enthalten)'
+            + '🔒 Rudiments ab Level 3 (in Simulation enthalten) &nbsp;·&nbsp; Coordination läuft ab Level 1'
             + '</div>';
 
       var currentLevel = -1, currentChapter = -1;
