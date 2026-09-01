@@ -1329,7 +1329,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     EXERCISES.forEach(function(ex) {
       if (ex.cat === 'fillins' && !ex.beats) return;
       var minB = ex.minBPM, maxB = ex.maxBPM, s = ex.step;
-      var normal = (!minB || !maxB || !s) ? 1 : Math.max(1, Math.round((maxB - minB) / s) + 1);
+      var normal = (!minB || !maxB || !s) ? 1 : Math.max(1, Math.floor((maxB - minB) / s) + 1);
       if (ex.warmup) normal += Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
       total += normal;
     });
@@ -1521,7 +1521,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // ── GROOVES (1–20) ──────────────────────────────────────────
     // noteValue:'eighth', hihatHands:'one' (SPHM factor 2.0)
     // Groove N: minBpm=5*ceil((29+N)/5), maxBpm=250
-    {id:1, cat:'grooves', name:'Groove 1', noteValue:'eighth', hihatHands:'one', minSPHM:60, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:30, maxBPM:250, step:2, beats:[
+    {id:1, cat:'grooves', name:'Groove 1', noteValue:'eighth', hihatHands:'one', minSPHM:60, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:80, maxBPM:250, step:5, warmup:{minBPM:30,step:2}, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1531,7 +1531,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:2, cat:'grooves', name:'Groove 2', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:31, maxBPM:250, step:2, beats:[
+    {id:2, cat:'grooves', name:'Groove 2', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:80, maxBPM:250, step:5, warmup:{minBPM:31,step:2}, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1541,7 +1541,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:3, cat:'grooves', name:'Groove 3', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:32, maxBPM:250, step:2, beats:[
+    {id:3, cat:'grooves', name:'Groove 3', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:80, maxBPM:250, step:5, warmup:{minBPM:32,step:2}, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1551,7 +1551,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:4, cat:'grooves', name:'Groove 4', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:33, maxBPM:250, step:2, beats:[
+    {id:4, cat:'grooves', name:'Groove 4', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:33, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1561,7 +1561,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:5, cat:'grooves', name:'Groove 5', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:34, maxBPM:250, step:2, beats:[
+    {id:5, cat:'grooves', name:'Groove 5', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:34, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1571,7 +1571,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:6, cat:'grooves', name:'Groove 6', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:35, maxBPM:250, step:2, beats:[
+    {id:6, cat:'grooves', name:'Groove 6', noteValue:'eighth', hihatHands:'one', minSPHM:70, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:35, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1581,7 +1581,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:7, cat:'grooves', name:'Groove 7', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:36, maxBPM:250, step:2, beats:[
+    {id:7, cat:'grooves', name:'Groove 7', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:36, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1591,7 +1591,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:8, cat:'grooves', name:'Groove 8', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:37, maxBPM:250, step:2, beats:[
+    {id:8, cat:'grooves', name:'Groove 8', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:37, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1601,7 +1601,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:9, cat:'grooves', name:'Groove 9', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:38, maxBPM:250, step:2, beats:[
+    {id:9, cat:'grooves', name:'Groove 9', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:38, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1611,7 +1611,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:10, cat:'grooves', name:'Groove 10', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:39, maxBPM:250, step:2, beats:[
+    {id:10, cat:'grooves', name:'Groove 10', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:39, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1621,7 +1621,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:11, cat:'grooves', name:'Groove 11', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:40, maxBPM:250, step:2, beats:[
+    {id:11, cat:'grooves', name:'Groove 11', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:40, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1631,7 +1631,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:12, cat:'grooves', name:'Groove 12', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:41, maxBPM:250, step:2, beats:[
+    {id:12, cat:'grooves', name:'Groove 12', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:41, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1641,7 +1641,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:13, cat:'grooves', name:'Groove 13', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:42, maxBPM:250, step:2, beats:[
+    {id:13, cat:'grooves', name:'Groove 13', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:42, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1651,7 +1651,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:14, cat:'grooves', name:'Groove 14', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:43, maxBPM:250, step:2, beats:[
+    {id:14, cat:'grooves', name:'Groove 14', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:43, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1661,7 +1661,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:15, cat:'grooves', name:'Groove 15', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:44, maxBPM:250, step:2, beats:[
+    {id:15, cat:'grooves', name:'Groove 15', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:44, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1671,7 +1671,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:16, cat:'grooves', name:'Groove 16', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:45, maxBPM:250, step:2, beats:[
+    {id:16, cat:'grooves', name:'Groove 16', noteValue:'eighth', hihatHands:'one', minSPHM:90, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:45, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1681,7 +1681,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:17, cat:'grooves', name:'Groove 17', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:46, maxBPM:250, step:2, beats:[
+    {id:17, cat:'grooves', name:'Groove 17', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:46, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1691,7 +1691,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:18, cat:'grooves', name:'Groove 18', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:47, maxBPM:250, step:2, beats:[
+    {id:18, cat:'grooves', name:'Groove 18', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:47, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1701,7 +1701,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:19, cat:'grooves', name:'Groove 19', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:48, maxBPM:250, step:2, beats:[
+    {id:19, cat:'grooves', name:'Groove 19', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:48, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -1711,7 +1711,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
         ]},
-    {id:20, cat:'grooves', name:'Groove 20', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:49, maxBPM:250, step:2, beats:[
+    {id:20, cat:'grooves', name:'Groove 20', noteValue:'eighth', hihatHands:'one', minSPHM:100, maxSPHM:500, catLabel:'Basic Grooves 1', minBPM:49, maxBPM:250, step:5, beats:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
@@ -2762,7 +2762,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
           []
         ]},
     {id:22, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 2', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,'L/R',null], beats:[
@@ -2781,7 +2781,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           []
         ]},
     {id:23, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 3', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:4, stickings2:[null,null,null,null,'L/R',null,'L/R',null], beats:[
@@ -2798,9 +2798,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           []
         ]},
     {id:24, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 4', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:2, stickings2:[null,null,'R',null,'L/R',null,'L/R',null], beats:[
@@ -2815,11 +2815,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         ], beats2:[
           [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}],
-          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           []
         ]},
     {id:25, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 5', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, warmup:{minBPM:30,step:2}, showLabels:true, stickings:null, fillStart:0, stickings2:['R',null,'R',null,'L/R',null,'L/R',null], beats:[
@@ -2832,13 +2832,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom2',line:1.0,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           []
         ]},
     {id:26, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 6', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:['R',null,'R',null,'R',null,'R',null], beats:[
@@ -2851,13 +2851,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom2',line:1.0,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
           []
         ]},
     {id:27, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 7', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:['L/R',null,'L/R',null,'L/R',null,'L/R',null], beats:[
@@ -2870,13 +2870,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           []
         ]},
     {id:28, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 8', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:['L/R',null,null,null,'L/R',null,'L/R',null], beats:[
@@ -2889,13 +2889,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'kick',line:3.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           []
         ]},
     {id:29, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 9', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:['L/R',null,null,null,'L/R',null,'L/R',null], beats:[
@@ -2908,13 +2908,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'kick',line:3.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom1',line:0.5,head:'oval'},{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true},{inst:'tom2',line:1.0,head:'oval',quarter:true}],
           [],
-          [{inst:'tom2',line:1.0,head:'oval'},{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom2',line:1.0,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
           []
         ]},
     {id:30, cat:'fillins', catLabel:'Quarter Fills', name:'Fill 10', noteValue:'quarter', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:40, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0, stickings2:['L/R',null,null,null,'L/R',null,null,null], beats:[
@@ -2927,13 +2927,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
           [{inst:'hh',line:-0.5,head:'x'}]
         ], beats2:[
-          [{inst:'tom1',line:0.5,head:'oval'},{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true},{inst:'tom2',line:1.0,head:'oval',quarter:true}],
           [],
-          [{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'kick',line:3.5,head:'oval',quarter:true}],
           [],
-          [{inst:'tom3',line:2.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true},{inst:'snare',line:1.5,head:'oval',quarter:true}],
           [],
-          [{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'kick',line:3.5,head:'oval',quarter:true}],
           []
         ]},
     {id:31, cat:'fillins', catLabel:'Eighth Note Fills', name:'Fill 11', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:30, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:6, stickings2:[null,null,null,null,null,null,"R","L"], beats:[
@@ -3317,9 +3317,211 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           [{inst:'kick',line:3.5,head:'oval'}]
         ]},
 
-    // ── RUDIMENTS (41–80) — 16th-note alternating ───────────────
+    // ── QUARTER & EIGHTH FILLS (Fill 31–40) ──
+    {id:301, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 31', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:4,
+     stickings2:[null,null,null,null,'R',null,'R','L'], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}]
+        ]},
+    {id:302, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 32', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:3,
+     stickings2:[null,null,null,null,'L/R',null,'R','L'], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}]
+        ]},
+    {id:303, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 33', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:2,
+     stickings2:[null,null,'L/R',null,'L/R',null,'R','L'], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}]
+        ]},
+    {id:304, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 34', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['L/R',null,'L/R',null,'R','L','R',null], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true}],
+          []
+        ]},
+    {id:305, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 35', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['R',null,'R','L','R',null,'R',null], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'snare',line:1.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom2',line:1.0,head:'oval',quarter:true}],
+          [],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          []
+        ]},
+    {id:306, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 36', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['L/R','L/R','L/R',null,null,'L/R','L/R',null], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true},{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          []
+        ]},
+    {id:307, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 37', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['R','L','R','L','R',null,'L',null], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true}],
+          []
+        ]},
+    {id:308, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 38', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['R','L','R',null,'R','L','R',null], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom2',line:1.0,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          []
+        ]},
+    {id:309, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 39', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['R','L',null,'L','R','L','R','L'], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}]
+        ]},
+    {id:310, cat:'fillins', catLabel:'Quarter & Eighth Fills', name:'Fill 40', noteValue:'eighth', hihatHands:'one', minSPHM:80, maxSPHM:400, minBPM:50, maxBPM:200, step:5, showLabels:true, stickings:null, fillStart:0,
+     stickings2:['R','L',null,'L','R',null,'R','L'], beats:[
+          [{inst:'crash1',line:-1.0,head:'circledX'},{inst:'kick',line:3.5,head:'oval'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+          [{inst:'hh',line:-0.5,head:'x'}]
+        ], beats2:[
+          [{inst:'snare',line:1.5,head:'oval'}],
+          [{inst:'snare',line:1.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'tom1',line:0.5,head:'oval'}],
+          [{inst:'tom1',line:0.5,head:'oval',quarter:true}],
+          [],
+          [{inst:'tom3',line:2.5,head:'oval'}],
+          [{inst:'tom3',line:2.5,head:'oval'}]
+        ]},
+
+    // ── RUDIMENTS ──────────────────────────────────────────────
     // factor 2.0 → BPM 60–200
-    {id:1001, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1001, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:250, step:1, showLabels:false,
       stickings:['R','L','R','L','R','L','R','L','R','L','R','L','R','L','R','L'],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],
@@ -3350,7 +3552,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval',quarter:true}],[],[]
       ]},
     // Single Stroke Seven: Sextole + Schlag auf der nächsten Zählzeit, alternierende Führhand
-    {id:1003, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Seven', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1003, cat:'rudiments', catLabel:'Rudiments', name:'Single Stroke Seven', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:150, step:1, showLabels:false,
       stickings:['R','L','R','L','R','L','R',null,null,null,null,null,'L','R','L','R','L','R','L',null,null,null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3364,7 +3566,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       ]},
     // Multiple Bounce Roll: braucht Buzz-Sound + Buzz-Notation — noch nicht baubar
     // Multiple Bounce Roll: gepresste Buzz-Schlaege, alternierend (Poster: 'z' ueber ganzer Note)
-    {id:1004, cat:'rudiments', catLabel:'Rudiments', name:'Multiple Bounce Roll', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1004, cat:'rudiments', catLabel:'Rudiments', name:'Multiple Bounce Roll', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:150, step:1, showLabels:false,
      stickings:['R','L','R','L','R','L','R','L'],
      beats:[
         [{inst:'snareBuzz',line:1.5,head:'oval'}],
@@ -3377,15 +3579,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareBuzz',line:1.5,head:'oval'}]
      ]},
     // Triple Stroke Roll: 8tel-Triolen, drei Schläge pro Hand
-    {id:1005, cat:'rudiments', catLabel:'Rudiments', name:'Triple Stroke Roll', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
-      stickings:['R','R','R','L','L','L','R','R','R','L','L','L'],
-      beats:[
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
-      ]},
-    {id:1006, cat:'rudiments', catLabel:'Rudiments', name:'Double Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1005, cat:'rudiments', catLabel:'Rudiments', name:'Double Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L','L'],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],
@@ -3406,7 +3600,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Stroke Rolls: ausgeschriebene Form in 16teln (Doppelschläge + akzentuierter Abschluss)
-    {id:1007, cat:'rudiments', catLabel:'Rudiments', name:'Five Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1006, cat:'rudiments', catLabel:'Rudiments', name:'Five Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R',null,null,null,'L','L','R','R','L',null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3414,14 +3608,58 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snareAccent',line:1.5,head:'oval',quarter:true}],[],[],[]
       ]},
-    {id:1008, cat:'rudiments', catLabel:'Rudiments', name:'Six Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
-      stickings:['R','L','L','R','R','L',null,null,'R','L','L','R','R','L',null,null],
+    {id:1007, cat:'rudiments', catLabel:'Rudiments', name:'Six Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      // Akzentuierte Achtel, vier 16tel (zwei Doppelschläge), akzentuierte Achtel.
+      stickings:['R',null,'L','L','R','R','L',null,'R',null,'L','L','R','R','L',null],
       beats:[
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[]
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],
+        [],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],
+        [],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],
+        [],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],
+        []
       ]},
+    {id:1008, cat:'rudiments', catLabel:'Rudiments', name:'Six Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:180, step:1, showLabels:false,
+      // Variante B: dieselbe Figur als durchgehende 16tel-Triolen —
+      // sechs Schläge pro Zählzeit, Akzent auf dem ersten und sechsten.
+      stickings:['R','L','L','R','R','L','R','L','L','R','R','L','R','L','L','R','R','L','R','L','L','R','R','L'],
+      beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}]
+      ]},
+
     {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L',null,'L','L','R','R','L','L','R',null],
       beats:[
@@ -3498,7 +3736,199 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         []
      ]},
     // Diddle Rudiments
-    {id:1016, cat:'rudiments', catLabel:'Rudiments', name:'Single Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    // ── MULTIPLE STROKE ROLLS ─────────────────────────────────
+    // Ende der Roll-Rudiments, vor den Diddles: alles mit mehreren
+    // Schlägen pro Hand, aufsteigend. Ab vier Schlägen gibt es keine
+    // PAS-Standardnamen mehr — die offizielle 40er-Liste endet beim
+    // Triple Stroke Roll. Namen nach gängigem Sprachgebrauch.
+    {id:1016, cat:'rudiments', catLabel:'Rudiments', name:'Triple Stroke Roll', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings:['R','R','R','L','L','L','R','R','R','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1017, cat:'rudiments', catLabel:'Rudiments', name:'Quadruple Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:270, step:1, showLabels:false,
+      stickings:['R','R','R','R','L','L','L','L','R','R','R','R','L','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1018, cat:'rudiments', catLabel:'Rudiments', name:'Quintuple Stroke Roll', noteValue:'quintuplet', hihatHands:'alternate', minBPM:30, maxBPM:215, step:1, showLabels:false,
+      stickings:['R','R','R','R','R','L','L','L','L','L','R','R','R','R','R','L','L','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1019, cat:'rudiments', catLabel:'Rudiments', name:'Sextuple Stroke Roll', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:180, step:1, showLabels:false,
+      stickings:['R','R','R','R','R','R','L','L','L','L','L','L','R','R','R','R','R','R','L','L','L','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1020, cat:'rudiments', catLabel:'Rudiments', name:'Septuple Stroke Roll', noteValue:'septuplet', hihatHands:'alternate', minBPM:30, maxBPM:150, step:1, showLabels:false,
+      stickings:['R','R','R','R','R','R','R','L','L','L','L','L','L','L','R','R','R','R','R','R','R','L','L','L','L','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1021, cat:'rudiments', catLabel:'Rudiments', name:'Octuple Stroke Roll', noteValue:'thirtysecond', hihatHands:'alternate', minBPM:30, maxBPM:135, step:1, showLabels:false,
+      stickings:['R','R','R','R','R','R','R','R','L','L','L','L','L','L','L','L','R','R','R','R','R','R','R','R','L','L','L','L','L','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1022, cat:'rudiments', catLabel:'Rudiments', name:'One-Handed Sixteenths', noteValue:'sixteenth', hihatHands:'one', minBPM:30, maxBPM:120, step:1, showLabels:false,
+      stickings:['R','R','R','R','R','R','R','R','R','R','R','R','R','R','R','R'],
+      stickings2:['L','L','L','L','L','L','L','L','L','L','L','L','L','L','L','L'],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ],
+      beats2:[
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}]
+      ]},
+    {id:1023, cat:'rudiments', catLabel:'Rudiments', name:'Single Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','R','R','L','R','L','L','R','L','R','R','L','R','L','L'],
       beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],
@@ -3519,7 +3949,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Double Paradiddle: 6er-Gruppen (Triolen-Grid), Akzent auf 1. Schlag jeder Gruppe
-    {id:1017, cat:'rudiments', catLabel:'Rudiments', name:'Double Paradiddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1024, cat:'rudiments', catLabel:'Rudiments', name:'Double Paradiddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','R','L','R','R','L','R','L','R','L','L'],
       beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3528,7 +3958,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Triple Paradiddle: 8er-Gruppen in 16teln, Akzent auf 1. Schlag jeder Gruppe
-    {id:1018, cat:'rudiments', catLabel:'Rudiments', name:'Triple Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1025, cat:'rudiments', catLabel:'Rudiments', name:'Triple Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','R','L','R','L','R','R','L','R','L','R','L','R','L','L'],
       beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3537,7 +3967,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Paradiddle-Diddle: 6er-Gruppen (Triolen-Grid), gleichbleibende Führhand, Akzent auf 1
-    {id:1019, cat:'rudiments', catLabel:'Rudiments', name:'Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1026, cat:'rudiments', catLabel:'Rudiments', name:'Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','L','R','R','L','L','R','L','R','R','L','L'],
       beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3547,14 +3977,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       ]},
     // Flam Rudiments — Sticking-Schreibweise: Kleinbuchstabe = Grace Note (z.B. lR = Flam rechts)
     // Flam: alternierende Flams auf Vierteln
-    {id:1020, cat:'rudiments', catLabel:'Rudiments', name:'Flam', noteValue:'quarter', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1027, cat:'rudiments', catLabel:'Rudiments', name:'Flam', noteValue:'quarter', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','rL','lR','rL'],
       beats:[
         [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}],
         [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}]
       ]},
     // Flam Accent: 8tel-Triolen, Flam + Akzent auf 1. Note jeder Triole, alternierend
-    {id:1021, cat:'rudiments', catLabel:'Rudiments', name:'Flam Accent', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1028, cat:'rudiments', catLabel:'Rudiments', name:'Flam Accent', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','L','R','rL','R','L','lR','L','R','rL','R','L'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3563,7 +3993,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Flam Tap: 8tel, Flam + Akzent auf 1. Note jedes Doppelschlags
-    {id:1022, cat:'rudiments', catLabel:'Rudiments', name:'Flam Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1029, cat:'rudiments', catLabel:'Rudiments', name:'Flam Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','R','rL','L','lR','R','rL','L'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3572,7 +4002,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Flamacue: Flam, Akzent auf 2. Note, Abschluss-Flam auf der nächsten Zählzeit, alternierend
-    {id:1023, cat:'rudiments', catLabel:'Rudiments', name:'Flamacue', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1030, cat:'rudiments', catLabel:'Rudiments', name:'Flamacue', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','L','R','L','lR',null,null,null,'rL','R','L','R','rL',null,null,null],
       beats:[
         [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3581,7 +4011,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlam',line:1.5,head:'oval'}],[],[],[]
       ]},
     // Flam Paradiddle: Paradiddle mit Flam + Akzent auf 1. Schlag jeder 4er-Gruppe
-    {id:1024, cat:'rudiments', catLabel:'Rudiments', name:'Flam Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1031, cat:'rudiments', catLabel:'Rudiments', name:'Flam Paradiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','L','R','R','rL','R','L','L','lR','L','R','R','rL','R','L','L'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3590,7 +4020,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Flammed Mill: umgekehrter Paradiddle (RRLR) mit Flam + Akzent vorne
-    {id:1025, cat:'rudiments', catLabel:'Rudiments', name:'Flammed Mill', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1032, cat:'rudiments', catLabel:'Rudiments', name:'Flammed Mill', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','R','L','R','rL','L','R','L','lR','R','L','R','rL','L','R','L'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3599,7 +4029,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Flam Paradiddle-Diddle: 6er-Gruppen (Triolen-Grid), Flam + Akzent auf 1, alternierend
-    {id:1026, cat:'rudiments', catLabel:'Rudiments', name:'Flam Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1033, cat:'rudiments', catLabel:'Rudiments', name:'Flam Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','L','R','R','L','L','rL','R','L','L','R','R'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3608,7 +4038,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Pataflafla: 16tel-Single-Strokes mit Flam auf 1. und 4. Note jeder 4er-Gruppe
-    {id:1027, cat:'rudiments', catLabel:'Rudiments', name:'Pataflafla', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1034, cat:'rudiments', catLabel:'Rudiments', name:'Pataflafla', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','L','R','rL','lR','L','R','rL','lR','L','R','rL','lR','L','R','rL'],
       beats:[
         [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}],
@@ -3617,7 +4047,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlam',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareFlam',line:1.5,head:'oval'}]
       ]},
     // Swiss Army Triplet: 8tel-Triolen, Flam + Akzent auf 1, gleichbleibende Führhand
-    {id:1028, cat:'rudiments', catLabel:'Rudiments', name:'Swiss Army Triplet', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1035, cat:'rudiments', catLabel:'Rudiments', name:'Swiss Army Triplet', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','R','L','lR','R','L','lR','R','L','lR','R','L'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3626,7 +4056,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Inverted Flam Tap: 8tel, Doppelschläge über die Zählzeit versetzt, Flam + Akzent auf den Zählzeiten
-    {id:1029, cat:'rudiments', catLabel:'Rudiments', name:'Inverted Flam Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1036, cat:'rudiments', catLabel:'Rudiments', name:'Inverted Flam Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['lR','L','rL','R','lR','L','rL','R'],
       beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3636,7 +4066,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       ]},
     // Flam Drag: braucht Drag-Sounds — noch nicht baubar
     // Flam Drag: Flam - Drag - Tap je Triole, Haende wechseln pro Gruppe
-    {id:1030, cat:'rudiments', catLabel:'Rudiments', name:'Flam Drag', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1037, cat:'rudiments', catLabel:'Rudiments', name:'Flam Drag', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['lR','rrL','R','rL','llR','L','lR','rrL','R','rL','llR','L'],
      beats:[
         [{inst:'snareFlamAccent',line:1.5,head:'oval'}],
@@ -3654,7 +4084,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
      ]},
     // Drag Rudiments
     // Drag (Ruff): zwei Vorschlagnoten vor jedem Viertel, alternierend
-    {id:1031, cat:'rudiments', catLabel:'Rudiments', name:'Drag', noteValue:'quarter', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1038, cat:'rudiments', catLabel:'Rudiments', name:'Drag', noteValue:'quarter', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','rrL','llR','rrL'],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3663,7 +4093,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareDrag',line:1.5,head:'oval'}]
      ]},
     // Single Drag Tap: Drag + akzentuierter Tap, Haende wechseln
-    {id:1032, cat:'rudiments', catLabel:'Rudiments', name:'Single Drag Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1039, cat:'rudiments', catLabel:'Rudiments', name:'Single Drag Tap', noteValue:'eighth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','L','rrL','R','llR','L','rrL','R'],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3676,7 +4106,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareAccent',line:1.5,head:'oval'}]
      ]},
     // Double Drag Tap: zwei Drags + akzentuierter Tap je Triolengruppe
-    {id:1033, cat:'rudiments', catLabel:'Rudiments', name:'Double Drag Tap', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1040, cat:'rudiments', catLabel:'Rudiments', name:'Double Drag Tap', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','llR','L','rrL','rrL','R','llR','llR','L','rrL','rrL','R'],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3693,7 +4123,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareAccent',line:1.5,head:'oval'}]
      ]},
     // Lesson 25: Dreiergruppe mit Akzent am Ende, Drag am Anfang
-    {id:1034, cat:'rudiments', catLabel:'Rudiments', name:'Lesson 25', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1041, cat:'rudiments', catLabel:'Rudiments', name:'Lesson 25', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','L','R','rrL','R','L','llR','L','R','rrL','R','L'],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3711,7 +4141,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
      ]},
     // Single Dragadiddle: Paradiddle mit vorangestelltem Doppelschlag
     //   (Poster schreibt ihn aus, deshalb keine Vorschlagnoten)
-    {id:1035, cat:'rudiments', catLabel:'Rudiments', name:'Single Dragadiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1042, cat:'rudiments', catLabel:'Rudiments', name:'Single Dragadiddle', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['R','R','L','R','R',null,null,null,'L','L','R','L','L',null,null,null],
      beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],
@@ -3732,7 +4162,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         []
      ]},
     // Drag Paradiddle #1: akzentuierte Achtel, dann Drag-Paradiddle in 16teln
-    {id:1036, cat:'rudiments', catLabel:'Rudiments', name:'Drag Paradiddle #1', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1043, cat:'rudiments', catLabel:'Rudiments', name:'Drag Paradiddle #1', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['R',null,'llR','L','R','R',null,null,'L',null,'rrL','R','L','L',null,null],
      beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],
@@ -3753,7 +4183,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         []
      ]},
     // Drag Paradiddle #2: wie #1, aber mit zwei Drags
-    {id:1037, cat:'rudiments', catLabel:'Rudiments', name:'Drag Paradiddle #2', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1044, cat:'rudiments', catLabel:'Rudiments', name:'Drag Paradiddle #2', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['R',null,'llR','llR','L','R','R',null,'L',null,'rrL','rrL','R','L','L',null],
      beats:[
         [{inst:'snareAccent',line:1.5,head:'oval'}],
@@ -3774,7 +4204,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         []
      ]},
     // Single Ratamacue: Single Stroke Four mit Drag am Anfang und Akzent am Ende
-    {id:1038, cat:'rudiments', catLabel:'Rudiments', name:'Single Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1045, cat:'rudiments', catLabel:'Rudiments', name:'Single Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','L','R','L',null,null,'rrL','R','L','R',null,null],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3791,7 +4221,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         []
      ]},
     // Double Ratamacue: zwei Drags vor der Figur
-    {id:1039, cat:'rudiments', catLabel:'Rudiments', name:'Double Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1046, cat:'rudiments', catLabel:'Rudiments', name:'Double Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','llR','L','R','L',null,'rrL','rrL','R','L','R',null],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3808,7 +4238,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         []
      ]},
     // Triple Ratamacue: drei Drags vor der Figur
-    {id:1040, cat:'rudiments', catLabel:'Rudiments', name:'Triple Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1047, cat:'rudiments', catLabel:'Rudiments', name:'Triple Ratamacue', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
      stickings:['llR','llR','llR','L','R','L','rrL','rrL','rrL','R','L','R'],
      beats:[
         [{inst:'snareDrag',line:1.5,head:'oval'}],
@@ -3824,6 +4254,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snareAccent',line:1.5,head:'oval'}]
      ]},
+
 
     // ── NOTE READING ─────────────────────────────────────────────
     // IDs 201+. 4-beat arrays (quarter-note grid). BPM steps: 60, 90, 120.
@@ -4227,10 +4658,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   var _navPos     = -1;
 
   // Anzahl BPM-Schritte für eine Übung (optional: warmup-Phase)
+  // floor statt round: sonst schiebt ein Startwert, der nicht auf dem Raster
+  // liegt (z.B. Groove 7 bei 36 mit Schritt 5), die letzte Stufe über maxBPM
+  // hinaus — und damit über den SPHM-Deckel.
   function _exSteps(ex) {
     var minB = (ex.minBPM != null) ? ex.minBPM : sphmToBpm(ex.minSPHM, ex, ex.step);
     var maxB = (ex.maxBPM != null) ? ex.maxBPM : sphmToBpm(ex.maxSPHM, ex, ex.step);
-    var normal = Math.max(1, Math.round((maxB - minB) / ex.step) + 1);
+    var normal = Math.max(1, Math.floor((maxB - minB) / ex.step) + 1);
     if (ex.warmup) {
       var wSteps = Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
       return wSteps + normal;
@@ -4252,7 +4686,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // ── Speed-Bremse: Groove 1 als Tempo-Gate ───────────────────
   // SPHM-Cap = Groove 1's aktuelles BPM × 2 (8tel, eine Hand).
   // Sobald Groove 1 graduated ist → kein Cap mehr.
-  var _NOTES_PER_BEAT = { whole:0.25, half:0.5, quarter:1, eighth:2, sixteenth:4, triplet:3, sixteenthTriplet:6 };
+  var _NOTES_PER_BEAT = { whole:0.25, half:0.5, quarter:1, eighth:2, sixteenth:4, triplet:3,
+                          quintuplet:5, sixteenthTriplet:6, septuplet:7, thirtysecond:8 };
 
   function _getSphmCap() {
     if (_cState.completed && _cState.completed.indexOf(1) !== -1) return null; // Groove 1 fertig
@@ -5229,6 +5664,18 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     var lbl16 = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
     var lbl12 = ['1', '&', 'a', '2', '&', 'a', '3', '&', 'a', '4', '&', 'a'];
     var lbl24 = ['1','','','&','','', '2','','','&','','', '3','','','&','','', '4','','','&','',''];
+    // Quintolen (20), Septolen (28) und 32tel (32) haben keine eingebürgerte
+    // Silbenzählung — dort wird nur die Zählzeit beschriftet, der Rest bleibt leer.
+    function lblFor(n) {
+      if (n === 16) return lbl16;
+      if (n === 12) return lbl12;
+      if (n === 24) return lbl24;
+      if (n === 4)  return lbl4;
+      if (n === 8)  return lbl8;
+      var per = n / 4, out = [];
+      for (var li = 0; li < n; li++) out.push(li % per === 0 ? String(li / per + 1) : '');
+      return out;
+    }
     var lbl   = lbl8;
     var sY   = 40, ls = 8;
     var op   = dimmed ? 0.2 : 1;
@@ -5250,7 +5697,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff, groups) {
       var n = beatsArr.length;
       var bW = n * bs;
-      var lbl = (n === 16) ? lbl16 : (n === 12) ? lbl12 : (n === 24) ? lbl24 : (n === 4) ? lbl4 : lbl8;
+      var lbl = lblFor(n);
       var fs = fillStart || 0;
       // Staff lines (skipped when caller draws them across full width)
       if (!skipStaff) {
@@ -5268,54 +5715,101 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       var BH = 2.5;  // Balkenhöhe
       var BT = sY - 18 - BH; // Balken-Oberkante (= sY-20.5)
       var SW = 0.6;  // halbe Halsstärke (stroke-width 1.2 / 2)
+      // Eine Viertelnote bekommt nie einen Balken. Für die Balkenbildung zählt
+      // ein Viertel-Slot deshalb wie ein leerer Slot.
+      function beamable(i) {
+        var a = beatsArr[i];
+        return !!(a && a.length > 0 && !a.some(function(nn) { return nn.quarter; }));
+      }
+      // Notendauer in Rasterschritten. Standard ist ein Schritt; `quarter:true`
+      // und `eighth:true` machen die Note entsprechend länger. Damit lassen sich
+      // gemischte Werte in einem Raster schreiben (z.B. Achtel im 16tel-Raster).
+      function slotSpan(i) {
+        var a = beatsArr[i];
+        if (!a || !a.length) return 1;
+        if (a.some(function(nn){ return nn.quarter; })) return Math.max(1, n / 4);
+        if (a.some(function(nn){ return nn.eighth;  })) return Math.max(1, n / 8);
+        return 1;
+      }
+      // Liegt der Slot noch im Klang der davorstehenden Note? Dann gehört dort
+      // weder eine Pause noch ein Balkenabbruch hin.
+      function isCovered(i) {
+        for (var k = i - 1; k >= 0; k--) {
+          var a = beatsArr[k];
+          if (a && a.length) return (k + slotSpan(k) > i);
+        }
+        return false;
+      }
+      // Wird in der 16tel-Balkenbildung gefüllt und von der Fähnchen-Logik gelesen.
+      var beamedSlots = {};
       if (n === 8) {
         [[0,1],[2,3],[4,5],[6,7]].forEach(function(g) {
-          if (beatsArr[g[0]] && beatsArr[g[0]].length > 0 &&
-              beatsArr[g[1]] && beatsArr[g[1]].length > 0) {
+          if (beamable(g[0]) && beamable(g[1])) {
             var x1 = sX+16+g[0]*bs+5, x2 = sX+16+g[1]*bs+5;
             h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                  '" fill="'+W+'" opacity="'+op+'"/>';
           }
         });
       } else if (n === 16) {
-        // Groups of 4 (one per beat), 2 beams (= sixteenth notes)
-        [[0,3],[4,7],[8,11],[12,15]].forEach(function(g) {
-          var allHaveNotes = true;
-          for (var gi = g[0]; gi <= g[1]; gi++) {
-            if (!beatsArr[gi] || beatsArr[gi].length === 0) { allHaveNotes = false; break; }
+        // Eine Gruppe = eine Zählzeit (4 Slots). Innerhalb der Gruppe werden
+        // zusammenhängende Läufe gebalkt; eine echte Pause bricht den Balken,
+        // ein von einer längeren Note gedeckter Slot nicht.
+        // Hauptbalken über den ganzen Lauf, Nebenbalken nur über die 16tel —
+        // so bekommt "Achtel + zwei 16tel" den korrekten abgesetzten Nebenbalken.
+        var BT2 = sY - 18 + BH + 1.5;
+        var beamRect = function(a, b, y) {
+          var x1 = sX+16+a*bs+5, x2 = sX+16+b*bs+5;
+          h += '<rect x="'+(x1-SW)+'" y="'+y+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+               '" fill="'+W+'" opacity="'+op+'"/>';
+        };
+        var stubRect = function(at, toLeft, y) {
+          var x1 = sX+16+at*bs+5;
+          var w  = bs * 0.45;
+          h += '<rect x="'+(toLeft ? x1-w : x1-SW)+'" y="'+y+'" width="'+(w+SW)+'" height="'+BH+
+               '" fill="'+W+'" opacity="'+op+'"/>';
+        };
+        for (var g0 = 0; g0 < n; g0 += 4) {
+          var runs = [], cur = [];
+          for (var gi = g0; gi < g0 + 4; gi++) {
+            if (beamable(gi))            cur.push(gi);
+            else if (!isCovered(gi))   { if (cur.length) runs.push(cur); cur = []; }
           }
-          if (allHaveNotes) {
-            var x1 = sX+16+g[0]*bs+5, x2 = sX+16+g[1]*bs+5;
-            h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
-                 '" fill="'+W+'" opacity="'+op+'"/>';
-            var BT2 = sY - 18 + BH + 1.5;
-            h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
-                 '" fill="'+W+'" opacity="'+op+'"/>';
-          } else {
-            // Partial: Untergruppen [0,1] und [2,3] innerhalb des Beats prüfen
-            [[g[0],g[0]+1],[g[0]+2,g[1]]].forEach(function(p) {
-              if (beatsArr[p[0]] && beatsArr[p[0]].length > 0 &&
-                  beatsArr[p[1]] && beatsArr[p[1]].length > 0) {
-                var x1 = sX+16+p[0]*bs+5, x2 = sX+16+p[1]*bs+5;
-                h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
-                     '" fill="'+W+'" opacity="'+op+'"/>';
-                var BT2 = sY - 18 + BH + 1.5;
-                h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
-                     '" fill="'+W+'" opacity="'+op+'"/>';
+          if (cur.length) runs.push(cur);
+          runs.forEach(function(run) {
+            if (run.length < 2) return;
+            run.forEach(function(idx){ beamedSlots[idx] = true; });
+            beamRect(run[0], run[run.length-1], BT);
+            // Nebenbalken: zusammenhängende 16tel-Läufe innerhalb des Hauptbalkens
+            var sub = [];
+            var flushSub = function() {
+              if (sub.length > 1) beamRect(sub[0], sub[sub.length-1], BT2);
+              else if (sub.length === 1) {
+                // Einzelnes 16tel zwischen längeren Noten → angesetzter Balkenstummel
+                var at = sub[0], pos = run.indexOf(at);
+                stubRect(at, pos > 0, BT2);
               }
+              sub = [];
+            };
+            run.forEach(function(idx) {
+              if (slotSpan(idx) === 1) sub.push(idx); else flushSub();
             });
-          }
-        });
-      } else if (n === 12 || n === 24) {
-        // Triolen (3er-Gruppen, 1 Balken) / Sextolen (6er-Gruppen, 2 Balken)
-        // Innerhalb jeder Gruppe: zusammenhängende Noten-Runs balken,
-        // volle Gruppen bekommen die Tuplet-Zahl (3 bzw. 6) über dem Balken
+            flushSub();
+          });
+        }
+      } else if (n === 12 || n === 20 || n === 24 || n === 28 || n === 32) {
+        // Eine Gruppe = eine Zählzeit. Triolen (3), Quintolen (5), Sextolen (6),
+        // Septolen (7), 32tel (8). Innerhalb jeder Gruppe: zusammenhängende
+        // Noten-Runs balken, volle Gruppen bekommen die Tuplet-Zahl über den Balken.
+        // Balkenzahl nach Notenwert: Achtel-Triole 1, alles auf 16tel-Basis 2, 32tel 3.
+        // 32tel sind keine Tuole → keine Zahl.
         var gsz = n / 4;
-        var dbl = (n === 24);
+        var nBeams = (n === 12) ? 1 : (n === 32) ? 3 : 2;
+        var dbl = (nBeams > 1);
+        var showTuplet = (n !== 32);
         for (var g0 = 0; g0 < n; g0 += gsz) {
           var runStart = -1;
           for (var gi = g0; gi <= g0 + gsz; gi++) {
-            var hasNote = gi < g0 + gsz && beatsArr[gi] && beatsArr[gi].length > 0;
+            var hasNote = gi < g0 + gsz && beamable(gi);
             if (hasNote && runStart === -1) runStart = gi;
             if (!hasNote && runStart !== -1) {
               var runEnd = gi - 1;
@@ -5327,8 +5821,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                   var BT2 = sY - 18 + BH + 1.5;
                   h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                        '" fill="'+W+'" opacity="'+op+'"/>';
+                  if (nBeams > 2) {
+                    var BT3 = BT2 + BH + 1.5;
+                    h += '<rect x="'+(x1-SW)+'" y="'+BT3+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                         '" fill="'+W+'" opacity="'+op+'"/>';
+                  }
                 }
-                if (runEnd - runStart === gsz - 1) {
+                if (showTuplet && runEnd - runStart === gsz - 1) {
                   h += '<text x="'+((x1+x2)/2)+'" y="'+(BT-3)+'" text-anchor="middle" fill="'+W+
                        '" font-size="9" font-style="italic" font-family="DM Sans,sans-serif" opacity="'+(op*0.8)+'">'+gsz+'</text>';
                 }
@@ -5340,8 +5839,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       } else if (n > 4) {
         // Fallback: groups of 2, 1 beam
         for (var gi = 0; gi < n-1; gi += 2) {
-          if (beatsArr[gi] && beatsArr[gi].length > 0 &&
-              beatsArr[gi+1] && beatsArr[gi+1].length > 0) {
+          if (beamable(gi) && beamable(gi+1)) {
             var x1 = sX+16+gi*bs+5, x2 = sX+16+(gi+1)*bs+5;
             h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                  '" fill="'+W+'" opacity="'+op+'"/>';
@@ -5485,17 +5983,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         if (stickings && stickings[bi]) {
           h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
-        // Check if empty slot is covered by a preceding quarter note in the same group
-        var coveredByQuarter = false;
-        if (bn.length === 0) {
-          var _gsz = _nb / 4;
-          var _grpStart = Math.floor(bi / _gsz) * _gsz;
-          for (var _gi = _grpStart; _gi < bi; _gi++) {
-            if (beatsArr[_gi] && beatsArr[_gi].some(function(nn){ return nn.quarter; })) {
-              coveredByQuarter = true; break;
-            }
-          }
-        }
+        // Leerer Slot, der noch im Klang der davorstehenden längeren Note liegt →
+        // dort gehört keine Pause hin. Prüft rückwärts bis zur letzten Note, also
+        // auch über Gruppengrenzen hinweg (Viertel auf dem "und" z.B.).
+        var coveredByQuarter = (bn.length === 0) && isCovered(bi);
         // Eighth rest symbol — authentisches Bravura-Glyph
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
             (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet') && bn.length === 0 && !coveredByQuarter) {
@@ -5530,31 +6021,36 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+stemTop+
                '" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
           // Fähnchen für einzelne Noten ohne Balken-Partner — Bravura-Glyphs
-          if (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') {
+          // Ein Viertel-Nachbar ist kein Balken-Partner: er bekommt selbst keinen
+          // Balken, die Achtel daneben braucht also ihr Fähnchen.
+          if (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.cat === 'fillins') {
             var isQuarterNote = bn.some(function(nn){ return nn.quarter; });
+            var beamPartner = function(i) {
+              var a = beatsArr[i];
+              return !!(a && a.length > 0 && !a.some(function(nn){ return nn.quarter; }));
+            };
             if (!isQuarterNote) {
               if (n === 8) {
                 // Achtel: Paar-Check (2er-Gruppen)
                 var pairIdx = Math.floor(bi / 2) * 2;
                 var partner = (bi % 2 === 0) ? pairIdx + 1 : pairIdx;
-                var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
-                if (!hasPartner) {
+                if (!beamPartner(partner)) {
                   h += bravuraGlyph('flag8thUp', x + 5, stemTop, nc, op);
                 }
               } else if (n === 16) {
-                // Sechzehntel: 2er-Paar-Check — Fähnchen wenn kein Balken-Partner im Paar
-                var pairStart = Math.floor(bi / 2) * 2;
-                var partner = (bi % 2 === 0) ? pairStart + 1 : pairStart;
-                var hasPartner = beatsArr[partner] && beatsArr[partner].length > 0;
-                if (!hasPartner) {
-                  h += bravuraGlyph('flag16thUp', x + 5, stemTop, nc, op);
+                // Sechzehntel: die Balkenbildung oben hat vermerkt, welche Slots
+                // einen Balken bekommen haben — alles andere braucht ein Fähnchen.
+                // Achtelwerte bekommen das einfache, 16tel das doppelte.
+                if (!beamedSlots[bi]) {
+                  var isEighthNote = bn.some(function(nn){ return nn.eighth; });
+                  h += bravuraGlyph(isEighthNote ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
                 }
-              } else if (n === 12 || n === 24) {
-                // Triolen/Sextolen: Fähnchen wenn kein direkter Nachbar in der Gruppe
+              } else if (n === 12 || n === 20 || n === 24 || n === 28 || n === 32) {
+                // Tuolen/32tel: Fähnchen wenn kein direkter Nachbar in der Gruppe
                 var gsz2 = n / 4;
                 var gst = Math.floor(bi / gsz2) * gsz2;
-                var hasL = bi > gst && beatsArr[bi-1] && beatsArr[bi-1].length > 0;
-                var hasR = bi < gst + gsz2 - 1 && beatsArr[bi+1] && beatsArr[bi+1].length > 0;
+                var hasL = bi > gst && beamPartner(bi-1);
+                var hasR = bi < gst + gsz2 - 1 && beamPartner(bi+1);
                 if (!hasL && !hasR) {
                   h += bravuraGlyph(n === 12 ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
                 }
@@ -5568,8 +6064,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     if (twoBar) {
       var n1 = GROOVE.beats.length;
       var n2 = GROOVE.beats2.length;
-      var bs1 = n1 <= 4 ? 100 : 56;
-      var bs2 = n2 <= 4 ? 100 : 56;
+      // Abstand aus der Slotzahl: Fills (8) bleiben bei 56, dichtere Raster
+      // (z.B. 16tel-Rudiments über zwei Takte) rücken zusammen.
+      var _twoBs = function(k) { return k <= 4 ? 100 : (k <= 8 ? 56 : (k <= 12 ? 38 : (k <= 16 ? 28 : 20))); };
+      var bs1 = _twoBs(n1);
+      var bs2 = _twoBs(n2);
       var bW1 = n1 * bs1;
       var bW2 = n2 * bs2;
       var sX1 = 42;
@@ -5614,13 +6113,21 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         h += '<line x1="'+(sX1-10)+'" y1="'+(sY+i*ls)+'" x2="'+(sX2+bW2+10)+'" y2="'+(sY+i*ls)+
              '" stroke="'+W+'" stroke-width="0.7" opacity="'+op+'"/>';
 
-      drawBeatsInBar(GROOVE.beats,  sX1, bs1, 0,  'GROOVE', false, 0, null, true);
-      drawBeatsInBar(GROOVE.beats2, sX2, bs2, n1, 'FILL',   GROOVE.showLabels, GROOVE.fillStart, GROOVE.stickings2, true);
+      // Nur Fills tragen die GROOVE/FILL-Beschriftung. Zweitaktige Rudiments
+      // brauchen sie nicht — dort gehören in beide Takte Stickings.
+      var _isFillBars = (GROOVE.cat === 'fillins');
+      drawBeatsInBar(GROOVE.beats,  sX1, bs1, 0,
+                     _isFillBars ? 'GROOVE' : null,
+                     _isFillBars ? false : GROOVE.showLabels,
+                     0, _isFillBars ? null : GROOVE.stickings, true);
+      drawBeatsInBar(GROOVE.beats2, sX2, bs2, n1,
+                     _isFillBars ? 'FILL' : null,
+                     GROOVE.showLabels, GROOVE.fillStart, GROOVE.stickings2, true);
 
     } else {
       // Single bar — adaptive spacing based on beat count
       var _nb = GROOVE.beats.length;
-      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : (_nb <= 12 ? 40 : (_nb <= 16 ? 30 : 20)));
+      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : (_nb <= 12 ? 40 : (_nb <= 16 ? 30 : (_nb <= 24 ? 20 : 16))));
       var bW = bs * _nb;
       var sX = 42;
       svg.setAttribute('viewBox', '0 -10 560 108');
@@ -6317,7 +6824,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       var minB = (ex.minBPM != null) ? ex.minBPM : ex.minSPHM;
       var maxB = (ex.maxBPM != null) ? ex.maxBPM : ex.maxSPHM;
       var s    = ex.step || 5;
-      var normal = (minB != null && maxB != null) ? Math.max(1, Math.round((maxB - minB) / s) + 1) : 1;
+      var normal = (minB != null && maxB != null) ? Math.max(1, Math.floor((maxB - minB) / s) + 1) : 1;
       if (ex.warmup) normal += Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
       return normal;
     }
