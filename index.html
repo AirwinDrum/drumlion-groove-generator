@@ -4607,7 +4607,227 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
      stickings:[null,null,null,'L',null,null,null,'L',null,null,null,'L',null,null,null,'L'],
      beats:[ [],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}],[],[],[],[{inst:'snare',line:1.5,head:'oval'}] ]
     },
+
+
   ];
+  var COORDINATION_SKIPPED = 0;
+
+  // ============================================================
+  // COORDINATION — systematisch erzeugt
+  // ============================================================
+  // Die Unabhängigkeitsübungen sind vollständig aus zwei Größen ableitbar:
+  // dem Verhältnis der Notenwerte beider Stimmen und dem Gliedmaßen-Paar.
+  // Sie werden deshalb hier gebaut statt ausgeschrieben — ausgeschrieben
+  // wären es rund 400 KB in einer Datei, die jeder Nutzer lädt.
+  //
+  // Regel für die Stimmen: der Notenkopf, der höher im System sitzt, ist die
+  // obere Stimme (Hälse nach oben), der tiefere die untere. Das stimmt für
+  // jedes Paar — Ride über Snare, Snare über Hi-Hat-Pedal, Kick über Pedal.
+  (function buildCoordination() {
+    var VAL = {1:'1/4', 2:'1/8', 3:'Triole', 4:'1/16', 5:'Quintole',
+               6:'Sextole', 7:'Septole', 8:'1/32'};
+    var NV  = {1:'quarter', 2:'eighth', 3:'triplet', 4:'sixteenth', 5:'quintuplet',
+               6:'sixteenthTriplet', 7:'septuplet', 8:'thirtysecond', 12:'thirtysecondTriplet'};
+    var GRID_OK = {1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1, 8:1, 12:1};
+
+    var RIDE = {inst:'ride',    line:0.0,  head:'x'},
+        HH   = {inst:'hh',      line:-0.5, head:'x'},
+        SN   = {inst:'snare',   line:1.5,  head:'oval'},
+        KICK = {inst:'kick',    line:3.5,  head:'oval'},
+        PED  = {inst:'hhPedal', line:4.5,  head:'x'};
+
+    // Open-handed: rechts führt auf dem Ride, in der Umkehrung führt links
+    // auf der Hi-Hat und rechts spielt Snare. Kein Überkreuzen.
+    var PAIRS = [
+      {up:RIDE, lo:SN,   grp:'Hands',       un:'Ride R',   ln:'Snare L'},
+      {up:HH,   lo:SN,   grp:'Hands',       un:'Hi-Hat L', ln:'Snare R'},
+      {up:RIDE, lo:KICK, grp:'Hand & Foot', un:'Ride R',   ln:'Kick'},
+      {up:SN,   lo:PED,  grp:'Hand & Foot', un:'Snare L',  ln:'HH-Pedal'},
+      {up:RIDE, lo:PED,  grp:'Hand & Foot', un:'Ride R',   ln:'HH-Pedal'},
+      {up:SN,   lo:KICK, grp:'Hand & Foot', un:'Snare L',  ln:'Kick'},
+      {up:KICK, lo:PED,  grp:'Feet',        un:'Kick',     ln:'HH-Pedal'}
+    ];
+
+    function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+    function lcm(a, b) { return a * b / gcd(a, b); }
+
+    function note(base, voice, span) {
+      var o = { inst: base.inst, line: base.line, head: base.head };
+      if (voice) o.voice = voice;
+      if (span > 1) o.span = span;
+      return o;
+    }
+    // Belastbarkeit der schnellsten Gliedmaße: Hände halten mehr aus als Füße.
+    // Ergibt keine spielbare Spanne mehr, entfällt die Kombination.
+    function ceiling(grp, npb) {
+      var base = (grp === 'Hands') ? 480 : (grp === 'Feet' ? 300 : 360);
+      return Math.min(200, Math.floor(base / npb / 5) * 5);
+    }
+    var out = [], nextId = 401, skipped = 0;
+
+    function push(pair, type, name, per, slots, npb) {
+      var mx = ceiling(pair.grp, npb);
+      if (mx < 55) { skipped++; return; }
+      out.push({
+        id: nextId++, cat: 'coordination',
+        catLabel: pair.grp + ' — ' + type,
+        name: name, noteValue: NV[per], hihatHands: 'one',
+        minBPM: 40, maxBPM: mx, step: 5, limbNPB: npb,
+        showLabels: false, beats: slots
+      });
+    }
+
+    // ── unisono: beide Gliedmaßen gleicher Wert, gleichzeitig ────────────
+    function unison(pair, v) {
+      var n = 4 * v, slots = [];
+      for (var i = 0; i < n; i++) slots.push([note(pair.up), note(pair.lo)]);
+      push(pair, 'Unison',
+           pair.un + ' + ' + pair.ln + ' ' + VAL[v] + ' unisono', v, slots, v);
+    }
+    // ── versetzt: gleicher Wert, treffen sich nie ────────────────────────
+    function displaced(pair, v) {
+      var per = 2 * v, n = 4 * per, slots = [];
+      for (var i = 0; i < n; i++) slots.push(i % 2 === 0 ? [note(pair.up)] : [note(pair.lo)]);
+      push(pair, 'Displaced',
+           pair.un + ' ' + VAL[v] + ' · ' + pair.ln + ' versetzt', per, slots, v);
+    }
+    // ── Verhältnis: obere Stimme a, untere b Schläge pro Zählzeit ────────
+    function ratio(pair, a, b) {
+      var per = lcm(a, b);
+      if (!GRID_OK[per]) return;
+      var n = 4 * per, slots = [], i;
+      for (i = 0; i < n; i++) slots.push([]);
+      for (i = 0; i < n; i += per / a) slots[i].push(note(pair.up, 1, per / a));
+      for (i = 0; i < n; i += per / b) slots[i].push(note(pair.lo, 2, per / b));
+      var nested = (b % a === 0) || (a % b === 0);
+      push(pair, nested ? 'Nested' : 'Cross',
+           pair.un + ' ' + VAL[a] + ' · ' + pair.ln + ' ' + VAL[b],
+           per, slots, Math.max(a, b));
+    }
+
+    var SAME = [1, 2, 3, 4, 6];
+    var RATIOS = [];
+    for (var a = 1; a <= 8; a++) for (var b = 1; b <= 8; b++) {
+      if (a === b) continue;
+      if (GRID_OK[lcm(a, b)]) RATIOS.push([a, b]);
+    }
+    RATIOS.sort(function(p, q) {
+      return (Math.max(p[0],p[1]) - Math.max(q[0],q[1])) || (p[0] - q[0]) || (p[1] - q[1]);
+    });
+
+    function grp(g) { return PAIRS.filter(function(p){ return p.grp === g; }); }
+    // Kursreihenfolge: leicht nach schwer. Füße kommen früh, weil sich zwei
+    // Füße weniger stören als Hand und Fuß.
+    [
+      ['Unison',    'Hands'], ['Unison',    'Feet'],
+      ['Displaced', 'Hands'], ['Displaced', 'Feet'],
+      ['Unison',    'Hand & Foot'], ['Displaced', 'Hand & Foot'],
+      ['Nested',    'Hands'], ['Nested',    'Feet'], ['Nested', 'Hand & Foot'],
+      ['Cross',     'Hands'], ['Cross',     'Feet'], ['Cross',  'Hand & Foot']
+    ].forEach(function(stage) {
+      var type = stage[0];
+      grp(stage[1]).forEach(function(pair) {
+        if (type === 'Unison')    { SAME.forEach(function(v){ unison(pair, v); }); return; }
+        if (type === 'Displaced') { SAME.forEach(function(v){ displaced(pair, v); }); return; }
+        RATIOS.forEach(function(r) {
+          var nested = (r[1] % r[0] === 0) || (r[0] % r[1] === 0);
+          if ((type === 'Nested') !== nested) return;
+          ratio(pair, r[0], r[1]);
+        });
+      });
+    });
+
+    // ── drei und vier Gliedmaßen ─────────────────────────────────────────
+    // Keine dritte Stimme: alle Hände bilden zusammen die obere Stimme, alle
+    // Füße die untere. Innerhalb einer Stimme ist der Rhythmus die Vereinigung
+    // der Anschläge; jede Note dauert bis zum nächsten Anschlag derselben Stimme.
+    var LIMB = {
+      RH: {n:'Ride',  i:RIDE, foot:false},
+      LH: {n:'Snare', i:SN,   foot:false},
+      RF: {n:'Kick',  i:KICK, foot:true},
+      LF: {n:'Pedal', i:PED,  foot:true}
+    };
+    var HAND_VALS = [1, 2, 3, 4];
+    var FOOT_VALS = [1, 2, 3];
+
+    // Innerhalb EINER Stimme verschmelzen die Anschläge zu einer Linie. Zwei
+    // Werte dürfen dort deshalb nur stehen, wenn einer den anderen teilt —
+    // Triole mit Sextole, Achtel mit 16tel. Triole gegen 16tel ergäbe in einer
+    // Stimme keine Polyrhythmik, sondern eine krumme Linie (3-1-2-2-1-3).
+    // Der Kreuzrhythmus gehört zwischen die Stimmen, nicht in eine hinein.
+    function sameFamily(vs) {
+      for (var i = 0; i < vs.length; i++)
+        for (var j = i + 1; j < vs.length; j++)
+          if (vs[i] % vs[j] !== 0 && vs[j] % vs[i] !== 0) return false;
+      return true;
+    }
+    function multi(keys, vals, label) {
+      var hands = [], feet = [];
+      keys.forEach(function(key, idx) {
+        (LIMB[key].foot ? feet : hands).push(vals[idx]);
+      });
+      if (!sameFamily(hands) || !sameFamily(feet)) { skipped++; return; }
+      var per = vals.reduce(function(x, y){ return lcm(x, y); }, 1);
+      if (!GRID_OK[per]) { skipped++; return; }
+      var n = 4 * per, i, k;
+      var slots = [];
+      for (i = 0; i < n; i++) slots.push([]);
+
+      [false, true].forEach(function(isFoot) {
+        // Anschlagspositionen aller Gliedmaßen dieser Stimme einsammeln
+        var at = {};
+        keys.forEach(function(key, idx) {
+          if (LIMB[key].foot !== isFoot) return;
+          var stp = per / vals[idx];
+          for (i = 0; i < n; i += stp) { (at[i] = at[i] || []).push(idx); }
+        });
+        var order = Object.keys(at).map(Number).sort(function(x, y){ return x - y; });
+        if (!order.length) return;
+        order.forEach(function(p, oi) {
+          var nxt  = (oi + 1 < order.length) ? order[oi + 1] : n;
+          var span = nxt - p;
+          at[p].forEach(function(idx) {
+            slots[p].push(note(LIMB[keys[idx]].i, isFoot ? 2 : 1, span));
+          });
+        });
+      });
+
+      var npb = Math.max.apply(null, vals);
+      var mx  = Math.min(200, Math.floor(500 / npb / 5) * 5);
+      if (mx < 55) { skipped++; return; }
+      var nm = keys.map(function(key, idx){ return LIMB[key].n + ' ' + VAL[vals[idx]]; }).join(' · ');
+      out.push({
+        id: nextId++, cat: 'coordination', catLabel: label, name: nm,
+        noteValue: NV[per], hihatHands: 'one',
+        minBPM: 40, maxBPM: mx, step: 5, limbNPB: npb,
+        showLabels: false, beats: slots
+      });
+    }
+
+    function valsFor(keys) {
+      return keys.map(function(k){ return LIMB[k].foot ? FOOT_VALS : HAND_VALS; });
+    }
+    function combos(lists) {
+      return lists.reduce(function(acc, l) {
+        var r = [];
+        acc.forEach(function(pre){ l.forEach(function(v){ r.push(pre.concat([v])); }); });
+        return r;
+      }, [[]]);
+    }
+    [
+      { keys:['RH','LH','RF'], label:'Three Limbs — Hands + Foot' },
+      { keys:['RH','LH','LF'], label:'Three Limbs — Hands + Foot' },
+      { keys:['RH','RF','LF'], label:'Three Limbs — Hand + Feet' },
+      { keys:['LH','RF','LF'], label:'Three Limbs — Hand + Feet' },
+      { keys:['RH','LH','RF','LF'], label:'Four Limbs' }
+    ].forEach(function(set) {
+      combos(valsFor(set.keys)).forEach(function(vals) { multi(set.keys, vals, set.label); });
+    });
+
+    COORDINATION_SKIPPED = skipped;
+    out.forEach(function(ex){ EXERCISES.push(ex); });
+  })();
+
 
   // Level-Berechnung: content-basiert, dynamisch an Gesamtmenge angepasst
   var TOTAL_CONTENT_LESSONS = _calcTotalContentLessons();
@@ -4687,7 +4907,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // SPHM-Cap = Groove 1's aktuelles BPM × 2 (8tel, eine Hand).
   // Sobald Groove 1 graduated ist → kein Cap mehr.
   var _NOTES_PER_BEAT = { whole:0.25, half:0.5, quarter:1, eighth:2, sixteenth:4, triplet:3,
-                          quintuplet:5, sixteenthTriplet:6, septuplet:7, thirtysecond:8 };
+                          quintuplet:5, sixteenthTriplet:6, septuplet:7, thirtysecond:8,
+                          thirtysecondTriplet:12 };
 
   function _getSphmCap() {
     if (_cState.completed && _cState.completed.indexOf(1) !== -1) return null; // Groove 1 fertig
@@ -4701,7 +4922,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _capBpm(ex, bpm) {
     var cap = _getSphmCap();
     if (cap === null) return bpm;
-    var npb   = _NOTES_PER_BEAT[ex.noteValue] || 2;
+    // Bei Unabhängigkeitsübungen sagt das Raster nichts über die Belastung:
+    // bei 2 gegen 3 ist das Raster eine Sextole, die schnellste Hand spielt
+    // aber nur drei Schläge. `limbNPB` gibt die tatsächliche Last vor.
+    var npb   = (ex.limbNPB != null) ? ex.limbNPB : (_NOTES_PER_BEAT[ex.noteValue] || 2);
     var hands = (ex.hihatHands === 'alternate') ? 2 : 1;
     var maxBpm = Math.floor(cap / (npb / hands));
     // Absolute Untergrenze der Übung: bei Warmup dessen minBPM, sonst ex.minBPM.
@@ -5093,7 +5317,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _setGroove(ex, bpm) {
     GROOVE = ex;
     tBpm = bpm;
-    document.getElementById('dgName').textContent = ex.name;
+    _setExName(ex.name);
     var _cl = document.getElementById('dgCatLabel');
     if (_cl) _cl.textContent = ex.catLabel || '';
     setMetronomeDefault(ex.cat);
@@ -5656,6 +5880,22 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     return '<g transform="translate('+originX+','+originY+') scale('+s+','+(-s)+')">' +
            '<path d="'+BRAVURA[name]+'" fill="'+color+'" opacity="'+opacity+'"/></g>';
   }
+  // Fähnchen für Hälse nach unten: dasselbe Glyph, an der Waagerechten durch
+  // das Halsende gespiegelt. Es sitzt weiter rechts am Hals, zeigt aber nach oben.
+  function bravuraGlyphFlipped(name, originX, originY, color, opacity) {
+    var s = 8 / 250;
+    return '<g transform="translate('+originX+','+originY+') scale('+s+','+s+')">' +
+           '<path d="'+BRAVURA[name]+'" fill="'+color+'" opacity="'+opacity+'"/></g>';
+  }
+
+  // Übungsnamen mit vier Gliedmaßen werden lang. Statt die Kopfzeile zu
+  // sprengen, wird die Schrift ab 34 Zeichen kleiner gesetzt.
+  function _setExName(name) {
+    var el = document.getElementById('dgName');
+    if (!el) return;
+    el.textContent = name;
+    el.style.fontSize = (name && name.length > 34) ? 'clamp(14px, 2.2vw, 22px)' : '';
+  }
 
   function renderNot(curBeat, dimmed) { dimmed = false;
     var svg  = document.getElementById('dgSvg');
@@ -5740,9 +5980,130 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         }
         return false;
       }
-      // Wird in der 16tel-Balkenbildung gefüllt und von der Fähnchen-Logik gelesen.
-      var beamedSlots = {};
-      if (n === 8) {
+      // Wird in der Balkenbildung gefüllt und von der Fähnchen-Logik gelesen.
+      var beamedSlots = {};      // Stimme 1 (Hälse nach oben)
+      var beamedSlotsV2 = {};    // Stimme 2 (Hälse nach unten)
+
+      // ── Zweistimmigkeit ──────────────────────────────────────────────
+      // voice:1 (Standard) = Hälse nach oben, Balken über dem System.
+      // voice:2            = Hälse nach unten, Balken darunter.
+      // Ohne eine einzige voice:2-Note läuft alles wie bisher — die
+      // bestehenden Übungen fassen diesen Zweig nie an.
+      var hasV2 = beatsArr.some(function(sl) {
+        return sl && sl.some(function(nn){ return nn.voice === 2; });
+      });
+      // Halsende der unteren Stimme: gut drei Notenlinien-Abstände unter dem
+      // tiefsten Notenkopf dieser Stimme, mindestens aber knapp unter dem System.
+      // Fest bei sY+4*ls+18 wären die Hälse nach unten mehr als doppelt so lang
+      // wie die nach oben — das sah unausgewogen aus.
+      var SB = (function() {
+        var lo = null;
+        beatsArr.forEach(function(sl) {
+          if (!sl) return;
+          sl.forEach(function(nn) {
+            if (nn.voice === 2 && (lo === null || nn.line > lo)) lo = nn.line;
+          });
+        });
+        var floorY = sY + 4*ls + 8;
+        if (lo === null) return sY + 4*ls + 18;
+        return Math.max(floorY, sY + lo*ls + 24);
+      })();
+      var BSP = BH + 4;          // Abstand zwischen zwei Balken
+
+      function vNotes(i, v) {
+        var a = beatsArr[i];
+        if (!a || !a.length) return [];
+        return a.filter(function(nn){ return (nn.voice || 1) === v && !nn.rest; });
+      }
+      // Dauer einer Note in Rasterschritten. `span` schlägt alles andere,
+      // sonst gelten die Kurzformen quarter/eighth.
+      function spanOfNote(nn) {
+        if (nn.span) return nn.span;
+        if (nn.quarter) return Math.max(1, n / 4);
+        if (nn.eighth)  return Math.max(1, n / 8);
+        return 1;
+      }
+      function vSpan(i, v) {
+        var g = vNotes(i, v);
+        if (!g.length) return 1;
+        return Math.max.apply(null, g.map(spanOfNote));
+      }
+      function vCovered(i, v) {
+        for (var k = i - 1; k >= 0; k--) {
+          if (vNotes(k, v).length) return (k + vSpan(k, v) > i);
+        }
+        return false;
+      }
+      // Balkenzahl aus der Notendauer: Achtel und Achteltriole 1,
+      // alles auf 16tel-Basis (inkl. Quintole bis Septole) 2, 32tel und
+      // 32tel-Triole 3.
+      function beamsForSpan(sp) {
+        var npb = (n / 4) / sp;
+        if (npb <= 1.01) return 0;
+        if (npb <= 3.01) return 1;
+        if (npb <= 7.01) return 2;
+        if (npb <= 15.01) return 3;
+        return 4;
+      }
+      // Hälse nach unten sitzen links am Notenkopf, nach oben rechts. Der Balken
+      // muss derselben Seite folgen, sonst hängt er 10px neben den Hälsen.
+      function stemX(slot, up) { return sX + 16 + slot * bs + (up ? 5 : -5); }
+      function voiceBeam(a, b2, level, up) {
+        var x1 = stemX(a, up), x2 = stemX(b2, up);
+        var y  = up ? (BT + level * BSP) : (SB - level * BSP);
+        h += '<rect x="'+(x1-SW)+'" y="'+y+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+             '" fill="'+W+'" opacity="'+op+'"/>';
+      }
+      if (hasV2) {
+        // Zweistimmig: jede Stimme für sich, innerhalb jeder Zählzeit
+        // zusammenhängende Läufe. Balkenzahl aus der längsten Note des Laufs,
+        // tiefere Balken nur über den Teilläufen, die sie brauchen.
+        [1, 2].forEach(function(v) {
+          var up  = (v === 1);
+          var gsz = Math.max(1, n / 4);
+          for (var g0 = 0; g0 < n; g0 += gsz) {
+            var runs = [], cur = [];
+            for (var gi = g0; gi < g0 + gsz; gi++) {
+              if (vNotes(gi, v).length) cur.push(gi);
+              else if (!vCovered(gi, v)) { if (cur.length) runs.push(cur); cur = []; }
+            }
+            if (cur.length) runs.push(cur);
+            runs.forEach(function(run) {
+              if (run.length < 2) return;
+              var lvls = run.map(function(i){ return beamsForSpan(vSpan(i, v)); });
+              var lo = Math.min.apply(null, lvls), hi = Math.max.apply(null, lvls);
+              if (hi < 1) return;                    // reine Viertel: kein Balken
+              var k;
+              for (k = 0; k < lo; k++) voiceBeam(run[0], run[run.length-1], k, up);
+              for (k = lo; k < hi; k++) {
+                var sub = [];
+                var flush = function() {
+                  if (sub.length > 1) voiceBeam(sub[0], sub[sub.length-1], k, up);
+                  sub = [];
+                };
+                run.forEach(function(i, ri) {
+                  if (lvls[ri] > k) sub.push(i); else flush();
+                });
+                flush();
+              }
+              run.forEach(function(i, ri) {
+                if (lvls[ri] >= 1) (up ? beamedSlots : beamedSlotsV2)[i] = true;
+              });
+              // Tuolenzahl, wenn die Stimme eine ungerade Teilung spielt und
+              // der Lauf eine ganze Zählzeit füllt (3, 5, 6 oder 7 pro Zählzeit).
+              var sp0 = vSpan(run[0], v);
+              var same = run.every(function(i){ return vSpan(i, v) === sp0; });
+              var npb0 = (n / 4) / sp0;
+              if (same && run.length === npb0 && [3,5,6,7].indexOf(npb0) !== -1) {
+                var tx = (stemX(run[0], up) + stemX(run[run.length-1], up)) / 2;
+                var ty = up ? (BT + (hi-1)*BSP - 3) : (SB + (hi-1)*BSP + BH + 9);
+                h += '<text x="'+tx+'" y="'+ty+'" text-anchor="middle" fill="'+W+
+                     '" font-size="9" font-style="italic" font-family="DM Sans,sans-serif" opacity="'+(op*0.8)+'">'+npb0+'</text>';
+              }
+            });
+          }
+        });
+      } else if (n === 8) {
         [[0,1],[2,3],[4,5],[6,7]].forEach(function(g) {
           if (beamable(g[0]) && beamable(g[1])) {
             var x1 = sX+16+g[0]*bs+5, x2 = sX+16+g[1]*bs+5;
@@ -5796,16 +6157,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             flushSub();
           });
         }
-      } else if (n === 12 || n === 20 || n === 24 || n === 28 || n === 32) {
+      } else if (n === 12 || n === 20 || n === 24 || n === 28 || n === 32 || n === 48) {
         // Eine Gruppe = eine Zählzeit. Triolen (3), Quintolen (5), Sextolen (6),
         // Septolen (7), 32tel (8). Innerhalb jeder Gruppe: zusammenhängende
         // Noten-Runs balken, volle Gruppen bekommen die Tuplet-Zahl über den Balken.
         // Balkenzahl nach Notenwert: Achtel-Triole 1, alles auf 16tel-Basis 2, 32tel 3.
         // 32tel sind keine Tuole → keine Zahl.
         var gsz = n / 4;
-        var nBeams = (n === 12) ? 1 : (n === 32) ? 3 : 2;
+        var nBeams = (n === 12) ? 1 : (n === 32 || n === 48) ? 3 : 2;
         var dbl = (nBeams > 1);
-        var showTuplet = (n !== 32);
+        var showTuplet = (n !== 32 && n !== 48);
         for (var g0 = 0; g0 < n; g0 += gsz) {
           var runStart = -1;
           for (var gi = g0; gi <= g0 + gsz; gi++) {
@@ -5981,7 +6342,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         }
         // Sticking: below label
         if (stickings && stickings[bi]) {
-          h += '<text x="'+x+'" y="'+(sY+4*ls+18)+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
+          // Bei Zweistimmigkeit liegen dort die Hälse und Balken der unteren Stimme
+          var _stickY = hasV2 ? (SB + 24) : (sY + 4*ls + 18);
+          h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
         }
         // Leerer Slot, der noch im Klang der davorstehenden längeren Note liegt →
         // dort gehört keine Pause hin. Prüft rückwärts bis zur letzten Note, also
@@ -6013,8 +6376,31 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, nc, op);
         }
+        // Hälse bei Zweistimmigkeit: obere Stimme nach oben, untere nach unten.
+        if (hasV2 && !isHalfRest && bn.length > 0) {
+          [1, 2].forEach(function(v) {
+            var g = vNotes(bi, v);
+            if (!g.length) return;
+            var up = (v === 1);
+            var lines = g.map(function(nn){ return nn.line; });
+            var anchor = up ? Math.max.apply(null, lines) : Math.min.apply(null, lines);
+            var y0 = sY + anchor * ls;
+            var y1 = up ? (sY - 18) : SB;
+            var sx = x + (up ? 5 : -5);
+            h += '<line x1="'+sx+'" y1="'+y0+'" x2="'+sx+'" y2="'+y1+
+                 '" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
+            // Fähnchen, wenn die Note keinen Balken bekommen hat
+            var nb = beamsForSpan(vSpan(bi, v));
+            var gotBeam = (up ? beamedSlots : beamedSlotsV2)[bi];
+            if (nb >= 1 && !gotBeam) {
+              var glyph = (nb === 1) ? 'flag8thUp' : 'flag16thUp';
+              h += up ? bravuraGlyph(glyph, sx, y1, nc, op)
+                      : bravuraGlyphFlipped(glyph, sx, y1, nc, op);
+            }
+          });
+        }
         // Stem — nicht für whole notes, nicht für half rests
-        if (!isHalfRest && bn.length > 0 && !bn.some(function(n){ return n.head === 'whole'; })) {
+        if (!hasV2 && !isHalfRest && bn.length > 0 && !bn.some(function(n){ return n.head === 'whole'; })) {
           var maxLine = Math.max.apply(null, bn.map(function(n) { return n.line; }));
           var stemBot = sY + maxLine * ls;
           var stemTop = sY - 18;
@@ -6075,7 +6461,12 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       var midX = sX1 + bW1 + 22;
       var sX2  = midX + 22;
       var vbW  = sX2 + bW2 + 22;
-      svg.setAttribute('viewBox', '0 -10 ' + vbW + ' 108');
+      var _v2b = [GROOVE.beats, GROOVE.beats2].some(function(arr){
+        return arr && arr.some(function(sl){
+          return sl && sl.some(function(nn){ return nn.voice === 2; });
+        });
+      });
+      svg.setAttribute('viewBox', '0 -10 ' + vbW + ' ' + (_v2b ? 134 : 108));
 
       // Pattern group overlays (filled rounded rect per group)
       if (GROOVE.groups && GROOVE.groups.length) {
@@ -6127,10 +6518,21 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     } else {
       // Single bar — adaptive spacing based on beat count
       var _nb = GROOVE.beats.length;
-      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : (_nb <= 12 ? 40 : (_nb <= 16 ? 30 : (_nb <= 24 ? 20 : 16))));
+      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : (_nb <= 12 ? 40 : (_nb <= 16 ? 30 : (_nb <= 24 ? 20 : (_nb <= 32 ? 16 : 13)))));
       var bW = bs * _nb;
       var sX = 42;
-      svg.setAttribute('viewBox', '0 -10 560 108');
+      // Breite wächst mit dem Raster (48er passt nicht mehr in 560),
+      // Höhe wächst, sobald eine zweite Stimme nach unten schreibt.
+      var _v2 = GROOVE.beats.some(function(sl){
+        return sl && sl.some(function(nn){ return nn.voice === 2; });
+      });
+      var _vbW = Math.max(560, sX + bW + 22);
+      var _v2low = 0;
+      GROOVE.beats.forEach(function(sl){ if(!sl) return; sl.forEach(function(nn){
+        if (nn.voice === 2 && nn.line > _v2low) _v2low = nn.line; }); });
+      var _sbY = Math.max(40 + 4*8 + 8, 40 + _v2low*8 + 24);
+      var _vbH = _v2 ? (_sbY + (GROOVE.stickings ? 42 : 22) + 10) : 108;
+      svg.setAttribute('viewBox', '0 -10 ' + _vbW + ' ' + _vbH);
 
       // Repeat sign left
       h += '<line x1="'+(sX-10)+'" y1="'+sY+'" x2="'+(sX-10)+'" y2="'+(sY+4*ls)+
@@ -6298,7 +6700,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   var _gName   = 'Groove ' + grooveId;
 
   // Header direkt setzen
-  document.getElementById('dgName').textContent = _gName;
+  _setExName(_gName);
 
   var playing=false, intId=null;
   // Visuelle Events werden mit ihrer Audio-Zeit gepuffert und erst von
@@ -6930,8 +7332,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     // ── HTML: Exercise Picker ────────────────────────────────
     function renderPicker() {
-      var cats2 = ['grooves','fillins','notes','rudiments'];
-      var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments'};
+      var cats2 = ['grooves','fillins','notes','rudiments','coordination'];
+      var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments', coordination:'Coordination'};
       var h = '';
       cats2.forEach(function(cat) {
         var exs = EXERCISES.filter(function(e){ return e.cat === cat; });
