@@ -4972,7 +4972,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           // beim doppelten Tempo. Einmalig, über ein Flag im Stand abgesichert.
           if (!p.bpmHalved) {
             Object.keys(p.cats).forEach(function(c) {
-              if (c === 'rudiments') return;
+              // Rudiments und Note Reading behalten ihre Schrittweite —
+              // dort darf der Schritt-Index deshalb nicht halbiert werden.
+              if (c === 'rudiments' || c === 'notes') return;
               (p.cats[c].active || []).forEach(function(en) {
                 en.bpmStep = Math.floor((en.bpmStep || 0) / 2);
               });
