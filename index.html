@@ -4665,14 +4665,36 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     }
     var out = [], nextId = 401, skipped = 0;
 
-    function push(pair, type, name, per, slots, npb) {
+    // Unisono (beide Gliedmaßen gleichzeitig, gleicher Wert) ist keine
+    // Unabhängigkeit — die Übungen entfallen (Erwin, 02.09.2026). Die ID wird
+    // trotzdem verbraucht, damit alle übrigen Übungen ihre bisherige ID behalten
+    // und gespeicherte Kursstände weiter auf dieselben Übungen zeigen.
+    var DROP_TYPES = { 'Unison': 1 };
+    // Einzeln aussortiert (Erwin, 02.09.2026). Die ID wird auch hier verbraucht,
+    // damit die übrigen Übungen ihre Nummer behalten.
+    // Versetzte Sextolen verschränken zwölf Anschläge pro Zählzeit — nicht spielbar.
+    var DROP_NAMES = {
+      'Ride R Sextole · Snare L versetzt':    1,
+      'Hi-Hat L Sextole · Snare R versetzt':  1,
+      'Ride R Sextole · Kick versetzt':       1,
+      'Snare L Sextole · HH-Pedal versetzt':  1,
+      'Ride R Sextole · HH-Pedal versetzt':   1,
+      'Snare L Sextole · Kick versetzt':      1,
+      'Kick Sextole · HH-Pedal versetzt':     1
+    };
+
+    function push(pair, type, name, per, slots, npb, minb) {
       var mx = ceiling(pair.grp, npb);
       if (mx < 55) { skipped++; return; }
+      if (DROP_TYPES[type] || DROP_NAMES[name]) { nextId++; skipped++; return; }
+      // Dichte Raster starten tiefer: ab sechs Schlägen pro Zählzeit sind schon
+      // 40 BPM ein zügiger Einstieg (Sextole = 4 Anschläge/Sekunde, 32tel 5,3).
+      var startBPM = minb || (per >= 6 ? 30 : 40);
       out.push({
         id: nextId++, cat: 'coordination',
         catLabel: pair.grp + ' — ' + type,
         name: name, noteValue: NV[per], hihatHands: 'one',
-        minBPM: 40, maxBPM: mx, step: 10, limbNPB: npb,
+        minBPM: startBPM, maxBPM: mx, step: 10, limbNPB: npb,
         showLabels: false, beats: slots
       });
     }
@@ -4688,8 +4710,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     function displaced(pair, v) {
       var per = 2 * v, n = 4 * per, slots = [];
       for (var i = 0; i < n; i++) slots.push(i % 2 === 0 ? [note(pair.up)] : [note(pair.lo)]);
+      // Ride R · Snare L in Vierteln ist seit dem Wegfall der Unisono-Übungen
+      // die allererste Unabhängigkeitsübung im Kurs. Sie startet wie Groove 1
+      // und Fill 1 bei 30 statt bei 40 BPM (Erwin, 02.09.2026).
+      // null = keine Vorgabe, dann greift die Dichteregel in push()
+      var minb = (pair.up === RIDE && pair.lo === SN && v === 1) ? 30 : null;
       push(pair, 'Displaced',
-           pair.un + ' ' + VAL[v] + ' · ' + pair.ln + ' versetzt', per, slots, v);
+           pair.un + ' ' + VAL[v] + ' · ' + pair.ln + ' versetzt', per, slots, v, minb);
     }
     // ── Verhältnis: obere Stimme a, untere b Schläge pro Zählzeit ────────
     function ratio(pair, a, b) {
@@ -4799,7 +4826,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       out.push({
         id: nextId++, cat: 'coordination', catLabel: label, name: nm,
         noteValue: NV[per], hihatHands: 'one',
-        minBPM: 40, maxBPM: mx, step: 10, limbNPB: npb,
+        minBPM: (per >= 6 ? 30 : 40), maxBPM: mx, step: 10, limbNPB: npb,
         showLabels: false, beats: slots
       });
     }
@@ -4970,6 +4997,23 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           // verdoppelt (halb so viele Stufen). `bpmStep` ist ein Index in diese
           // Stufen — ohne Halbierung stuende jeder Bestandsnutzer schlagartig
           // beim doppelten Tempo. Einmalig, über ein Flag im Stand abgesichert.
+          // Übungen können aus dem Bestand fallen (z.B. die Unisono-Übungen
+          // am 02.09.2026). Aktive Einträge, die auf eine nicht mehr vorhandene
+          // Übung zeigen, blockieren sonst ihre Kategorie dauerhaft: `_peekLesson`
+          // überspringt sie, aber die Kategorie gilt als belegt und bekommt nie
+          // Nachschub. Deshalb aussortieren und bei Bedarf nachrücken lassen.
+          Object.keys(p.cats).forEach(function(c) {
+            var cs = p.cats[c];
+            if (!cs || !cs.active) return;
+            cs.active = cs.active.filter(function(en) {
+              return EXERCISES.some(function(ex) { return ex.id === en.id; });
+            });
+            var pool = _catPool[c] || [];
+            if (!cs.active.length && cs.introIdx > 0 && cs.introIdx < pool.length) {
+              cs.active.push({ id: pool[cs.introIdx].id, bpmStep: 0 });
+              cs.introIdx++;
+            }
+          });
           if (!p.bpmHalved) {
             Object.keys(p.cats).forEach(function(c) {
               // Rudiments und Note Reading behalten ihre Schrittweite —
@@ -5045,7 +5089,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260901-184504';
+  var DL_BUILD = '20260902-161537';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
