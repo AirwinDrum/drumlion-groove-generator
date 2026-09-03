@@ -4933,21 +4933,44 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     return minB + stepIdx * ex.step;
   }
 
-  // ── Speed-Bremse: Groove 1 als Tempo-Gate ───────────────────
-  // SPHM-Cap = Groove 1's aktuelles BPM × 2 (8tel, eine Hand).
-  // Sobald Groove 1 graduated ist → kein Cap mehr.
+  // ── Speed-Bremse: Tempo-Decke nach Level ────────────────────
+  // Bis 02.09.2026 hing sie an Groove 1 (dessen BPM × 2) und fiel weg,
+  // sobald Groove 1 durch war. Jetzt steigt sie über die 100 Level —
+  // siehe SPHM_LEVEL_* und BPM_LEVEL_* weiter unten.
   var _NOTES_PER_BEAT = { whole:0.25, half:0.5, quarter:1, eighth:2, sixteenth:4, triplet:3,
                           quintuplet:5, sixteenthTriplet:6, septuplet:7, thirtysecond:8,
                           thirtysecondTriplet:12 };
 
-  function _getSphmCap() {
-    if (_cState.completed && _cState.completed.indexOf(1) !== -1) return null; // Groove 1 fertig
-    var cs = _cState.cats.grooves;
-    var g1entry = cs && cs.active && cs.active.find(function(e){ return e.id === 1; });
-    var g1ex = EXERCISES.find(function(e){ return e.id === 1; });
-    if (!g1entry || !g1ex) return null;
-    return _exBpm(g1ex, g1entry.bpmStep) * 2; // 8tel, eine Hand → ×2
+  // Tempo-Decke nach Level, in Schlägen pro Hand und Minute.
+  // Vorher hing sie an Groove 1 (dessen BPM × 2). Das hatte zwei Nachteile:
+  // sie war für den Schüler nicht nachvollziehbar, und jede Änderung an
+  // Groove 1 verschob das Tempo aller anderen Übungen mit — beim Halbieren
+  // der BPM-Schritte am 01.09.2026 tauchten dadurch schon ab Lektion 490
+  // Übungen mit 200 BPM auf statt erst ab 4.815.
+  //
+  // Die Einheit ist bewusst NICHT BPM: 100 BPM in Sechzehnteln sind viermal
+  // so viele Schläge wie 100 BPM in Vierteln. Eine reine BPM-Grenze wäre
+  // unten zu streng und oben zu lasch.
+  // Zwei Decken, weil sie zwei verschiedene Dinge begrenzen:
+  //   Schläge/Hand/Min → die körperliche Last. Hält dichte Unterteilungen
+  //                      zurück: 100 BPM in 16teln sind viermal so viel
+  //                      Arbeit wie 100 BPM in Vierteln.
+  //   BPM              → den Puls. „Ride Viertel gegen Snare Viertel" bei
+  //                      200 BPM sind nur 200 Schläge/Hand, fühlen sich aber
+  //                      trotzdem rasend an. Ohne diese zweite Decke tauchten
+  //                      200 BPM schon bei Lektion 490 auf statt bei 9.902.
+  // Es gilt die jeweils strengere.
+  var SPHM_LEVEL_1   = 200;   // Level 1  — entspricht Groove 1 bei 100 BPM
+  var SPHM_LEVEL_100 = 600;
+  var BPM_LEVEL_1    = 100;
+  var BPM_LEVEL_100  = 300;
+  function _levelRamp(from, to) {
+    var lvl = _getLevelInfo().level;
+    if (lvl >= TOTAL_LEVELS) return to;
+    return Math.round(from + (lvl - 1) * (to - from) / (TOTAL_LEVELS - 1));
   }
+  function _getSphmCap() { return _levelRamp(SPHM_LEVEL_1, SPHM_LEVEL_100); }
+  function _getBpmCap()  { return _levelRamp(BPM_LEVEL_1,  BPM_LEVEL_100);  }
 
   function _capBpm(ex, bpm) {
     var cap = _getSphmCap();
@@ -4963,7 +4986,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // (sonst würde die Warmup-Rampe 30→40 auf 40 hochgezogen und verschwinden).
     var floorBpm = ex.warmup ? ex.warmup.minBPM
                              : ((ex.minBPM != null) ? ex.minBPM : 30);
-    return Math.min(bpm, Math.max(maxBpm, floorBpm));
+    return Math.min(bpm,
+                    Math.max(maxBpm,        floorBpm),
+                    Math.max(_getBpmCap(),  floorBpm));
   }
 
   // Initial State aufbauen
@@ -5089,7 +5114,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260902-161537';
+  var DL_BUILD = '20260903-104518';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5147,12 +5172,22 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   var _syncUid = (function() {
     try {
-      var id = (new URLSearchParams(window.location.search).get('uid') || '').trim();
+      var q  = new URLSearchParams(window.location.search);
+      var id = (q.get('uid') || '').trim();
       // Nur plausible IDs übernehmen — ein nicht ersetzter Platzhalter wie
       // {{ contact.id }} darf niemals als Schlüssel landen.
       if (/^[A-Za-z0-9_-]{3,64}$/.test(id)) {
         localStorage.setItem(_SYNC_UID_KEY, id);
         return id;
+      }
+      // Kein uid in der URL → der gemerkte Wert darf NUR gelten, wenn auch die
+      // Email dazu passt. Meldet sich im selben Browser jemand anderes an,
+      // gehörte die gemerkte Kunden-ID sonst weiterhin zum vorigen Konto.
+      var urlMail = (q.get('u') || '').toLowerCase();
+      var savedMail = (localStorage.getItem(_SYNC_EMAIL_KEY) || '').toLowerCase();
+      if (urlMail && urlMail.indexOf('@') !== -1 && savedMail && urlMail !== savedMail) {
+        localStorage.removeItem(_SYNC_UID_KEY);
+        return '';
       }
       return localStorage.getItem(_SYNC_UID_KEY) || '';
     } catch(e) { return ''; }
@@ -5160,6 +5195,34 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   // Der Wert, unter dem der Fortschritt abgelegt wird.
   function _syncKey() { return _syncUid || _syncEmail; }
+
+  // ── Identitätswechsel im selben Browser ───────────────────────────────
+  // localStorage gehört dem Browser, nicht dem Konto. Meldet sich auf
+  // demselben Gerät jemand anderes an, lag der Kursstand des Vorgängers
+  // noch da — und wurde beim ersten Speichern unter dem NEUEN Schlüssel
+  // hochgeladen. So hat am 02.09.2026 ein zweites Konto den Fortschritt
+  // des ersten übernommen. Deshalb: gehört der lokale Stand zu einem
+  // anderen Schlüssel, wird er verworfen, bevor irgendetwas passiert.
+  var _SYNC_OWNER_KEY = 'drumlion_sync_owner_v1';
+  (function guardIdentity() {
+    try {
+      var now  = _syncKey();
+      if (!now) return;
+      var prev = localStorage.getItem(_SYNC_OWNER_KEY) || '';
+      if (prev && prev !== now) {
+        localStorage.removeItem(COURSE_KEY);
+        localStorage.removeItem(_lessonsKey);
+        localStorage.removeItem(_timeKey);
+        localStorage.removeItem(_dailyDateKey);
+        localStorage.removeItem(_dailyMinsKey);
+        // _loadState() lief weiter oben schon — der Stand des Vorgängers
+        // liegt also bereits im Speicher und muss ebenfalls weg, sonst
+        // wird er beim ersten Speichern unter dem neuen Schlüssel hochgeladen.
+        _cState = _initState();
+      }
+      localStorage.setItem(_SYNC_OWNER_KEY, now);
+    } catch(e) {}
+  })();
 
   function _syncSetEmail(email) {
     _syncEmail = email;
