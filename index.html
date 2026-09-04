@@ -4899,7 +4899,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   function _initCat(cat) {
     var first = _catPool[cat] && _catPool[cat][0];
-    return { active: first ? [{id: first.id, bpmStep: 0}] : [],
+    return { active: first ? [{id: first.id, bpmStep: 0}] : [], park: [],
              introIdx: first ? 1 : 0, counter: 0, lastId: null };
   }
 
@@ -4969,10 +4969,20 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     if (lvl >= TOTAL_LEVELS) return to;
     return Math.round(from + (lvl - 1) * (to - from) / (TOTAL_LEVELS - 1));
   }
+  // Ab hier fällt die Decke ganz weg. Nicht Kosmetik, sondern nötig:
+  // Die Rudiments enden bei 300 BPM, also exakt am obersten Wert der Decke —
+  // erreichbar wäre das erst in Level 100. Der Kurs bleibt aber in Level 99
+  // stehen, weil dann nur noch geparkte Rudiments übrig sind und keine
+  // Lektion mehr gespielt werden kann, die das Level anheben würde.
+  // Ein Level früher freigeben löst die Blockade: 665 von 665 Übungen
+  // abgeschlossen statt 628, Level 100 erreicht.
+  var SPEED_FREE_FROM_LEVEL = 99;
+  function _speedUncapped() { return _getLevelInfo().level >= SPEED_FREE_FROM_LEVEL; }
   function _getSphmCap() { return _levelRamp(SPHM_LEVEL_1, SPHM_LEVEL_100); }
   function _getBpmCap()  { return _levelRamp(BPM_LEVEL_1,  BPM_LEVEL_100);  }
 
   function _capBpm(ex, bpm) {
+    if (_speedUncapped()) return bpm;
     var cap = _getSphmCap();
     if (cap === null) return bpm;
     // Bei Unabhängigkeitsübungen sagt das Raster nichts über die Belastung:
@@ -5016,7 +5026,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
           // Kategorie bliebe für Bestandsnutzer für immer unsichtbar.
           ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'].forEach(function(c) {
-            if (!p.cats[c]) p.cats[c] = { active: [], introIdx: 0, counter: 0, lastId: null };
+            if (!p.cats[c]) p.cats[c] = { active: [], park: [], introIdx: 0, counter: 0, lastId: null };
+            if (!p.cats[c].park) p.cats[c].park = [];
           });
           // 01.09.2026: die BPM-Schrittweite wurde ausserhalb der Rudiments
           // verdoppelt (halb so viele Stufen). `bpmStep` ist ein Index in diese
@@ -5114,7 +5125,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260903-104518';
+  var DL_BUILD = '20260904-203955';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5431,6 +5442,45 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     .catch(function() { _syncSetStatus('err', 'Offline'); onDone(false); });
   }
 
+  // ── Parken an der Tempo-Decke ─────────────────────────────────────────
+  // Erreicht eine Übung die Decke ihres Levels, bringt Weiterspielen nichts
+  // mehr: der Schrittzähler lief bisher trotzdem hoch, die Übung galt
+  // irgendwann als abgeschlossen und verschwand — gespielt wurde sie aber nie
+  // schneller als die Decke. Über den ganzen Kurs betraf das 596 von 665
+  // Übungen. Stattdessen verlässt sie jetzt den aktiven Satz, neue rücken
+  // nach, und sie kommt zurück, sobald das Level die nächste Stufe erlaubt.
+  function _nextStepOverCap(ex, entry) {
+    if (entry.bpmStep >= _exSteps(ex)) return false;      // fertig, nicht parken
+    var soll = _exBpm(ex, entry.bpmStep);
+    return _capBpm(ex, soll) < soll;
+  }
+
+  function _unparkDue() {
+    Object.keys(_cState.cats).forEach(function(cat) {
+      var cs = _cState.cats[cat];
+      if (!cs) return;
+      if (!cs.park) cs.park = [];
+      var bleibt = [];
+      cs.park.forEach(function(entry) {
+        var ex = EXERCISES.find(function(e){ return e.id === entry.id; });
+        if (!ex) return;                                   // Übung entfernt → verwerfen
+        if (!_nextStepOverCap(ex, entry) && cs.active.length < MAX_ACTIVE_PER_CAT) {
+          cs.active.push(entry);
+        } else {
+          bleibt.push(entry);
+        }
+      });
+      cs.park = bleibt;
+      // Kategorie sonst leer? Dann die nächste Übung aus dem Pool nachziehen,
+      // sonst käme sie nie wieder dran und würde in der Rotation übersprungen.
+      var pool = _catPool[cat] || [];
+      if (!cs.active.length && cs.introIdx < pool.length) {
+        cs.active.push({ id: pool[cs.introIdx].id, bpmStep: 0 });
+        cs.introIdx++;
+      }
+    });
+  }
+
   // Nächste Lektion ermitteln (ohne State zu ändern)
   function _peekLesson() {
     var rotation = _getRotation();
@@ -5460,6 +5510,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   // Lektion abschließen: State vorwärts
   function _advanceState() {
+    _unparkDue();
     var lesson = _peekLesson();
     if (!lesson) return;
     var cat = lesson.cat;
@@ -5474,6 +5525,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     if (entry.bpmStep >= _exSteps(lesson.ex)) {
       cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
+    }
+
+    // An der Decke angekommen? Dann Platz räumen und später wiederkommen.
+    if (cs.active.indexOf(entry) !== -1 && _nextStepOverCap(lesson.ex, entry)) {
+      cs.active = cs.active.filter(function(e){ return e !== entry; });
+      if (!cs.park) cs.park = [];
+      cs.park.push(entry);
     }
 
     // Neue Übung einführen: alle STEPS_PER_NEW_EX Erscheinungen ODER wenn keine aktive mehr
@@ -5563,6 +5621,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // Aktuelle Lektion in den Player laden
   function _loadCurrentLesson(autoStart) {
     if (playing) stopExercise();
+    // Auch beim Laden prüfen — sonst kämen geparkte Übungen nach einem
+    // Level-Aufstieg erst mit der übernächsten Lektion zurück.
+    _unparkDue();
     var lesson = _peekLesson();
     if (!lesson) return;
     _setGroove(lesson.ex, lesson.bpm);
