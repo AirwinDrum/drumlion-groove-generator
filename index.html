@@ -266,6 +266,51 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   100% { transform: scale(1);    opacity: 1; }
 }
 
+/* ── Timing-Trainer: Vorwarnung und Zustand ──────────────────────────────
+   Zwei Zustände, bewusst unterschiedlich in Farbe UND Bewegung, damit sie
+   sich aus dem Augenwinkel unterscheiden lassen — beim Spielen schaut
+   niemand hin, um zu lesen.
+     .warn  gold, pulsiert   → im letzten Groove-Takt: gleich hört der Groove auf
+     .now   ruhig, gross     → jetzt läuft nur der Click                        */
+.timing-cue {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px; z-index: 12; pointer-events: none;
+  text-align: center; padding: 0 12px;
+}
+.timing-cue[hidden] { display: none !important; }
+.timing-cue-main {
+  font-size: clamp(22px, 6vw, 40px);
+  font-weight: 700; letter-spacing: 0.04em; line-height: 1.05;
+}
+.timing-cue-sub {
+  font-size: clamp(11px, 2.4vw, 14px);
+  font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.timing-cue.warn .timing-cue-main {
+  color: #C9A84C;
+  text-shadow: 0 0 26px rgba(201,168,76,0.85), 0 2px 8px rgba(0,0,0,0.9);
+  animation: dgCueBlink 0.5s ease-in-out infinite alternate;
+}
+.timing-cue.warn .timing-cue-sub { color: rgba(201,168,76,0.85); }
+.timing-cue.now .timing-cue-main {
+  color: #F5F3EE;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.95);
+}
+.timing-cue.now .timing-cue-sub { color: rgba(245,243,238,0.7); }
+@keyframes dgCueBlink {
+  from { opacity: 0.45; transform: scale(0.97); }
+  to   { opacity: 1;    transform: scale(1.03); }
+}
+/* Während „nur Click" verschwindet die Notation fast ganz. Das ist der
+   Hinweis, der ohne Sprache auskommt und den man nicht übersehen kann. */
+#dgSvg { transition: opacity 0.18s ease; }
+#dgSvg.dg-muted { opacity: 0.10; }
+@media (prefers-reduced-motion: reduce) {
+  .timing-cue.warn .timing-cue-main { animation: none; opacity: 1; }
+}
+
 /* Phase row */
 .phase-row {
   display: flex; align-items: center; justify-content: center; gap: 14px;
@@ -1015,6 +1060,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       <svg id="dgSvg" viewBox="0 -10 560 108"></svg>
       <div class="countin-overlay" id="dgCountIn" style="display:none;">
         <div class="countin-number" id="dgCountNum">1</div>
+      </div>
+      <!-- Timing-Trainer: Vorwarnung und Zustandsanzeige. Lag bisher nur als
+           kleiner Text oben rechts ("· Click only 🎵") — beim Spielen sieht
+           das niemand. -->
+      <div class="timing-cue" id="dgTimingCue" hidden>
+        <div class="timing-cue-main" id="dgTimingMain"></div>
+        <div class="timing-cue-sub"  id="dgTimingSub"></div>
       </div>
     </div>
     </div><!-- /notation-group -->
@@ -3688,12 +3740,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       ]},
 
     {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      // Sechs 16tel (drei Doppelschläge), dann der siebte Schlag als
+      // akzentuierte Achtel — nicht als 16tel mit Pause dahinter (Erwin,
+      // 10.09.2026). Der Schlussschlag trägt die Figur und klingt aus;
+      // eine 16tel plus Pause liest sich, als müsste man ihn abstoppen.
       stickings:['R','R','L','L','R','R','L',null,'L','L','R','R','L','L','R',null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',eighth:true}],[],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[]
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',eighth:true}],[]
       ]},
     {id:1010, cat:'rudiments', catLabel:'Rudiments', name:'Nine Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L','L','R',null,null,null,null,null,null,null],
@@ -5232,7 +5288,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-150134';
+  var DL_BUILD = '20260910-150952';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7138,6 +7194,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _visReset() {
     _visQ.length = 0;
     if (_rafId) { cancelAnimationFrame(_rafId); _rafId = null; }
+    // Hinweis des Timing-Trainers mit abräumen — sonst bliebe „NUR CLICK"
+    // samt ausgeblendeter Notation stehen, wenn mitten im Block gestoppt wird.
+    _applyTimingCue(null);
   }
 
   // Zeichnet den zuletzt fälligen Event. Alle übersprungenen werden verworfen,
@@ -7149,8 +7208,33 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     while (_visQ.length && _visQ[0].t <= now) { ev = _visQ.shift(); }
     if (ev) {
       if (ev.info != null) setInfo(ev.info);
+      if (ev.cue !== undefined) _applyTimingCue(ev.cue);
       renderNot(ev.bt, false);
     }
+  }
+
+  // Timing-Trainer-Hinweis setzen. `null` blendet ihn aus.
+  // Bewusst über das Bild gelegt statt daneben: wer spielt, schaut auf die
+  // Noten — ein Hinweis am Rand wird nicht gesehen.
+  function _applyTimingCue(c) {
+    var el = document.getElementById('dgTimingCue');
+    var sv = document.getElementById('dgSvg');
+    if (!el) return;
+    if (!c) {
+      el.hidden = true;
+      el.className = 'timing-cue';
+      if (sv) sv.classList.remove('dg-muted');
+      return;
+    }
+    var m = document.getElementById('dgTimingMain');
+    var u = document.getElementById('dgTimingSub');
+    if (m) m.textContent = c.m;
+    if (u) u.textContent = c.u;
+    el.className = 'timing-cue ' + c.s;
+    el.hidden = false;
+    // Nur im Click-Takt ausblenden — in der Vorwarnung muss man die Noten
+    // ja noch lesen können, dort spielt der Groove weiter.
+    if (sv) sv.classList.toggle('dg-muted', c.s === 'now');
   }
 
   // rAF liefert die flüssige Darstellung, solange der Tab sichtbar ist.
@@ -7371,6 +7455,22 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       return Math.floor((b - 8) / 2) % 2 !== 0;
     }
 
+    // Hinweis für den Timing-Trainer, abhängig vom Takt.
+    // Zwei Zustände: die Vorwarnung im letzten Groove-Takt, und der laufende
+    // Click-Takt. Die Vorwarnung ist der eigentliche Punkt — wer erst merkt,
+    // dass der Groove weg ist, wenn er schon weg ist, hat den Takt verloren.
+    function cueFor(br) {
+      if (!isTimingBlock) return null;
+      if (!grooveOn(br)) {
+        return { s: 'now', m: 'NUR CLICK',
+                 u: 'weiterspielen · Takt ' + (((br - 8) % 2) + 1) + ' von 2' };
+      }
+      if (!grooveOn(br + 1)) {
+        return { s: 'warn', m: 'GLEICH NUR CLICK', u: 'noch 1 Takt' };
+      }
+      return null;
+    }
+
     // totalRealBars = tatsächliche Takte (für Info-Anzeige)
     var totalRealBars = totalBars;
 
@@ -7427,7 +7527,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly);
         }
       }
-      _visQ.push({ t: when, bt: bt, info: _info });
+      // Der Hinweis wechselt an derselben Taktgrenze wie die Infozeile.
+      _visQ.push({ t: when, bt: bt, info: _info,
+                   cue: (_info != null) ? cueFor(br) : undefined });
     }
 
     setInfo(infoLine(bar, beat));
