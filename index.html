@@ -8,6 +8,15 @@
      Zeile stünde in jedem Request an einen fremden Host, von welcher Seite er
      kam — bei einer Lektions-URL also mitsamt allem, was an Parametern dranhängt. -->
 <meta name="referrer" content="no-referrer">
+<!-- Nicht indexieren. Die Datei ist eine eingebettete Anwendung hinter dem
+     Systeme.io-Login, keine Seite, die jemand über Google finden soll — sonst
+     könnte der Generator ohne Mitgliedschaft genutzt werden. `nofollow` dazu,
+     damit keine Lektions- oder Kurslinks aus dem Player heraus verfolgt werden.
+     Bewusst KEIN Disallow in einer robots.txt: das verbietet nur das Abrufen.
+     Wer die Seite nie abruft, liest auch dieses noindex nicht — und die URL
+     landet dann trotzdem im Index, nur ohne Inhalt. Das Meta-Tag ist der Weg,
+     der die Seite tatsächlich wieder aus dem Index nimmt. -->
+<meta name="robots" content="noindex, nofollow">
 <!-- Schrift bewusst NICHT von fonts.googleapis.com.
      Ein Font-Link zum Google-CDN überträgt bei jedem einzelnen Seitenaufruf die
      IP-Adresse des Besuchers an Google in die USA — ohne Einwilligung. Genau
@@ -5139,7 +5148,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260909-180514';
+  var DL_BUILD = '20260910-101808';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
