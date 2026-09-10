@@ -4719,8 +4719,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // obere Stimme (Hälse nach oben), der tiefere die untere. Das stimmt für
   // jedes Paar — Ride über Snare, Snare über Hi-Hat-Pedal, Kick über Pedal.
   (function buildCoordination() {
-    var VAL = {1:'1/4', 2:'1/8', 3:'Triole', 4:'1/16', 5:'Quintole',
-               6:'Sextole', 7:'Septole', 8:'1/32'};
+    // Englisch wie der gesamte Player (Erwin, 10.09.2026).
+    var VAL = {1:'1/4', 2:'1/8', 3:'Triplet', 4:'1/16', 5:'Quintuplet',
+               6:'Sextuplet', 7:'Septuplet', 8:'1/32'};
     var NV  = {1:'quarter', 2:'eighth', 3:'triplet', 4:'sixteenth', 5:'quintuplet',
                6:'sixteenthTriplet', 7:'septuplet', 8:'thirtysecond', 12:'thirtysecondTriplet'};
     var GRID_OK = {1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1, 8:1, 12:1};
@@ -4769,23 +4770,25 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // trotzdem verbraucht, damit alle übrigen Übungen ihre bisherige ID behalten
     // und gespeicherte Kursstände weiter auf dieselben Übungen zeigen.
     var DROP_TYPES = { 'Unison': 1 };
-    // Einzeln aussortiert (Erwin, 02.09.2026). Die ID wird auch hier verbraucht,
-    // damit die übrigen Übungen ihre Nummer behalten.
-    // Versetzte Sextolen verschränken zwölf Anschläge pro Zählzeit — nicht spielbar.
-    var DROP_NAMES = {
-      'Ride R Sextole · Snare L versetzt':    1,
-      'Hi-Hat L Sextole · Snare R versetzt':  1,
-      'Ride R Sextole · Kick versetzt':       1,
-      'Snare L Sextole · HH-Pedal versetzt':  1,
-      'Ride R Sextole · HH-Pedal versetzt':   1,
-      'Snare L Sextole · Kick versetzt':      1,
-      'Kick Sextole · HH-Pedal versetzt':     1
-    };
+    // Versetzte Sextolen verschränken zwölf Anschläge pro Zählzeit — nicht
+    // spielbar, deshalb am 02.09.2026 aussortiert (Erwin).
+    //
+    // Bis zum 10.09.2026 stand hier eine Liste der sieben deutschen Übungsnamen.
+    // Beim Übersetzen der Namen ins Englische hätte die Liste nichts mehr
+    // gefunden, und die sechs Übungen wären klammheimlich zurückgekommen —
+    // sichtbar erst, wenn ein Mitglied dort ankommt. Deshalb jetzt die Regel
+    // selbst statt ihrer Beschriftung: was ausgeschlossen wird, hängt an `v`,
+    // nicht am Namen. Umbenennen kann das nicht mehr aushebeln.
+    var DROP_DISPLACED_V = { 6: 1 };
 
-    function push(pair, type, name, per, slots, npb, minb) {
+    // `drop` wird von displaced() gesetzt. Die Reihenfolge im Rumpf ist wichtig:
+    // die Deckel-Prüfung kommt zuerst und verbraucht KEINE id, der Ausschluss
+    // danach verbraucht eine — so behalten alle übrigen Übungen ihre Nummer,
+    // und gespeicherte Kursstände zeigen weiter auf dieselben Übungen.
+    function push(pair, type, name, per, slots, npb, minb, drop) {
       var mx = ceiling(pair.grp, npb);
       if (mx < 55) { skipped++; return; }
-      if (DROP_TYPES[type] || DROP_NAMES[name]) { nextId++; skipped++; return; }
+      if (DROP_TYPES[type] || drop) { nextId++; skipped++; return; }
       // Dichte Raster starten tiefer: ab sechs Schlägen pro Zählzeit sind schon
       // 40 BPM ein zügiger Einstieg (Sextole = 4 Anschläge/Sekunde, 32tel 5,3).
       var startBPM = minb || (per >= 6 ? 30 : 40);
@@ -4817,7 +4820,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       var n = 4 * v, slots = [];
       for (var i = 0; i < n; i++) slots.push([note(pair.up), note(pair.lo)]);
       push(pair, 'Unison',
-           pair.un + ' + ' + pair.ln + ' ' + VAL[v] + ' unisono', v, slots, v);
+           pair.un + ' + ' + pair.ln + ' ' + VAL[v] + ' unison', v, slots, v);
     }
     // ── versetzt: gleicher Wert, treffen sich nie ────────────────────────
     function displaced(pair, v) {
@@ -4829,7 +4832,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       // null = keine Vorgabe, dann greift die Dichteregel in push()
       var minb = (pair.up === RIDE && pair.lo === SN && v === 1) ? 30 : null;
       push(pair, 'Displaced',
-           pair.un + ' ' + VAL[v] + ' · ' + pair.ln + ' versetzt', per, slots, v, minb);
+           pair.un + ' ' + VAL[v] + ' · ' + pair.ln + ' displaced', per, slots, v, minb,
+           !!DROP_DISPLACED_V[v]);
     }
     // ── Verhältnis: obere Stimme a, untere b Schläge pro Zählzeit ────────
     function ratio(pair, a, b) {
@@ -5300,7 +5304,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-155445';
+  var DL_BUILD = '20260910-173729';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
