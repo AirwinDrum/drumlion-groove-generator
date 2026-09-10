@@ -4722,6 +4722,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         catLabel: pair.grp + ' — ' + type,
         name: name, noteValue: NV[per], hihatHands: 'one',
         minBPM: startBPM, maxBPM: mx, step: 10, limbNPB: npb,
+        // Anschläge pro Zählzeit im feinsten Raster der Übung — das ist die
+        // Unterteilung, die der Spieler tatsächlich lesen muss. Sie steuert,
+        // ab welchem Level die Übung überhaupt auftauchen darf (COORD_UNLOCK).
+        gridPer: per,
         showLabels: false, beats: slots
       });
     }
@@ -4913,6 +4917,61 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     rudiments:     EXERCISES.filter(function(e){ return e.cat === 'rudiments' && e.beats; })
   };
 
+  // ── Unterteilungen nach Level freischalten (Erwin, 10.09.2026) ────────
+  // Bei Unabhängigkeit war bisher schon in Level 1 alles möglich, bis hinauf
+  // zu 32tel-Triolen. Zwei Stimmen gegeneinander sind aber auch in Achteln
+  // schon schwer genug — das Raster darf nicht zusätzlich im Weg stehen.
+  // Deshalb: Level 1 nur Viertel und Achtel, ab Level 2 kommt je Level eine
+  // Unterteilung dazu. Freigeschaltet heißt freigegeben, nicht vorgeschrieben —
+  // alles, was offen ist, darf jederzeit starten.
+  //
+  // Schlüssel ist `gridPer`: Anschläge pro Zählzeit im feinsten Raster.
+  // Reihenfolge: erst die geraden Werte, dann die Triolenfamilie, dann die
+  // ungeraden — und das dichteste Raster (32tel-Triole, 12 pro Zählzeit)
+  // zuletzt. Eine Zeile ändern genügt, wenn die Reihenfolge anders soll.
+  var COORD_UNLOCK = {
+    1: 1,   // Viertel
+    2: 1,   // Achtel
+    4: 2,   // 16tel
+    3: 3,   // Triole
+    6: 4,   // Sextole
+    8: 5,   // 32tel
+    5: 6,   // Quintole
+    7: 7,   // Septole
+    12: 8   // 32tel-Triole
+  };
+
+  function _subUnlocked(ex) {
+    if (!ex || ex.gridPer == null) return true;   // betrifft nur Unabhängigkeit
+    return _getLevelInfo().level >= (COORD_UNLOCK[ex.gridPer] || 1);
+  }
+
+  // Nächste einführbare Übung einer Kategorie holen — oder null.
+  //
+  // Der Pool wird bewusst NICHT nach Freischalt-Level umsortiert: gespeicherte
+  // Stände zeigen mit `introIdx` auf Positionen darin, und ein Umsortieren
+  // würde sie auf andere Übungen zeigen lassen. Stattdessen wandert der Zeiger
+  // wie bisher vorwärts; was noch gesperrt ist, landet in `cs.skip` und wird
+  // nachgeholt, sobald das Level stimmt. So blockiert eine schwere Übung nicht
+  // alles, was hinter ihr im Pool steht.
+  function _introNext(cat, cs) {
+    var pool = _catPool[cat] || [];
+    if (!cs.skip) cs.skip = [];
+    for (var i = 0; i < cs.skip.length; i++) {
+      var sid = cs.skip[i];
+      var sx  = null;
+      for (var j = 0; j < pool.length; j++) if (pool[j].id === sid) { sx = pool[j]; break; }
+      if (!sx) { cs.skip.splice(i, 1); i--; continue; }   // Übung entfernt
+      if (_subUnlocked(sx)) { cs.skip.splice(i, 1); return sx; }
+    }
+    while (cs.introIdx < pool.length) {
+      var ex = pool[cs.introIdx++];
+      if (_subUnlocked(ex)) return ex;
+      cs.skip.push(ex.id);
+    }
+    return null;
+  }
+
   function _getRotation() {
     var level = _getLevelInfo().level;
     var r = ['grooves', 'notes', 'fillins'];
@@ -4925,9 +4984,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   function _initCat(cat) {
-    var first = _catPool[cat] && _catPool[cat][0];
-    return { active: first ? [{id: first.id, bpmStep: 0}] : [], park: [],
-             introIdx: first ? 1 : 0, counter: 0, lastId: null };
+    var cs = { active: [], park: [], skip: [], introIdx: 0, counter: 0, lastId: null };
+    // Über _introNext statt direkt pool[0], damit auch die allererste Übung
+    // durch das Unterteilungs-Gate muss. Bei Unabhängigkeit steht vorn zwar
+    // ohnehin ein Achtelraster — aber die Reihenfolge im Pool kann sich ändern.
+    var first = _introNext(cat, cs);
+    if (first) cs.active.push({ id: first.id, bpmStep: 0 });
+    return cs;
   }
 
   // Navigations-History für Prev/Next
@@ -5053,8 +5116,12 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
           // Kategorie bliebe für Bestandsnutzer für immer unsichtbar.
           ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'].forEach(function(c) {
-            if (!p.cats[c]) p.cats[c] = { active: [], park: [], introIdx: 0, counter: 0, lastId: null };
+            if (!p.cats[c]) p.cats[c] = { active: [], park: [], skip: [], introIdx: 0, counter: 0, lastId: null };
             if (!p.cats[c].park) p.cats[c].park = [];
+            // 10.09.2026: übersprungene Übungen, deren Unterteilung im
+            // aktuellen Level noch gesperrt ist. Werden nachgeholt, sobald das
+            // Level stimmt — siehe `_introNext`.
+            if (!p.cats[c].skip) p.cats[c].skip = [];
           });
           // 01.09.2026: die BPM-Schrittweite wurde ausserhalb der Rudiments
           // verdoppelt (halb so viele Stufen). `bpmStep` ist ein Index in diese
@@ -5071,10 +5138,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             cs.active = cs.active.filter(function(en) {
               return EXERCISES.some(function(ex) { return ex.id === en.id; });
             });
-            var pool = _catPool[c] || [];
-            if (!cs.active.length && cs.introIdx > 0 && cs.introIdx < pool.length) {
-              cs.active.push({ id: pool[cs.introIdx].id, bpmStep: 0 });
-              cs.introIdx++;
+            if (!cs.active.length && cs.introIdx > 0) {
+              var _nx2 = _introNext(c, cs);
+              if (_nx2) cs.active.push({ id: _nx2.id, bpmStep: 0 });
             }
           });
           if (!p.bpmHalved) {
@@ -5152,7 +5218,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-115550';
+  var DL_BUILD = '20260910-145327';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5520,10 +5586,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       cs.park = bleibt;
       // Kategorie sonst leer? Dann die nächste Übung aus dem Pool nachziehen,
       // sonst käme sie nie wieder dran und würde in der Rotation übersprungen.
-      var pool = _catPool[cat] || [];
-      if (!cs.active.length && cs.introIdx < pool.length) {
-        cs.active.push({ id: pool[cs.introIdx].id, bpmStep: 0 });
-        cs.introIdx++;
+      if (!cs.active.length) {
+        var nx = _introNext(cat, cs);
+        if (nx) cs.active.push({ id: nx.id, bpmStep: 0 });
       }
     });
   }
@@ -5583,10 +5648,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     // Neue Übung einführen: alle STEPS_PER_NEW_EX Erscheinungen ODER wenn keine aktive mehr
     if ((cs.counter % STEPS_PER_NEW_EX === 0 || cs.active.length === 0) &&
-        cs.active.length < MAX_ACTIVE_PER_CAT &&
-        cs.introIdx < _catPool[cat].length) {
-      cs.active.push({ id: _catPool[cat][cs.introIdx].id, bpmStep: 0 });
-      cs.introIdx++;
+        cs.active.length < MAX_ACTIVE_PER_CAT) {
+      var _nx = _introNext(cat, cs);
+      if (_nx) cs.active.push({ id: _nx.id, bpmStep: 0 });
     }
 
     // Coordination/Rudiments lazy-initialisieren wenn Level-Gate erreicht
@@ -5596,8 +5660,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       if (cs && !cs.active.length && !cs.introIdx && _catPool[cat].length) {
         var gate = (cat === 'coordination') ? 1 : 3;
         if (_curLevel >= gate) {
-          cs.active.push({ id: _catPool[cat][0].id, bpmStep: 0 });
-          cs.introIdx = 1;
+          var _first = _introNext(cat, cs);
+          if (_first) cs.active.push({ id: _first.id, bpmStep: 0 });
         }
       }
     });
