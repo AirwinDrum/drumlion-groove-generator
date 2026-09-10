@@ -279,17 +279,18 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
      .warn  goldener Umriss, pulsierend  → gleich hört der Groove auf
      .now   gold ausgefüllt, dunkler Text → jetzt läuft nur der Click        */
 .timing-cue {
-  position: absolute; inset: 0;
-  display: flex; z-index: 12; pointer-events: none;
-  justify-content: center; align-items: flex-end;
-  padding: 0 12px 2px;
+  display: flex; justify-content: center; align-items: center;
+  min-height: 36px; margin-top: 4px; padding: 0 12px;
+  pointer-events: none;
 }
-.timing-cue[hidden] { display: none !important; }
 .timing-cue-pill {
   display: flex; flex-direction: column; align-items: center; gap: 1px;
   text-align: center; border-radius: 999px; padding: 5px 20px 6px;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  opacity: 0;              /* Platz bleibt reserviert, nur der Inhalt geht weg */
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
+.timing-cue.warn .timing-cue-pill,
+.timing-cue.now  .timing-cue-pill { opacity: 1; }
 .timing-cue-main { font-weight: 700; letter-spacing: 0.06em; line-height: 1.05; }
 .timing-cue-sub  { font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
 
@@ -958,20 +959,20 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 <!-- Sync Bar -->
 <div class="sync-bar hidden" id="syncBar">
   <div class="sync-bar-dot" id="syncDot"></div>
-  <span id="syncMsg">Fortschritt nicht gespeichert</span>
-  <span class="sync-bar-link" id="syncOpenLink">Sync aktivieren</span>
+  <span id="syncMsg">Progress not saved</span>
+  <span class="sync-bar-link" id="syncOpenLink">Turn on sync</span>
 </div>
 
 <!-- Sync Modal -->
 <div class="sync-overlay" id="syncOverlay">
   <div class="sync-modal">
-    <h3>☁️ Fortschritt sichern</h3>
-    <p>Gib deine Drumlion-Email ein. Dein Fortschritt wird automatisch auf allen Geräten synchronisiert.</p>
+    <h3>☁️ Save your progress</h3>
+    <p>Enter your Drumlion email. Your progress syncs automatically across all your devices.</p>
     <p style="font-size:12px;opacity:0.55;margin-top:-4px;">Die Adresse bleibt auf deinem Gerät — gespeichert wird nur eine daraus errechnete Kennung.</p>
-    <input class="sync-input" id="syncEmailInput" type="email" placeholder="deine@email.com" autocomplete="email"/>
+    <input class="sync-input" id="syncEmailInput" type="email" placeholder="you@email.com" autocomplete="email"/>
     <div class="sync-error" id="syncError" style="display:none;"></div>
-    <button class="sync-btn" id="syncSubmitBtn">Fortschritt sichern</button>
-    <button class="sync-btn-skip" id="syncSkipBtn">Später</button>
+    <button class="sync-btn" id="syncSubmitBtn">Save progress</button>
+    <button class="sync-btn-skip" id="syncSkipBtn">Later</button>
   </div>
 </div>
 
@@ -1067,14 +1068,17 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       <div class="countin-overlay" id="dgCountIn" style="display:none;">
         <div class="countin-number" id="dgCountNum">1</div>
       </div>
-      <!-- Timing-Trainer: Vorwarnung und Zustandsanzeige. Lag bisher nur als
-           kleiner Text oben rechts ("· Click only 🎵") — beim Spielen sieht
-           das niemand. -->
-      <div class="timing-cue" id="dgTimingCue" hidden>
-        <div class="timing-cue-pill">
-          <div class="timing-cue-main" id="dgTimingMain"></div>
-          <div class="timing-cue-sub"  id="dgTimingSub"></div>
-        </div>
+    </div>
+    <!-- Timing-Trainer: Vorwarnung und Zustandsanzeige.
+         Bewusst AUSSERHALB des Notenfelds, in einer eigenen Zeile darunter —
+         innerhalb lag die Kapsel auf dem Handsatz (Erwin, 10.09.2026).
+         Die Zeile ist immer da und behält ihre Höhe, auch wenn nichts
+         angezeigt wird; sonst würde das Notenbild bei jedem Taktwechsel
+         springen. Unsichtbar wird nur die Kapsel darin. -->
+    <div class="timing-cue" id="dgTimingCue">
+      <div class="timing-cue-pill">
+        <div class="timing-cue-main" id="dgTimingMain"></div>
+        <div class="timing-cue-sub"  id="dgTimingSub"></div>
       </div>
     </div>
     </div><!-- /notation-group -->
@@ -5296,7 +5300,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-152408';
+  var DL_BUILD = '20260910-155445';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5517,7 +5521,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         var local = _getTotalLessons() || (_cState.total || 0);
         if (remote > local) {
           // Server ist weiter — nicht überschreiben, stattdessen übernehmen
-          _syncSetStatus('spin', 'Neuerer Stand gefunden…');
+          _syncSetStatus('spin', 'Newer progress found…');
           _syncPull(function(changed) {
             if (changed && typeof _loadCurrentLesson === 'function') {
               _loadCurrentLesson(false); _updateLevelUI();
@@ -5535,7 +5539,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _syncWrite(immediate) {
     if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
     _syncPending = false;
-    if (!immediate) _syncSetStatus('spin', 'Speichern…');
+    if (!immediate) _syncSetStatus('spin', 'Saving…');
     var opts = {
       method: 'POST',
       headers: _sbHeaders({
@@ -5557,8 +5561,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     fetch(_SB_URL + '/rest/v1/user_progress', opts)
     .then(function(r) {
       if (immediate) return;
-      if (r.ok) { _syncSetStatus('ok', 'Gespeichert ✓'); }
-      else { _syncSetStatus('err', 'Sync-Fehler'); }
+      if (r.ok) { _syncSetStatus('ok', 'Saved ✓'); }
+      else { _syncSetStatus('err', 'Sync failed'); }
     })
     .catch(function() {
       // Fehlgeschlagen: erneut vormerken, localStorage hat den Stand ohnehin
@@ -5588,7 +5592,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   function _syncPull(onDone) {
     if (!_syncReady()) { onDone(false); return; }
-    _syncSetStatus('spin', 'Lade Fortschritt…');
+    _syncSetStatus('spin', 'Loading progress…');
     Promise.all([_syncFetch(_syncKey()), Promise.resolve(null)])
     .then(function(res) {
       // Von beiden Schlüsseln den Stand mit den meisten Lektionen nehmen
@@ -5602,11 +5606,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         } catch(e) { return; }
         if (c > best) { best = c; rows = rs; }
       });
-      if (!rows || !rows.length) { _syncSetStatus('ok', 'Neu angelegt ✓'); onDone(false); return; }
+      if (!rows || !rows.length) { _syncSetStatus('ok', 'New profile created ✓'); onDone(false); return; }
       try {
         var remote = _syncParse(rows[0].state);
         if (!remote.course || !remote.course.cats) {
-          _syncSetStatus('err', 'Sync-Fehler'); onDone(false); return;
+          _syncSetStatus('err', 'Sync failed'); onDone(false); return;
         }
         // Vergleich über die abgeschlossenen Lektionen — das ist der Wert,
         // der Level und Balken bestimmt. Fällt er weg (Altformat), zählt
@@ -5621,14 +5625,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(remote.lessons));
             if (remote.minutes != null) localStorage.setItem(_timeKey,    String(remote.minutes));
           } catch(e) {}
-          _syncSetStatus('ok', 'Fortschritt geladen ✓');
+          _syncSetStatus('ok', 'Progress loaded ✓');
           onDone(true); // state changed, needs UI reload
         } else {
-          _syncSetStatus('ok', 'Aktuell ✓');
+          _syncSetStatus('ok', 'Up to date ✓');
           if (remoteCount < localCount) _syncPush();
           onDone(false);
         }
-      } catch(e) { _syncSetStatus('err', 'Sync-Fehler'); onDone(false); }
+      } catch(e) { _syncSetStatus('err', 'Sync failed'); onDone(false); }
     })
     .catch(function() { _syncSetStatus('err', 'Offline'); onDone(false); });
   }
@@ -7228,7 +7232,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     var el = document.getElementById('dgTimingCue');
     if (!el) return;
     if (!c) {
-      el.hidden = true;
+      // Nur den Zustand wegnehmen, das Element bleibt stehen — es hält die
+      // Zeilenhöhe, damit das Notenbild nicht bei jedem Taktwechsel springt.
       el.className = 'timing-cue';
       return;
     }
@@ -7237,7 +7242,6 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     if (m) m.textContent = c.m;
     if (u) u.textContent = c.u;
     el.className = 'timing-cue ' + c.s;
-    el.hidden = false;
   }
 
   // rAF liefert die flüssige Darstellung, solange der Tab sichtbar ist.
@@ -7746,7 +7750,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     // ── Reset-Handler ────────────────────────────────────────
     function devReset() {
-      if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) {
+      if (confirm('Reset the course? All progress will be deleted.')) {
         // Der Fortschritt steckt in drei Werten: Kurs-State plus die beiden
         // Zähler, aus denen Level, Chapter und die Balken kommen. Nur den
         // Kurs-State zu löschen lässt die Zahlen stehen.
@@ -7859,7 +7863,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
            + '<button id="devTabPicker" style="' + (activeTab==='picker' ? tabActiveS : tabStyle) + '">Exercise Picker</button>'
            + '<button id="devTabMap"    style="' + (activeTab==='map'    ? tabActiveS : tabStyle) + '">Course Map</button>'
            + '</div>'
-           + '<span style="font-size:12px;color:#555;padding-bottom:6px;">Taste D schließen</span>'
+           + '<span style="font-size:12px;color:#555;padding-bottom:6px;">Press D to close</span>'
            + '</div>'
            + '<div style="border-top:1px solid #333;margin-bottom:20px;"></div>';
     }
@@ -7945,7 +7949,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // ── HTML: Footer mit Reset ───────────────────────────────
     function renderFooter() {
       return '<div style="margin-top:24px;padding-top:16px;border-top:1px solid #1e1e1e;text-align:right;">'
-           + '<button onclick="if(confirm(\'Kurs zurücksetzen? Alle Fortschritte werden gelöscht.\')){window._dlResetAll();}" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:DM Sans,system-ui,sans-serif;letter-spacing:0.05em;">↺ Reset Course</button>'
+           + '<button onclick="if(confirm(\'Reset the course? All progress will be deleted.\')){window._dlResetAll();}" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);font-size:11px;padding:5px 14px;border-radius:3px;cursor:pointer;font-family:DM Sans,system-ui,sans-serif;letter-spacing:0.05em;">↺ Reset course</button>'
            + '</div>';
     }
 
@@ -7993,7 +7997,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   // Dev: Reset Course
   document.getElementById('dgDevReset').addEventListener('click', function() {
-    if (confirm('Kurs zurücksetzen? Alle Fortschritte werden gelöscht.')) _resetAll();
+    if (confirm('Reset the course? All progress will be deleted.')) _resetAll();
   });
 
   // Prev = zurück in der History
@@ -8174,7 +8178,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         var dot = document.getElementById('syncDot');
         var msg = document.getElementById('syncMsg');
         if (dot) dot.className = 'sync-bar-dot';
-        if (msg) msg.textContent = 'Fortschritt nicht gespeichert';
+        if (msg) msg.textContent = 'Progress not saved';
         if (openLink) openLink.style.display = 'inline';
       }
     }
@@ -8185,7 +8189,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       submitBtn.addEventListener('click', function() {
         var email = (input ? input.value.trim() : '').toLowerCase();
         if (!email || !email.includes('@')) {
-          if (errDiv) { errDiv.textContent = 'Bitte gültige Email eingeben.'; errDiv.style.display = 'block'; }
+          if (errDiv) { errDiv.textContent = 'Please enter a valid email address.'; errDiv.style.display = 'block'; }
           return;
         }
         if (errDiv) errDiv.style.display = 'none';
@@ -8204,7 +8208,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             }
           });
         }).catch(function() {
-          if (errDiv) { errDiv.textContent = 'Sync hier nicht möglich.'; errDiv.style.display = 'block'; }
+          if (errDiv) { errDiv.textContent = 'Sync is not available here.'; errDiv.style.display = 'block'; }
         });
       });
     }
@@ -8232,7 +8236,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     _loadCurrentLesson(false);
     _updateLevelUI();
     if (_syncReady()) _syncPush();
-    _syncSetStatus('ok', 'Fortschritt zurückgesetzt ✓');
+    _syncSetStatus('ok', 'Progress reset ✓');
   } else if (_syncKey() && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
     // Startup-Pull: Supabase-Fortschritt laden
     _syncPull(function(changed) {
