@@ -274,31 +274,44 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
      .now   ruhig, gross     → jetzt läuft nur der Click                        */
 .timing-cue {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 4px; z-index: 12; pointer-events: none;
-  text-align: center; padding: 0 12px;
+  display: flex; z-index: 12; pointer-events: none;
+  justify-content: center; padding: 0 12px;
 }
 .timing-cue[hidden] { display: none !important; }
+.timing-cue-pill {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  text-align: center; border-radius: 10px; padding: 5px 18px 6px;
+}
+/* Vorwarnung sitzt UNTER dem System: in diesem Takt läuft der Groove noch,
+   die Noten müssen lesbar bleiben. Über den Köpfen wäre sie im Weg. */
+.timing-cue.warn { align-items: flex-end; padding-bottom: 2px; }
+.timing-cue.warn .timing-cue-pill {
+  background: rgba(10,10,10,0.9);
+  border: 1px solid rgba(201,168,76,0.55);
+  animation: dgCueBlink 0.5s ease-in-out infinite alternate;
+}
+/* Während der Click-Takte ist die Notation ohnehin fast weg — hier darf der
+   Hinweis mittig und gross stehen. */
+.timing-cue.now { align-items: center; }
 .timing-cue-main {
-  font-size: clamp(22px, 6vw, 40px);
   font-weight: 700; letter-spacing: 0.04em; line-height: 1.05;
 }
 .timing-cue-sub {
-  font-size: clamp(11px, 2.4vw, 14px);
   font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
 }
 .timing-cue.warn .timing-cue-main {
-  color: #C9A84C;
-  text-shadow: 0 0 26px rgba(201,168,76,0.85), 0 2px 8px rgba(0,0,0,0.9);
-  animation: dgCueBlink 0.5s ease-in-out infinite alternate;
+  color: #C9A84C; font-size: clamp(15px, 3.2vw, 21px);
 }
-.timing-cue.warn .timing-cue-sub { color: rgba(201,168,76,0.85); }
+.timing-cue.warn .timing-cue-sub {
+  color: rgba(201,168,76,0.8); font-size: clamp(9px, 1.8vw, 11px);
+}
 .timing-cue.now .timing-cue-main {
-  color: #F5F3EE;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.95);
+  color: #F5F3EE; font-size: clamp(26px, 6.5vw, 46px);
+  text-shadow: 0 2px 16px rgba(0,0,0,0.95);
 }
-.timing-cue.now .timing-cue-sub { color: rgba(245,243,238,0.7); }
+.timing-cue.now .timing-cue-sub {
+  color: rgba(245,243,238,0.65); font-size: clamp(11px, 2.4vw, 14px);
+}
 @keyframes dgCueBlink {
   from { opacity: 0.45; transform: scale(0.97); }
   to   { opacity: 1;    transform: scale(1.03); }
@@ -1065,8 +1078,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
            kleiner Text oben rechts ("· Click only 🎵") — beim Spielen sieht
            das niemand. -->
       <div class="timing-cue" id="dgTimingCue" hidden>
-        <div class="timing-cue-main" id="dgTimingMain"></div>
-        <div class="timing-cue-sub"  id="dgTimingSub"></div>
+        <div class="timing-cue-pill">
+          <div class="timing-cue-main" id="dgTimingMain"></div>
+          <div class="timing-cue-sub"  id="dgTimingSub"></div>
+        </div>
       </div>
     </div>
     </div><!-- /notation-group -->
@@ -5288,7 +5303,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-150952';
+  var DL_BUILD = '20260910-151552';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
