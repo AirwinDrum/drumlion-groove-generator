@@ -1359,15 +1359,19 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     return total;
   }
   // TOTAL_CONTENT_LESSONS wird nach EXERCISES-Definition berechnet (s. unten)
-  // URL-Parameter ?user=EMAIL → pro-User localStorage Namespace
-  var _urlUser = (function() {
-    var p = new URLSearchParams(window.location.search).get('user') || '';
-    return p ? '_' + p.replace(/[^a-zA-Z0-9@._-]/g, '').substring(0, 64) : '';
-  })();
-  var _timeKey    = 'drumlion_v1_totalMinutes' + _urlUser;
-  var _lessonsKey = 'drumlion_v1_totalLessons' + _urlUser;
-  var _dailyDateKey = 'drumlion_v1_dailyDate' + _urlUser;
-  var _dailyMinsKey = 'drumlion_v1_dailyMins' + _urlUser;
+  // Hier stand bis zum 10.09.2026 ein `?user=EMAIL`-Parameter, der die Adresse
+  // an alle Speichernamen hängte — aus `…totalLessons` wurde
+  // `…totalLessons_wer@wo.de`. Das war die Notlösung aus der Zeit vor dem
+  // Server-Sync, um zwei Personen an einem Browser auseinanderzuhalten.
+  // Überflüssig, seit `guardIdentity()` den lokalen Stand verwirft, sobald sich
+  // ein anderes Konto anmeldet, und die Wahrheit ohnehin auf dem Server liegt.
+  // Entfernt, weil er eine Adresse zurück in URL, Browserverlauf und DOM geholt
+  // hätte — und weil er auch COURSE_KEY umbenannte: ein versehentliches
+  // `?user=` hätte für den Betroffenen wie ein kompletter Reset ausgesehen.
+  var _timeKey      = 'drumlion_v1_totalMinutes';
+  var _lessonsKey   = 'drumlion_v1_totalLessons';
+  var _dailyDateKey = 'drumlion_v1_dailyDate';
+  var _dailyMinsKey = 'drumlion_v1_dailyMins';
 
   function _getTotalMinutes()  { return parseFloat(localStorage.getItem(_timeKey)    || '0'); }
   function _getTotalLessons()  { return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
@@ -4896,7 +4900,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   var STEPS_PER_NEW_EX  = 5;   // alle N Kategorie-Erscheinungen → neue Übung
   var MAX_ACTIVE_PER_CAT = 100; // max aktive Übungen pro Kategorie (01.09.2026 von 50 erhöht)
-  var COURSE_KEY = 'drumlion_v4_course' + _urlUser;
+  var COURSE_KEY = 'drumlion_v4_course';
 
   // Übungen pro Kategorie, sortiert nach ID
   // Pillars: Grooves → Notes → Fills → Coordination → Rudiments (ab 200h)
@@ -5148,7 +5152,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-101808';
+  var DL_BUILD = '20260910-111100';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
