@@ -5152,7 +5152,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-111100';
+  var DL_BUILD = '20260910-115550';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8040,6 +8040,17 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       if (changed) {
         _loadCurrentLesson(false);
         _updateLevelUI();
+      } else if (_getTotalLessons() > 0) {
+        // Nichts übernommen — entweder ist der lokale Stand weiter, oder die
+        // Serverzeile ist unbrauchbar (`_syncPull` weist einen Zustand ohne
+        // `cats` ab). Bisher blieb es dann dabei: der gute lokale Stand wurde
+        // erst beim Abschluss der nächsten Lektion hochgeladen. Wer vorher ein
+        // zweites Gerät öffnete, sah dort einen leeren Kurs und kam nicht mehr
+        // heraus, weil der Server mehr Lektionen meldet als das neue Gerät hat.
+        // Deshalb jetzt sofort hochschieben. `_syncPush` liest vorher selbst
+        // den Server und übernimmt, falls der doch weiter ist — es kann also
+        // nichts überschrieben werden, was neuer wäre.
+        _syncPush();
       }
     });
   }
