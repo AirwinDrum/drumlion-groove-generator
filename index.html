@@ -4665,14 +4665,18 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     // Open-handed: rechts führt auf dem Ride, in der Umkehrung führt links
     // auf der Hi-Hat und rechts spielt Snare. Kein Überkreuzen.
+    // `uc`/`lc` = welche Gliedmaße die obere bzw. untere Stimme spielt.
+    // Bei den Füßen steht R für den rechten Fuß (Kick) und L für den linken
+    // (Hi-Hat-Pedal) — verwechseln kann man das nicht, die Fußstimmen stehen
+    // ohnehin auf eigenen Linien.
     var PAIRS = [
-      {up:RIDE, lo:SN,   grp:'Hands',       un:'Ride R',   ln:'Snare L'},
-      {up:HH,   lo:SN,   grp:'Hands',       un:'Hi-Hat L', ln:'Snare R'},
-      {up:RIDE, lo:KICK, grp:'Hand & Foot', un:'Ride R',   ln:'Kick'},
-      {up:SN,   lo:PED,  grp:'Hand & Foot', un:'Snare L',  ln:'HH-Pedal'},
-      {up:RIDE, lo:PED,  grp:'Hand & Foot', un:'Ride R',   ln:'HH-Pedal'},
-      {up:SN,   lo:KICK, grp:'Hand & Foot', un:'Snare L',  ln:'Kick'},
-      {up:KICK, lo:PED,  grp:'Feet',        un:'Kick',     ln:'HH-Pedal'}
+      {up:RIDE, lo:SN,   grp:'Hands',       un:'Ride R',   ln:'Snare L',  uc:'R', lc:'L'},
+      {up:HH,   lo:SN,   grp:'Hands',       un:'Hi-Hat L', ln:'Snare R',  uc:'L', lc:'R'},
+      {up:RIDE, lo:KICK, grp:'Hand & Foot', un:'Ride R',   ln:'Kick',     uc:'R', lc:'R'},
+      {up:SN,   lo:PED,  grp:'Hand & Foot', un:'Snare L',  ln:'HH-Pedal', uc:'L', lc:'L'},
+      {up:RIDE, lo:PED,  grp:'Hand & Foot', un:'Ride R',   ln:'HH-Pedal', uc:'R', lc:'L'},
+      {up:SN,   lo:KICK, grp:'Hand & Foot', un:'Snare L',  ln:'Kick',     uc:'L', lc:'R'},
+      {up:KICK, lo:PED,  grp:'Feet',        un:'Kick',     ln:'HH-Pedal', uc:'R', lc:'L'}
     ];
 
     function gcd(a, b) { return b ? gcd(b, a % b) : a; }
@@ -4726,6 +4730,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         // Unterteilung, die der Spieler tatsächlich lesen muss. Sie steuert,
         // ab welchem Level die Übung überhaupt auftauchen darf (COORD_UNLOCK).
         gridPer: per,
+        // Welche Gliedmaße welches Instrument spielt. Der Renderer schreibt
+        // den Buchstaben damit an den Notenkopf — bei Unabhängigkeit ist die
+        // Hand pro Instrument konstant, anders als bei Fills und Rudiments,
+        // wo der Handsatz von Schlag zu Schlag wechselt.
+        limbs: (function() {
+          var m = {};
+          m[pair.up.inst] = pair.uc;
+          m[pair.lo.inst] = pair.lc;
+          return m;
+        })(),
         showLabels: false, beats: slots
       });
     }
@@ -5218,7 +5232,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-145327';
+  var DL_BUILD = '20260910-150134';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6657,6 +6671,21 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                  '</circle>';
           }
           h += drawNoteHead(n, x + offArr[ci], y, nc, op);
+          // Handsatz direkt am Notenkopf (Erwin, 10.09.2026).
+          // Nur bei Unabhängigkeit: dort steht die Gliedmaße pro Instrument
+          // fest — auf dem Ride immer rechts, auf der Snare immer links —,
+          // und genau das ist die Information, die man beim Lesen braucht.
+          // Bei Fills und Rudiments wechselt der Handsatz von Schlag zu Schlag;
+          // die stehen weiter unter dem System, wo mehr Platz ist.
+          // Links vom Kopf, weil dort weder Hals noch Balken sitzen.
+          if (GROOVE.limbs && GROOVE.gridPer && GROOVE.gridPer <= 4) {
+            var _lb = GROOVE.limbs[n.inst];
+            if (_lb) {
+              h += '<text x="'+(x + offArr[ci] - 10)+'" y="'+(y + 4)+
+                   '" text-anchor="middle" fill="'+nc+'" font-size="9" font-weight="600"' +
+                   ' font-family="DM Sans,system-ui,sans-serif" opacity="'+(op*0.7)+'">'+_lb+'</text>';
+            }
+          }
         });
         // Articulation marks (o = HH open, + = HH close) — als SVG-Shapes über dem Balken
         sortedBn.forEach(function(n, ci) {
