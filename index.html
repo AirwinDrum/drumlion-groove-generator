@@ -5304,7 +5304,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260910-173729';
+  var DL_BUILD = '20260912-112811';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5679,6 +5679,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     });
   }
 
+  // Die Lektion, die gerade angezeigt wird. `_advanceState()` schaltet genau
+  // diese fort — sonst kann sich zwischen Anzeige und Klick der aktive Satz
+  // ändern (Levelaufstieg, Unparken) und es trifft die falsche Übung.
+  var _shownLesson = null;
+
+  function _rotateOn() {
+    var rotation = _getRotation();
+    _cState.rotationPos = (_cState.rotationPos + 1) % rotation.length;
+  }
+
   // Nächste Lektion ermitteln (ohne State zu ändern)
   function _peekLesson() {
     var rotation = _getRotation();
@@ -5708,12 +5718,26 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   // Lektion abschließen: State vorwärts
   function _advanceState() {
-    _unparkDue();
-    var lesson = _peekLesson();
+    // Fortgeschaltet wird GENAU die Lektion, die auf dem Schirm stand — nicht
+    // eine neu ermittelte.
+    //
+    // Vorher stand hier `_unparkDue(); var lesson = _peekLesson();`. Das lief
+    // auseinander: `_addLessonTime()` zählt die Lektion schon hoch, wenn die
+    // Übung durchgelaufen ist — also bevor „Done → Next" gedrückt wird. Steigt
+    // dabei das Level, hebt `_unparkDue()` geparkte Übungen zurück in die
+    // aktive Liste, und das anschließende `_peekLesson()` lieferte eine ANDERE
+    // Übung als die gespielte. Deren Schrittzähler blieb stehen, und sie kam
+    // sofort noch einmal — mit demselben Tempo. Genau so beobachtet am
+    // 11.09.2026 bei „Ride R 1/4 · Snare L displaced", 50 BPM, zweimal.
+    var lesson = _shownLesson || _peekLesson();
+    _shownLesson = null;
     if (!lesson) return;
     var cat = lesson.cat;
     var cs  = _cState.cats[cat];
     var entry = cs.active.find(function(e){ return e.id === lesson.entry.id; });
+    // Übung zwischenzeitlich verschwunden (geparkt oder abgeschlossen)?
+    // Dann nur die Rotation weiterschieben, nichts fortschalten.
+    if (!entry) { _unparkDue(); _rotateOn(); return; }
 
     entry.bpmStep++;
     cs.lastId  = entry.id;
@@ -5752,9 +5776,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       }
     });
 
+    // Erst JETZT geparkte Übungen zurückholen — nach dem Fortschalten, damit
+    // sie die gerade gespielte Lektion nicht mehr verdrängen können. Für die
+    // Anzeige reicht das: `_loadCurrentLesson()` ruft `_unparkDue()` ohnehin,
+    // bevor es die nächste Lektion ermittelt.
+    _unparkDue();
+
     // Rotation weiterschieben
-    var rotation = _getRotation();
-    _cState.rotationPos = (_cState.rotationPos + 1) % rotation.length;
+    _rotateOn();
 
     _cState.total++;
     _cState.chapterLessons = (_cState.chapterLessons || 0) + 1;
@@ -5823,6 +5852,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     _unparkDue();
     var lesson = _peekLesson();
     if (!lesson) return;
+    // Merken, was der Spieler sieht — `_advanceState()` schaltet genau das fort.
+    _shownLesson = lesson;
     _setGroove(lesson.ex, lesson.bpm);
     // Always reset ctrl to Start button (e.g. after "Mark as Completed" transition)
     if (!autoStart) {
