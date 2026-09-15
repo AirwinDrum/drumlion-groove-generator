@@ -968,7 +968,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   <div class="sync-modal">
     <h3>☁️ Save your progress</h3>
     <p>Enter your Drumlion email. Your progress syncs automatically across all your devices.</p>
-    <p style="font-size:12px;opacity:0.55;margin-top:-4px;">Die Adresse bleibt auf deinem Gerät — gespeichert wird nur eine daraus errechnete Kennung.</p>
+    <p style="font-size:12px;opacity:0.55;margin-top:-4px;">Your email stays on this device. Only a code derived from it is saved.</p>
     <input class="sync-input" id="syncEmailInput" type="email" placeholder="you@email.com" autocomplete="email"/>
     <div class="sync-error" id="syncError" style="display:none;"></div>
     <button class="sync-btn" id="syncSubmitBtn">Save progress</button>
@@ -3751,7 +3751,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}]
       ]},
 
-    {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       // Sechs 16tel (drei Doppelschläge), dann der siebte Schlag als
       // akzentuierte Achtel — nicht als 16tel mit Pause dahinter (Erwin,
       // 10.09.2026). Der Schlussschlag trägt die Figur und klingt aus;
@@ -3762,6 +3762,30 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',eighth:true}],[],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',eighth:true}],[]
+      ]},
+    // Variante B (Erwin, 15.09.2026): sechs 16tel-Triolen auf der ersten
+    // Zählzeit, der siebte Schlag als akzentuierte Viertel auf der zweiten.
+    // Zweimal pro Takt, die zweite Hälfte mit der anderen Hand geführt.
+    //
+    // ID 1048 statt einer Nummer neben 1009: seit echte Mitglieder üben, wird
+    // nicht mehr umnummeriert — gespeicherte Stände zeigen auf IDs. In der
+    // Kursreihenfolge steht sie trotzdem direkt hinter der A-Variante, weil
+    // die Reihenfolge des Arrays zählt, nicht die Nummer.
+    //
+    // maxBPM 180 wie beim Six Stroke Roll B: gleiche Unterteilung, und die
+    // Sextolen-Passage ist der Engpass, nicht der Mittelwert pro Takt. Nach der
+    // 540-Schläge-Regel kämen 300 heraus — das hieße 30 Anschläge pro Sekunde
+    // während der ersten Zählzeit. Endgültigen Wert gibt Erwin vor.
+    {id:1048, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:180, step:1, showLabels:false,
+      stickings:['R','R','L','L','R','R','L',null,null,null,null,null,
+                 'L','L','R','R','L','L','R',null,null,null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[],[],[],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[],[],[]
       ]},
     {id:1010, cat:'rudiments', catLabel:'Rudiments', name:'Nine Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L','L','R',null,null,null,null,null,null,null],
@@ -5304,7 +5328,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260912-112811';
+  var DL_BUILD = '20260915-103618';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
