@@ -3787,12 +3787,23 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[],[],[]
       ]},
-    {id:1010, cat:'rudiments', catLabel:'Rudiments', name:'Nine Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1010, cat:'rudiments', catLabel:'Rudiments', name:'Nine Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:250, step:1, showLabels:false,
+      // Acht 16tel (vier Doppelschläge) und der neunte Schlag als akzentuierte
+      // Viertel, Zählzeit 4 bleibt frei. Zwei Takte: der erste beginnt rechts,
+      // der zweite links (Erwin, 15.09.2026).
       stickings:['R','R','L','L','R','R','L','L','R',null,null,null,null,null,null,null],
+      stickings2:['L','L','R','R','L','L','R','R','L',null,null,null,null,null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],[],[],[],[]
+        [{inst:'snareAccent',line:1.5,head:'oval',quarter:true}],[],[],[],
+        [],[],[],[]
+      ],
+      beats2:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',quarter:true}],[],[],[],
+        [],[],[],[]
       ]},
     {id:1011, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L','L','R','L',null,null,null,null,null,null],
@@ -5328,7 +5339,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260915-103842';
+  var DL_BUILD = '20260915-105612';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6912,12 +6923,33 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
+        // Ganze Zählzeit leer → eine Viertelpause auf der Zählzeit statt vier
+        // 16tel-Pausen (Nine Stroke Roll, Erwin 15.09.2026). Nur im 16tel- und
+        // 16tel-Triolen-Raster; die Achtelpausen der Staves bleiben, wie sie sind.
+        var _restGrp = n / 4;
+        var _restGst = Math.floor(bi / _restGrp) * _restGrp;
+        var beatRest = false;
+        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
+            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') &&
+            _restGrp > 1 && _restGrp === Math.floor(_restGrp) && !hasV2) {
+          beatRest = true;
+          for (var _rk = _restGst; _rk < _restGst + _restGrp; _rk++) {
+            var _ra = beatsArr[_rk];
+            if ((_ra && _ra.length) || isCovered(_rk)) { beatRest = false; break; }
+          }
+        }
+        if (beatRest && bi === _restGst) {
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, nc, op);
+        }
         // Sixteenth rest symbol — authentisches Bravura-Glyph
         // coveredByQuarter auch hier prüfen: eine Viertelnote deckt die
         // folgenden Slots ihrer Gruppe ab, dort gehört keine Pause hin.
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
             (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') &&
-            bn.length === 0 && !coveredByQuarter) {
+            bn.length === 0 && !coveredByQuarter && !beatRest) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
