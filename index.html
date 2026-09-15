@@ -3751,7 +3751,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}]
       ]},
 
-    {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1009, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:250, step:1, showLabels:false,
       // Sechs 16tel (drei Doppelschläge), dann der siebte Schlag als
       // akzentuierte Achtel — nicht als 16tel mit Pause dahinter (Erwin,
       // 10.09.2026). Der Schlussschlag trägt die Figur und klingt aus;
@@ -3776,7 +3776,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // Sextolen-Passage ist der Engpass, nicht der Mittelwert pro Takt. Nach der
     // 540-Schläge-Regel kämen 300 heraus — das hieße 30 Anschläge pro Sekunde
     // während der ersten Zählzeit. Endgültigen Wert gibt Erwin vor.
-    {id:1048, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:180, step:1, showLabels:false,
+    {id:1048, cat:'rudiments', catLabel:'Rudiments', name:'Seven Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:166, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L',null,null,null,null,null,
                  'L','L','R','R','L','L','R',null,null,null,null,null],
       beats:[
@@ -5328,7 +5328,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260915-103618';
+  var DL_BUILD = '20260915-103842';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
