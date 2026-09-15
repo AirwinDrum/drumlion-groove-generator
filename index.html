@@ -5339,7 +5339,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260915-105612';
+  var DL_BUILD = '20260915-114621';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7797,6 +7797,54 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   // ============================================================
+  // DEV-MODUS — Taste D (Dev-Panel) und Pfeiltasten (Prev/Skip) nur auf
+  // freigeschalteten Geräten (Erwin, 15.09.2026). Sonst hätte jedes Mitglied
+  // mit einem Tastendruck Lektionen überspringen, beliebige Übungen laden und
+  // den Kurs zurücksetzen können.
+  // Freischalten: in den Player klicken und „drumlion" tippen — noch einmal
+  // tippen schaltet wieder ab. Alternativ den Player direkt mit ?dev=1 öffnen
+  // (?dev=0 schaltet ab). Gilt pro Gerät und Browser. Im Systeme.io-iFrame
+  // führt der Browser einen eigenen Speicher, dort also per Tippen.
+  // ============================================================
+  var _DEV_KEY = 'drumlion_dev_v1';
+  var _devMode = false;
+  try {
+    var _devParam = new URLSearchParams(window.location.search).get('dev');
+    if (_devParam === '1') localStorage.setItem(_DEV_KEY, '1');
+    if (_devParam === '0') localStorage.removeItem(_DEV_KEY);
+    _devMode = localStorage.getItem(_DEV_KEY) === '1';
+  } catch(e) {}
+
+  function _devToast(text) {
+    var t = document.createElement('div');
+    t.textContent = text;
+    t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100000;'
+      + 'background:#1a1a1a;border:1px solid #C9A84C;color:#E8E4DB;border-radius:999px;padding:8px 18px;'
+      + 'font:500 13px \'DM Sans\',system-ui,sans-serif;letter-spacing:0.04em;transition:opacity .4s;';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.style.opacity = '0'; }, 1600);
+    setTimeout(function(){ t.remove(); }, 2100);
+  }
+
+  var _devTyped = '';
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+    if (!e.key || e.key.length !== 1) return;
+    _devTyped = (_devTyped + e.key.toLowerCase()).slice(-8);
+    if (_devTyped !== 'drumlion') return;
+    _devTyped = '';
+    _devMode = !_devMode;
+    try {
+      if (_devMode) localStorage.setItem(_DEV_KEY, '1');
+      else localStorage.removeItem(_DEV_KEY);
+    } catch(e2) {}
+    // Das „d" am Anfang hat das Panel womöglich gerade geöffnet
+    var _dp = document.getElementById('devPicker');
+    if (_dp && !_devMode) _dp.style.display = 'none';
+    _devToast(_devMode ? 'Dev mode on' : 'Dev mode off');
+  });
+
+  // ============================================================
   // LEERTASTE
   // ============================================================
   document.addEventListener('keydown', function(e) {
@@ -7808,10 +7856,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       e.preventDefault();
       metronomeOn = !metronomeOn;
       updateMetroBtn();
-    } else if (e.code === 'ArrowRight') {
+    } else if (e.code === 'ArrowRight' && _devMode) {
       e.preventDefault();
       document.getElementById('dgNavNext').click();
-    } else if (e.code === 'ArrowLeft') {
+    } else if (e.code === 'ArrowLeft' && _devMode) {
       e.preventDefault();
       document.getElementById('dgNavPrev').click();
     }
@@ -8076,6 +8124,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     document.addEventListener('keydown', function(e) {
       if (e.code !== 'KeyD') return;
+      if (!_devMode) return;   // nur auf freigeschalteten Geräten, siehe DEV-MODUS
       if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
       panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     });
