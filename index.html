@@ -418,6 +418,20 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   border-color: transparent transparent transparent #0a0a0a;
   flex-shrink: 0;
 }
+/* Rückmeldung nach der Lektion (16.09.2026) */
+.dl-feedback { display: none; flex-direction: column; align-items: center; gap: 8px; }
+.dl-fb-q { font-size: 13px; color: rgba(255,255,255,0.7); letter-spacing: 0.3px; }
+.dl-fb-opts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.dl-fb {
+  background: #161616; color: #ffffff; border: 1px solid #333; border-radius: 999px;
+  padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.dl-fb:hover { border-color: #C9A84C; }
+.dl-fb:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
+.dl-fb[aria-checked="true"] { background: rgba(201,168,76,0.18); border-color: #C9A84C; color: #C9A84C; }
+.dl-fb-note { font-size: 12px; color: rgba(255,255,255,0.55); min-height: 16px; font-variant-numeric: tabular-nums; }
+
 .dl-completed-banner {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.3);
@@ -1317,6 +1331,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       <span class="dev-tempo-unit">BPM</span>
     </div>
     <div id="dgCompletedBanner" style="display:none;" class="dl-completed-banner">✔ Completed</div>
+    <!-- Rückmeldung nach der Lektion (Erwin, 16.09.2026): freiwillig, ein Tipp.
+         Sichtbar nur nach einem vollständigen Durchgang, siehe _showFeedback(). -->
+    <div class="dl-feedback" id="dgFeedback">
+      <span class="dl-fb-q" id="dgFeedbackQ">How did that feel?</span>
+      <div class="dl-fb-opts" role="radiogroup" aria-labelledby="dgFeedbackQ">
+        <button type="button" class="dl-fb" data-fb="easy" role="radio" aria-checked="false">Too easy</button>
+        <button type="button" class="dl-fb" data-fb="good" role="radio" aria-checked="false">Just right</button>
+        <button type="button" class="dl-fb" data-fb="hard" role="radio" aria-checked="false">Too hard</button>
+      </div>
+      <span class="dl-fb-note" id="dgFeedbackNote" aria-live="polite"></span>
+    </div>
 
     <div class="nav-row">
       <button class="nav-btn" id="dgNavPrev" style="visibility:hidden;">← Prev</button>
@@ -5653,7 +5678,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-135319';
+  var DL_BUILD = '20260916-143225';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6097,7 +6122,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Dann nur die Rotation weiterschieben, nichts fortschalten.
     if (!entry) { _unparkDue(); _rotateOn(); return; }
 
-    entry.bpmStep++;
+    // Rückmeldung zur gespielten Lektion bestimmt die nächste Tempostufe
+    var _fb = _lessonFeedback;
+    _lessonFeedback = null;
+    entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
+    if (_fb === 'easy') entry.fbEasy = (entry.fbEasy || 0) + 1; else delete entry.fbEasy;
+    if (_fb === 'hard') entry.fbHard = (entry.fbHard || 0) + 1; else delete entry.fbHard;
     cs.lastId  = entry.id;
     cs.counter = (cs.counter || 0) + 1;
 
@@ -6179,6 +6209,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Zentrale Funktion: Exercise → GROOVE laden (einzige Stelle die GROOVE setzt)
   function _setGroove(ex, bpm) {
+    if (typeof _lessonFeedback !== 'undefined') { _lessonFeedback = null; _showFeedback(false); }
     GROOVE = ex;
     tBpm = bpm;
     _setExName(ex.name);
@@ -7862,6 +7893,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // PLAYBACK
   // ============================================================
   function startExercise() {
+    _showFeedback(false);
     initA();
     blocks  = getBlocks(tBpm);
     pauses  = getPauses(tBpm, blocks.length);
@@ -8188,6 +8220,62 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
   }
 
+  // ── Rückmeldung: Too easy / Just right / Too hard (Erwin, 16.09.2026) ──
+  // Wirkt nur auf das Tempo, mit dem DIESE Übung beim nächsten Mal kommt.
+  // Lektionszähler, Level und Rotation bleiben unberührt; ohne Antwort läuft
+  // alles wie bisher (eine Stufe weiter).
+  //   Too easy   → mind. 5 % schneller (mind. 2 Stufen); zweimal in Folge 10 % (mind. 3)
+  //   Just right → eine Stufe weiter
+  //   Too hard   → gleiches Tempo; zweimal in Folge eine Stufe zurück
+  // Ein Sprung endet an der Tempo-Decke des Levels — darüber würden Stufen
+  // übersprungen, die das Level noch gar nicht erlaubt.
+  var _lessonFeedback = null;
+
+  function _feedbackStep(ex, entry, fb) {
+    var cur = entry.bpmStep || 0;
+    var steps = _exSteps(ex);
+    if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(0, cur - 1) : cur;
+    if (fb !== 'easy') return cur + 1;
+    var twice = (entry.fbEasy || 0) >= 1;
+    // aufrunden auf ganze BPM; -1e-9 gegen Gleitkomma (50 × 1,1 = 55,000…01)
+    var target = Math.ceil(_exBpm(ex, cur) * (twice ? 1.10 : 1.05) - 1e-9);
+    var next = cur + (twice ? 3 : 2);
+    while (next < steps && _exBpm(ex, next) < target) next++;
+    while (next > cur + 1 && next < steps && _capBpm(ex, _exBpm(ex, next)) < _exBpm(ex, next)) next--;
+    return Math.min(next, steps);
+  }
+
+  // Übung und Eintrag der gerade gespielten Lektion (dieselbe Quelle wie _advanceState)
+  function _feedbackTarget() {
+    var lesson = _shownLesson || _peekLesson();
+    if (!lesson) return null;
+    var cs = _cState.cats[lesson.cat];
+    var entry = cs && cs.active.find(function(e) { return e.id === lesson.entry.id; });
+    return entry ? { ex: lesson.ex, entry: entry } : null;
+  }
+
+  function _renderFeedback() {
+    var box = document.getElementById('dgFeedback');
+    if (!box) return;
+    Array.prototype.forEach.call(box.querySelectorAll('.dl-fb'), function(b) {
+      b.setAttribute('aria-checked', b.getAttribute('data-fb') === _lessonFeedback ? 'true' : 'false');
+    });
+    var note = '';
+    var tg = _lessonFeedback ? _feedbackTarget() : null;
+    if (tg) {
+      var n = _feedbackStep(tg.ex, tg.entry, _lessonFeedback);
+      note = (n >= _exSteps(tg.ex)) ? 'Next time: exercise completed'
+                                    : 'Next time for this exercise: ' + _exBpm(tg.ex, n) + ' BPM';
+    }
+    document.getElementById('dgFeedbackNote').textContent = note;
+  }
+  function _showFeedback(on) {
+    var box = document.getElementById('dgFeedback');
+    if (!box) return;
+    box.style.display = on ? 'flex' : 'none';
+    if (on) _renderFeedback();
+  }
+
   function finishExercise() {
     playDoneSound();
     playing=false; _visReset(); phase='done'; bIdx=blocks.length;
@@ -8201,6 +8289,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
     if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
     document.getElementById('dgTotal').style.display='inline';
+    // Nur nach Kurs-Lektionen fragen, nicht im Einstufungstest
+    _showFeedback(!_rampMode);
     document.getElementById('dgCtrl').innerHTML =
       '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>Again</button>'+
       '<button class="btn-go" id="dgNextLesson">Done → Next</button>';
@@ -8223,6 +8313,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function stopExercise() {
+    _showFeedback(false);
     if (aCtx) _statsDrain(aCtx.currentTime);
     _statQ.length = 0;
     _statsCommit(true);
@@ -8602,6 +8693,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // EVENTS & INIT
   // ============================================================
   document.getElementById('dgStart').addEventListener('click', startExercise);
+
+  // Rückmeldung nach der Lektion: Auswahl setzen, zweiter Tipp nimmt sie zurück
+  Array.prototype.forEach.call(document.querySelectorAll('#dgFeedback .dl-fb'), function(b) {
+    b.addEventListener('click', function() {
+      var v = b.getAttribute('data-fb');
+      _lessonFeedback = (_lessonFeedback === v) ? null : v;
+      _renderFeedback();
+    });
+  });
 
   // Dev: Reset Course
   document.getElementById('dgDevReset').addEventListener('click', function() {
