@@ -4125,8 +4125,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}]
       ]},
-    // Double Paradiddle in 16tel-Triolen: RLRLRR LRLRLL zweimal pro Takt, Akzent auf
-    // dem ersten Schlag jeder Sechsergruppe (Erwin, 16.09.2026; vorher Achteltriolen,
+    // Double Paradiddle in 16tel-Triolen: vier Sechsergruppen pro Takt (RLRLRR LRLRLL
+    // RLRLRR LRLRLL), Akzent auf dem ersten Schlag jeder Sechsergruppe (Erwin, 16.09.2026; vorher Achteltriolen,
     // einmal pro Takt). maxBPM 150 = dieselben Schläge pro Minute wie vorher 300.
     {id:1024, cat:'rudiments', catLabel:'Rudiments', name:'Double Paradiddle', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:150, step:1, showLabels:false,
       stickings:['R','L','R','L','R','R', 'L','R','L','R','L','L',
@@ -4146,14 +4146,17 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
-    // Paradiddle-Diddle: 6er-Gruppen (Triolen-Grid), gleichbleibende Führhand, Akzent auf 1
-    {id:1026, cat:'rudiments', catLabel:'Rudiments', name:'Paradiddle-Diddle', noteValue:'triplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
-      stickings:['R','L','R','R','L','L','R','L','R','R','L','L'],
+    // Paradiddle-Diddle in 16tel-Triolen: RLRRLL viermal pro Takt (eine Gruppe je
+    // Zählzeit), gleichbleibende Führhand, Akzent auf dem ersten Schlag jeder Gruppe
+    // (Erwin, 16.09.2026; vorher Achteltriolen). maxBPM 150 = gleiche Schläge/min wie vorher 300.
+    {id:1026, cat:'rudiments', catLabel:'Rudiments', name:'Paradiddle-Diddle', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:150, step:1, showLabels:false,
+      stickings:['R','L','R','R','L','L', 'R','L','R','R','L','L',
+                 'R','L','R','R','L','L', 'R','L','R','R','L','L'],
       beats:[
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}]
       ]},
     // Flam Rudiments — Sticking-Schreibweise: Kleinbuchstabe = Grace Note (z.B. lR = Flam rechts)
     // Flam: alternierende Flams auf Vierteln
@@ -5389,7 +5392,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-120319';
+  var DL_BUILD = '20260916-120645';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
