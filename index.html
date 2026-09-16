@@ -814,6 +814,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
 /* Kopfzeile rechts: Drum Key, Stats, Einstellungen als eine Gruppe */
 .ni-tools { display: flex; align-items: center; gap: 6px; }
+/* ?hdr=1: Die Lektionsseite hat eine eigene Drumlion-Kopfleiste mit Stats und
+   Zahnrad (Erwin, 16.09.2026) — im Player bleibt dann nur der Drum Key. */
+body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 /* Handy: die zwei neuen Knöpfe kosten ~60px, die der Titel in der Mitte
    braucht. Die Blockinfo steht dort deshalb zweizeilig: „1 Block" / „Rep 5". */
 .notation-info-right .ni-sep { white-space: pre; }
@@ -5628,7 +5631,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-122508';
+  var DL_BUILD = '20260916-123507';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8885,6 +8888,26 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     [statsOverlay, settingsOverlay, legendOverlay].forEach(function(ov) {
       if (ov.classList.contains('open')) _closePanel(ov);
     });
+  });
+
+  // Kopfleiste der Lektionsseite (Systeme.io-Einbettungscode, 16.09.2026):
+  // `?hdr=1` blendet die Knöpfe im Player aus, die Kopfleiste schickt
+  // {drumlion:'panel', panel:'stats'|'settings'} per postMessage. Nur von
+  // drumlion.com angenommen; ein zweiter Klick schließt das Fenster wieder.
+  try {
+    if (new URLSearchParams(window.location.search).get('hdr') === '1') document.body.classList.add('dl-hdr');
+  } catch(e) {}
+  window.addEventListener('message', function(e) {
+    if (!/^https:\/\/(www\.)?drumlion\.com$/.test(e.origin)) return;
+    var d = e.data;
+    if (!d || d.drumlion !== 'panel') return;
+    var target = (d.panel === 'stats') ? statsOverlay : (d.panel === 'settings') ? settingsOverlay : null;
+    if (!target) return;
+    var wasOpen = target.classList.contains('open');
+    [statsOverlay, settingsOverlay, legendOverlay].forEach(function(ov) {
+      if (ov.classList.contains('open')) _closePanel(ov);
+    });
+    if (!wasOpen) document.getElementById(d.panel === 'stats' ? 'dgStatsBtn' : 'dgSettingsBtn').click();
   });
 
 })();
