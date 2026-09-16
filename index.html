@@ -1243,6 +1243,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     snareDragAccent: { line: 1.5, head: 'oval',      sound: 'snareDragAccent', grace: 2, articulation: '>' },
     snareBuzz:   { line: 1.5,  head: 'oval',         sound: 'snare', articulation: 'z' }, // Multiple Bounce (Buzz)
     ghost:       { line: 1.5,  head: 'oval-ghost',   sound: 'snare'  }, // Snare Ghostnote
+    snareGhost:  { line: 1.5,  head: 'oval-ghost',   sound: 'snareGhost' }, // Ghostnote mit eigenem Sample (Ten Stroke Roll B)
     crossStick:  { line: 1.5,  head: 'x',            sound: 'snare'  }, // Cross Stick
     hh:          { line: -0.5, head: 'x',            sound: 'hh'     }, // Hi-Hat geschlossen
     hhOpen:      { line: -0.5, head: 'x',            sound: 'hh',    articulation: 'o' },
@@ -3805,19 +3806,51 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareAccent',line:1.5,head:'oval',quarter:true}],[],[],[],
         [],[],[],[]
       ]},
-    {id:1011, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
-      stickings:['R','R','L','L','R','R','L','L','R','L',null,null,null,null,null,null],
+    {id:1011, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      // Acht 16tel (vier Doppelschläge), dann zwei akzentuierte Achtel R L,
+      // Zählzeit 4 frei (Erwin, 16.09.2026).
+      stickings:['R','R','L','L','R','R','L','L','R',null,'L',null,null,null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],[],[],[]
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[],
+        [],[],[],[]
       ]},
-    {id:1012, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+    {id:1049, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:200, step:1, showLabels:false, beamRests:true,
+      // 16tel-Triolen, nach Erwins Notenbild (16.09.2026): Akzent R, Pause,
+      // acht Doppelschläge als Ghostnotes in Klammern, Akzent L, Pause —
+      // zweimal im Takt. Zehn Schläge je Hälfte, 5 R / 5 L.
+      // maxBPM 200 = gleiche Schläge pro Minute wie A bei 300 (1.200 ÷ 6).
+      stickings:['R',null,'L','L','R','R', 'L','L','R','R','L',null,
+                 'R',null,'L','L','R','R', 'L','L','R','R','L',null],
+      beats:[
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[]
+      ]},
+    {id:1012, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      // Zehn 16tel (fünf Doppelschläge), dann der elfte Schlag als
+      // akzentuierte Achtel, Zählzeit 4 frei — Aufbau wie Ten Stroke Roll A
+      // (Erwin, 16.09.2026).
       stickings:['R','R','L','L','R','R','L','L','R','R','L',null,null,null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[],[],[]
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[],
+        [],[],[],[]
+      ]},
+    {id:1050, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:200, step:1, showLabels:false, beamRests:true,
+      // 16tel-Triolen wie Ten Stroke Roll B: die fünf Doppelschläge als
+      // Ghostnotes, der elfte Schlag akzentuiert, dann eine Pause — zweimal
+      // im Takt. Elf Schläge je Hälfte. maxBPM 200 wie bei Ten B (1.200 ÷ 6).
+      stickings:['R','R','L','L','R','R', 'L','L','R','R','L',null,
+                 'R','R','L','L','R','R', 'L','L','R','R','L',null],
+      beats:[
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[]
       ]},
     {id:1013, cat:'rudiments', catLabel:'Rudiments', name:'Thirteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null],
@@ -5339,7 +5372,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260915-114621';
+  var DL_BUILD = '20260916-114549';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6717,6 +6750,38 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         var nBeams = (n === 12) ? 1 : (n === 32 || n === 48) ? 3 : 2;
         var dbl = (nBeams > 1);
         var showTuplet = (n !== 32 && n !== 48);
+        // `beamRests:true` an der Übung: ein Balken pro Zählzeit vom ersten bis
+        // zum letzten Ton, auch über Pausen dazwischen, und die Tuolenzahl für
+        // jede Gruppe. Gesetzt nach Erwins Vorlage zum Ten Stroke Roll B
+        // (16.09.2026). Ohne das Flag bleibt alles wie bisher.
+        if (GROOVE.beamRests) {
+          for (var g0 = 0; g0 < n; g0 += gsz) {
+            var inGrp = [];
+            for (var gi = g0; gi < g0 + gsz; gi++) if (beamable(gi)) inGrp.push(gi);
+            if (inGrp.length < 2) continue;
+            var rs = inGrp[0], re = inGrp[inGrp.length - 1];
+            var x1 = sX+16+rs*bs+5, x2 = sX+16+re*bs+5;
+            h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                 '" fill="'+W+'" opacity="'+op+'"/>';
+            if (dbl) {
+              var BT2 = sY - 18 + BH + 1.5;
+              h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                   '" fill="'+W+'" opacity="'+op+'"/>';
+              if (nBeams > 2) {
+                var BT3 = BT2 + BH + 1.5;
+                h += '<rect x="'+(x1-SW)+'" y="'+BT3+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                     '" fill="'+W+'" opacity="'+op+'"/>';
+              }
+            }
+            if (showTuplet) {
+              // Ziffer immer über der Mitte der Zählzeit, ohne Klammer: eine
+              // Klammer auf dieser Höhe liefe durch die Akzentzeichen (sY-31).
+              var gx1 = sX+16+g0*bs+5, gx2 = sX+16+(g0+gsz-1)*bs+5;
+              h += '<text x="'+((gx1+gx2)/2)+'" y="'+(BT-3)+'" text-anchor="middle" fill="'+W+
+                   '" font-size="9" font-style="italic" font-family="DM Sans,system-ui,sans-serif" opacity="'+(op*0.8)+'">'+gsz+'</text>';
+            }
+          }
+        } else
         for (var g0 = 0; g0 < n; g0 += gsz) {
           var runStart = -1;
           for (var gi = g0; gi <= g0 + gsz; gi++) {
@@ -7023,6 +7088,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                 var gst = Math.floor(bi / gsz2) * gsz2;
                 var hasL = bi > gst && beamPartner(bi-1);
                 var hasR = bi < gst + gsz2 - 1 && beamPartner(bi+1);
+                // Mit `beamRests` hängt jeder Ton am Gruppenbalken, sobald
+                // irgendwo in der Zählzeit ein zweiter steht.
+                if (GROOVE.beamRests) {
+                  for (var _bk = gst; _bk < gst + gsz2; _bk++) {
+                    if (_bk !== bi && beamPartner(_bk)) { hasL = true; break; }
+                  }
+                }
                 if (!hasL && !hasR) {
                   h += bravuraGlyph(n === 12 ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
                 }
