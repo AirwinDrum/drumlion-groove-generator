@@ -812,6 +812,20 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 .legend-table .leg-name { color: rgba(255,255,255,0.85); }
 .legend-table .leg-pos { color: #ffffff; font-size: 12px; text-align: right; }
 
+/* Dev-Tempo-Regler (Erwin, 16.09.2026) — nur im Dev-Modus sichtbar */
+.dev-tempo {
+  display: none; align-items: center; gap: 10px;
+  width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
+  padding: 6px 12px; border: 1px dashed rgba(201,168,76,0.5); border-radius: 10px;
+}
+.dev-tempo-lbl { font-size: 10px; letter-spacing: 1.5px; color: #C9A84C; font-weight: 700; }
+.dev-tempo input[type=range] { flex: 1; min-width: 0; accent-color: #C9A84C; }
+.dev-tempo input[type=number] {
+  width: 60px; background: #141414; color: #fff; border: 1px solid #333; border-radius: 6px;
+  padding: 3px 6px; font: inherit; font-size: 14px;
+}
+.dev-tempo-unit { font-size: 12px; color: rgba(255,255,255,0.6); }
+
 /* Kopfzeile rechts: Drum Key, Stats, Einstellungen als eine Gruppe */
 .ni-tools { display: flex; align-items: center; gap: 6px; }
 /* ?hdr=1: Die Lektionsseite hat eine eigene Drumlion-Kopfleiste mit Stats und
@@ -1294,6 +1308,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     <div class="phase-info" id="dgInfo"></div>
 
     <div id="dgBlocks"></div>
+    <!-- Dev: Tempo-Regler für jede Übung (Erwin, 16.09.2026). Nur im Dev-Modus
+         sichtbar, Anzeige steuert _devTempoSync(). -->
+    <div class="dev-tempo" id="dgDevTempo">
+      <span class="dev-tempo-lbl">DEV</span>
+      <input type="range" id="dgDevTempoRange" min="30" max="300" step="1" aria-label="Tempo (dev)">
+      <input type="number" id="dgDevTempoNum" min="30" max="300" step="1" aria-label="Tempo (dev)">
+      <span class="dev-tempo-unit">BPM</span>
+    </div>
     <div id="dgCompletedBanner" style="display:none;" class="dl-completed-banner">✔ Completed</div>
 
     <div class="nav-row">
@@ -5631,7 +5653,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-123507';
+  var DL_BUILD = '20260916-130922';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7635,6 +7657,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
     if (typeof _updateCourseUI === 'function') _updateCourseUI();
+    _devTempoSync();
   }
 
   // ============================================================
@@ -8245,7 +8268,36 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _dp = document.getElementById('devPicker');
     if (_dp && !_devMode) _dp.style.display = 'none';
     _devToast(_devMode ? 'Dev mode on' : 'Dev mode off');
+    _devTempoSync();
   });
+
+  // Dev: Tempo-Regler (Erwin, 16.09.2026). Setzt nur das Tempo der geladenen
+  // Übung — Kursstand und Tempostufen bleiben unberührt. Läuft die Übung,
+  // wird sie angehalten, damit Blöcke und Pausen neu berechnet werden.
+  function _devTempoSync() {
+    var box = document.getElementById('dgDevTempo');
+    if (!box) return;
+    box.style.display = _devMode ? 'flex' : 'none';
+    var r = document.getElementById('dgDevTempoRange');
+    var nIn = document.getElementById('dgDevTempoNum');
+    if (r && document.activeElement !== r) r.value = tBpm;
+    if (nIn && document.activeElement !== nIn) nIn.value = tBpm;
+  }
+  function _devTempoSet(v) {
+    v = Math.round(+v);
+    if (!v) return;
+    v = Math.max(30, Math.min(300, v));
+    if (playing) stopExercise();
+    tBpm = v;
+    updateBpm();
+  }
+  (function() {
+    var r = document.getElementById('dgDevTempoRange');
+    var nIn = document.getElementById('dgDevTempoNum');
+    if (r) r.addEventListener('input', function() { if (nIn) nIn.value = r.value; _devTempoSet(r.value); });
+    if (nIn) nIn.addEventListener('change', function() { if (r) r.value = nIn.value; _devTempoSet(nIn.value); });
+    _devTempoSync();
+  })();
 
   // ============================================================
   // LEERTASTE
