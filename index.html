@@ -812,6 +812,54 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 .legend-table .leg-name { color: rgba(255,255,255,0.85); }
 .legend-table .leg-pos { color: #ffffff; font-size: 12px; text-align: right; }
 
+/* Kopfzeile rechts: Drum Key, Stats, Einstellungen als eine Gruppe */
+.ni-tools { display: flex; align-items: center; gap: 6px; }
+/* Handy: die zwei neuen Knöpfe kosten ~60px, die der Titel in der Mitte
+   braucht. Die Blockinfo steht dort deshalb zweizeilig: „1 Block" / „Rep 5". */
+.notation-info-right .ni-sep { white-space: pre; }
+@media (max-width: 480px) {
+  .ni-tools { gap: 4px; }
+  .notation-info-right .ni-sep { display: none; }
+  .notation-info-right .ni-rep { display: block; }
+}
+.legend-btn:focus-visible, .legend-close:focus-visible,
+.dl-set-btn:focus-visible, .dl-set-link:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
+
+/* Stats + Einstellungen (16.09.2026) — gleiche Hülle wie der Drum Key */
+.legend-modal.dl-panel { width: min(440px, 94vw); max-height: 92vh; overflow-y: auto; }
+.dl-stat-where { text-align: center; font-size: 15px; color: rgba(255,255,255,0.85); margin: -6px 0 18px; }
+.dl-stat-where strong { color: #C9A84C; font-weight: 700; }
+.dl-stat-bars { display: grid; gap: 9px; }
+.dl-stat-bar-row { display: grid; grid-template-columns: 72px 1fr 48px; align-items: center; gap: 10px; }
+.dl-stat-bar-lbl { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.dl-stat-bar { height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+.dl-stat-bar > i { display: block; height: 100%; background: #C9A84C; border-radius: 3px; }
+.dl-stat-bar-pct { text-align: right; font-size: 13px; color: #fff; font-variant-numeric: tabular-nums; }
+.dl-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+.dl-stat-tile { background: #141414; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 8px 14px; text-align: center; min-width: 0; }
+.dl-stat-num { font-size: clamp(21px, 6vw, 30px); font-weight: 700; color: #fff; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dl-stat-num small { font-size: 0.5em; font-weight: 500; color: rgba(255,255,255,0.55); margin: 0 5px 0 2px; }
+.dl-stat-num small:last-child { margin-right: 0; }
+.dl-stat-lbl { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-top: 6px; }
+.dl-stat-note { font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; margin-top: 14px; line-height: 1.6; }
+
+.dl-set-sec { padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.dl-set-sec:first-of-type { border-top: none; padding-top: 0; }
+.dl-set-h { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
+.dl-set-p { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.5; margin: 0 0 12px; }
+.dl-set-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.dl-set-btn { display: inline-flex; align-items: center; gap: 6px; background: #C9A84C; color: #000; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; text-decoration: none; }
+.dl-set-btn:hover { background: #d4b05a; }
+.dl-set-link { background: none; border: none; padding: 0; color: #C9A84C; font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.dl-set-link:hover { color: #d4b05a; }
+.dl-set-sync { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+.dl-set-dot { width: 8px; height: 8px; border-radius: 50%; background: #666; flex-shrink: 0; }
+.dl-set-dot.on { background: #4caf50; }
+.dl-set-keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; font-size: 14px; color: rgba(255,255,255,0.85); }
+.dl-set-keys kbd { font-family: inherit; font-size: 12px; min-width: 28px; text-align: center; background: #141414; border: 1px solid rgba(255,255,255,0.18); border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px; color: #fff; }
+/* Ohne Tastatur (Handy, Tablet) sind Tastenkürzel nutzlos */
+@media (hover: none) { .dl-set-keys-sec { display: none; } }
+
 /* Daily celebration overlay */
 #dgCelebOverlay {
   display: none; position: fixed; inset: 0; z-index: 9500;
@@ -1051,8 +1099,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         </div>
         <div class="ni-right">
         <span class="notation-info-right" id="dgInfoRight"></span>
+        <div class="ni-tools">
         <!-- Drum Key -->
-        <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
+          <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
           <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="6.5" cy="11.5" r="3.5"/>
             <line x1="9.5" y1="8.5" x2="15.5" y2="2.5"/>
@@ -1060,6 +1109,22 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             <line x1="11.5" y1="6.5" x2="14" y2="9"/>
           </svg>
         </button>
+          <!-- Stats (16.09.2026) -->
+          <button class="legend-btn" id="dgStatsBtn" type="button" title="Your stats" aria-label="Your stats">
+            <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <line x1="4" y1="15" x2="4" y2="10"/>
+              <line x1="9" y1="15" x2="9" y2="3.5"/>
+              <line x1="14" y1="15" x2="14" y2="7.5"/>
+            </svg>
+          </button>
+          <!-- Einstellungen (16.09.2026) -->
+          <button class="legend-btn" id="dgSettingsBtn" type="button" title="Settings" aria-label="Settings">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
         </div>
       </div>
 
@@ -1082,6 +1147,47 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       </div>
     </div>
     </div><!-- /notation-group -->
+
+    <!-- Stats (16.09.2026) — Inhalt baut _renderStats() -->
+    <div class="legend-overlay" id="dgStatsOverlay" role="dialog" aria-modal="true" aria-labelledby="dgStatsTitle">
+      <div class="legend-modal dl-panel">
+        <button class="legend-close" type="button" aria-label="Close">×</button>
+        <h3 id="dgStatsTitle">Your Stats</h3>
+        <div id="dgStatsBody"></div>
+      </div>
+    </div>
+
+    <!-- Einstellungen (16.09.2026). Die Konto-Seiten liegen bei Systeme.io und
+         öffnen in einem neuen Tab, damit die Übungssitzung stehen bleibt. -->
+    <div class="legend-overlay" id="dgSettingsOverlay" role="dialog" aria-modal="true" aria-labelledby="dgSettingsTitle">
+      <div class="legend-modal dl-panel">
+        <button class="legend-close" type="button" aria-label="Close">×</button>
+        <h3 id="dgSettingsTitle">Settings</h3>
+        <section class="dl-set-sec">
+          <div class="dl-set-h">Membership</div>
+          <p class="dl-set-p">Manage your subscription or cancel your membership.</p>
+          <a class="dl-set-btn" href="https://www.drumlion.com/profile/manage-subscriptions" target="_blank" rel="noopener">Manage membership <span aria-hidden="true">↗</span></a>
+        </section>
+        <section class="dl-set-sec">
+          <div class="dl-set-h">Account</div>
+          <div class="dl-set-actions">
+            <a class="dl-set-link" href="https://www.drumlion.com/profile/user-settings" target="_blank" rel="noopener">Account settings ↗</a>
+            <a class="dl-set-link" href="https://www.drumlion.com/profile/change-password" target="_blank" rel="noopener">Change password ↗</a>
+          </div>
+        </section>
+        <section class="dl-set-sec">
+          <div class="dl-set-h">Progress sync</div>
+          <div class="dl-set-sync" id="dgSetSync"></div>
+        </section>
+        <section class="dl-set-sec dl-set-keys-sec">
+          <div class="dl-set-h">Keyboard</div>
+          <div class="dl-set-keys">
+            <kbd>Space</kbd><span>Start / Stop</span>
+            <kbd>K</kbd><span>Click on / off</span>
+          </div>
+        </section>
+      </div>
+    </div>
 
     <!-- Drum Legend Modal -->
     <div class="legend-overlay" id="dgLegendOverlay">
@@ -1440,6 +1546,133 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   function _getTotalMinutes()  { return parseFloat(localStorage.getItem(_timeKey)    || '0'); }
   function _getTotalLessons()  { return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
+
+  // ── LEBENSZEIT-STATISTIK (Erwin, 16.09.2026) ─────────────────────
+  // Gespielte Zeit und Schläge über die ganze Mitgliedschaft.
+  // Gezählt wird, was der Schlagzeuger spielt: jeder Notenkopf, bei Flam
+  // ein und bei Drag zwei Vorschläge extra. NICHT gezählt: Einzähler,
+  // Pausen zwischen den Blöcken, Pausenzeichen, der Click. Die Click-only-
+  // Takte des Timing-Trainers zählen mit — dort spielt er weiter, nur der
+  // Player schweigt.
+  // Jeder geplante Rasterschritt kommt in `_statQ` und wird erst abgerechnet,
+  // wenn er erklungen ist. Wer mitten im Takt stoppt, bekommt die schon
+  // vorausgeplanten Schritte nicht gutgeschrieben.
+  // Zeit = Summe der gespielten Rasterschritte, also dieselbe Uhr wie der Ton.
+  var _STATS_KEY = 'drumlion_v1_stats';
+  var _statQ = [];
+  var _statsDirty = false;       // seit dem letzten Server-Schreiben gewachsen
+  var _statsLastSave = 0;
+  var _stats = _statsLoad();
+
+  function _statsLoad() {
+    try {
+      var p = JSON.parse(localStorage.getItem(_STATS_KEY) || 'null');
+      if (p) return { sec: Math.max(0, +p.sec || 0), strokes: Math.max(0, Math.floor(+p.strokes || 0)) };
+    } catch(e) {}
+    return { sec: 0, strokes: 0 };
+  }
+  function _statsSave() {
+    _statsLastSave = Date.now();
+    try {
+      localStorage.setItem(_STATS_KEY, JSON.stringify({ sec: Math.round(_stats.sec * 10) / 10, strokes: _stats.strokes }));
+    } catch(e) {}
+  }
+  function _statsClear() {
+    _stats = { sec: 0, strokes: 0 };
+    _statQ.length = 0;
+    _statsDirty = false;
+    try { localStorage.removeItem(_STATS_KEY); } catch(e) {}
+  }
+  // Die Zähler wachsen nur. Von zwei Ständen (Gerät, Server, Rückrechnung)
+  // gilt je Zähler der größere — so zählt nichts doppelt und nichts geht verloren.
+  function _statsMerge(o) {
+    if (!o) return false;
+    var ch = false;
+    var sec = +o.sec || 0, k = Math.floor(+o.strokes || 0);
+    if (sec > _stats.sec)   { _stats.sec = sec;   ch = true; }
+    if (k > _stats.strokes) { _stats.strokes = k; ch = true; }
+    if (ch) _statsSave();
+    return ch;
+  }
+  function _slotStrokes(slot) {
+    var c = 0;
+    (slot || []).forEach(function(nn) {
+      if (!nn || nn.rest) return;
+      var dm = DRUM_MAP[nn.inst] || {};
+      c += 1 + (dm.grace || (dm.flam ? 1 : 0));
+    });
+    return c;
+  }
+  function _barStrokes(arr) {
+    var c = 0;
+    (arr || []).forEach(function(sl) { c += _slotStrokes(sl); });
+    return c;
+  }
+  // Abrechnen, was bis `upTo` (Audio-Zeit) erklungen ist.
+  function _statsDrain(upTo) {
+    var added = false;
+    while (_statQ.length && _statQ[0].t <= upTo) {
+      var e = _statQ.shift();
+      _stats.sec += e.d;
+      _stats.strokes += e.n;
+      added = true;
+    }
+    if (added) {
+      _statsDirty = true;
+      if (Date.now() - _statsLastSave > 5000) _statsSave();
+    }
+  }
+  // Nach Stop und Lektionsende: lokal sichern, auf Wunsch zum Server.
+  function _statsCommit(toServer) {
+    _statsSave();
+    if (toServer && _statsDirty && _syncReady()) { _statsDirty = false; _syncSchedule(); }
+  }
+  // Tab weg oder Seite zu: sofort sichern und für das Sofort-Schreiben vormerken.
+  function _statsLeave() {
+    if (playing && aCtx) _statsDrain(aCtx.currentTime);
+    _statsSave();
+    if (_statsDirty && _syncReady()) { _statsDirty = false; _syncPending = true; }
+  }
+  // Rückwirkend für alles, was vor dem Zähler gespielt wurde: jede abgeschlossene
+  // Tempostufe einmal, so lang wie ihre Blöcke. Wiederholungen und abgebrochene
+  // Durchgänge kennt der Kursstand nicht — das ist also eine Untergrenze. Wird
+  // nur per Maximum übernommen und kann deshalb nie doppelt zählen.
+  function _statsFromCourse(cs) {
+    var out = { sec: 0, strokes: 0 };
+    if (!cs || !cs.cats) return out;
+    var steps = {};
+    (cs.completed || []).forEach(function(id) { steps[id] = Infinity; });
+    Object.keys(cs.cats).forEach(function(c) {
+      var k = cs.cats[c];
+      if (!k) return;
+      (k.active || []).concat(k.park || []).forEach(function(en) {
+        if (!en) return;
+        steps[en.id] = Math.max(steps[en.id] || 0, en.bpmStep || 0);
+      });
+    });
+    var saved = GROOVE;
+    try {
+      Object.keys(steps).forEach(function(id) {
+        var ex = EXERCISES.find(function(e) { return e.id === +id; });
+        if (!ex || !ex.beats) return;
+        var two = !!(ex.beats2 && ex.beats2.length);
+        var perPhrase = _barStrokes(ex.beats) + (two ? _barStrokes(ex.beats2) : 0);
+        var beatsPerBar = ex.beatsPerBar || 4;
+        var nSteps = Math.min(steps[id], _exSteps(ex));
+        GROOVE = ex;   // getBlocks() liest Kategorie und Taktart aus GROOVE
+        for (var i = 0; i < nSteps; i++) {
+          getBlocks(_exBpm(ex, i)).forEach(function(b) {
+            var phrases = two ? Math.ceil(b.bars / 2) : b.bars;
+            out.strokes += phrases * perPhrase;
+            out.sec     += phrases * (two ? 2 : 1) * beatsPerBar * 60 / b.bpm;
+          });
+        }
+      });
+    } catch(e) {}
+    GROOVE = saved;
+    return out;
+  }
+  function _statsBackfill() { _statsMerge(_statsFromCourse(_cState)); }
 
   function _addLessonTime(mins) {
     var prevLessons = _getTotalLessons();
@@ -5353,6 +5586,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       localStorage.removeItem(_lessonsKey);
       localStorage.removeItem(_timeKey);
     } catch(e) {}
+    _statsClear();
     // Leeren Stand hochschieben, damit auch die Cloud sauber ist. keepalive,
     // damit der Request das folgende Neuladen überlebt.
     if (typeof _syncReady === 'function' && _syncReady()) {
@@ -5378,6 +5612,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       localStorage.removeItem(_lessonsKey);
       localStorage.removeItem(_timeKey);
     } catch(e) {}
+    _statsClear();
   }
 
   var _cState = _loadState();
@@ -5392,7 +5627,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-120645';
+  var DL_BUILD = '20260916-121731';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5504,6 +5739,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         localStorage.removeItem(_timeKey);
         localStorage.removeItem(_dailyDateKey);
         localStorage.removeItem(_dailyMinsKey);
+        _statsClear();   // Schläge und Spielzeit gehören ebenfalls dem Vorgänger
         // _loadState() lief weiter oben schon — der Stand des Vorgängers
         // liegt also bereits im Speicher und muss ebenfalls weg, sonst
         // wird er beim ersten Speichern unter dem neuen Schlüssel hochgeladen.
@@ -5555,7 +5791,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       v: 2,
       course:  _cState,
       lessons: _getTotalLessons(),
-      minutes: _getTotalMinutes()
+      minutes: _getTotalMinutes(),
+      stats:   { sec: Math.round(_stats.sec), strokes: _stats.strokes }
     });
   }
 
@@ -5563,10 +5800,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _syncParse(raw) {
     var p = JSON.parse(raw);
     if (p && p.v === 2 && p.course) {
-      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0 };
+      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0, stats: p.stats || null };
     }
     // Altformat: nur der Kurs-State, Zähler unbekannt
-    return { course: p, lessons: null, minutes: null };
+    return { course: p, lessons: null, minutes: null, stats: null };
   }
 
   function _syncReady() {
@@ -5606,9 +5843,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // ist am 01.09.2026 ein Stand von 52 auf 49 Lektionen zurückgefallen.
     if (!immediate && !force) {
       _syncFetch(_syncKey()).then(function(rows) {
-        var remote = -1;
+        var remote = -1, remoteParsed = null;
         if (rows && rows.length) {
-          try { remote = _syncCount(_syncParse(rows[0].state)); } catch(e) {}
+          try { remoteParsed = _syncParse(rows[0].state); remote = _syncCount(remoteParsed); } catch(e) {}
         }
         var local = _getTotalLessons() || (_cState.total || 0);
         if (remote > local) {
@@ -5621,6 +5858,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
           });
           return;
         }
+        // Ein anderes Gerät kann bei gleicher Lektionszahl mehr Schläge haben
+        if (remoteParsed) _statsMerge(remoteParsed.stats);
         _syncWrite(false);
       }).catch(function() { _syncWrite(false); });
       return;
@@ -5664,9 +5903,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden') _syncFlush();
+    if (document.visibilityState === 'hidden') { _statsLeave(); _syncFlush(); }
   });
-  window.addEventListener('pagehide', _syncFlush);
+  window.addEventListener('pagehide', function() { _statsLeave(); _syncFlush(); });
 
   // Bis zum 28.08.2026 lief die Identifikation über die Email, seitdem über die
   // Systeme.io-Kundennummer. Für die Übergangszeit sah der Player zusätzlich
@@ -5717,11 +5956,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(remote.lessons));
             if (remote.minutes != null) localStorage.setItem(_timeKey,    String(remote.minutes));
           } catch(e) {}
+          _statsMerge(remote.stats);
+          _statsBackfill();
           _syncSetStatus('ok', 'Progress loaded ✓');
           onDone(true); // state changed, needs UI reload
         } else {
           _syncSetStatus('ok', 'Up to date ✓');
+          _statsMerge(remote.stats);
+          var _rs = remote.stats || {};
           if (remoteCount < localCount) _syncPush();
+          else if (_stats.strokes > (+_rs.strokes || 0) || Math.round(_stats.sec) > (+_rs.sec || 0)) _syncSchedule();
           onDone(false);
         }
       } catch(e) { _syncSetStatus('err', 'Sync failed'); onDone(false); }
@@ -7361,8 +7605,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // Die Taktart steht in einem eigenen Element, damit sie auf schmalen
     // Displays entfallen kann — sonst schiebt die linke Gruppe den Titel weg.
     document.getElementById('dgInfoLeft').innerHTML = tBpm + ' BPM' + (GROOVE.cat === 'notes' ? '<span class="ni-meter">4/4</span>' : '');
-    document.getElementById('dgInfoRight').textContent =
-      blocks.length + ' Block' + (blocks.length > 1 ? 's' : '') + (_repStr ? '  ·  ' + _repStr : '');
+    // Zwei Teile in eigenen Spans: auf dem Handy stehen sie untereinander,
+    // sonst bräche die Zeile mitten in „Rep 5".
+    document.getElementById('dgInfoRight').innerHTML =
+      '<span>' + blocks.length + ' Block' + (blocks.length > 1 ? 's' : '') + '</span>' +
+      (_repStr ? '<span class="ni-sep">  ·  </span><span class="ni-rep">' + _repStr + '</span>' : '');
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
@@ -7420,6 +7667,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   function _visDrain() {
     if (!playing || !aCtx) return;
     var now = aCtx.currentTime;
+    _statsDrain(now);
     var ev = null;
     while (_visQ.length && _visQ[0].t <= now) { ev = _visQ.shift(); }
     if (ev) {
@@ -7493,6 +7741,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   function _rampFinish() {
+    _statsDrain(Infinity); _statQ.length = 0; _statsCommit(true);
     playing = false;
     _visReset();
     if (intId) clearInterval(intId);
@@ -7645,6 +7894,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   function startPlaying(inheritedTime) {
+    _statQ.length = 0;
     phase='playing'; setBadge('playing'); beat=0; bar=0;
     renderBlocksBar();
 
@@ -7719,6 +7969,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     if (_rampMode) { _rampStartTime = nextBeatTime; _rampDone = false; }
 
     function tickAndRender(bt, br, when) {
+      // Statistik: Schläge dieses Rasterschritts, abgerechnet erst wenn erklungen
+      var _stSlot = isFill ? (bt < n1 ? GROOVE.beats[bt] : GROOVE.beats2[bt - n1]) : GROOVE.beats[bt];
+      _statQ.push({ t: when, d: tickSecAt(when), n: _slotStrokes(_stSlot) });
       // Audio wird auf `when` geplant, das Bild geht in die Queue und wird
       // von _drawLoop() erst zum selben Zeitpunkt gezeichnet.
       var _info = null;
@@ -7795,6 +8048,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             clearInterval(intId);
             setCountdown(0);
             setTimeout(function() {
+              _statsDrain(Infinity); _statQ.length = 0; _statsSave();
               playBlockEnd();
               if (bIdx < blocks.length-1) startPause();
               else finishExercise();
@@ -7882,6 +8136,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     playing=false; _visReset(); phase='done'; bIdx=blocks.length;
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
+    _statsCommit(true);
     var _milestone = _addLessonTime(_lessonDurationMinutes());
     _updateLevelUI(-1);
     if (_milestone === 'level')   setTimeout(function(){ setInfo('🎯 Level complete!');   }, 800);
@@ -7911,6 +8166,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   }
 
   function stopExercise() {
+    if (aCtx) _statsDrain(aCtx.currentTime);
+    _statQ.length = 0;
+    _statsCommit(true);
     playing=false;
     _visReset();
     if (intId) clearInterval(intId);
@@ -8494,6 +8752,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     }
   })();
 
+  _statsBackfill();
+
   if (_resetRequested) {
     // Kein Pull — sonst käme der zu löschende Stand sofort zurück.
     // Stattdessen den leeren Stand hochschieben, damit auch der Server sauber ist.
@@ -8534,6 +8794,79 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   });
   legendOverlay.addEventListener('click', function(e) {
     if (e.target === legendOverlay) legendOverlay.classList.remove('open');
+  });
+
+  // ── Stats + Einstellungen (16.09.2026) ──────────────────────────────
+  function _fmtNum(n) { return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function _fmtPlayTime(sec) {
+    var m = Math.floor(sec / 60), h = Math.floor(m / 60);
+    if (h < 1) return m + '<small>min</small>';
+    return _fmtNum(h) + '<small>h</small>' + String(m % 60).padStart(2, '0') + '<small>min</small>';
+  }
+  function _fmtPct(p) { return (p > 0 && p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; }
+
+  var statsOverlay    = document.getElementById('dgStatsOverlay');
+  var settingsOverlay = document.getElementById('dgSettingsOverlay');
+  var statsTick = null;
+
+  function _renderStats() {
+    if (playing && aCtx) _statsDrain(aCtx.currentTime);   // live mitzählen, wenn offen
+    var info = _getLevelInfo();
+    var lessons = _getTotalLessons();
+    var bar = function(lbl, pct) {
+      return '<div class="dl-stat-bar-row"><span class="dl-stat-bar-lbl">' + lbl + '</span>' +
+             '<span class="dl-stat-bar"><i style="width:' + Math.min(100, pct).toFixed(1) + '%"></i></span>' +
+             '<span class="dl-stat-bar-pct">' + _fmtPct(pct) + '</span></div>';
+    };
+    document.getElementById('dgStatsBody').innerHTML =
+      '<p class="dl-stat-where"><strong>Level ' + info.level + '</strong> · Chapter ' + info.chapter + ' · Lesson ' + info.lessons + '</p>' +
+      '<div class="dl-stat-bars">' + bar('Chapter', info.chapterPct) + bar('Level', info.levelPct) + bar('Academy', info.academyPct) + '</div>' +
+      '<div class="dl-stat-grid">' +
+        '<div class="dl-stat-tile"><div class="dl-stat-num">' + _fmtPlayTime(_stats.sec) + '</div><div class="dl-stat-lbl">Time played</div></div>' +
+        '<div class="dl-stat-tile"><div class="dl-stat-num">' + _fmtNum(_stats.strokes) + '</div><div class="dl-stat-lbl">Strokes played</div></div>' +
+      '</div>' +
+      '<p class="dl-stat-note">' + _fmtNum(lessons) + ' lesson' + (lessons === 1 ? '' : 's') + ' completed<br>' +
+      'Counts only what you play: no count-ins, breaks or clicks.</p>';
+  }
+
+  function _renderSettings() {
+    var el = document.getElementById('dgSetSync');
+    if (_syncKey()) {
+      el.innerHTML = '<span class="dl-set-dot on"></span><span>On. Your progress and stats are saved and shared across your devices.</span>';
+      return;
+    }
+    el.innerHTML = '<span class="dl-set-dot"></span><span>Off. Progress is only saved in this browser.</span>' +
+                   '<button class="dl-set-link" type="button" id="dgSetSyncOn">Turn on sync</button>';
+    document.getElementById('dgSetSyncOn').addEventListener('click', function() {
+      _closePanel(settingsOverlay);
+      var l = document.getElementById('syncOpenLink');
+      if (l) l.click();
+    });
+  }
+
+  function _closePanel(ov) {
+    ov.classList.remove('open');
+    if (ov === statsOverlay && statsTick) { clearInterval(statsTick); statsTick = null; }
+  }
+  document.getElementById('dgStatsBtn').addEventListener('click', function() {
+    _renderStats();
+    statsOverlay.classList.add('open');
+    if (statsTick) clearInterval(statsTick);
+    statsTick = setInterval(_renderStats, 1000);
+  });
+  document.getElementById('dgSettingsBtn').addEventListener('click', function() {
+    _renderSettings();
+    settingsOverlay.classList.add('open');
+  });
+  [statsOverlay, settingsOverlay].forEach(function(ov) {
+    ov.addEventListener('click', function(e) { if (e.target === ov) _closePanel(ov); });
+    ov.querySelector('.legend-close').addEventListener('click', function() { _closePanel(ov); });
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    [statsOverlay, settingsOverlay, legendOverlay].forEach(function(ov) {
+      if (ov.classList.contains('open')) _closePanel(ov);
+    });
   });
 
 })();
