@@ -5627,7 +5627,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-121731';
+  var DL_BUILD = '20260916-122118';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7220,8 +7220,13 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             h += '<line x1="'+(gx+3)+'" y1="'+gy+'" x2="'+(gx+3)+'" y2="'+(gy-13)+
                  '" stroke="'+nc+'" stroke-width="1" opacity="'+op+'"/>';
             if (cnt === 1) {
-              // Flam: Fähnchen
-              h += '<line x1="'+gx+'" y1="'+(gy-10)+'" x2="'+(gx+6)+'" y2="'+(gy-15)+
+              // Flam: Vorschlag als durchgestrichene Achtel — geschwungenes
+              // Fähnchen am Halsende, Schrägstrich durch Hals und Fähnchen
+              // (Erwin, 16.09.2026; vorher nur ein schräger Strich).
+              var fx = gx + 3, ft = gy - 13;
+              h += '<path d="M'+fx+' '+ft+' C'+(fx+0.6)+' '+(ft+3.6)+' '+(fx+5.2)+' '+(ft+4.6)+' '+(fx+4.2)+' '+(ft+9.5)+
+                   '" fill="none" stroke="'+nc+'" stroke-width="1.1" stroke-linecap="round" opacity="'+op+'"/>';
+              h += '<line x1="'+(gx-1.5)+'" y1="'+(gy-4.5)+'" x2="'+(gx+7.5)+'" y2="'+(gy-11)+
                    '" stroke="'+nc+'" stroke-width="0.9" opacity="'+op+'"/>';
             }
           }
@@ -7255,7 +7260,19 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         if (stickings && stickings[bi]) {
           // Bei Zweistimmigkeit liegen dort die Hälse und Balken der unteren Stimme
           var _stickY = hasV2 ? (SB + 24) : (sY + 4*ls + 18);
-          h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600">'+stickings[bi]+'</text>';
+          var _stk  = String(stickings[bi]);
+          var _stAt = 'fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600"';
+          // Kleinbuchstaben vorn = Vorschläge (lR = Flam, rrL = Drag). Sie stehen als
+          // kleinere Großbuchstaben links daneben, der Hauptschlag bleibt genau unter
+          // seinem Notenkopf (Erwin, 16.09.2026).
+          var _stG = _stk.match(/^([a-z]+)([A-Z].*)$/);
+          if (_stG) {
+            var _stMainW = 8.5 * _stG[2].length;
+            h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" font-size="13" '+_stAt+'>'+_stG[2]+'</text>';
+            h += '<text x="'+(x - _stMainW/2 - 1)+'" y="'+_stickY+'" text-anchor="end" font-size="9" '+_stAt+'>'+_stG[1].toUpperCase()+'</text>';
+          } else {
+            h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600">'+_stk+'</text>';
+          }
         }
         // Leerer Slot, der noch im Klang der davorstehenden längeren Note liegt →
         // dort gehört keine Pause hin. Prüft rückwärts bis zur letzten Note, also
