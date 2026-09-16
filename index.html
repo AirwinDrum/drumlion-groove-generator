@@ -1609,6 +1609,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // vorausgeplanten Schritte nicht gutgeschrieben.
   // Zeit = Summe der gespielten Rasterschritte, also dieselbe Uhr wie der Ton.
   var _STATS_KEY = 'drumlion_v1_stats';
+  var _RESET_SEEN_KEY = 'drumlion_v1_resetSeen';   // zuletzt übernommener Reset, siehe _resetSeen()
   var _statQ = [];
   var _statsDirty = false;       // seit dem letzten Server-Schreiben gewachsen
   var _statsLastSave = 0;
@@ -5564,43 +5565,57 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     };
   }
 
+  // Bereinigt einen Kursstand: fehlende Kategorien und Felder ergänzen, aktive
+  // Einträge ohne vorhandene Übung entfernen und bei Bedarf Nachschub holen.
+  // Gilt für den lokalen Stand UND für einen vom Server übernommenen. Bis zum
+  // 16.09.2026 lief das nur beim lokalen Laden — ein Stand, der immer frisch
+  // vom Server kam (z.B. Safari leert den Speicher im iFrame), behielt so eine
+  // Unabhängigkeitsübung, die es nicht mehr gab (id 401, seit dem 02.09. entfernt).
+  // `_peekLesson` übersprang die Kategorie dann für immer und spielte an ihrer
+  // Stelle einen Groove — bei Leon zweimal Groove hintereinander, keine
+  // Unabhängigkeit.
+  function _sanitizeCourse(p) {
+    // Kommt später eine Kategorie dazu, fehlt sie in allen gespeicherten
+    // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
+    // Kategorie bliebe für Bestandsnutzer für immer unsichtbar.
+    ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'].forEach(function(c) {
+      if (!p.cats[c]) p.cats[c] = { active: [], park: [], skip: [], introIdx: 0, counter: 0, lastId: null };
+      if (!p.cats[c].park) p.cats[c].park = [];
+      // 10.09.2026: übersprungene Übungen, deren Unterteilung im
+      // aktuellen Level noch gesperrt ist. Werden nachgeholt, sobald das
+      // Level stimmt — siehe `_introNext`.
+      if (!p.cats[c].skip) p.cats[c].skip = [];
+    });
+    // Übungen können aus dem Bestand fallen (z.B. die Unisono-Übungen
+    // am 02.09.2026). Aktive Einträge, die auf eine nicht mehr vorhandene
+    // Übung zeigen, blockieren sonst ihre Kategorie dauerhaft: `_peekLesson`
+    // überspringt sie, aber die Kategorie gilt als belegt und bekommt nie
+    // Nachschub. Deshalb aussortieren und bei Bedarf nachrücken lassen.
+    Object.keys(p.cats).forEach(function(c) {
+      var cs = p.cats[c];
+      if (!cs || !cs.active) return;
+      cs.active = cs.active.filter(function(en) {
+        return EXERCISES.some(function(ex) { return ex.id === en.id; });
+      });
+      if (!cs.active.length && cs.introIdx > 0) {
+        var _nx2 = _introNext(c, cs);
+        if (_nx2) cs.active.push({ id: _nx2.id, bpmStep: 0 });
+      }
+    });
+    return p;
+  }
+
   function _loadState() {
     try {
       var s = localStorage.getItem(COURSE_KEY);
       if (s) {
         var p = JSON.parse(s);
         if (p && p.cats) {
-          // Kommt später eine Kategorie dazu, fehlt sie in allen gespeicherten
-          // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
-          // Kategorie bliebe für Bestandsnutzer für immer unsichtbar.
-          ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'].forEach(function(c) {
-            if (!p.cats[c]) p.cats[c] = { active: [], park: [], skip: [], introIdx: 0, counter: 0, lastId: null };
-            if (!p.cats[c].park) p.cats[c].park = [];
-            // 10.09.2026: übersprungene Übungen, deren Unterteilung im
-            // aktuellen Level noch gesperrt ist. Werden nachgeholt, sobald das
-            // Level stimmt — siehe `_introNext`.
-            if (!p.cats[c].skip) p.cats[c].skip = [];
-          });
+          _sanitizeCourse(p);
           // 01.09.2026: die BPM-Schrittweite wurde ausserhalb der Rudiments
           // verdoppelt (halb so viele Stufen). `bpmStep` ist ein Index in diese
           // Stufen — ohne Halbierung stuende jeder Bestandsnutzer schlagartig
           // beim doppelten Tempo. Einmalig, über ein Flag im Stand abgesichert.
-          // Übungen können aus dem Bestand fallen (z.B. die Unisono-Übungen
-          // am 02.09.2026). Aktive Einträge, die auf eine nicht mehr vorhandene
-          // Übung zeigen, blockieren sonst ihre Kategorie dauerhaft: `_peekLesson`
-          // überspringt sie, aber die Kategorie gilt als belegt und bekommt nie
-          // Nachschub. Deshalb aussortieren und bei Bedarf nachrücken lassen.
-          Object.keys(p.cats).forEach(function(c) {
-            var cs = p.cats[c];
-            if (!cs || !cs.active) return;
-            cs.active = cs.active.filter(function(en) {
-              return EXERCISES.some(function(ex) { return ex.id === en.id; });
-            });
-            if (!cs.active.length && cs.introIdx > 0) {
-              var _nx2 = _introNext(c, cs);
-              if (_nx2) cs.active.push({ id: _nx2.id, bpmStep: 0 });
-            }
-          });
           if (!p.bpmHalved) {
             Object.keys(p.cats).forEach(function(c) {
               // Rudiments und Note Reading behalten ihre Schrittweite —
@@ -5638,6 +5653,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       localStorage.removeItem(_timeKey);
     } catch(e) {}
     _statsClear();
+    _markResetSeen(_newResetId());   // andere Geräte setzen sich beim nächsten Abgleich mit zurück
     // Leeren Stand hochschieben, damit auch die Cloud sauber ist. keepalive,
     // damit der Request das folgende Neuladen überlebt.
     if (typeof _syncReady === 'function' && _syncReady()) {
@@ -5664,6 +5680,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       localStorage.removeItem(_timeKey);
     } catch(e) {}
     _statsClear();
+    _markResetSeen(_newResetId());
   }
 
   var _cState = _loadState();
@@ -5678,7 +5695,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-143225';
+  var DL_BUILD = '20260916-162304';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5791,6 +5808,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         localStorage.removeItem(_dailyDateKey);
         localStorage.removeItem(_dailyMinsKey);
         _statsClear();   // Schläge und Spielzeit gehören ebenfalls dem Vorgänger
+        localStorage.removeItem(_RESET_SEEN_KEY);
         // _loadState() lief weiter oben schon — der Stand des Vorgängers
         // liegt also bereits im Speicher und muss ebenfalls weg, sonst
         // wird er beim ersten Speichern unter dem neuen Schlüssel hochgeladen.
@@ -5837,13 +5855,31 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Level/Chapter/Fortschrittsbalken lesen aus den Zählern totalLessons und
   // totalMinutes. Würden nur _cState synchronisiert, käme auf einem zweiten
   // Gerät die Kursposition an, aber Level und Balken stünden auf null.
+  // ── Zurücksetzen über alle Geräte (16.09.2026) ──
+  // Ein Reset bekommt eine Kennung (`resetId`), die im Server-Stand mitreist.
+  // Ein Gerät, das diese Kennung noch nicht gesehen hat, verwirft beim nächsten
+  // Abgleich seinen lokalen Stand und übernimmt den zurückgesetzten — sonst
+  // lüde es seinen alten Stand einfach wieder hoch (lokal mehr Lektionen als
+  // der Server). Für Supportfälle kann der Server-Stand direkt mit einer neuen
+  // `resetId` geschrieben werden, siehe CONTEXT.md.
+  // (_RESET_SEEN_KEY steht oben bei den Speicherschlüsseln — `?reset=1` und
+  // der Kontowechsel brauchen ihn, bevor dieser Abschnitt ausgeführt wird.)
+  function _resetSeen() {
+    try { return localStorage.getItem(_RESET_SEEN_KEY) || ''; } catch(e) { return ''; }
+  }
+  function _markResetSeen(id) {
+    try { if (id) localStorage.setItem(_RESET_SEEN_KEY, id); } catch(e) {}
+  }
+  function _newResetId() { return 'r' + Date.now().toString(36); }
+
   function _syncSerialize() {
     return JSON.stringify({
       v: 2,
       course:  _cState,
       lessons: _getTotalLessons(),
       minutes: _getTotalMinutes(),
-      stats:   { sec: Math.round(_stats.sec), strokes: _stats.strokes }
+      stats:   { sec: Math.round(_stats.sec), strokes: _stats.strokes },
+      resetId: _resetSeen() || undefined
     });
   }
 
@@ -5851,10 +5887,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _syncParse(raw) {
     var p = JSON.parse(raw);
     if (p && p.v === 2 && p.course) {
-      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0, stats: p.stats || null };
+      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0, stats: p.stats || null, resetId: p.resetId || null };
     }
     // Altformat: nur der Kurs-State, Zähler unbekannt
-    return { course: p, lessons: null, minutes: null, stats: null };
+    return { course: p, lessons: null, minutes: null, stats: null, resetId: null };
   }
 
   function _syncReady() {
@@ -5899,6 +5935,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           try { remoteParsed = _syncParse(rows[0].state); remote = _syncCount(remoteParsed); } catch(e) {}
         }
         var local = _getTotalLessons() || (_cState.total || 0);
+        if (remoteParsed && remoteParsed.resetId && remoteParsed.resetId !== _resetSeen()) {
+          // Auf dem Server liegt ein Reset, den dieses Gerät noch nicht kennt
+          _syncPull(function(changed) {
+            if (changed && typeof _loadCurrentLesson === 'function') {
+              _loadCurrentLesson(false); _updateLevelUI();
+            }
+          });
+          return;
+        }
         if (remote > local) {
           // Server ist weiter — nicht überschreiben, stattdessen übernehmen
           _syncSetStatus('spin', 'Newer progress found…');
@@ -5994,6 +6039,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (!remote.course || !remote.course.cats) {
           _syncSetStatus('err', 'Sync failed'); onDone(false); return;
         }
+        if (remote.resetId && remote.resetId !== _resetSeen()) {
+          try {
+            localStorage.removeItem(COURSE_KEY);
+            localStorage.setItem(_lessonsKey, String(remote.lessons || 0));
+            localStorage.setItem(_timeKey,    String(remote.minutes || 0));
+            localStorage.removeItem(_dailyDateKey);
+            localStorage.removeItem(_dailyMinsKey);
+          } catch(e) {}
+          _statsClear();
+          _statsMerge(remote.stats);
+          _cState = Object.keys(remote.course.cats).length ? _sanitizeCourse(remote.course) : _initState();
+          if (!_cState.bpmHalved) _cState.bpmHalved = 1;
+          try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
+          _markResetSeen(remote.resetId);
+          _syncSetStatus('ok', 'Progress reset ✓');
+          onDone(true);
+          return;
+        }
         // Vergleich über die abgeschlossenen Lektionen — das ist der Wert,
         // der Level und Balken bestimmt. Fällt er weg (Altformat), zählt
         // ersatzweise _cState.total.
@@ -6001,12 +6064,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var localCount  = _getTotalLessons() || (_cState.total || 0);
 
         if (remoteCount > localCount) {
-          _cState = remote.course;
           try {
-            localStorage.setItem(COURSE_KEY, JSON.stringify(remote.course));
             if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(remote.lessons));
             if (remote.minutes != null) localStorage.setItem(_timeKey,    String(remote.minutes));
           } catch(e) {}
+          // Genauso bereinigen wie beim lokalen Laden (Zähler zuerst, weil
+          // `_introNext` das Level für die Unterteilungs-Sperre braucht).
+          // Keine Schritt-Halbierung: ein Server-Stand ohne Flag wurde nach
+          // dem 01.09.2026 nie lokal migriert, seine Stufen sind schon neu.
+          var _before = JSON.stringify(remote.course);
+          _cState = _sanitizeCourse(remote.course);
+          if (!_cState.bpmHalved) _cState.bpmHalved = 1;
+          var _cleaned = JSON.stringify(_cState) !== _before;
+          try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
+          if (_cleaned) _syncSchedule();   // bereinigten Stand zurückschreiben
           _statsMerge(remote.stats);
           _statsBackfill();
           _syncSetStatus('ok', 'Progress loaded ✓');
@@ -6067,9 +6138,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ändern (Levelaufstieg, Unparken) und es trifft die falsche Übung.
   var _shownLesson = null;
 
-  function _rotateOn() {
+  // Weiter hinter die Kategorie, die TATSÄCHLICH gespielt wurde. `_peekLesson`
+  // überspringt Kategorien ohne spielbare Übung (leer, alles geparkt, noch
+  // gesperrt) und nimmt die nächste. Bisher rückte die Rotation danach nur um
+  // eins weiter — die übersprungene Stelle zeigte dann auf dieselbe Kategorie
+  // wie die gerade gespielte, und die kam sofort noch einmal (zweimal Groove
+  // hintereinander, 16.09.2026).
+  function _rotateOn(playedCat) {
     var rotation = _getRotation();
-    _cState.rotationPos = (_cState.rotationPos + 1) % rotation.length;
+    var idx = playedCat ? rotation.indexOf(playedCat) : -1;
+    var from = (idx >= 0) ? idx : _cState.rotationPos;
+    _cState.rotationPos = (from + 1) % rotation.length;
   }
 
   // Nächste Lektion ermitteln (ohne State zu ändern)
@@ -6120,7 +6199,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var entry = cs.active.find(function(e){ return e.id === lesson.entry.id; });
     // Übung zwischenzeitlich verschwunden (geparkt oder abgeschlossen)?
     // Dann nur die Rotation weiterschieben, nichts fortschalten.
-    if (!entry) { _unparkDue(); _rotateOn(); return; }
+    if (!entry) { _unparkDue(); _rotateOn(cat); return; }
 
     // Rückmeldung zur gespielten Lektion bestimmt die nächste Tempostufe
     var _fb = _lessonFeedback;
@@ -6171,7 +6250,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _unparkDue();
 
     // Rotation weiterschieben
-    _rotateOn();
+    _rotateOn(cat);
 
     _cState.total++;
     _cState.chapterLessons = (_cState.chapterLessons || 0) + 1;
@@ -8945,7 +9024,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Stattdessen den leeren Stand hochschieben, damit auch der Server sauber ist.
     _loadCurrentLesson(false);
     _updateLevelUI();
-    if (_syncReady()) _syncPush();
+    // force: ohne das sah die Vorprüfung am Server mehr Lektionen und holte den
+    // alten Stand zurück, statt den leeren zu schreiben.
+    if (_syncReady()) _syncPush(false, true);
     _syncSetStatus('ok', 'Progress reset ✓');
   } else if (_syncKey() && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
     // Startup-Pull: Supabase-Fortschritt laden
