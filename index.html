@@ -3808,8 +3808,15 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       ]},
     {id:1011, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       // Acht 16tel (vier Doppelschläge), dann zwei akzentuierte Achtel R L,
-      // Zählzeit 4 frei (Erwin, 16.09.2026).
-      stickings:['R','R','L','L','R','R','L','L','R',null,'L',null,null,null,null,null],
+      // Zählzeit 4 frei. Zweitaktig: Takt 2 beginnt links (Erwin, 16.09.2026).
+      stickings: ['R','R','L','L','R','R','L','L','R',null,'L',null,null,null,null,null],
+      stickings2:['L','L','R','R','L','L','R','R','L',null,'R',null,null,null,null,null],
+      beats2:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[],
+        [],[],[],[]
+      ],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3832,8 +3839,15 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     {id:1012, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       // Zehn 16tel (fünf Doppelschläge), dann der elfte Schlag als
       // akzentuierte Achtel, Zählzeit 4 frei — Aufbau wie Ten Stroke Roll A
-      // (Erwin, 16.09.2026).
-      stickings:['R','R','L','L','R','R','L','L','R','R','L',null,null,null,null,null],
+      // (Erwin, 16.09.2026). Zweitaktig: Takt 2 beginnt links.
+      stickings: ['R','R','L','L','R','R','L','L','R','R','L',null,null,null,null,null],
+      stickings2:['L','L','R','R','L','L','R','R','L','L','R',null,null,null,null,null],
+      beats2:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[],
+        [],[],[],[]
+      ],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3853,8 +3867,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[]
       ]},
     {id:1013, cat:'rudiments', catLabel:'Rudiments', name:'Thirteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
-      // Zwölf 16tel, der dreizehnte Schlag als akzentuierte Viertel auf 4 (Erwin, 16.09.2026).
-      stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null],
+      // Zwölf 16tel, der dreizehnte Schlag als akzentuierte Viertel auf 4.
+      // Zweitaktig: Takt 2 beginnt links (Erwin, 16.09.2026).
+      stickings: ['R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null],
+      stickings2:['L','L','R','R','L','L','R','R','L','L','R','R','L',null,null,null],
+      beats2:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[]
+      ],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
@@ -3870,36 +3892,26 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[]
       ]},
-    // Seventeen Stroke Roll: 17 Schläge passen nicht in einen 4/4-Takt aus 16teln (bräuchte 32tel)
-    // Seventeen Stroke Roll: 8 Doppelschlaege + akzentuierter Abschluss (17 Schlaege), Sextolen
-    {id:1015, cat:'rudiments', catLabel:'Rudiments', name:'Seventeen Stroke Roll', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
-     stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null,null,null,null,null],
-     beats:[
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        []
-     ]},
+    // Seventeen Stroke Roll im 5/4-Takt: 16 16tel (acht Doppelschläge) und der
+    // siebzehnte Schlag als akzentuierte Viertel auf 5. Zweitaktig: Takt 1 beginnt
+    // rechts, Takt 2 links (Erwin, 16.09.2026). Vorher 16tel-Triolen im 4/4.
+    {id:1015, cat:'rudiments', catLabel:'Rudiments', name:'Seventeen Stroke Roll', noteValue:'sixteenth', beatsPerBar:5, hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      stickings: ['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null],
+      stickings2:['L','L','R','R','L','L','R','R','L','L','R','R','L','L','R','R','L',null,null,null],
+      beats:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[]
+      ],
+      beats2:[
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[]
+      ]},
     // Diddle Rudiments
     // ── MULTIPLE STROKE ROLLS ─────────────────────────────────
     // Ende der Roll-Rudiments, vor den Diddles: alles mit mehreren
@@ -5374,7 +5386,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-115158';
+  var DL_BUILD = '20260916-115910';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5895,7 +5907,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     tBpm = bpm;
     _setExName(ex.name);
     var _cl = document.getElementById('dgCatLabel');
-    if (_cl) _cl.textContent = ex.catLabel || '';
+    // Abweichende Taktart steht neben der Kategorie — links neben dem Tempo
+    // drückte sie lange Übungsnamen zusammen (Seventeen Stroke Roll, 5/4).
+    if (_cl) _cl.textContent = (ex.catLabel || '') + (ex.beatsPerBar && ex.beatsPerBar !== 4 ? ' · ' + ex.beatsPerBar + '/4' : '');
     setMetronomeDefault(ex.cat);
     updateBpm();
   }
@@ -6018,14 +6032,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
   function getBarsFromBase(bpm, baseDur) {
     // Rohe Takte bei baseDur Sekunden, auf nächste 4 Takte aufrunden
-    var rawBars = bpm * baseDur / 60 / 4;
+    var rawBars = bpm * baseDur / 60 / (GROOVE.beatsPerBar || 4);
     return Math.ceil(rawBars / 4) * 4;
   }
 
   function getBlocks(t) {
     // Notes-Pillar: 1 Block, ~60 Sekunden, aufgerundet auf volle 4-Takt-Phrasen
     if (GROOVE.cat === 'notes') {
-      var secPerBar = 4 * 60 / t;  // Sekunden pro Takt (4/4)
+      var secPerBar = (GROOVE.beatsPerBar || 4) * 60 / t;  // Sekunden pro Takt
       var barsFor60 = Math.ceil(60 / secPerBar);
       // Auf nächstes Vielfaches von 4 aufrunden
       var bars = Math.ceil(barsFor60 / 4) * 4;
@@ -6048,7 +6062,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     return bpms.map(function(b, i) {
       var bars = getBarsFromBase(b, baseDurs[i]);
-      var dur  = bars * 4 * 60 / b;
+      var dur  = bars * (GROOVE.beatsPerBar || 4) * 60 / b;
       return { bpm: b, bars: bars, dur: dur };
     });
   }
@@ -6327,7 +6341,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // Metronom-Clicks für Tick bt schedulen
   function scheduleMetroClicks(bt, tickSec, qTicks, when, forceClick) {
     if (!metronomeOn && !forceClick) return;
-    var beatInBar = Math.floor(bt / qTicks) % 4;
+    var beatInBar = Math.floor(bt / qTicks) % (GROOVE.beatsPerBar || 4);
     var posInQ    = bt % qTicks;
     var qSec      = tickSec * qTicks;
     var accent    = (posInQ === 0 && beatInBar === 0);
@@ -6521,8 +6535,23 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     // stickings:  per-beat sticking string array for bar 2
     function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff, groups) {
       var n = beatsArr.length;
+      // Taktart: `beatsPerBar` an der Übung, Standard 4 (Seventeen Stroke Roll
+      // steht in 5/4, 16.09.2026). Die Raster-Logik — Beschriftung, Balken,
+      // Fähnchen, Pausen, Notendauern — hängt an den Slots EINER Zählzeit.
+      // `nq` ist die Slotzahl eines 4/4-Takts im selben Raster; bei 4/4 ist
+      // nq === n, dort ändert sich also nichts. Schleifen laufen weiter über n.
+      var bpbar = GROOVE.beatsPerBar || 4;
+      var nq = n * 4 / bpbar;
       var bW = n * bs;
-      var lbl = lblFor(n);
+      var lbl = lblFor(nq);
+      if (bpbar !== 4) {
+        // Silben einer Zählzeit wiederholen, Zählzeiten weiterzählen (… 4 e & a 5 e & a)
+        var _lbase = lbl, _lper = nq / 4;
+        lbl = [];
+        for (var _li = 0; _li < n; _li++) {
+          lbl.push(_li % _lper === 0 ? String(_li / _lper + 1) : (_lbase[_li % _lper] || ''));
+        }
+      }
       var fs = fillStart || 0;
       // Staff lines (skipped when caller draws them across full width)
       if (!skipStaff) {
@@ -6552,8 +6581,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       function slotSpan(i) {
         var a = beatsArr[i];
         if (!a || !a.length) return 1;
-        if (a.some(function(nn){ return nn.quarter; })) return Math.max(1, n / 4);
-        if (a.some(function(nn){ return nn.eighth;  })) return Math.max(1, n / 8);
+        if (a.some(function(nn){ return nn.quarter; })) return Math.max(1, nq / 4);
+        if (a.some(function(nn){ return nn.eighth;  })) return Math.max(1, nq / 8);
         return 1;
       }
       // Liegt der Slot noch im Klang der davorstehenden Note? Dann gehört dort
@@ -6604,8 +6633,8 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       // sonst gelten die Kurzformen quarter/eighth.
       function spanOfNote(nn) {
         if (nn.span) return nn.span;
-        if (nn.quarter) return Math.max(1, n / 4);
-        if (nn.eighth)  return Math.max(1, n / 8);
+        if (nn.quarter) return Math.max(1, nq / 4);
+        if (nn.eighth)  return Math.max(1, nq / 8);
         return 1;
       }
       function vSpan(i, v) {
@@ -6623,7 +6652,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
       // alles auf 16tel-Basis (inkl. Quintole bis Septole) 2, 32tel und
       // 32tel-Triole 3.
       function beamsForSpan(sp) {
-        var npb = (n / 4) / sp;
+        var npb = (nq / 4) / sp;
         if (npb <= 1.01) return 0;
         if (npb <= 3.01) return 1;
         if (npb <= 7.01) return 2;
@@ -6645,7 +6674,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         // tiefere Balken nur über den Teilläufen, die sie brauchen.
         [1, 2].forEach(function(v) {
           var up  = (v === 1);
-          var gsz = Math.max(1, n / 4);
+          var gsz = Math.max(1, nq / 4);
           for (var g0 = 0; g0 < n; g0 += gsz) {
             var runs = [], cur = [];
             for (var gi = g0; gi < g0 + gsz; gi++) {
@@ -6678,7 +6707,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
               // der Lauf eine ganze Zählzeit füllt (3, 5, 6 oder 7 pro Zählzeit).
               var sp0 = vSpan(run[0], v);
               var same = run.every(function(i){ return vSpan(i, v) === sp0; });
-              var npb0 = (n / 4) / sp0;
+              var npb0 = (nq / 4) / sp0;
               if (same && run.length === npb0 && [3,5,6,7].indexOf(npb0) !== -1) {
                 var tx = (stemX(run[0], up) + stemX(run[run.length-1], up)) / 2;
                 var ty = up ? (BT + (hi-1)*BSP - 3) : (SB + (hi-1)*BSP + BH + 9);
@@ -6688,7 +6717,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             });
           }
         });
-      } else if (n === 8) {
+      } else if (nq === 8) {
         [[0,1],[2,3],[4,5],[6,7]].forEach(function(g) {
           if (beamable(g[0]) && beamable(g[1])) {
             var x1 = sX+16+g[0]*bs+5, x2 = sX+16+g[1]*bs+5;
@@ -6696,7 +6725,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                  '" fill="'+W+'" opacity="'+op+'"/>';
           }
         });
-      } else if (n === 16) {
+      } else if (nq === 16) {
         // Eine Gruppe = eine Zählzeit (4 Slots). Innerhalb der Gruppe werden
         // zusammenhängende Läufe gebalkt; eine echte Pause bricht den Balken,
         // ein von einer längeren Note gedeckter Slot nicht.
@@ -6742,16 +6771,16 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
             flushSub();
           });
         }
-      } else if (n === 12 || n === 20 || n === 24 || n === 28 || n === 32 || n === 48) {
+      } else if (nq === 12 || nq === 20 || nq === 24 || nq === 28 || nq === 32 || nq === 48) {
         // Eine Gruppe = eine Zählzeit. Triolen (3), Quintolen (5), Sextolen (6),
         // Septolen (7), 32tel (8). Innerhalb jeder Gruppe: zusammenhängende
         // Noten-Runs balken, volle Gruppen bekommen die Tuplet-Zahl über den Balken.
         // Balkenzahl nach Notenwert: Achtel-Triole 1, alles auf 16tel-Basis 2, 32tel 3.
         // 32tel sind keine Tuole → keine Zahl.
-        var gsz = n / 4;
-        var nBeams = (n === 12) ? 1 : (n === 32 || n === 48) ? 3 : 2;
+        var gsz = nq / 4;
+        var nBeams = (nq === 12) ? 1 : (nq === 32 || nq === 48) ? 3 : 2;
         var dbl = (nBeams > 1);
-        var showTuplet = (n !== 32 && n !== 48);
+        var showTuplet = (nq !== 32 && nq !== 48);
         // `beamRests:true` an der Übung: ein Balken pro Zählzeit vom ersten bis
         // zum letzten Ton, auch über Pausen dazwischen, und die Tuolenzahl für
         // jede Gruppe. Gesetzt nach Erwins Vorlage zum Ten Stroke Roll B
@@ -6993,7 +7022,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         // Ganze Zählzeit leer → eine Viertelpause auf der Zählzeit statt vier
         // 16tel-Pausen (Nine Stroke Roll, Erwin 15.09.2026). Nur im 16tel- und
         // 16tel-Triolen-Raster; die Achtelpausen der Staves bleiben, wie sie sind.
-        var _restGrp = n / 4;
+        var _restGrp = nq / 4;
         var _restGst = Math.floor(bi / _restGrp) * _restGrp;
         var beatRest = false;
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
@@ -7069,14 +7098,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
               return !!(a && a.length > 0 && !a.some(function(nn){ return nn.quarter; }));
             };
             if (!isQuarterNote) {
-              if (n === 8) {
+              if (nq === 8) {
                 // Achtel: Paar-Check (2er-Gruppen)
                 var pairIdx = Math.floor(bi / 2) * 2;
                 var partner = (bi % 2 === 0) ? pairIdx + 1 : pairIdx;
                 if (!beamPartner(partner)) {
                   h += bravuraGlyph('flag8thUp', x + 5, stemTop, nc, op);
                 }
-              } else if (n === 16) {
+              } else if (nq === 16) {
                 // Sechzehntel: die Balkenbildung oben hat vermerkt, welche Slots
                 // einen Balken bekommen haben — alles andere braucht ein Fähnchen.
                 // Achtelwerte bekommen das einfache, 16tel das doppelte.
@@ -7084,9 +7113,9 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                   var isEighthNote = bn.some(function(nn){ return nn.eighth; });
                   h += bravuraGlyph(isEighthNote ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
                 }
-              } else if (n === 12 || n === 20 || n === 24 || n === 28 || n === 32) {
+              } else if (nq === 12 || nq === 20 || nq === 24 || nq === 28 || nq === 32) {
                 // Tuolen/32tel: Fähnchen wenn kein direkter Nachbar in der Gruppe
-                var gsz2 = n / 4;
+                var gsz2 = nq / 4;
                 var gst = Math.floor(bi / gsz2) * gsz2;
                 var hasL = bi > gst && beamPartner(bi-1);
                 var hasR = bi < gst + gsz2 - 1 && beamPartner(bi+1);
@@ -7098,7 +7127,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                   }
                 }
                 if (!hasL && !hasR) {
-                  h += bravuraGlyph(n === 12 ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
+                  h += bravuraGlyph(nq === 12 ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
                 }
               }
             }
@@ -7178,7 +7207,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
     } else {
       // Single bar — adaptive spacing based on beat count
       var _nb = GROOVE.beats.length;
-      var bs = _nb <= 4 ? 120 : (_nb <= 8 ? 60 : (_nb <= 12 ? 40 : (_nb <= 16 ? 30 : (_nb <= 24 ? 20 : (_nb <= 32 ? 16 : 13)))));
+      // Unter 32 Slots bekommt der Takt immer dieselben 480 Einheiten. Die alte
+      // Stufenleiter (120/60/40/30/20) passte nur für 4, 8, 12, 16 und 24 Slots —
+      // Quintolen (20) und Septolen (28) endeten weit vor dem rechten Rand, das
+      // Notenbild saß nach links verschoben (Erwin, 16.09.2026).
+      var bs = (_nb < 32) ? 480 / Math.max(4, _nb) : (_nb <= 32 ? 16 : 13);
       var bW = bs * _nb;
       var sX = 42;
       // Breite wächst mit dem Raster (48er passt nicht mehr in 560),
@@ -7555,6 +7588,17 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         { num:'4',  click:true,  accent:false }
       ];
     }
+    // Andere Taktart: ganze Takte durchzählen (unter 60 BPM einer, sonst zwei),
+    // damit die Taktart schon im Einzähler zu hören ist.
+    var _ciBeats = GROOVE.beatsPerBar || 4;
+    if (_ciBeats !== 4) {
+      seq = [];
+      for (var _ciBar = 0; _ciBar < (bpm >= 60 ? 2 : 1); _ciBar++) {
+        for (var _ciZ = 1; _ciZ <= _ciBeats; _ciZ++) {
+          seq.push({ num: String(_ciZ), click: true, accent: _ciZ === 1 });
+        }
+      }
+    }
 
     // Beat i feuern: Klick präzise geplant per Web Audio, Stimme vorausgeplant
     var ciNextTime = aCtx ? aCtx.currentTime : 0;
@@ -7610,7 +7654,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 
     // Adaptive tick interval: derive from beat count per bar (4/4 assumed)
     // 4 beats = quarter, 8 = eighth, 16 = sixteenth, etc.
-    var ticksPerBeat = n1 / 4;  // immer aus einem Takt ableiten (nicht Gesamtphrase)
+    var ticksPerBeat = n1 / (GROOVE.beatsPerBar || 4);  // aus einem Takt ableiten (nicht Gesamtphrase)
     var eighthMs     = (60 / cb.bpm / ticksPerBeat) * 1000;
     // Fills haben phraseLen = 2 Takte → loopBars halbieren damit Gesamtzeit gleich bleibt
     var loopBars    = isFill ? Math.ceil(totalBars / 2) : totalBars;
