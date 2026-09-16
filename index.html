@@ -3853,20 +3853,22 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
         [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[]
       ]},
     {id:1013, cat:'rudiments', catLabel:'Rudiments', name:'Thirteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      // Zwölf 16tel, der dreizehnte Schlag als akzentuierte Viertel auf 4 (Erwin, 16.09.2026).
       stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R',null,null,null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snareAccent',line:1.5,head:'oval'}],[],[],[]
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',quarter:true}],[],[],[]
       ]},
     {id:1014, cat:'rudiments', catLabel:'Rudiments', name:'Fifteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
+      // Vierzehn 16tel, der fünfzehnte Schlag als akzentuierte Achtel auf 4-und (Erwin, 16.09.2026).
       stickings:['R','R','L','L','R','R','L','L','R','R','L','L','R','R','L',null],
       beats:[
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
         [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],
-        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval'}],[]
+        [{inst:'snare',line:1.5,head:'oval'}],[{inst:'snare',line:1.5,head:'oval'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',eighth:true}],[]
       ]},
     // Seventeen Stroke Roll: 17 Schläge passen nicht in einen 4/4-Takt aus 16teln (bräuchte 32tel)
     // Seventeen Stroke Roll: 8 Doppelschlaege + akzentuierter Abschluss (17 Schlaege), Sextolen
@@ -5372,7 +5374,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-114549';
+  var DL_BUILD = '20260916-115158';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
