@@ -888,6 +888,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .dl-set-btn:hover { background: #d4b05a; }
 .dl-set-link { background: none; border: none; padding: 0; color: #C9A84C; font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .dl-set-link:hover { color: #d4b05a; }
+.dl-set-offset { display: flex; align-items: center; gap: 10px; }
+.dl-set-offset input[type=range] { flex: 1; min-width: 0; accent-color: #C9A84C; }
+.dl-set-offset-end { font-size: 12px; color: rgba(255,255,255,0.55); }
+.dl-set-offset-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.dl-set-offset-val { font-size: 14px; color: #fff; font-variant-numeric: tabular-nums; }
 .dl-set-sync { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.5; }
 .dl-set-dot { width: 8px; height: 8px; border-radius: 50%; background: #666; flex-shrink: 0; }
 .dl-set-dot.on { background: #4caf50; }
@@ -1209,6 +1214,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <div class="dl-set-actions">
             <a class="dl-set-link" href="https://www.drumlion.com/profile/user-settings" target="_blank" rel="noopener">Account settings ↗</a>
             <a class="dl-set-link" href="https://www.drumlion.com/profile/change-password" target="_blank" rel="noopener">Change password ↗</a>
+          </div>
+        </section>
+        <section class="dl-set-sec">
+          <div class="dl-set-h">Cursor timing</div>
+          <p class="dl-set-p">If the moving highlight is ahead of or behind the sound — common with Bluetooth headphones — slide until both match. Saved on this device.</p>
+          <div class="dl-set-offset">
+            <span class="dl-set-offset-end">Earlier</span>
+            <input type="range" id="dgCursorOffset" min="-150" max="400" step="5" aria-label="Cursor timing">
+            <span class="dl-set-offset-end">Later</span>
+          </div>
+          <div class="dl-set-offset-row">
+            <span id="dgCursorOffsetVal" class="dl-set-offset-val">0 ms</span>
+            <button class="dl-set-link" type="button" id="dgCursorOffsetReset">Reset</button>
           </div>
         </section>
         <section class="dl-set-sec">
@@ -5700,7 +5718,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-164527';
+  var DL_BUILD = '20260916-170957';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7839,10 +7857,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Verzögerung zwischen Audio-Uhr und Lautsprecher: Verarbeitung (baseLatency)
   // plus Ausgabegerät (outputLatency — bei Bluetooth oft 150–250 ms). Ohne
   // Ausgleich zeigt der Cursor den Schlag, bevor er zu hören ist (16.09.2026).
+  //
+  // Dazu der manuelle Regler „Cursor timing" in den Einstellungen (pro Gerät).
+  // Safari meldet `outputLatency` gar nicht, und manche Geräte melden falsch —
+  // der Regler ist deshalb die verlässliche Stellschraube. Nach vorn höchstens
+  // so weit, wie Schläge vorausgeplant werden (SCHEDULE_AHEAD 0,18 s).
+  var _CURSOR_OFFSET_KEY = 'drumlion_v1_cursorOffsetMs';
+  var _cursorOffsetMs = 0;
+  try { _cursorOffsetMs = Math.max(-150, Math.min(400, parseInt(localStorage.getItem(_CURSOR_OFFSET_KEY), 10) || 0)); } catch(e) {}
   function _audioLatency() {
-    if (!aCtx) return 0;
-    var l = (aCtx.outputLatency || 0) + (aCtx.baseLatency || 0);
-    return (l > 0 && l < 0.6) ? l : 0;
+    var auto = 0;
+    if (aCtx) {
+      var l = (aCtx.outputLatency || 0) + (aCtx.baseLatency || 0);
+      auto = (l > 0 && l < 0.6) ? l : 0;
+    }
+    return auto + _cursorOffsetMs / 1000;
   }
 
   function _visDrain() {
@@ -9113,7 +9142,30 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       'Counts only what you play: no count-ins, breaks or clicks.</p>';
   }
 
+  function _renderCursorOffset() {
+    var r = document.getElementById('dgCursorOffset');
+    var v = document.getElementById('dgCursorOffsetVal');
+    if (r) r.value = _cursorOffsetMs;
+    if (v) v.textContent = (_cursorOffsetMs > 0 ? '+' : '') + _cursorOffsetMs + ' ms';
+  }
+  (function() {
+    var r = document.getElementById('dgCursorOffset');
+    var reset = document.getElementById('dgCursorOffsetReset');
+    function setOffset(ms) {
+      _cursorOffsetMs = Math.max(-150, Math.min(400, Math.round(+ms || 0)));
+      try {
+        if (_cursorOffsetMs) localStorage.setItem(_CURSOR_OFFSET_KEY, String(_cursorOffsetMs));
+        else localStorage.removeItem(_CURSOR_OFFSET_KEY);
+      } catch(e) {}
+      _renderCursorOffset();
+    }
+    // Wirkt sofort, auch während die Übung läuft — so lässt es sich nach Gehör einstellen
+    if (r) r.addEventListener('input', function() { setOffset(r.value); });
+    if (reset) reset.addEventListener('click', function() { setOffset(0); });
+  })();
+
   function _renderSettings() {
+    _renderCursorOffset();
     var el = document.getElementById('dgSetSync');
     if (_syncKey()) {
       el.innerHTML = '<span class="dl-set-dot on"></span><span>On. Your progress and stats are saved and shared across your devices.</span>';
