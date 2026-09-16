@@ -5386,7 +5386,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-115910';
+  var DL_BUILD = '20260916-120058';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6799,7 +6799,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
               h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                    '" fill="'+W+'" opacity="'+op+'"/>';
               if (nBeams > 2) {
-                var BT3 = BT2 + BH + 1.5;
+                var BT3 = BT2 + BSP;   // gleicher Abstand wie Balken 1→2 (vorher 1,5 statt 4 — dritter Balken klebte am zweiten)
                 h += '<rect x="'+(x1-SW)+'" y="'+BT3+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                      '" fill="'+W+'" opacity="'+op+'"/>';
               }
@@ -6829,7 +6829,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
                   h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                        '" fill="'+W+'" opacity="'+op+'"/>';
                   if (nBeams > 2) {
-                    var BT3 = BT2 + BH + 1.5;
+                    var BT3 = BT2 + BSP;   // gleicher Abstand wie Balken 1→2 (vorher 1,5 statt 4 — dritter Balken klebte am zweiten)
                     h += '<rect x="'+(x1-SW)+'" y="'+BT3+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                          '" fill="'+W+'" opacity="'+op+'"/>';
                   }
