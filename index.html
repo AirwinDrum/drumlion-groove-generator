@@ -423,19 +423,56 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   border-color: transparent transparent transparent #0a0a0a;
   flex-shrink: 0;
 }
-/* Rückmeldung nach der Lektion (16.09.2026) */
-.dl-feedback { display: none; flex-direction: column; align-items: center; gap: 8px; }
-.dl-fb-q { font-size: 13px; color: rgba(255,255,255,0.7); letter-spacing: 0.3px; }
-.dl-fb-opts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.dl-fb {
-  background: #161616; color: #ffffff; border: 1px solid #333; border-radius: 999px;
-  padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+/* Rückmeldung nach der Lektion als Popup (Erwin, 17.09.2026): groß genug fürs Handy,
+   ein Tipp auf eine Antwort schließt die Lektion ab und lädt die nächste */
+.dl-fbx {
+  display: none; position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0,0,0,0.78);
+  align-items: center; justify-content: center;
+  padding: 16px; box-sizing: border-box;
 }
-.dl-fb:hover { border-color: #C9A84C; }
-.dl-fb:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
-.dl-fb[aria-checked="true"] { background: rgba(201,168,76,0.18); border-color: #C9A84C; color: #C9A84C; }
-.dl-fb-note { font-size: 12px; color: rgba(255,255,255,0.55); min-height: 16px; font-variant-numeric: tabular-nums; }
+.dl-fbx.open { display: flex; }
+.dl-fbx-card {
+  width: min(460px, 100%); max-height: 100%; overflow-y: auto; box-sizing: border-box;
+  background: #1a1a1a; border: 1px solid rgba(201,168,76,0.45); border-radius: 18px;
+  padding: 28px 20px 14px; text-align: center; position: relative; outline: none;
+  font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  animation: dlFbxIn 0.22s ease-out both;
+}
+@keyframes dlFbxIn { from { transform: translateY(14px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dl-fbx-card { animation: none; } }
+.dl-fbx-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #C9A84C; }
+.dl-fbx-title { margin: 6px 0 20px; font-size: clamp(26px, 7vw, 32px); font-weight: 800; color: #ffffff; line-height: 1.15; text-wrap: balance; }
+.dl-fbx-opts { display: flex; flex-direction: column; gap: 12px; }
+.dl-fbx-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  width: 100%; min-height: 78px; padding: 12px 16px; box-sizing: border-box;
+  background: #141414; color: #ffffff; border: 2px solid #3a3a3a; border-radius: 14px;
+  font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+}
+.dl-fbx-btn:hover { border-color: #C9A84C; }
+.dl-fbx-btn:active { transform: scale(0.98); }
+.dl-fbx-btn:focus-visible { outline: 3px solid #C9A84C; outline-offset: 2px; }
+.dl-fbx-btn.primary { background: #C9A84C; border-color: #C9A84C; color: #0a0a0a; }
+.dl-fbx-btn.primary:hover { background: #d4b85a; border-color: #d4b85a; }
+.dl-fbx-lbl { font-size: 22px; font-weight: 800; letter-spacing: 0.3px; }
+.dl-fbx-sub { font-size: 14px; font-weight: 500; opacity: 0.75; font-variant-numeric: tabular-nums; }
+.dl-fbx-sub:empty { display: none; }
+.dl-fbx-again {
+  margin-top: 10px; background: none; border: none; color: rgba(255,255,255,0.65);
+  font: inherit; font-size: 16px; padding: 12px 16px; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.dl-fbx-again:hover { color: #ffffff; }
+.dl-fbx-again:focus-visible, .dl-fbx-close:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
+.dl-fbx-close {
+  position: absolute; top: 6px; right: 6px; width: 44px; height: 44px;
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  font-size: 28px; line-height: 1; cursor: pointer;
+}
+.dl-fbx-close:hover { color: #ffffff; }
 
 .dl-completed-banner {
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -1354,16 +1391,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       <span class="dev-tempo-unit">BPM</span>
     </div>
     <div id="dgCompletedBanner" style="display:none;" class="dl-completed-banner">✔ Completed</div>
-    <!-- Rückmeldung nach der Lektion (Erwin, 16.09.2026): freiwillig, ein Tipp.
-         Sichtbar nur nach einem vollständigen Durchgang, siehe _showFeedback(). -->
-    <div class="dl-feedback" id="dgFeedback">
-      <span class="dl-fb-q" id="dgFeedbackQ">How did that feel?</span>
-      <div class="dl-fb-opts" role="radiogroup" aria-labelledby="dgFeedbackQ">
-        <button type="button" class="dl-fb" data-fb="easy" role="radio" aria-checked="false">Too easy</button>
-        <button type="button" class="dl-fb" data-fb="good" role="radio" aria-checked="false">Just right</button>
-        <button type="button" class="dl-fb" data-fb="hard" role="radio" aria-checked="false">Too hard</button>
+    <!-- Rückmeldung nach der Lektion als Popup (Erwin, 17.09.2026): erscheint nach jedem
+         vollständigen Durchgang; ein Tipp auf eine Antwort = Lektion fertig und weiter.
+         Siehe _showFeedback() und _doneNext(). -->
+    <div class="dl-fbx" id="dgFeedback" role="dialog" aria-modal="true" aria-labelledby="dgFeedbackQ">
+      <div class="dl-fbx-card" tabindex="-1">
+        <button type="button" class="dl-fbx-close" id="dgFeedbackClose" aria-label="Close">×</button>
+        <div class="dl-fbx-eyebrow">Lesson complete</div>
+        <div class="dl-fbx-title" id="dgFeedbackQ">How did that feel?</div>
+        <div class="dl-fbx-opts">
+          <button type="button" class="dl-fbx-btn" data-fb="easy"><span class="dl-fbx-lbl">Too easy</span><span class="dl-fbx-sub" data-sub="easy"></span></button>
+          <button type="button" class="dl-fbx-btn primary" data-fb="good"><span class="dl-fbx-lbl">Just right</span><span class="dl-fbx-sub" data-sub="good"></span></button>
+          <button type="button" class="dl-fbx-btn" data-fb="hard"><span class="dl-fbx-lbl">Too hard</span><span class="dl-fbx-sub" data-sub="hard"></span></button>
+        </div>
+        <button type="button" class="dl-fbx-again" id="dgFeedbackAgain">Play again</button>
       </div>
-      <span class="dl-fb-note" id="dgFeedbackNote" aria-live="polite"></span>
     </div>
 
     <div class="nav-row">
@@ -5583,73 +5625,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return minB + stepIdx * ex.step;
   }
 
-  // ── Speed-Bremse: Tempo-Decke nach Level ────────────────────
-  // Bis 02.09.2026 hing sie an Groove 1 (dessen BPM × 2) und fiel weg,
-  // sobald Groove 1 durch war. Jetzt steigt sie über die 100 Level —
-  // siehe SPHM_LEVEL_* und BPM_LEVEL_* weiter unten.
-  var _NOTES_PER_BEAT = { whole:0.25, half:0.5, quarter:1, eighth:2, sixteenth:4, triplet:3,
-                          quintuplet:5, sixteenthTriplet:6, septuplet:7, thirtysecond:8,
-                          thirtysecondTriplet:12 };
-
-  // Tempo-Decke nach Level, in Schlägen pro Hand und Minute.
-  // Vorher hing sie an Groove 1 (dessen BPM × 2). Das hatte zwei Nachteile:
-  // sie war für den Schüler nicht nachvollziehbar, und jede Änderung an
-  // Groove 1 verschob das Tempo aller anderen Übungen mit — beim Halbieren
-  // der BPM-Schritte am 01.09.2026 tauchten dadurch schon ab Lektion 490
-  // Übungen mit 200 BPM auf statt erst ab 4.815.
-  //
-  // Die Einheit ist bewusst NICHT BPM: 100 BPM in Sechzehnteln sind viermal
-  // so viele Schläge wie 100 BPM in Vierteln. Eine reine BPM-Grenze wäre
-  // unten zu streng und oben zu lasch.
-  // Zwei Decken, weil sie zwei verschiedene Dinge begrenzen:
-  //   Schläge/Hand/Min → die körperliche Last. Hält dichte Unterteilungen
-  //                      zurück: 100 BPM in 16teln sind viermal so viel
-  //                      Arbeit wie 100 BPM in Vierteln.
-  //   BPM              → den Puls. „Ride Viertel gegen Snare Viertel" bei
-  //                      200 BPM sind nur 200 Schläge/Hand, fühlen sich aber
-  //                      trotzdem rasend an. Ohne diese zweite Decke tauchten
-  //                      200 BPM schon bei Lektion 490 auf statt bei 9.902.
-  // Es gilt die jeweils strengere.
-  var SPHM_LEVEL_1   = 200;   // Level 1  — entspricht Groove 1 bei 100 BPM
-  var SPHM_LEVEL_100 = 600;
-  var BPM_LEVEL_1    = 100;
-  var BPM_LEVEL_100  = 300;
-  function _levelRamp(from, to) {
-    var lvl = _getLevelInfo().level;
-    if (lvl >= TOTAL_LEVELS) return to;
-    return Math.round(from + (lvl - 1) * (to - from) / (TOTAL_LEVELS - 1));
-  }
-  // Ab hier fällt die Decke ganz weg. Nicht Kosmetik, sondern nötig:
-  // Die Rudiments enden bei 300 BPM, also exakt am obersten Wert der Decke —
-  // erreichbar wäre das erst in Level 100. Der Kurs bleibt aber in Level 99
-  // stehen, weil dann nur noch geparkte Rudiments übrig sind und keine
-  // Lektion mehr gespielt werden kann, die das Level anheben würde.
-  // Ein Level früher freigeben löst die Blockade: 665 von 665 Übungen
-  // abgeschlossen statt 628, Level 100 erreicht.
-  var SPEED_FREE_FROM_LEVEL = 99;
-  function _speedUncapped() { return _getLevelInfo().level >= SPEED_FREE_FROM_LEVEL; }
-  function _getSphmCap() { return _levelRamp(SPHM_LEVEL_1, SPHM_LEVEL_100); }
-  function _getBpmCap()  { return _levelRamp(BPM_LEVEL_1,  BPM_LEVEL_100);  }
-
-  function _capBpm(ex, bpm) {
-    if (_speedUncapped()) return bpm;
-    var cap = _getSphmCap();
-    if (cap === null) return bpm;
-    // Bei Unabhängigkeitsübungen sagt das Raster nichts über die Belastung:
-    // bei 2 gegen 3 ist das Raster eine Sextole, die schnellste Hand spielt
-    // aber nur drei Schläge. `limbNPB` gibt die tatsächliche Last vor.
-    var npb   = (ex.limbNPB != null) ? ex.limbNPB : (_NOTES_PER_BEAT[ex.noteValue] || 2);
-    var hands = (ex.hihatHands === 'alternate') ? 2 : 1;
-    var maxBpm = Math.floor(cap / (npb / hands));
-    // Absolute Untergrenze der Übung: bei Warmup dessen minBPM, sonst ex.minBPM.
-    // Der Cap darf NUR nach unten begrenzen — niemals ein geplantes BPM anheben
-    // (sonst würde die Warmup-Rampe 30→40 auf 40 hochgezogen und verschwinden).
-    var floorBpm = ex.warmup ? ex.warmup.minBPM
-                             : ((ex.minBPM != null) ? ex.minBPM : 30);
-    return Math.min(bpm,
-                    Math.max(maxBpm,        floorBpm),
-                    Math.max(_getBpmCap(),  floorBpm));
-  }
+  // ── Keine Tempo-Bremse mehr (Erwin, 17.09.2026) ──────────────────────
+  // Bis heute begrenzte eine Decke je Level das Tempo (Level 1: 100 BPM bzw.
+  // 200 Schläge/Hand, linear bis Level 100). Seit jeder Schlagzeuger nach der
+  // Lektion „Too easy / Just right / Too hard" meldet, stellt er sein Tempo
+  // selbst ein; die Decke bremste vor allem einfache Übungen und ließ Übungen
+  // monatelang an ihr warten (2.000 Lektionen: 4 statt 65 abgeschlossen).
+  // Grenze ist jetzt allein die Übung: Einführungstempo, Schrittweite, Endtempo.
+  // `_capBpm` bleibt als Stelle erhalten, an der ein Tempo-Deckel säße.
+  function _capBpm(ex, bpm) { return bpm; }
 
   // Initial State aufbauen
   function _initState() {
@@ -5798,7 +5782,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260917-161726';
+  var DL_BUILD = '20260917-163828';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6252,19 +6236,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     .catch(function() { _syncSetStatus('err', 'Offline'); onDone(false); });
   }
 
-  // ── Parken an der Tempo-Decke ─────────────────────────────────────────
-  // Erreicht eine Übung die Decke ihres Levels, bringt Weiterspielen nichts
-  // mehr: der Schrittzähler lief bisher trotzdem hoch, die Übung galt
-  // irgendwann als abgeschlossen und verschwand — gespielt wurde sie aber nie
-  // schneller als die Decke. Über den ganzen Kurs betraf das 596 von 665
-  // Übungen. Stattdessen verlässt sie jetzt den aktiven Satz, neue rücken
-  // nach, und sie kommt zurück, sobald das Level die nächste Stufe erlaubt.
-  function _nextStepOverCap(ex, entry) {
-    if (entry.bpmStep >= _exSteps(ex)) return false;      // fertig, nicht parken
-    var soll = _exBpm(ex, entry.bpmStep);
-    return _capBpm(ex, soll) < soll;
-  }
-
+  // ── Geparkte Übungen zurückholen ───────────────────────────────────────
+  // Bis 17.09.2026 wurden Übungen an der Tempo-Decke ihres Levels geparkt.
+  // Die Decke ist weg; Stände aus der Zeit tragen aber noch `cs.park`.
+  // Diese Übungen kehren in den aktiven Satz zurück, sobald dort Platz ist,
+  // und machen genau bei ihrer gespeicherten Stufe weiter.
   function _unparkDue() {
     Object.keys(_cState.cats).forEach(function(cat) {
       var cs = _cState.cats[cat];
@@ -6274,7 +6250,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       cs.park.forEach(function(entry) {
         var ex = EXERCISES.find(function(e){ return e.id === entry.id; });
         if (!ex) return;                                   // Übung entfernt → verwerfen
-        if (!_nextStepOverCap(ex, entry) && cs.active.length < MAX_ACTIVE_PER_CAT) {
+        if (cs.active.length < MAX_ACTIVE_PER_CAT) {
           cs.active.push(entry);
         } else {
           bleibt.push(entry);
@@ -6331,27 +6307,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                  sphm: bpmToSphm(bpm, ex),
                  entry: entry, cat: cat };
       }
-      // Nichts aktiv, aber Übungen an der Tempo-Decke geparkt: Kategorie NICHT
-      // überspringen (Erwin, 17.09.2026). Bisher fiel sie aus der Rotation, bis
-      // das Level die Decke hob — Notes fehlten so ab Lektion ~750 für ~240
-      // Lektionen, mit viel „Too easy" Fills bis zu ~400. Jetzt kommt reihum
-      // eine geparkte Übung im höchsten erlaubten Tempo; schneller wird sie
-      // dabei nicht, zurück in den aktiven Satz geht sie wie bisher über
-      // `_unparkDue`, sobald das Level die nächste Stufe erlaubt.
-      if (cs && cs.park && cs.park.length) {
-        var park = cs.park;
-        var pIdx = -1;
-        for (var k = 0; k < park.length; k++) {
-          if (park[k].id === cs.lastId) { pIdx = k; break; }
-        }
-        var pe = park[(pIdx + 1) % park.length];
-        var pex = EXERCISES.find(function(e){ return e.id === pe.id; });
-        if (!pex) continue;
-        var pBpm = _capBpm(pex, _exBpm(pex, pe.bpmStep));
-        return { ex: pex, bpm: pBpm,
-                 sphm: bpmToSphm(pBpm, pex),
-                 entry: pe, cat: cat, parked: true };
-      }
     }
     return null;
   }
@@ -6374,36 +6329,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!lesson) return;
     var cat = lesson.cat;
     var cs  = _cState.cats[cat];
-    var entry = lesson.parked
-      ? (cs.park || []).find(function(e){ return e.id === lesson.entry.id; })
-      : cs.active.find(function(e){ return e.id === lesson.entry.id; });
+    var entry = cs.active.find(function(e){ return e.id === lesson.entry.id; });
     // Übung zwischenzeitlich verschwunden (geparkt oder abgeschlossen)?
     // Dann nur die Rotation weiterschieben, nichts fortschalten.
     if (!entry) { _unparkDue(); _rotateOn(cat); return; }
 
-    // Rückmeldung zur gespielten Lektion bestimmt die nächste Tempostufe —
-    // außer bei einer geparkten Übung: die steht an der Decke und bleibt dort.
+    // Rückmeldung zur gespielten Lektion bestimmt die nächste Tempostufe
     var _fb = _lessonFeedback;
     _lessonFeedback = null;
-    if (!lesson.parked) {
-      entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
-      if (_fb === 'easy') entry.fbEasy = (entry.fbEasy || 0) + 1; else delete entry.fbEasy;
-      if (_fb === 'hard') entry.fbHard = (entry.fbHard || 0) + 1; else delete entry.fbHard;
-    }
+    entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
+    if (_fb === 'easy') entry.fbEasy = (entry.fbEasy || 0) + 1; else delete entry.fbEasy;
+    if (_fb === 'hard') entry.fbHard = (entry.fbHard || 0) + 1; else delete entry.fbHard;
     cs.lastId  = entry.id;
     cs.counter = (cs.counter || 0) + 1;
 
-    // Graduation
-    if (!lesson.parked && entry.bpmStep >= _exSteps(lesson.ex)) {
+    // Graduation: Endtempo gespielt → abgeschlossen, kommt nie wieder
+    if (entry.bpmStep >= _exSteps(lesson.ex)) {
       cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
-    }
-
-    // An der Decke angekommen? Dann Platz räumen und später wiederkommen.
-    if (cs.active.indexOf(entry) !== -1 && _nextStepOverCap(lesson.ex, entry)) {
-      cs.active = cs.active.filter(function(e){ return e !== entry; });
-      if (!cs.park) cs.park = [];
-      cs.park.push(entry);
     }
 
     // Neue Übung einführen: alle STEPS_PER_NEW_EX Erscheinungen ODER wenn keine aktive mehr
@@ -8512,8 +8455,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   //   Too easy   → mind. 5 % schneller (mind. 2 Stufen); zweimal in Folge 10 % (mind. 3)
   //   Just right → eine Stufe weiter
   //   Too hard   → gleiches Tempo; zweimal in Folge eine Stufe zurück
-  // Ein Sprung endet an der Tempo-Decke des Levels — darüber würden Stufen
-  // übersprungen, die das Level noch gar nicht erlaubt.
+  // Seit 17.09.2026 als Popup nach jeder Lektion; ein Tipp schließt die Lektion
+  // ab (siehe _doneNext). Wer das Popup schließt, kommt über „Done → Next" weiter
+  // — dann ohne Antwort, also eine Stufe.
   var _lessonFeedback = null;
 
   function _feedbackStep(ex, entry, fb) {
@@ -8526,7 +8470,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var target = Math.ceil(_exBpm(ex, cur) * (twice ? 1.10 : 1.05) - 1e-9);
     var next = cur + (twice ? 3 : 2);
     while (next < steps && _exBpm(ex, next) < target) next++;
-    while (next > cur + 1 && next < steps && _capBpm(ex, _exBpm(ex, next)) < _exBpm(ex, next)) next--;
     // Fertig ist eine Übung erst, wenn ihr Endtempo gespielt wurde (Erwin, 17.09.2026).
     // Der Sprung endet deshalb spätestens AUF der letzten Stufe; wer gerade das
     // Endtempo gespielt hat, ist damit durch.
@@ -8542,26 +8485,56 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return entry ? { ex: lesson.ex, entry: entry } : null;
   }
 
+  // Unter jeder Antwort steht, was sie für diese Übung bedeutet
   function _renderFeedback() {
     var box = document.getElementById('dgFeedback');
     if (!box) return;
-    Array.prototype.forEach.call(box.querySelectorAll('.dl-fb'), function(b) {
-      b.setAttribute('aria-checked', b.getAttribute('data-fb') === _lessonFeedback ? 'true' : 'false');
+    var tg = _feedbackTarget();
+    ['easy', 'good', 'hard'].forEach(function(v) {
+      var sub = box.querySelector('[data-sub="' + v + '"]');
+      if (!sub) return;
+      if (!tg) { sub.textContent = ''; return; }
+      var n = _feedbackStep(tg.ex, tg.entry, v);
+      if (n >= _exSteps(tg.ex)) { sub.textContent = 'Exercise complete ✓'; return; }
+      var now = _exBpm(tg.ex, tg.entry.bpmStep || 0), nb = _exBpm(tg.ex, n);
+      sub.textContent = (nb === now) ? 'Stays at ' + nb + ' BPM' : 'Next time ' + nb + ' BPM';
     });
-    var note = '';
-    var tg = _lessonFeedback ? _feedbackTarget() : null;
-    if (tg) {
-      var n = _feedbackStep(tg.ex, tg.entry, _lessonFeedback);
-      note = (n >= _exSteps(tg.ex)) ? 'Next time: exercise completed'
-                                    : 'Next time for this exercise: ' + _exBpm(tg.ex, n) + ' BPM';
-    }
-    document.getElementById('dgFeedbackNote').textContent = note;
   }
   function _showFeedback(on) {
     var box = document.getElementById('dgFeedback');
     if (!box) return;
-    box.style.display = on ? 'flex' : 'none';
-    if (on) _renderFeedback();
+    var wasOpen = box.classList.contains('open');
+    box.classList.toggle('open', !!on);
+    if (on) {
+      _renderFeedback();
+      if (!wasOpen) {
+        var card = box.querySelector('.dl-fbx-card');
+        try { card.focus({ preventScroll: true }); } catch(e) { card.focus(); }
+      }
+    }
+  }
+
+  // Lektion abschließen und die nächste laden — „Done → Next" und die Antworten
+  // im Popup. Nur einmal pro abgeschlossenem Durchgang: ein doppelter Tipp
+  // (Popup zu, darunter liegt „Done → Next") würde sonst zwei Lektionen weiterschalten.
+  var _doneNextArmed = false;
+  function _doneNext() {
+    if (!_doneNextArmed) return;
+    _doneNextArmed = false;
+    _showFeedback(false);
+    _advanceState();
+    // Transition animation
+    var wrap = document.querySelector('.dg-inner');
+    if (wrap) {
+      wrap.style.transition = 'opacity 0.35s';
+      wrap.style.opacity = '0';
+      setTimeout(function() {
+        _loadCurrentLesson(false);
+        wrap.style.opacity = '1';
+      }, 400);
+    } else {
+      _loadCurrentLesson(false);
+    }
   }
 
   function finishExercise() {
@@ -8577,28 +8550,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
     if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
     document.getElementById('dgTotal').style.display='inline';
-    // Nur nach Kurs-Lektionen fragen, nicht im Einstufungstest
-    // An der Tempo-Decke gibt es nichts zu verstellen — dann keine Rückfrage
-    _showFeedback(!_rampMode && !(_shownLesson && _shownLesson.parked));
     document.getElementById('dgCtrl').innerHTML =
       '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>Again</button>'+
       '<button class="btn-go" id="dgNextLesson">Done → Next</button>';
     document.getElementById('dgAgain').addEventListener('click', startExercise);
-    document.getElementById('dgNextLesson').addEventListener('click', function() {
-      _advanceState();
-      // Transition animation
-      var wrap = document.querySelector('.dg-inner');
-      if (wrap) {
-        wrap.style.transition = 'opacity 0.35s';
-        wrap.style.opacity = '0';
-        setTimeout(function() {
-          _loadCurrentLesson(false);
-          wrap.style.opacity = '1';
-        }, 400);
-      } else {
-        _loadCurrentLesson(false);
-      }
-    });
+    document.getElementById('dgNextLesson').addEventListener('click', _doneNext);
+    _doneNextArmed = true;
+    // Nur nach Kurs-Lektionen fragen, nicht im Einstufungstest
+    _showFeedback(!_rampMode);
   }
 
   function stopExercise() {
@@ -8983,13 +8942,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   document.getElementById('dgStart').addEventListener('click', startExercise);
 
-  // Rückmeldung nach der Lektion: Auswahl setzen, zweiter Tipp nimmt sie zurück
-  Array.prototype.forEach.call(document.querySelectorAll('#dgFeedback .dl-fb'), function(b) {
+  // Rückmeldung nach der Lektion: Antwort merken, Lektion abschließen, weiter
+  Array.prototype.forEach.call(document.querySelectorAll('#dgFeedback .dl-fbx-btn'), function(b) {
     b.addEventListener('click', function() {
-      var v = b.getAttribute('data-fb');
-      _lessonFeedback = (_lessonFeedback === v) ? null : v;
-      _renderFeedback();
+      if (!_doneNextArmed) return;
+      _lessonFeedback = b.getAttribute('data-fb');
+      _doneNext();
     });
+  });
+  document.getElementById('dgFeedbackAgain').addEventListener('click', startExercise);
+  document.getElementById('dgFeedbackClose').addEventListener('click', function() { _showFeedback(false); });
+  document.getElementById('dgFeedback').addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) _showFeedback(false);
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') _showFeedback(false);
   });
 
   // Dev: Reset Course
