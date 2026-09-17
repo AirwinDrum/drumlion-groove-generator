@@ -1667,8 +1667,35 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var _dailyDateKey = _nsKey('drumlion_v1_dailyDate');
   var _dailyMinsKey = _nsKey('drumlion_v1_dailyMins');
 
-  function _getTotalMinutes()  { return parseFloat(localStorage.getItem(_timeKey)    || '0'); }
-  function _getTotalLessons()  { return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
+  // ── Zähler zusätzlich im Arbeitsspeicher (17.09.2026, Dave) ──────────
+  // Lektionen und Minuten lagen NUR im localStorage, Kursstand und Stats
+  // dagegen auch im Arbeitsspeicher. Wurde der localStorage während einer
+  // Sitzung geleert (eingebettete Seiten in Safari), liefen Kurs und Stats
+  // weiter, die Zähler fingen aber bei 0 an: Balken auf null, und der nächste
+  // Abgleich schrieb 0 Lektionen zum Server (Dave: 16 → 0 → 1, Kurs 16).
+  // Jetzt merkt sich der Tab die Zähler und schreibt sie zurück, sobald sie
+  // fehlen. Nicht, wenn inzwischen ein Reset gelaufen ist: der setzt eine neue
+  // Reset-Kennung, dann gilt der leere Stand.
+  var _counterMem = null;   // { l, m, r } — zuletzt bekannte Zähler dieses Tabs
+  function _counterRead(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+  function _counterRemember() {
+    var l = _counterRead(_lessonsKey);
+    if (l === null) { _counterMem = null; return; }
+    _counterMem = { l: parseInt(l) || 0, m: parseFloat(_counterRead(_timeKey) || '0') || 0,
+                    r: _counterRead(_RESET_SEEN_KEY) };
+  }
+  function _counterHeal() {
+    if (!_counterMem || _counterRead(_lessonsKey) !== null) return;
+    var r = _counterRead(_RESET_SEEN_KEY);
+    if (r !== null && r !== _counterMem.r) { _counterMem = null; return; }   // Reset gelaufen
+    try {
+      localStorage.setItem(_lessonsKey, String(_counterMem.l));
+      localStorage.setItem(_timeKey,    String(_counterMem.m));
+      if (r === null && _counterMem.r) localStorage.setItem(_RESET_SEEN_KEY, _counterMem.r);
+    } catch(e) {}
+  }
+  function _getTotalMinutes()  { _counterHeal(); return parseFloat(localStorage.getItem(_timeKey)    || '0'); }
+  function _getTotalLessons()  { _counterHeal(); return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
 
   // ── LEBENSZEIT-STATISTIK (Erwin, 16.09.2026) ─────────────────────
   // Gespielte Zeit und Schläge über die ganze Mitgliedschaft.
@@ -1806,6 +1833,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       localStorage.setItem(_timeKey,    String(newMins));
       localStorage.setItem(_lessonsKey, String(newLessons));
     } catch(e) {}
+    _counterRemember();
     // detect chapter / level crossings — chapter relativ zum Level (gleiche Basis wie der Balken)
     var prevLevel   = Math.floor(prevLessons / LESSONS_PER_LEVEL);
     var newLevel    = Math.floor(newLessons  / LESSONS_PER_LEVEL);
@@ -5720,6 +5748,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Nur den Kurs-State zu löschen setzt die Anzeige NICHT zurück, und ohne
   // den Server-Teil lädt der alte Stand beim nächsten Öffnen wieder herunter.
   function _resetAll() {
+    _counterMem = null;
     try {
       localStorage.removeItem(COURSE_KEY);
       localStorage.removeItem(_lessonsKey);
@@ -5757,6 +5786,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   var _cState = _loadState();
+  _counterRemember();
 
   // ============================================================
   // CLOUD SYNC — Supabase (Fortschritt geräteübergreifend)
@@ -5768,7 +5798,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260917-123642';
+  var DL_BUILD = '20260917-145757';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6015,6 +6045,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           try { remoteParsed = _syncParse(rows[0].state); remote = _syncCount(remoteParsed); } catch(e) {}
         }
         var local = _getTotalLessons() || (_cState.total || 0);
+        // Zähler hinter dem Server, obwohl der Kurs gleich weit ist (Dave, 17.09.2026):
+        // der Vergleich oben fällt bei 0 Lektionen auf die Kursposition zurück und
+        // sah deshalb keinen Unterschied — geschrieben wurden dann 0 Lektionen.
+        var countersBehind = !!(remoteParsed && remoteParsed.lessons != null &&
+                                remoteParsed.lessons > _getTotalLessons());
         if (remoteParsed && remoteParsed.resetId && remoteParsed.resetId !== _resetSeen()) {
           // Auf dem Server liegt ein Reset, den dieses Gerät noch nicht kennt
           _syncPull(function(changed) {
@@ -6024,7 +6059,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           });
           return;
         }
-        if (remote > local) {
+        if (remoteParsed && remoteParsed.lessons != null)
+          _remoteLessonsSeen = Math.max(_remoteLessonsSeen, remoteParsed.lessons);
+        if (remote > local || countersBehind) {
           // Server ist weiter — nicht überschreiben, stattdessen übernehmen
           _syncSetStatus('spin', 'Newer progress found…');
           _syncPull(function(changed) {
@@ -6040,11 +6077,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }).catch(function() { _syncWrite(false); });
       return;
     }
-    _syncWrite(immediate);
+    _syncWrite(immediate, force);
   }
 
-  function _syncWrite(immediate) {
+  // Höchste Lektionszahl, die der Server für dieses Konto in dieser Sitzung
+  // nachweislich hatte. Darunter wird nie geschrieben (außer beim Reset) — auch
+  // nicht beim Schließen des Tabs, wo die Vorprüfung am Server entfällt.
+  var _remoteLessonsSeen = -1;
+
+  function _syncWrite(immediate, force) {
     if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+    var sendLessons = _getTotalLessons();
+    if (!force && sendLessons < _remoteLessonsSeen) {
+      // Lokal weniger Lektionen als der Server schon hatte: nicht schreiben.
+      // Der nächste Abgleich holt die Zähler vom Server zurück.
+      return;
+    }
+    _remoteLessonsSeen = force ? sendLessons : Math.max(_remoteLessonsSeen, sendLessons);
     _syncPending = false;
     if (!immediate) _syncSetStatus('spin', 'Saving…');
     var opts = {
@@ -6133,6 +6182,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           if (!_cState.bpmHalved) _cState.bpmHalved = 1;
           try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
           _markResetSeen(remote.resetId);
+          _counterRemember();
+          _remoteLessonsSeen = remote.lessons || 0;   // Reset: ab hier gilt der neue, kleinere Stand
           _syncSetStatus('ok', 'Progress reset ✓');
           onDone(true);
           return;
@@ -6142,12 +6193,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // ersatzweise _cState.total.
         var remoteCount = (remote.lessons != null) ? remote.lessons : (remote.course.total || 0);
         var localCount  = _getTotalLessons() || (_cState.total || 0);
+        if (remote.lessons != null) _remoteLessonsSeen = Math.max(_remoteLessonsSeen, remote.lessons);
+        // Kursposition vergleichen, damit ein Stand mit verlorenen Zählern nicht
+        // einen lokal weiter gespielten Kurs überschreibt (siehe unten).
+        var remoteTotal = (remote.course.total != null) ? remote.course.total : Infinity;
+        var localTotal  = _cState.total || 0;
 
-        if (remoteCount > localCount) {
+        if (remoteCount > localCount && remoteTotal >= localTotal) {
           try {
             if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(remote.lessons));
             if (remote.minutes != null) localStorage.setItem(_timeKey,    String(remote.minutes));
           } catch(e) {}
+          _counterRemember();
           // Genauso bereinigen wie beim lokalen Laden (Zähler zuerst, weil
           // `_introNext` das Level für die Unterteilungs-Sperre braucht).
           // Keine Schritt-Halbierung: ein Server-Stand ohne Flag wurde nach
@@ -6162,6 +6219,26 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           _statsBackfill();
           _syncSetStatus('ok', 'Progress loaded ✓');
           onDone(true); // state changed, needs UI reload
+        } else if (remote.lessons != null && remote.lessons > _getTotalLessons()) {
+          // Kurs lokal gleich weit oder weiter, aber die Zähler stehen unter dem
+          // Server: sie sind hier verloren gegangen (Dave, 17.09.2026). Nur die
+          // Zähler übernehmen, den Kurs behalten, dann den reparierten Stand hochladen.
+          // Lektionen, die hier seitdem weitergespielt wurden, zählen mit.
+          var _fixedLessons = remote.lessons + Math.max(0, localTotal - remoteTotal);
+          try {
+            localStorage.setItem(_lessonsKey, String(_fixedLessons));
+            if (remote.minutes != null && remote.minutes > _getTotalMinutes())
+              localStorage.setItem(_timeKey, String(remote.minutes));
+          } catch(e) {}
+          _counterRemember();
+          _statsMerge(remote.stats);
+          if (_getTotalLessons() >= remote.lessons) {
+            _syncSetStatus('ok', 'Progress loaded ✓');
+            if (localTotal > remoteTotal) _syncSchedule();   // lokal weiter gespielter Kurs
+          } else {
+            _syncSetStatus('err', 'Sync failed');            // Speicher nimmt nichts an
+          }
+          onDone(true);
         } else {
           _syncSetStatus('ok', 'Up to date ✓');
           _statsMerge(remote.stats);
