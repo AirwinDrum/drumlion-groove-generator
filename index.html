@@ -1612,10 +1612,60 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Entfernt, weil er eine Adresse zurück in URL, Browserverlauf und DOM geholt
   // hätte — und weil er auch COURSE_KEY umbenannte: ein versehentliches
   // `?user=` hätte für den Betroffenen wie ein kompletter Reset ausgesehen.
-  var _timeKey      = 'drumlion_v1_totalMinutes';
-  var _lessonsKey   = 'drumlion_v1_totalLessons';
-  var _dailyDateKey = 'drumlion_v1_dailyDate';
-  var _dailyMinsKey = 'drumlion_v1_dailyMins';
+  // ── Speicher pro Konto (17.09.2026) ─────────────────────────────────────
+  // Der lokale Speicher gehört dem Browser, nicht dem Konto. Bis zum 17.09. lag
+  // der Kursstand unter festen Namen, und nur ein einzelner Merker (sync_owner)
+  // entschied, wem er gehört. Fehlte der Merker oder schrieb ein noch offener
+  // Tab des Vorgängers nach, übernahm das nächste Konto dessen Stand und lud
+  // ihn unter seinem eigenen Schlüssel hoch — so hat Dirk auf demselben Gerät
+  // Nicos Stand bekommen. Jetzt hängt an jedem Speichernamen die Kennung des
+  // Kontos (`name@kennung`). Zwei Konten teilen sich auf einem Gerät nichts
+  // mehr, egal in welcher Reihenfolge oder in wie vielen Tabs.
+  //
+  // Kennung wie `_syncKey()`: ?uid= aus der URL, sonst die zuletzt gespeicherte
+  // Kundennummer, sonst der Email-Hash, sonst 'anon'. In der Kurs-Einbettung
+  // (?hdr=1) gibt es KEINEN Rückgriff auf eine gespeicherte Kundennummer —
+  // fehlt dort ?uid=, ist unklar, wer spielt, und es wäre womöglich die des
+  // Vorgängers.
+  var _EMBEDDED = (function() {
+    try { return new URLSearchParams(window.location.search).get('hdr') === '1'; } catch(e) { return false; }
+  })();
+  var _ID_NS = (function() {
+    try {
+      var id = (new URLSearchParams(window.location.search).get('uid') || '').trim();
+      if (/^[A-Za-z0-9_-]{3,64}$/.test(id)) return id;
+      if (_EMBEDDED) return 'anon';
+      return localStorage.getItem('drumlion_sync_uid_v1') || localStorage.getItem('drumlion_sync_hash_v1') || 'anon';
+    } catch(e) { return 'anon'; }
+  })();
+  function _nsKey(base) { return base + '@' + _ID_NS; }
+
+  // Einmalig: Stände unter den alten, festen Namen dem Konto zuordnen, dem sie
+  // nachweislich gehörten (Merker sync_owner). Ohne Merker ist nicht zu sagen,
+  // wessen Stand das ist — dann wird er verworfen; der Server hat ihn ohnehin.
+  // Danach verschwinden die alten Namen, damit nie wieder jemand sie übernimmt.
+  (function _migrateSharedStore() {
+    try {
+      var LEGACY = ['drumlion_v4_course', 'drumlion_v1_totalLessons', 'drumlion_v1_totalMinutes',
+                    'drumlion_v1_dailyDate', 'drumlion_v1_dailyMins', 'drumlion_v1_stats',
+                    'drumlion_v1_resetSeen'];
+      var any = LEGACY.some(function(k) { return localStorage.getItem(k) !== null; });
+      if (!any) return;
+      var owner = localStorage.getItem('drumlion_sync_owner_v1') || '';
+      if (owner) {
+        LEGACY.forEach(function(k) {
+          var v = localStorage.getItem(k);
+          if (v !== null && localStorage.getItem(k + '@' + owner) === null) localStorage.setItem(k + '@' + owner, v);
+        });
+      }
+      LEGACY.forEach(function(k) { localStorage.removeItem(k); });
+    } catch(e) {}
+  })();
+
+  var _timeKey      = _nsKey('drumlion_v1_totalMinutes');
+  var _lessonsKey   = _nsKey('drumlion_v1_totalLessons');
+  var _dailyDateKey = _nsKey('drumlion_v1_dailyDate');
+  var _dailyMinsKey = _nsKey('drumlion_v1_dailyMins');
 
   function _getTotalMinutes()  { return parseFloat(localStorage.getItem(_timeKey)    || '0'); }
   function _getTotalLessons()  { return parseInt(  localStorage.getItem(_lessonsKey) || '0'); }
@@ -1631,8 +1681,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // wenn er erklungen ist. Wer mitten im Takt stoppt, bekommt die schon
   // vorausgeplanten Schritte nicht gutgeschrieben.
   // Zeit = Summe der gespielten Rasterschritte, also dieselbe Uhr wie der Ton.
-  var _STATS_KEY = 'drumlion_v1_stats';
-  var _RESET_SEEN_KEY = 'drumlion_v1_resetSeen';   // zuletzt übernommener Reset, siehe _resetSeen()
+  var _STATS_KEY = _nsKey('drumlion_v1_stats');
+  var _RESET_SEEN_KEY = _nsKey('drumlion_v1_resetSeen');   // zuletzt übernommener Reset, siehe _resetSeen()
   var _statQ = [];
   var _statsDirty = false;       // seit dem letzten Server-Schreiben gewachsen
   var _statsLastSave = 0;
@@ -5386,7 +5436,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   var STEPS_PER_NEW_EX  = 5;   // alle N Kategorie-Erscheinungen → neue Übung
   var MAX_ACTIVE_PER_CAT = 100; // max aktive Übungen pro Kategorie (01.09.2026 von 50 erhöht)
-  var COURSE_KEY = 'drumlion_v4_course';
+  var COURSE_KEY = _nsKey('drumlion_v4_course');   // pro Konto, siehe _ID_NS
 
   // Übungen pro Kategorie, sortiert nach ID
   // Pillars: Grooves → Notes → Fills → Coordination → Rudiments (ab 200h)
@@ -5718,7 +5768,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260916-170957';
+  var DL_BUILD = '20260917-123642';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -5802,8 +5852,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       // `?u=` (Email) wird bewusst nicht mehr gelesen. Schickt der alte
       // Einbettungscode sie weiterhin mit, läuft sie ins Leere statt in den
-      // Speicher. Den Kontowechsel im selben Browser fängt guardIdentity ab:
-      // die Kundennummer wechselt mit dem Konto, das genügt.
+      // Speicher.
+      // In der Kurs-Einbettung (?hdr=1) ohne ?uid= kein Rückgriff: die
+      // gespeicherte Kundennummer kann die eines anderen Kontos sein.
+      if (_EMBEDDED) return '';
       return localStorage.getItem(_SYNC_UID_KEY) || '';
     } catch(e) { return ''; }
   })();
@@ -5820,24 +5872,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // anderen Schlüssel, wird er verworfen, bevor irgendetwas passiert.
   var _SYNC_OWNER_KEY = 'drumlion_sync_owner_v1';
   function _guardIdentity() {
+    // Seit dem 17.09.2026 liegt jeder Stand unter `name@kennung` (siehe _ID_NS).
+    // Hier wird nichts mehr gelöscht — das hätte beim Hin- und Herwechseln den
+    // eigenen Stand des aktuellen Kontos getroffen. Der Merker bleibt nur für
+    // die einmalige Zuordnung alter Stände (_migrateSharedStore).
     try {
-      var now  = _syncKey();
-      if (!now) return;
-      var prev = localStorage.getItem(_SYNC_OWNER_KEY) || '';
-      if (prev && prev !== now) {
-        localStorage.removeItem(COURSE_KEY);
-        localStorage.removeItem(_lessonsKey);
-        localStorage.removeItem(_timeKey);
-        localStorage.removeItem(_dailyDateKey);
-        localStorage.removeItem(_dailyMinsKey);
-        _statsClear();   // Schläge und Spielzeit gehören ebenfalls dem Vorgänger
-        localStorage.removeItem(_RESET_SEEN_KEY);
-        // _loadState() lief weiter oben schon — der Stand des Vorgängers
-        // liegt also bereits im Speicher und muss ebenfalls weg, sonst
-        // wird er beim ersten Speichern unter dem neuen Schlüssel hochgeladen.
-        _cState = _initState();
-      }
-      localStorage.setItem(_SYNC_OWNER_KEY, now);
+      var now = _syncKey();
+      if (now) localStorage.setItem(_SYNC_OWNER_KEY, now);
     } catch(e) {}
   }
   _guardIdentity();
@@ -5849,6 +5890,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _syncHash = key;
     try { localStorage.setItem(_SYNC_HASH_KEY, key); } catch(e) {}
     _guardIdentity();
+    // Neue Kennung = anderer Speicherbereich. Ein bisher anonym gespielter Stand
+    // wandert mit (wie vorher), dann neu laden, damit alles darunter arbeitet.
+    var newNs = _syncKey();
+    if (newNs && newNs !== _ID_NS) {
+      try {
+        if (_ID_NS === 'anon' && localStorage.getItem('drumlion_v4_course@' + newNs) === null) {
+          ['drumlion_v4_course', 'drumlion_v1_totalLessons', 'drumlion_v1_totalMinutes',
+           'drumlion_v1_dailyDate', 'drumlion_v1_dailyMins', 'drumlion_v1_stats'].forEach(function(k) {
+            var v = localStorage.getItem(k + '@anon');
+            if (v !== null) localStorage.setItem(k + '@' + newNs, v);
+          });
+        }
+      } catch(e) {}
+      location.reload();
+      return true;
+    }
   }
 
   function _syncSetStatus(state, msg) {
@@ -9030,7 +9087,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // Server noch der localStorage sehen sie je — der Schlüssel reicht,
         // um dieselbe Zeile auf einem zweiten Gerät wiederzufinden.
         _syncHashEmail(email).then(function(key) {
-          _syncSetKey(key);
+          if (_syncSetKey(key)) return;   // Seite lädt mit dem neuen Speicherbereich neu
           closeModal();
           _syncPull(function(changed) {
             if (changed) {
