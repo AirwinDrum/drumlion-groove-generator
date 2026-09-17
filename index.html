@@ -5900,7 +5900,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260917-173232';
+  var DL_BUILD = '20260917-181851';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8067,7 +8067,72 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Sonst liefe der Cursor dem Ton um bis zu SCHEDULE_AHEAD (0.1s) voraus.
   var _visQ = [], _rafId = null;
 
+  // ── Ansage „Timing training" (Erwin, 17.09.2026) ───────────────────────
+  // Einmal pro Block, kurz bevor die ersten Click-only-Takte beginnen: endet
+  // spätestens mit dem Warntakt. Über die Sprachausgabe des Browsers — gibt es
+  // die auf einem Gerät nicht, bleibt es bei der Anzeige „CLICK ONLY NEXT BAR".
+  // Web-Audio-Zeit und Sprache laufen über dieselbe Ausgabe; Bluetooth-Verzug
+  // trifft beide gleich, deshalb kein Latenzausgleich.
+  var _sayTimer = null, _sayUnlocked = false, _sayVoice = null;
+  function _sayOk() { return typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined'; }
+  function _sayPickVoice() {
+    if (_sayVoice) return _sayVoice;
+    try {
+      var vs = speechSynthesis.getVoices() || [];
+      var en = vs.filter(function(v) { return /^en[-_]/i.test(v.lang); });
+      // Natürliche Standardstimmen zuerst. Sonst nähme der Mac alphabetisch
+      // „Albert" — eine Spaßstimme.
+      var GOOD = ['Samantha', 'Daniel', 'Karen', 'Moira', 'Tessa', 'Alex', 'Google US English',
+                  'Google UK English Female', 'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Zira',
+                  'Microsoft Guy', 'Microsoft David'];
+      var byName = function(n) { return en.filter(function(v) { return v.name.indexOf(n) === 0; })[0]; };
+      for (var i = 0; i < GOOD.length && !_sayVoice; i++) _sayVoice = byName(GOOD[i]) || null;
+      if (!_sayVoice) _sayVoice = en.filter(function(v) { return v.default; })[0] ||
+                                  en.filter(function(v) { return /^en[-_]US/i.test(v.lang) && v.localService; })[0] ||
+                                  en[0] || null;
+    } catch(e) {}
+    return _sayVoice;
+  }
+  // Stimmen laden bei manchen Browsern erst nach und nach — früh anstoßen
+  if (_sayOk()) {
+    try {
+      speechSynthesis.getVoices();
+      if (speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', function() { _sayVoice = null; _sayPickVoice(); });
+    } catch(e) {}
+  }
+  // Im Klick auf Start aufrufen: iOS und Chrome sprechen erst nach einer Berührung
+  function _sayUnlock() {
+    if (_sayUnlocked || !_sayOk()) return;
+    try {
+      var u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      speechSynthesis.speak(u);
+      _sayPickVoice();
+      _sayUnlocked = true;
+    } catch(e) {}
+  }
+  function _sayCancel() {
+    if (_sayTimer) { clearTimeout(_sayTimer); _sayTimer = null; }
+    try { if (_sayOk() && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); } catch(e) {}
+  }
+  function _sayAt(text, audioTime) {
+    if (!_sayOk() || !aCtx) return;
+    _sayCancel();
+    _sayTimer = setTimeout(function() {
+      _sayTimer = null;
+      if (!playing) return;
+      try {
+        var u = new SpeechSynthesisUtterance(text);
+        var v = _sayPickVoice();
+        if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'en-US'; }
+        u.rate = 1.05;
+        speechSynthesis.speak(u);
+      } catch(e) {}
+    }, Math.max(0, (audioTime - aCtx.currentTime) * 1000));
+  }
+
   function _visReset() {
+    _sayCancel();
     _visQ.length = 0;
     if (_rafId) { cancelAnimationFrame(_rafId); _rafId = null; }
     // Hinweis des Timing-Trainers mit abräumen — sonst bliebe „CLICK ONLY"
@@ -8240,6 +8305,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function startExercise() {
     _showFeedback(false);
     initA();
+    _sayUnlock();
     blocks  = getBlocks(tBpm);
     pauses  = getPauses(tBpm, blocks.length);
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
@@ -8439,6 +8505,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         } else {
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly);
         }
+      }
+      // Ansage vor den ersten Click-only-Takten des Blocks (Takt bzw. Phrase 9)
+      if (bt === 0 && isTimingBlock && br === 7 && loopBars > 8) {
+        var phraseSec = phraseLen * tickSecAt(when);
+        _sayAt('Timing training', when + phraseSec - Math.min(phraseSec, 1.6));
       }
       // Der Hinweis wechselt an derselben Taktgrenze wie die Infozeile.
       _visQ.push({ t: when, bt: bt, info: _info,
