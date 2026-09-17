@@ -918,6 +918,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .dl-stat-num small { font-size: 0.5em; font-weight: 500; color: rgba(255,255,255,0.55); margin: 0 5px 0 2px; }
 .dl-stat-num small:last-child { margin-right: 0; }
 .dl-stat-lbl { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-top: 6px; }
+.dl-stat-cap { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.dl-stat-wide { grid-column: 1 / -1; }
 .dl-stat-note { font-size: 12px; color: rgba(255,255,255,0.45); text-align: center; margin-top: 14px; line-height: 1.6; }
 
 .dl-set-sec { padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -1769,21 +1771,67 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var _statsLastSave = 0;
   var _stats = _statsLoad();
 
+  // ── Spielzeit pro Woche und Wochenrekord (Erwin, 17.09.2026) ──
+  // Dieselbe Uhr wie „Time played", gezählt je Kalenderwoche (ISO, Montag bis
+  // Sonntag, Gerätezeit). `wk` ist die laufende Woche, `bestSec`/`bestWk` die
+  // beste je erreichte — die laufende zählt mit, sobald sie vorn liegt.
+  // Erst ab dieser Version erfasst: frühere Wochen sind nicht bekannt.
+  function _weekId(d) {
+    d = d || new Date();
+    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    var day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);                 // Donnerstag derselben Woche
+    var y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    var w = Math.ceil(((t - y0) / 86400000 + 1) / 7);
+    return t.getUTCFullYear() + '-W' + (w < 10 ? '0' : '') + w;
+  }
+  function _weekLabel(id) {
+    var m = /^(\d{4})-W(\d{2})$/.exec(id || '');
+    if (!m) return '';
+    var jan4 = new Date(Date.UTC(+m[1], 0, 4));
+    var mon = new Date(jan4);
+    mon.setUTCDate(jan4.getUTCDate() - (jan4.getUTCDay() || 7) + 1 + (+m[2] - 1) * 7);
+    var sun = new Date(mon); sun.setUTCDate(mon.getUTCDate() + 6);
+    var f = function(x, o) { return x.toLocaleDateString('en-US', Object.assign({ timeZone: 'UTC' }, o)); };
+    return mon.getUTCMonth() === sun.getUTCMonth()
+      ? f(mon, { month: 'short', day: 'numeric' }) + '–' + sun.getUTCDate()
+      : f(mon, { month: 'short', day: 'numeric' }) + ' – ' + f(sun, { month: 'short', day: 'numeric' });
+  }
+  // Neue Woche angebrochen? Dann beginnt die laufende bei 0; ihr alter Wert
+  // steckt schon im Rekord, falls er einer war.
+  function _statsRollWeek() {
+    var now = _weekId();
+    if (_stats.wk === now) return false;
+    if (_stats.wkSec > _stats.bestSec) { _stats.bestSec = _stats.wkSec; _stats.bestWk = _stats.wk; }
+    _stats.wk = now; _stats.wkSec = 0;
+    return true;
+  }
+
   function _statsLoad() {
+    var o = { sec: 0, strokes: 0, wk: '', wkSec: 0, bestSec: 0, bestWk: '' };
     try {
       var p = JSON.parse(localStorage.getItem(_STATS_KEY) || 'null');
-      if (p) return { sec: Math.max(0, +p.sec || 0), strokes: Math.max(0, Math.floor(+p.strokes || 0)) };
+      if (p) {
+        o.sec = Math.max(0, +p.sec || 0);
+        o.strokes = Math.max(0, Math.floor(+p.strokes || 0));
+        o.wk = p.wk || ''; o.wkSec = Math.max(0, +p.wkSec || 0);
+        o.bestSec = Math.max(0, +p.bestSec || 0); o.bestWk = p.bestWk || '';
+      }
     } catch(e) {}
-    return { sec: 0, strokes: 0 };
+    return o;
   }
   function _statsSave() {
     _statsLastSave = Date.now();
     try {
-      localStorage.setItem(_STATS_KEY, JSON.stringify({ sec: Math.round(_stats.sec * 10) / 10, strokes: _stats.strokes }));
+      localStorage.setItem(_STATS_KEY, JSON.stringify({
+        sec: Math.round(_stats.sec * 10) / 10, strokes: _stats.strokes,
+        wk: _stats.wk, wkSec: Math.round(_stats.wkSec * 10) / 10,
+        bestSec: Math.round(_stats.bestSec * 10) / 10, bestWk: _stats.bestWk
+      }));
     } catch(e) {}
   }
   function _statsClear() {
-    _stats = { sec: 0, strokes: 0 };
+    _stats = { sec: 0, strokes: 0, wk: '', wkSec: 0, bestSec: 0, bestWk: '' };
     _statQ.length = 0;
     _statsDirty = false;
     try { localStorage.removeItem(_STATS_KEY); } catch(e) {}
@@ -1796,6 +1844,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var sec = +o.sec || 0, k = Math.floor(+o.strokes || 0);
     if (sec > _stats.sec)   { _stats.sec = sec;   ch = true; }
     if (k > _stats.strokes) { _stats.strokes = k; ch = true; }
+    // Wochen: gleiche Woche → größerer Wert; der andere Stand ist eine Woche
+    // weiter → seine übernehmen; seine ältere Woche zählt nur für den Rekord.
+    if (o.wk) {
+      var ws = +o.wkSec || 0;
+      if (o.wk === _stats.wk) {
+        if (ws > _stats.wkSec) { _stats.wkSec = ws; ch = true; }
+      } else if (o.wk > (_stats.wk || '')) {
+        if (_stats.wkSec > _stats.bestSec) { _stats.bestSec = _stats.wkSec; _stats.bestWk = _stats.wk; }
+        _stats.wk = o.wk; _stats.wkSec = ws; ch = true;
+      } else if (ws > _stats.bestSec) {
+        _stats.bestSec = ws; _stats.bestWk = o.wk; ch = true;
+      }
+    }
+    if ((+o.bestSec || 0) > _stats.bestSec) { _stats.bestSec = +o.bestSec; _stats.bestWk = o.bestWk || ''; ch = true; }
+    if (_stats.wkSec > _stats.bestSec) { _stats.bestSec = _stats.wkSec; _stats.bestWk = _stats.wk; ch = true; }
     if (ch) _statsSave();
     return ch;
   }
@@ -1818,8 +1881,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var added = false;
     while (_statQ.length && _statQ[0].t <= upTo) {
       var e = _statQ.shift();
+      if (!added) _statsRollWeek();
       _stats.sec += e.d;
       _stats.strokes += e.n;
+      _stats.wkSec += e.d;
+      if (_stats.wkSec > _stats.bestSec) { _stats.bestSec = _stats.wkSec; _stats.bestWk = _stats.wk; }
       added = true;
     }
     if (added) {
@@ -5834,7 +5900,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260917-172310';
+  var DL_BUILD = '20260917-173232';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6024,7 +6090,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       course:  _cState,
       lessons: _getTotalLessons(),
       minutes: _getTotalMinutes(),
-      stats:   { sec: Math.round(_stats.sec), strokes: _stats.strokes },
+      stats:   { sec: Math.round(_stats.sec), strokes: _stats.strokes,
+                 wk: _stats.wk || undefined, wkSec: Math.round(_stats.wkSec),
+                 bestSec: Math.round(_stats.bestSec), bestWk: _stats.bestWk || undefined },
       resetId: _resetSeen() || undefined
     });
   }
@@ -9314,8 +9382,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function _renderStats() {
     if (playing && aCtx) _statsDrain(aCtx.currentTime);   // live mitzählen, wenn offen
+    if (_statsRollWeek()) _statsSave();                      // Wochenwechsel, während das Fenster offen ist
     var info = _getLevelInfo();
     var lessons = _getTotalLessons();
+    // Abgeschlossene Übungen: nur solche, die es im Kurs noch gibt
+    var inCourse = {}, courseTotal = 0;
+    Object.keys(_catPool).forEach(function(c) {
+      _catPool[c].forEach(function(e) { if (!inCourse[e.id]) { inCourse[e.id] = 1; courseTotal++; } });
+    });
+    var exDone = (_cState.completed || []).filter(function(id) { return inCourse[id]; }).length;
+    var bestLbl = !_stats.bestSec ? 'No record yet'
+                : (_stats.bestWk === _stats.wk ? 'This week' : _weekLabel(_stats.bestWk));
     var bar = function(lbl, pct) {
       return '<div class="dl-stat-bar-row"><span class="dl-stat-bar-lbl">' + lbl + '</span>' +
              '<span class="dl-stat-bar"><i style="width:' + Math.min(100, pct).toFixed(1) + '%"></i></span>' +
@@ -9327,6 +9404,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       '<div class="dl-stat-grid">' +
         '<div class="dl-stat-tile"><div class="dl-stat-num">' + _fmtPlayTime(_stats.sec) + '</div><div class="dl-stat-lbl">Time played</div></div>' +
         '<div class="dl-stat-tile"><div class="dl-stat-num">' + _fmtNum(_stats.strokes) + '</div><div class="dl-stat-lbl">Strokes played</div></div>' +
+        '<div class="dl-stat-tile"><div class="dl-stat-num">' + _fmtPlayTime(_stats.wkSec) + '</div><div class="dl-stat-lbl">This week</div>' +
+          '<div class="dl-stat-cap">' + _weekLabel(_weekId()) + '</div></div>' +
+        '<div class="dl-stat-tile"><div class="dl-stat-num">' + _fmtPlayTime(_stats.bestSec) + '</div><div class="dl-stat-lbl">Best week</div>' +
+          '<div class="dl-stat-cap">' + bestLbl + '</div></div>' +
+        '<div class="dl-stat-tile dl-stat-wide"><div class="dl-stat-num">' + _fmtNum(exDone) + '<small>of ' + _fmtNum(courseTotal) + '</small></div>' +
+          '<div class="dl-stat-lbl">Exercises completed</div></div>' +
       '</div>' +
       '<p class="dl-stat-note">' + _fmtNum(lessons) + ' lesson' + (lessons === 1 ? '' : 's') + ' completed<br>' +
       'Counts only what you play: no count-ins, breaks or clicks.</p>';
