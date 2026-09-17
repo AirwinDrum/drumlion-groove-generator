@@ -963,13 +963,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 #dgCelebEmoji { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+#dgCelebEmoji svg { display: block; width: 72px; height: 72px; margin: 0 auto; }
+/* Auch lange Übungsnamen dürfen die Karte nicht über den Bildschirm schieben */
+#dgCelebCard { box-sizing: border-box; max-width: min(440px, calc(100vw - 32px)); }
+@media (max-width: 480px) { #dgCelebCard { padding: 32px 22px; } }
 #dgCelebTitle {
   font-size: clamp(24px, 5vw, 32px); font-weight: 800;
   color: #C9A84C; letter-spacing: 0.5px; margin-bottom: 8px;
 }
 #dgCelebSub {
   font-size: clamp(14px, 2.5vw, 17px); color: rgba(255,255,255,0.7);
-  margin-bottom: 20px;
+  margin-bottom: 20px; text-wrap: pretty;
 }
 #dgCelebDismiss {
   background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.4);
@@ -1992,18 +1996,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return null;
   }
 
-  function _showDailyCelebration(milestone) {
-    var configs = {
-      10: { emoji: '⭐', title: '10 Minutes Today!', sub: 'Great start — keep the momentum going!' },
-      20: { emoji: '🔥', title: '20 Minutes Today!', sub: 'You crushed your daily goal!' },
-      30: { emoji: '🏆', title: '30 Minutes Today!', sub: 'Absolutely on fire. Legendary session!' }
-    };
-    var cfg = configs[milestone] || configs[20];
-
+  // Feier-Overlay mit Konfetti. Eine Warteschlange verhindert, dass sich zwei
+  // Anlässe gegenseitig überschreiben (Tagesziel und abgeschlossene Übung
+  // können im selben Moment fällig werden).
+  var _celebQueue = [], _celebOpen = false;
+  function _celebrate(cfg) {
+    if (_celebOpen) { _celebQueue.push(cfg); return; }
+    _celebOpen = true;
     var overlay = document.getElementById('dgCelebOverlay');
-    document.getElementById('dgCelebEmoji').textContent  = cfg.emoji;
-    document.getElementById('dgCelebTitle').textContent  = cfg.title;
-    document.getElementById('dgCelebSub').textContent    = cfg.sub;
+    var icon = document.getElementById('dgCelebEmoji');
+    if (cfg.iconHtml) icon.innerHTML = cfg.iconHtml; else icon.textContent = cfg.emoji || '';
+    document.getElementById('dgCelebTitle').textContent = cfg.title;
+    var sub = document.getElementById('dgCelebSub');
+    sub.textContent = '';
+    (cfg.lines || [cfg.sub]).forEach(function(line, i) {
+      if (i) sub.appendChild(document.createElement('br'));
+      sub.appendChild(document.createTextNode(line));
+    });
+    document.getElementById('dgCelebDismiss').textContent = cfg.button || 'Keep going!';
 
     // spawn confetti
     var colors = ['#C9A84C','#e85d8a','#5b8fd9','#66bb6a','#ff7043','#ab47bc'];
@@ -2028,14 +2038,48 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     overlay.classList.add('show');
 
+    var closed = false;
     function dismiss() {
+      if (closed) return;
+      closed = true;
       overlay.classList.remove('show');
       overlay.querySelectorAll('.dgConfettiPiece').forEach(function(p){ p.remove(); });
+      _celebOpen = false;
+      var next = _celebQueue.shift();
+      if (next) setTimeout(function() { _celebrate(next); }, 250);
     }
     document.getElementById('dgCelebDismiss').onclick = dismiss;
     overlay.onclick = function(e){ if (e.target === overlay) dismiss(); };
-    setTimeout(dismiss, 10000);
+    if (cfg.autoMs !== 0) setTimeout(dismiss, cfg.autoMs || 10000);
   }
+
+  function _showDailyCelebration(milestone) {
+    var configs = {
+      10: { emoji: '⭐', title: '10 Minutes Today!', sub: 'Great start — keep the momentum going!' },
+      20: { emoji: '🔥', title: '20 Minutes Today!', sub: 'You crushed your daily goal!' },
+      30: { emoji: '🏆', title: '30 Minutes Today!', sub: 'Absolutely on fire. Legendary session!' }
+    };
+    _celebrate(configs[milestone] || configs[20]);
+  }
+
+  // Übung endgültig abgeschlossen: Endtempo gespielt, sie kommt nie wieder
+  // (Erwin, 17.09.2026). Bleibt stehen, bis der Schlagzeuger tippt — das
+  // passiert selten genug, um es nicht nach ein paar Sekunden verschwinden zu lassen.
+  var _CHECK_ICON = '<svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="34" fill="#C9A84C"/>' +
+                    '<path d="M21 37.5l10 10 20-22" fill="none" stroke="#0a0a0a" stroke-width="6" ' +
+                    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function _showExerciseComplete(ex) {
+    var goal = _exBpm(ex, _exSteps(ex) - 1);
+    _celebrate({
+      iconHtml: _CHECK_ICON,
+      title: 'Exercise complete!',
+      lines: [ex.name + ' — goal tempo of ' + goal + ' BPM reached.',
+              'This exercise is finished for good. On to new ones!'],
+      button: 'Keep going!',
+      autoMs: 0
+    });
+  }
+
 
   // ── EXERCISES ───────────────────────────────────────────────
   // noteValue   : 'quarter' | 'eighth' | 'sixteenth' | 'triplet'
@@ -5790,7 +5834,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260917-165804';
+  var DL_BUILD = '20260917-172310';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8530,7 +8574,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_doneNextArmed) return;
     _doneNextArmed = false;
     _showFeedback(false);
+    // War das die Lektion im Endtempo, landet die Übung jetzt in `completed`
+    var played = _shownLesson;
+    var doneBefore = (_cState.completed || []).length;
     _advanceState();
+    var mastered = (played && _cState.completed.length > doneBefore &&
+                    _cState.completed.indexOf(played.ex.id) !== -1) ? played.ex : null;
     // Transition animation
     var wrap = document.querySelector('.dg-inner');
     if (wrap) {
@@ -8539,9 +8588,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setTimeout(function() {
         _loadCurrentLesson(false);
         wrap.style.opacity = '1';
+        if (mastered) _showExerciseComplete(mastered);
       }, 400);
     } else {
       _loadCurrentLesson(false);
+      if (mastered) _showExerciseComplete(mastered);
     }
   }
 
