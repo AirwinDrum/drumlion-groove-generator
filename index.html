@@ -1954,22 +1954,65 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       localStorage.setItem(_lessonsKey, String(newLessons));
     } catch(e) {}
     _counterRemember();
-    // detect chapter / level crossings — chapter relativ zum Level (gleiche Basis wie der Balken)
-    var prevLevel   = Math.floor(prevLessons / LESSONS_PER_LEVEL);
-    var newLevel    = Math.floor(newLessons  / LESSONS_PER_LEVEL);
-    if (newLevel > prevLevel) return 'level';
-    var prevChapter = Math.floor((prevLessons % LESSONS_PER_LEVEL) / LESSONS_PER_CHAPTER);
-    var newChapter  = Math.floor((newLessons  % LESSONS_PER_LEVEL) / LESSONS_PER_CHAPTER);
-    if (newChapter > prevChapter) {
-      _cState.chapterLessons = 0;
-      _saveState();
-      return 'chapter';
-    }
+    // Level und Chapter hängen seit dem 18.09.2026 an den erreichten Stufen,
+    // nicht mehr an der Lektionszahl — gemeldet wird der Übergang deshalb in
+    // `_doneNext`, wenn die Stufe gutgeschrieben ist.
     return null;
   }
 
+  // ── Fortschritt = erreichte Tempostufen (Erwin, 18.09.2026) ──────────
+  // Bis hierher zählten Level, Chapter und Academy die GESPIELTEN Lektionen.
+  // Seit es „Too easy / Too hard" gibt, ist eine Lektion aber nicht mehr eine
+  // Stufe: „Too easy" springt zwei oder drei, „Too hard" bleibt stehen. Zwei
+  // Schlagzeuger mit gleich vielen Lektionen standen deshalb gleich hoch,
+  // obwohl der eine 6.127 Stufen geschafft hatte und der andere keine.
+  // Gezählt wird die HÖCHSTE je erreichte Stufe (`entry.best`) — nach „Too hard"
+  // geht dadurch kein Balken zurück. Eine abgeschlossene Übung zählt voll.
+  // Fleiß (Lektionen, Zeit, Schläge, Woche) steht weiter in den Stats.
+  var _stepsById = null, _masteredCache = null;
+  function _exStepsById(id) {
+    if (!_stepsById) {
+      _stepsById = {};
+      EXERCISES.forEach(function(ex) { if (ex.beats) _stepsById[ex.id] = _exSteps(ex); });
+    }
+    return _stepsById[id] || 0;
+  }
+  function _masteredInvalidate() { _masteredCache = null; }
+  // Beim Wechsel von Lektionen auf Stufen darf niemand zurückfallen: wer schon
+  // mehr Lektionen gespielt als Stufen erreicht hat (alles vor dem 18.09.2026),
+  // behält seinen Stand als Untergrenze, bis die Stufen ihn überholen.
+  function _ensureProgressFloor() {
+    if (!_cState || typeof _cState.pfloor === 'number') return;
+    _cState.pfloor = Math.max(_masteredRaw(), _getTotalLessons() || 0);
+  }
+  function _masteredSteps() {
+    _ensureProgressFloor();
+    return Math.max(_masteredRaw(), (_cState && _cState.pfloor) || 0);
+  }
+  function _masteredRaw() {
+    if (_masteredCache != null) return _masteredCache;
+    var n = 0, seen = {};
+    if (_cState) {
+      (_cState.completed || []).forEach(function(id) {
+        if (seen[id]) return;
+        seen[id] = 1; n += _exStepsById(id);
+      });
+      Object.keys(_cState.cats || {}).forEach(function(c) {
+        var k = _cState.cats[c];
+        if (!k) return;
+        (k.active || []).concat(k.park || []).forEach(function(en) {
+          if (!en || seen[en.id]) return;
+          seen[en.id] = 1;
+          n += Math.min(Math.max(en.best || 0, en.bpmStep || 0), _exStepsById(en.id));
+        });
+      });
+    }
+    _masteredCache = n;
+    return n;
+  }
+
   function _getLevelInfo(offset) {
-    var totalLessons    = _getTotalLessons() + (offset || 0);
+    var totalLessons    = _masteredSteps() + (offset || 0);
     var level           = Math.min(TOTAL_LEVELS, Math.floor(totalLessons / LESSONS_PER_LEVEL) + 1);
     var lessonsInLevel  = totalLessons % LESSONS_PER_LEVEL;
     var chapter         = Math.min(CHAPTERS_PER_LEVEL, Math.floor(lessonsInLevel / LESSONS_PER_CHAPTER) + 1);
@@ -5764,7 +5807,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         coordination: _initCat('coordination'),  // leer bis Inhalt da ist
         rudiments:    { active: [], introIdx: 0, counter: 0, lastId: null }
       },
-      completed: [], total: 0, chapterLessons: 0, history: [], bpmHalved: 1
+      completed: [], total: 0, chapterLessons: 0, history: [], bpmHalved: 1, pfloor: 0
     };
   }
 
@@ -5838,6 +5881,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function _saveState() {
+    _masteredInvalidate();
     // localStorage sofort (kostet nichts, ist der Offline-Fallback),
     // der Server-Schreibvorgang wird gedrosselt — siehe _syncSchedule().
     try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
@@ -5862,6 +5906,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // damit der Request das folgende Neuladen überlebt.
     if (typeof _syncReady === 'function' && _syncReady()) {
       _cState = _initState();
+      _masteredInvalidate();
       _syncPush(true, true);   // Reset: bewusst rückwärts schreiben
     }
     setTimeout(function(){ location.reload(); }, 250);
@@ -5889,6 +5934,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   var _cState = _loadState();
   _counterRemember();
+  _ensureProgressFloor();
 
   // ============================================================
   // CLOUD SYNC — Supabase (Fortschritt geräteübergreifend)
@@ -5900,7 +5946,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260917-181851';
+  var DL_BUILD = '20260918-101832';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6283,6 +6329,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           _statsClear();
           _statsMerge(remote.stats);
           _cState = Object.keys(remote.course.cats).length ? _sanitizeCourse(remote.course) : _initState();
+          _masteredInvalidate();
+          _cState.pfloor = 0;   // Reset: auch die Untergrenze fällt weg
           if (!_cState.bpmHalved) _cState.bpmHalved = 1;
           try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
           _markResetSeen(remote.resetId);
@@ -6315,6 +6363,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           // dem 01.09.2026 nie lokal migriert, seine Stufen sind schon neu.
           var _before = JSON.stringify(remote.course);
           _cState = _sanitizeCourse(remote.course);
+          _masteredInvalidate();
+          _ensureProgressFloor();
           if (!_cState.bpmHalved) _cState.bpmHalved = 1;
           var _cleaned = JSON.stringify(_cState) !== _before;
           try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
@@ -6381,7 +6431,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // sonst käme sie nie wieder dran und würde in der Rotation übersprungen.
       if (!cs.active.length) {
         var nx = _introNext(cat, cs);
-        if (nx) cs.active.push({ id: nx.id, bpmStep: 0 });
+        if (nx) { cs.active.push({ id: nx.id, bpmStep: 0 }); cs.sinceNew = 0; }
       }
     });
   }
@@ -6457,11 +6507,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Rückmeldung zur gespielten Lektion bestimmt die nächste Tempostufe
     var _fb = _lessonFeedback;
     _lessonFeedback = null;
+    var _oldStep = entry.bpmStep || 0;
     entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
+    // Höchste je erreichte Stufe — Grundlage für Level und Balken
+    entry.best = Math.max(entry.best || 0, entry.bpmStep);
     if (_fb === 'easy') entry.fbEasy = (entry.fbEasy || 0) + 1; else delete entry.fbEasy;
     if (_fb === 'hard') entry.fbHard = (entry.fbHard || 0) + 1; else delete entry.fbHard;
     cs.lastId  = entry.id;
     cs.counter = (cs.counter || 0) + 1;
+    // Nachschub nach STUFEN, nicht nach Erscheinungen (Erwin, 18.09.2026):
+    // mit „Too easy" ging das Tempo schnell hoch, neue Übungen kamen aber
+    // weiter erst nach fünf Erscheinungen der Kategorie — also alle 20
+    // Lektionen. Fill 1 stand bei 130 BPM, Fill 2 war noch nicht in Sicht.
+    cs.sinceNew = (cs.sinceNew || 0) + Math.max(1, entry.bpmStep - _oldStep);
 
     // Graduation: Endtempo gespielt → abgeschlossen, kommt nie wieder
     if (entry.bpmStep >= _exSteps(lesson.ex)) {
@@ -6469,11 +6527,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
     }
 
-    // Neue Übung einführen: alle STEPS_PER_NEW_EX Erscheinungen ODER wenn keine aktive mehr
-    if ((cs.counter % STEPS_PER_NEW_EX === 0 || cs.active.length === 0) &&
+    // Neue Übung einführen: alle STEPS_PER_NEW_EX Stufen ODER wenn keine aktive mehr
+    if ((cs.sinceNew >= STEPS_PER_NEW_EX || cs.active.length === 0) &&
         cs.active.length < MAX_ACTIVE_PER_CAT) {
       var _nx = _introNext(cat, cs);
-      if (_nx) cs.active.push({ id: _nx.id, bpmStep: 0 });
+      if (_nx) { cs.active.push({ id: _nx.id, bpmStep: 0 }); cs.sinceNew = 0; }
     }
 
     // Coordination/Rudiments lazy-initialisieren wenn Level-Gate erreicht
@@ -8716,7 +8774,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // War das die Lektion im Endtempo, landet die Übung jetzt in `completed`
     var played = _shownLesson;
     var doneBefore = (_cState.completed || []).length;
+    var lvlBefore = _getLevelInfo();
     _advanceState();
+    _masteredInvalidate();
+    var lvlAfter = _getLevelInfo();
+    var milestone = (lvlAfter.level > lvlBefore.level) ? 'level'
+                  : (lvlAfter.chapter !== lvlBefore.chapter) ? 'chapter' : null;
     var mastered = (played && _cState.completed.length > doneBefore &&
                     _cState.completed.indexOf(played.ex.id) !== -1) ? played.ex : null;
     // Transition animation
@@ -8727,10 +8790,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setTimeout(function() {
         _loadCurrentLesson(false);
         wrap.style.opacity = '1';
+        if (milestone === 'level')   setInfo('🎯 Level complete!');
+        if (milestone === 'chapter') setInfo('⭐ Chapter complete!');
         if (mastered) _showExerciseComplete(mastered);
       }, 400);
     } else {
       _loadCurrentLesson(false);
+      if (milestone === 'level')   setInfo('🎯 Level complete!');
+      if (milestone === 'chapter') setInfo('⭐ Chapter complete!');
       if (mastered) _showExerciseComplete(mastered);
     }
   }
@@ -8741,10 +8808,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
     _statsCommit(true);
-    var _milestone = _addLessonTime(_lessonDurationMinutes());
-    _updateLevelUI(-1);
-    if (_milestone === 'level')   setTimeout(function(){ setInfo('🎯 Level complete!');   }, 800);
-    if (_milestone === 'chapter') setTimeout(function(){ setInfo('⭐ Chapter complete!'); }, 800);
+    _addLessonTime(_lessonDurationMinutes());
+    _updateLevelUI();
     var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
     if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
     document.getElementById('dgTotal').style.display='inline';
