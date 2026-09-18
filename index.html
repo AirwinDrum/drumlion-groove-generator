@@ -885,6 +885,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   padding: 3px 6px; font: inherit; font-size: 14px;
 }
 .dev-tempo-unit { font-size: 12px; color: rgba(255,255,255,0.6); }
+.dev-tempo-range {
+  font-size: 12px; color: #C9A84C; white-space: nowrap; font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
 
 /* Kopfzeile rechts: Drum Key, Stats, Einstellungen als eine Gruppe */
 .ni-tools { display: flex; align-items: center; gap: 6px; }
@@ -1399,6 +1403,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       <input type="range" id="dgDevTempoRange" min="30" max="300" step="1" aria-label="Tempo (dev)">
       <input type="number" id="dgDevTempoNum" min="30" max="300" step="1" aria-label="Tempo (dev)">
       <span class="dev-tempo-unit">BPM</span>
+      <span class="dev-tempo-range" id="dgDevRange"></span>
     </div>
     <div id="dgCompletedBanner" style="display:none;" class="dl-completed-banner">✔ Completed</div>
     <!-- Emoji-Grafiken 🥱 👌 🥵: Noto Emoji von Google (github.com/googlefonts/noto-emoji,
@@ -5950,7 +5955,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-120632';
+  var DL_BUILD = '20260918-121533';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8959,6 +8964,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var nIn = document.getElementById('dgDevTempoNum');
     if (r && document.activeElement !== r) r.value = tBpm;
     if (nIn && document.activeElement !== nIn) nIn.value = tBpm;
+    // Grenzen der geladenen Übung: erste und letzte Tempostufe, dazu wo wir stehen
+    var rg = document.getElementById('dgDevRange');
+    if (rg) {
+      var txt = '';
+      try {
+        if (GROOVE && GROOVE.beats) {
+          var n  = _exSteps(GROOVE);
+          var lo = _exBpm(GROOVE, 0), hi = _exBpm(GROOVE, n - 1);
+          var st = _stepIndexFor(GROOVE, tBpm) + 1;
+          var sw = GROOVE.warmup ? (GROOVE.warmup.step + '→' + GROOVE.step) : (GROOVE.step || '?');
+          txt = lo + '–' + hi + ' BPM · Stufe ' + st + '/' + n + ' · Schritt ' + sw;
+        }
+      } catch(e) {}
+      rg.textContent = txt;
+    }
   }
   function _devTempoSet(v) {
     v = Math.round(+v);
