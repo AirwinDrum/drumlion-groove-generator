@@ -224,12 +224,34 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   text-overflow: ellipsis;
   max-width: 100%;
 }
+/* Rechte Kante: zwei Zeilen übereinander wie in der Mitte (Kategorie/Titel).
+   Oben Block + Rep in derselben Größe wie die BPM-Zahl links — die bleibt
+   immer stehen, auch während der Lektion (Erwin, 18.09.2026). Darunter die
+   laufende Taktzahl; ihre Zeile ist dauerhaft reserviert, damit beim Start
+   nichts springt. */
+.ni-right-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
 .notation-info-right {
   color: #ffffff;
-  font-size: clamp(14px, 2.2vw, 18px);
+  font-size: clamp(17px, 3vw, 24px);
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+  line-height: 1.05;
+}
+.notation-info-bar {
+  color: rgba(255,255,255,0.72);
+  font-size: clamp(11px, 1.8vw, 15px);
   font-weight: 500;
   text-align: right;
   white-space: nowrap;
+  line-height: 1;
+  min-height: 1em;
 }
 
 /* Notation box — volle Breite, kein seitlicher Radius */
@@ -710,6 +732,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 /* Im Rampen-Modus bleibt nur Notation + Start/Stop stehen */
 body.ramp-mode .notation-info-left,
 body.ramp-mode .notation-info-right,
+body.ramp-mode .notation-info-bar,
 body.ramp-mode .metro-cluster,
 body.ramp-mode .legend-btn,
 body.ramp-mode .phase-row,
@@ -898,10 +921,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 /* Handy: die zwei neuen Knöpfe kosten ~60px, die der Titel in der Mitte
    braucht. Die Blockinfo steht dort deshalb zweizeilig: „1 Block" / „Rep 5". */
 .notation-info-right .ni-sep { white-space: pre; }
-@media (max-width: 480px) {
-  .ni-tools { gap: 4px; }
+/* Seit Block und Rep so groß stehen wie die BPM-Zahl (Erwin, 18.09.2026)
+   braucht die Zeile mehr Platz als früher: bis 700 px stehen die beiden
+   Angaben untereinander, sonst schiebt sich die rechte Gruppe in den Titel. */
+@media (max-width: 700px) {
   .notation-info-right .ni-sep { display: none; }
   .notation-info-right .ni-rep { display: block; }
+}
+@media (max-width: 480px) {
+  .ni-tools { gap: 4px; }
 }
 .legend-btn:focus-visible, .legend-close:focus-visible,
 .dl-set-btn:focus-visible, .dl-set-link:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
@@ -1043,7 +1071,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
      sie werden verkleinert statt ausgeblendet. */
   .notation-info { padding-left: 8px; padding-right: 8px; gap: 6px; }
   .notation-info-left  { font-size: clamp(13px, 3.4vw, 17px); }
-  .notation-info-right { font-size: clamp(10px, 2.6vw, 13px); text-align: right; line-height: 1.2; }
+  .notation-info-right { font-size: clamp(13px, 3.4vw, 17px); text-align: right; line-height: 1.1; }
+  .notation-info-bar   { font-size: clamp(9px, 2.2vw, 12px); }
   .notation-info-title { font-size: clamp(17px, 4.2vw, 26px); }
   .notation-info-cat   { font-size: clamp(9px, 2vw, 11px); letter-spacing: 1.5px; }
   .notation-box { padding-left: 8px; padding-right: 8px; }
@@ -1124,6 +1153,85 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
      Sync-Leiste. Level/Chapter/Lesson bleibt als Orientierung stehen —
      die Balken sind beim Üben die verzichtbarste Information. */
   .progress-row { display: none; }
+}
+
+/* ── Handy im Querformat: die Breite nutzen (Erwin, 18.09.2026) ───────────
+   Hochkant blieben unter dem Start-Knopf noch 273 px frei, quer nur 19 —
+   und genau dort liegt in Safari die Browser-Leiste. Der Knopf war auf dem
+   iPhone im Querformat deshalb nicht mehr zu treffen, obwohl er zu sehen war.
+   Die Ursache ist die Höhe, nicht der Knopf: dieselbe Spalte wie hochkant,
+   aber in 393 statt 852 Pixeln. Quer stehen Anzeige und Knopf deshalb
+   NEBENEINANDER — links Badge, Zeit und Blockleiste, rechts der große Knopf.
+   Das spart rund 80 px Höhe, die unten frei bleiben.
+   Die Bedingung trifft genau das liegende Handy: flach UND breit. 600 px, weil
+   das schmalste Querformat das iPhone SE mit 667 px ist; ein schmales flaches
+   Fenster darunter behält den Stapel. */
+@media (max-height: 560px) and (min-width: 600px) {
+  .dg-body {
+    display: grid;
+    grid-template-columns: 1fr minmax(210px, 32%);
+    grid-template-areas:
+      "status action"
+      "info   action"
+      "blocks action";
+    column-gap: clamp(16px, 3vw, 40px);
+    row-gap: 2px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  .dg-body > .phase-row  { grid-area: status; }
+  .dg-body > .phase-info { grid-area: info; }
+  .dg-body > #dgBlocks   { grid-area: blocks; }
+  .dg-body > .nav-row    { grid-area: action; margin-top: 0; align-self: center; }
+  /* Alles Weitere läuft in eigenen Zeilen unter den beiden Spalten durch */
+  .dg-body > .dev-tempo,
+  .dg-body > #dgCompletedBanner,
+  .dg-body > .level-display,
+  .dg-body > .space-hint,
+  .dg-body > #dgDevReset { grid-column: 1 / -1; }
+
+  /* Keine erzwungene Bildschirmhöhe mehr: `100dvh` rechnet die Browser-Leiste
+     nur dann richtig ein, wenn der Browser `dvh` kennt (iOS ab 15.4) — sonst
+     fällt es auf `100vh` zurück, und das ist die Höhe OHNE Leiste. Der Inhalt
+     wurde dadurch quer über den sichtbaren Bereich hinausgezogen. Quer nimmt
+     die Spalte deshalb einfach ihre eigene Höhe; sie ist jetzt kleiner als
+     jedes Querformat-Fenster und kann gar nicht mehr hinauslaufen. */
+  .dg-inner { min-height: 0; padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); }
+  body:has(.sync-bar:not(.hidden)) .dg-inner {
+    padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Der gewonnene Platz gehört den Noten — quer sind sie das Einzige, was
+     größer werden darf. */
+  .notation-box svg { max-height: 34dvh; }
+
+  /* Rückmeldung nach der Lektion: hochkant untereinander, quer nebeneinander.
+     Sonst ragte die Karte über den unteren Rand hinaus — „Too hard" war
+     angeschnitten und „Again" gar nicht mehr erreichbar. */
+  .dl-fbx { padding: 10px; }
+  .dl-fbx-card { width: min(760px, 100%); padding: 14px 18px 10px; }
+  .dl-fbx-eyebrow { font-size: 12px; }
+  .dl-fbx-title { margin: 4px 0 12px; font-size: clamp(20px, 3.2vw, 26px); }
+  .dl-fbx-opts { flex-direction: row; gap: 10px; }
+  .dl-fbx-btn {
+    grid-template-columns: 1fr; grid-template-rows: auto auto;
+    min-height: 0; padding: 10px 8px; justify-items: center; row-gap: 4px;
+  }
+  .dl-fbx-emo { grid-column: 1; grid-row: 1; }
+  .dl-fbx-emo img { width: 30px; height: 30px; }
+  .dl-fbx-txt { grid-column: 1; grid-row: 2; }
+  .dl-fbx-lbl { font-size: 18px; }
+  .dl-fbx-sub { font-size: 13px; }
+  .dl-fbx-again { margin-top: 4px; padding: 8px 16px; font-size: 15px; }
+
+  /* Stats und Einstellungen quer breiter statt höher — 440 px Spaltenbreite
+     in 393 px Höhe bedeutete sonst scrollen für jede Zahl. */
+  .legend-modal.dl-panel { width: min(760px, 94vw); max-height: 94vh; }
+  .dl-stat-where { margin-bottom: 12px; font-size: 16px; }
+  .dl-stat-grid { grid-template-columns: repeat(4, 1fr); margin-top: 12px; }
+  .dl-stat-tile { padding: 12px 6px 10px; }
+  .dl-stat-num  { font-size: clamp(22px, 3.4vw, 32px); }
+  .dl-stat-note { margin-top: 10px; }
 }
 </style>
 </head>
@@ -1223,7 +1331,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <span class="notation-info-title" id="dgName">Groove 1</span>
         </div>
         <div class="ni-right">
-        <span class="notation-info-right" id="dgInfoRight"></span>
+        <span class="ni-right-stack">
+          <span class="notation-info-right" id="dgInfoRight"></span>
+          <span class="notation-info-bar" id="dgInfoBar"></span>
+        </span>
         <div class="ni-tools">
         <!-- Drum Key -->
           <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
@@ -1652,6 +1763,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     quarterTriplet:    1.5,   // Vierteltriole        (3 per 2 beats)
     eighth:            2,     // Achtel               (2 per beat)
     eighthTriplet:     3,     // Achteltriole         (3 per beat)
+    // Der Kursbauer und die Rudiments schreiben 'triplet' statt
+    // 'eighthTriplet'. Ohne diese Zeile fiel beides auf den Standard 2 zurück
+    // und rechnete die Schläge pro Hand um ein Drittel zu niedrig — das
+    // verkürzte unter anderem die Pausen (Erwin, 18.09.2026).
+    triplet:           3,     // = eighthTriplet
     sixteenth:         4,     // 16tel                (4 per beat)
     quintuplet:        5,     // Quintole             (5 per beat)
     sixteenthTriplet:  6,     // 16tel-Triole/Sextole (6 per beat)
@@ -3492,6 +3608,28 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       [{inst:'hhAccent',line:-0.5,head:'x'}],
       [{inst:'kick',line:3.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
       [{inst:'hhAccent',line:-0.5,head:'x'}]
+    ]},
+
+        // ── TRIPLET GROOVES (5001+) ─────────────────────────────────
+    // Erste Triolen-Kategorie (Erwin, 18.09.2026). Achteltriolen auf der
+    // Hi-Hat, durchgehend mit einer Hand — bei 12 Anschlägen pro Takt ist die
+    // Hand die Grenze, nicht die Koordination. Deshalb Einstieg bei 60 BPM
+    // (180 Schläge/Hand) und Schluss bei 160 (480), also derselbe Endbereich
+    // wie bei den Achtel-Grooves, nur über 21 Stufen à 5 BPM.
+    {id:5001, cat:'triplets', name:'Triplet Groove 1', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves 1', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
     ]},
 
         // ── FILL INS (21–50) ────────────────────────────────────────
@@ -6020,7 +6158,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-154833';
+  var DL_BUILD = '20260918-235048';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8212,6 +8350,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('dgInfoRight').innerHTML =
       '<span>' + blocks.length + ' Block' + (blocks.length > 1 ? 's' : '') + '</span>' +
       (_repStr ? '<span class="ni-sep">  ·  </span><span class="ni-rep">' + _repStr + '</span>' : '');
+    // Die Taktzeile darunter gehört zur laufenden Lektion — beim Tempowechsel
+    // ist keine im Gange.
+    var _ib = document.getElementById('dgInfoBar');
+    if (_ib) _ib.textContent = '';
     bIdx=0; phase='idle';
     renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
     renderNot(-1, false);
@@ -8681,7 +8823,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         else rightStr += (grooveOn(br) ? ' · Groove 🥁' : ' · Click only 🎵');
       }
       document.getElementById('dgInfoLeft').innerHTML = cb.bpm + ' BPM' + (GROOVE.cat === 'notes' ? '<span class="ni-meter">4/4</span>' : '');
-      document.getElementById('dgInfoRight').textContent = rightStr;
+      // Block + Rep stehen oben rechts stehen und bleiben — der Takt läuft in
+      // der Zeile darunter (Erwin, 18.09.2026).
+      var _ib = document.getElementById('dgInfoBar');
+      if (_ib) _ib.textContent = rightStr;
       return '';
     }
 
@@ -9259,8 +9404,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     // ── HTML: Exercise Picker ────────────────────────────────
     function renderPicker() {
-      var cats2 = ['grooves','fillins','notes','rudiments','coordination'];
-      var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments', coordination:'Coordination'};
+      var cats2 = ['grooves','triplets','fillins','notes','rudiments','coordination'];
+      var labels = {grooves:'Grooves', triplets:'Triplet Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments', coordination:'Coordination'};
       var h = '';
       cats2.forEach(function(cat) {
         var exs = EXERCISES.filter(function(e){ return e.cat === cat; });
