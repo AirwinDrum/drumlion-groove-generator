@@ -5955,7 +5955,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-142909';
+  var DL_BUILD = '20260918-143320';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7067,34 +7067,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // deshalb braucht der Klick keine Kompensation mehr.
   var CLICK_OFFSET = 0;
 
-  // ── Click 30 % lauter (Erwin, 18.09.2026) ─────────────────────────────
-  // Am Pegel allein ging es nicht: der Hauptclick lag schon bei 1.0, darüber
-  // übersteuert die Summe aus Click und Schlagzeug. Die Lautheit kommt deshalb
-  // aus der Klangform — Rechteckwelle mit sanftem Tiefpass, zwei Millisekunden
-  // gehaltener Spitze und etwas längerem Ausklang. Damit die Spitze unter 1.0
-  // bleibt, werden alle Pegel mit 0,84 skaliert; die Verhältnisse zwischen
-  // Akzent, Hauptclick und Unterteilung bleiben dadurch unverändert.
-  // 18.09.2026, zweite Runde: Erwin meldet Übersteuerung. Zusammen mit dem
-  // Schlagzeug lag die Summe zu hoch — der Click hatte kaum noch Luft. Pegel
-  // deshalb auf 0,62: die Lautheit liegt damit wieder etwa beim alten Sinus,
-  // die Spitze aber nur noch bei rund 0,72 statt 0,97. Es bleibt also Platz
-  // für Snare und Kick, ohne dass etwas verzerrt.
-  var CLICK_SCALE = 0.62;
+  // ── Click ────────────────────────────────────────────────────────────
+  // 18.09.2026: kurzzeitig auf Rechteck mit Tiefpass umgestellt, um ihn lauter
+  // zu bekommen. Das übersteuerte in der Summe mit dem Schlagzeug, deshalb
+  // wieder der ursprüngliche Sinus mit den alten Werten.
   function playCountClick(accent, vol, when) {
     if (!aCtx) return;
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     t += CLICK_OFFSET; // Kompensation für MP3-Encoder-Delay
-    var o = aCtx.createOscillator(), g = aCtx.createGain(), lp = aCtx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = accent ? 3600 : 2600;   // nimmt der Rechteckwelle die Schärfe
-    lp.Q.value = 0.5;
-    o.connect(lp); lp.connect(g); g.connect(aCtx.destination);
+    var o = aCtx.createOscillator(), g = aCtx.createGain();
+    o.connect(g); g.connect(aCtx.destination);
     o.frequency.value = accent ? 1500 : 1100;
-    var lvl = (vol !== undefined ? vol : 0.46) * CLICK_SCALE;
-    g.gain.setValueAtTime(lvl, t);
-    g.gain.setValueAtTime(lvl, t + 0.002);       // kurz halten, das gibt Druck
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-    o.type = 'square'; o.start(t); o.stop(t + 0.07);
+    g.gain.setValueAtTime(vol !== undefined ? vol : 0.46, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    o.type = 'sine'; o.start(t); o.stop(t + 0.06);
   }
 
   // Zählende Stimme via Web Speech API (best-effort)
