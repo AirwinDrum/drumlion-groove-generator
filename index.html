@@ -5950,7 +5950,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-102715';
+  var DL_BUILD = '20260918-105214';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6731,6 +6731,55 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   var MAX_BLOCKS = 3;   // Erwin, 16.09.2026 — vorher bis zu 5
+
+  // ── Blöcke: Anzahl nach der Stufe INNERHALB der Übung (Erwin, 18.09.2026) ──
+  // Vorher entschied allein das Tempo: unter 100 BPM ein Block, darüber drei.
+  // Das passte nicht: Fill 1 bei 100 BPM (Viertel) bekam denselben Anlauf wie
+  // ein 16tel-Groove, eine dichte Übung bei 80 BPM dagegen gar keinen.
+  // Jetzt zählt, wie weit die Übung selbst schon ist:
+  //   erstes Drittel der Stufen  → 1 Block   (kennenlernen)
+  //   zweites Drittel            → 2 Blöcke  (festigen)
+  //   letztes Drittel            → 3 Blöcke  (ans Limit)
+  // Dauern: ein Block wie bisher nach Tempo, zwei Blöcke 40/60 s,
+  // drei Blöcke 20/40/60 s — immer auf volle 4 Takte aufgerundet.
+  function _blockBase(bpm) {
+    return bpm <= 50 ? 30 : bpm <= 70 ? 40 : bpm <= 80 ? 50 : 60;
+  }
+  function _stepIndexFor(ex, bpm) {
+    var steps = _exSteps(ex), best = 0, bestD = Infinity;
+    for (var i = 0; i < steps; i++) {
+      var d = Math.abs(_exBpm(ex, i) - bpm);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  }
+  function _blockCount(ex, bpm) {
+    if (!ex || !ex.beats) return 1;
+    var steps = _exSteps(ex);
+    if (steps <= 1) return 1;
+    return Math.min(MAX_BLOCKS, Math.floor(_stepIndexFor(ex, bpm) * 3 / steps) + 1);
+  }
+  // Anlauftempi. Ab 100 BPM aus der Speed-Tabelle wie bisher, darunter gab es
+  // keine — dort 80 % und 90 % des Zieltempos, dasselbe Verhältnis wie oben.
+  function _rampBpms(t, n) {
+    if (n <= 1) return [t];
+    if (t >= 100) {
+      var list;
+      if      (t <= 110) list = [t-30,t-20,t-10,t];
+      else if (t <= 160) list = [t-40,t-30,t-20,t-10,t];
+      else if (t <= 200) { var r1 = RAW_161[t-161]; list = [r1[0],r1[1],r1[2],r1[3],t]; }
+      else if (t <= 250) { var r2 = RAW_201[t-201]; list = [r2[0],r2[1],r2[2],r2[3],t]; }
+      else               list = [t-120,t-90,t-60,t-30,t];
+      return list.slice(-n);
+    }
+    var out = [];
+    if (n >= 3) out.push(Math.max(30, Math.round(t * 0.8)));
+    if (n >= 2) out.push(Math.max(30, Math.round(t * 0.9)));
+    out.push(t);
+    // Bei sehr langsamen Tempi können zwei Stufen zusammenfallen
+    return out.filter(function(b, i) { return out.indexOf(b) === i; });
+  }
+
   function getBlocks(t) {
     // Notes-Pillar: 1 Block, ~60 Sekunden, aufgerundet auf volle 4-Takt-Phrasen
     if (GROOVE.cat === 'notes') {
@@ -6742,28 +6791,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return [{ bpm: t, bars: bars, dur: bars * secPerBar }];
     }
 
-    var bpms, baseDurs;
-    // Block-BPMs und Basis-Dauern direkt aus Speed Tabelle.
-    // Erwin, 16.09.2026: unter 100 BPM immer nur EIN Block (81–99 mit der
-    // 60-s-Basis des Zielblocks), ab 100 BPM höchstens drei — es bleiben die
-    // letzten drei der Tabelle, die langsamsten fallen weg (siehe unten).
-    if      (t <= 50)  { bpms=[t];                        baseDurs=[30];             }
-    else if (t <= 70)  { bpms=[t];                        baseDurs=[40];             }
-    else if (t <= 80)  { bpms=[t];                        baseDurs=[50];             }
-    else if (t < 100)  { bpms=[t];                        baseDurs=[60];             }
-    else if (t <= 100) { bpms=[t-20,t-10,t];              baseDurs=[40,50,60];       }
-    else if (t <= 110) { bpms=[t-30,t-20,t-10,t];         baseDurs=[30,40,50,60];    }
-    else if (t <= 160) { bpms=[t-40,t-30,t-20,t-10,t];   baseDurs=[20,30,40,50,60]; }
-    else if (t <= 200) { var r=RAW_161[t-161]; bpms=[r[0],r[1],r[2],r[3],t]; baseDurs=[20,30,40,50,60]; }
-    else if (t <= 250) { var r=RAW_201[t-201]; bpms=[r[0],r[1],r[2],r[3],t]; baseDurs=[20,30,40,50,60]; }
-    else               { bpms=[t-120,t-90,t-60,t-30,t];  baseDurs=[20,30,40,50,60]; }
-    if (bpms.length > MAX_BLOCKS) {
-      bpms     = bpms.slice(-MAX_BLOCKS);
-      baseDurs = baseDurs.slice(-MAX_BLOCKS);
-    }
+    var want  = _blockCount(GROOVE, t);
+    var bpms  = _rampBpms(t, want);
+    var durs  = (bpms.length === 1) ? [_blockBase(t)]
+              : (bpms.length === 2) ? [40, 60]
+              :                       [20, 40, 60];
 
     return bpms.map(function(b, i) {
-      var bars = getBarsFromBase(b, baseDurs[i]);
+      var bars = getBarsFromBase(b, durs[i]);
       var dur  = bars * (GROOVE.beatsPerBar || 4) * 60 / b;
       return { bpm: b, bars: bars, dur: dur };
     });
@@ -6775,9 +6810,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (GROOVE.cat === 'notes') return [];  // Notes: 1 Block, keine Pausen
     if (!n || n <= 1) return [];
     var list;
-    if      (t <= 80)  list = [];
-    else if (t <= 90)  list = [15];
-    else if (t <= 100) list = [10,15];
+    // Seit dem 18.09.2026 kann es auch unter 100 BPM zwei oder drei Blöcke
+    // geben — dort braucht es also ebenfalls Pausen (vorher keine).
+    if      (t <= 80)  list = [10,10,10,15];
+    else if (t <= 90)  list = [10,10,10,15];
+    else if (t <= 100) list = [10,10,10,15];
     else if (t <= 110) list = [10,10,15];
     else if (t <= 160) list = [10,10,10,15];
     else if (t <= 200) list = [10,10,15,20];
