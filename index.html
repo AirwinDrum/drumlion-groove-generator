@@ -5955,7 +5955,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-142516';
+  var DL_BUILD = '20260918-142909';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -7074,9 +7074,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // gehaltener Spitze und etwas längerem Ausklang. Damit die Spitze unter 1.0
   // bleibt, werden alle Pegel mit 0,84 skaliert; die Verhältnisse zwischen
   // Akzent, Hauptclick und Unterteilung bleiben dadurch unverändert.
-  // Gemessen (OfflineAudioContext, Effektivwert über 0,3 s):
-  // vorher 0,0737 → jetzt 0,0949, also +29 %, Spitze 0,975 statt 0,974.
-  var CLICK_SCALE = 0.84;
+  // 18.09.2026, zweite Runde: Erwin meldet Übersteuerung. Zusammen mit dem
+  // Schlagzeug lag die Summe zu hoch — der Click hatte kaum noch Luft. Pegel
+  // deshalb auf 0,62: die Lautheit liegt damit wieder etwa beim alten Sinus,
+  // die Spitze aber nur noch bei rund 0,72 statt 0,97. Es bleibt also Platz
+  // für Snare und Kick, ohne dass etwas verzerrt.
+  var CLICK_SCALE = 0.62;
   function playCountClick(accent, vol, when) {
     if (!aCtx) return;
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
