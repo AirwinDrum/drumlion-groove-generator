@@ -5955,7 +5955,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-141541';
+  var DL_BUILD = '20260918-142516';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8563,11 +8563,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_rampMode) loopBars = 1e6;
     var eighthsLeft = loopBars * phraseLen;
 
-    // Timing-Training: Takte 1-8 voller Groove, dann alternierend Klick/Groove
+    // Timing-Training: Takte 1-8 voller Groove, dann alternierend zwei Takte
+    // Klick und zwei Takte Groove. Gerechnet wird in ECHTEN TAKTEN (Erwin,
+    // 18.09.2026): bei zweitaktigen Übungen ist eine Phrase zwei Takte lang,
+    // vorher zählte `b` Phrasen — das Timing-Training begann dort erst nach 16
+    // Takten. `barsPerPhrase` rechnet das um.
+    var barsPerPhrase   = isFill ? 2 : 1;
+    var TIMING_START_BAR = 8;
     function grooveOn(b) {
       if (!isTimingBlock) return true;
-      if (b < 8) return true;
-      return Math.floor((b - 8) / 2) % 2 !== 0;
+      var bar0 = b * barsPerPhrase;                 // erster Takt dieser Phrase
+      if (bar0 < TIMING_START_BAR) return true;
+      return Math.floor((bar0 - TIMING_START_BAR) / 2) % 2 !== 0;
     }
 
     // Hinweis für den Timing-Trainer, abhängig vom Takt.
@@ -8578,8 +8585,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     function cueFor(br) {
       if (!isTimingBlock) return null;
       if (!grooveOn(br)) {
+        var bar0 = br * barsPerPhrase;
         return { s: 'now', m: 'CLICK ONLY',
-                 u: 'keep playing · bar ' + (((br - 8) % 2) + 1) + ' of 2' };
+                 u: (barsPerPhrase === 2) ? 'keep playing · 2 bars'
+                                          : 'keep playing · bar ' + (((bar0 - TIMING_START_BAR) % 2) + 1) + ' of 2' };
       }
       if (!grooveOn(br + 1)) {
         return { s: 'warn', m: 'CLICK ONLY NEXT BAR', u: 'get ready' };
@@ -8599,7 +8608,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       var rightStr = 'Bar ' + realBar + '/' + totalRealBars;
       if (isTimingBlock) {
-        if (br < 8) rightStr += ' · Groove';
+        // ebenfalls in echten Takten, sonst stimmt die Zeile bei zweitaktigen
+        // Übungen nicht mit dem Hinweis überein (18.09.2026)
+        if (br * barsPerPhrase < TIMING_START_BAR) rightStr += ' · Groove';
         else rightStr += (grooveOn(br) ? ' · Groove 🥁' : ' · Click only 🎵');
       }
       document.getElementById('dgInfoLeft').innerHTML = cb.bpm + ' BPM' + (GROOVE.cat === 'notes' ? '<span class="ni-meter">4/4</span>' : '');
@@ -8646,8 +8657,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly);
         }
       }
-      // Ansage vor den ersten Click-only-Takten des Blocks (Takt bzw. Phrase 9)
-      if (bt === 0 && isTimingBlock && br === 7 && loopBars > 8) {
+      // Ansage vor den ersten Click-only-Takten des Blocks: in der Phrase davor
+      if (bt === 0 && isTimingBlock && (br + 1) * barsPerPhrase === TIMING_START_BAR && totalBars > TIMING_START_BAR) {
         var phraseSec = phraseLen * tickSecAt(when);
         _sayAt('Timing training', when + phraseSec - Math.min(phraseSec, 1.6));
       }
