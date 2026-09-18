@@ -6020,7 +6020,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-154135';
+  var DL_BUILD = '20260918-154833';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6274,6 +6274,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // sah deshalb keinen Unterschied — geschrieben wurden dann 0 Lektionen.
         var countersBehind = !!(remoteParsed && remoteParsed.lessons != null &&
                                 remoteParsed.lessons > _getTotalLessons());
+        var courseBehind   = !!(remoteParsed && remoteParsed.course &&
+                                (remoteParsed.course.total || 0) > ((_cState && _cState.total) || 0));
         if (remoteParsed && remoteParsed.resetId && remoteParsed.resetId !== _resetSeen()) {
           // Auf dem Server liegt ein Reset, den dieses Gerät noch nicht kennt
           _syncPull(function(changed) {
@@ -6285,7 +6287,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         }
         if (remoteParsed && remoteParsed.lessons != null)
           _remoteLessonsSeen = Math.max(_remoteLessonsSeen, remoteParsed.lessons);
-        if (remote > local || countersBehind) {
+        if (remote > local || countersBehind || courseBehind) {
           // Server ist weiter — nicht überschreiben, stattdessen übernehmen
           _syncSetStatus('spin', 'Newer progress found…');
           _syncPull(function(changed) {
@@ -6308,16 +6310,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // nachweislich hatte. Darunter wird nie geschrieben (außer beim Reset) — auch
   // nicht beim Schließen des Tabs, wo die Vorprüfung am Server entfällt.
   var _remoteLessonsSeen = -1;
+  var _remoteTotalSeen   = -1;   // weiteste Kursposition, die der Server hatte
 
   function _syncWrite(immediate, force) {
     if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
     var sendLessons = _getTotalLessons();
-    if (!force && sendLessons < _remoteLessonsSeen) {
-      // Lokal weniger Lektionen als der Server schon hatte: nicht schreiben.
-      // Der nächste Abgleich holt die Zähler vom Server zurück.
+    var sendTotal   = (_cState && _cState.total) || 0;
+    if (!force && (sendLessons < _remoteLessonsSeen || sendTotal < _remoteTotalSeen)) {
+      // Lokal weniger Lektionen ODER ein weniger weiter Kurs als der Server
+      // schon hatte: nicht schreiben. Der nächste Abgleich holt den Stand zurück.
       return;
     }
     _remoteLessonsSeen = force ? sendLessons : Math.max(_remoteLessonsSeen, sendLessons);
+    _remoteTotalSeen   = force ? sendTotal   : Math.max(_remoteTotalSeen, sendTotal);
     _syncPending = false;
     if (!immediate) _syncSetStatus('spin', 'Saving…');
     var opts = {
@@ -6410,6 +6415,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           _markResetSeen(remote.resetId);
           _counterRemember();
           _remoteLessonsSeen = remote.lessons || 0;   // Reset: ab hier gilt der neue, kleinere Stand
+          _remoteTotalSeen   = (remote.course && remote.course.total) || 0;
           _syncSetStatus('ok', 'Progress reset ✓');
           onDone(true);
           return;
@@ -6420,15 +6426,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var remoteCount = (remote.lessons != null) ? remote.lessons : (remote.course.total || 0);
         var localCount  = _getTotalLessons() || (_cState.total || 0);
         if (remote.lessons != null) _remoteLessonsSeen = Math.max(_remoteLessonsSeen, remote.lessons);
+        if (remote.course.total != null) _remoteTotalSeen = Math.max(_remoteTotalSeen, remote.course.total);
         // Kursposition vergleichen, damit ein Stand mit verlorenen Zählern nicht
         // einen lokal weiter gespielten Kurs überschreibt (siehe unten).
         var remoteTotal = (remote.course.total != null) ? remote.course.total : Infinity;
         var localTotal  = _cState.total || 0;
 
-        if (remoteCount > localCount && remoteTotal >= localTotal) {
+        // Übernommen wird, wenn der Server bei den Lektionen ODER beim Kurs
+        // weiter ist. Nur die Lektionen zu vergleichen reichte nicht: bei Bela
+        // war der Kursstand im Gerätespeicher verschwunden, die Lektionszahl
+        // aber noch da — der leere Kurs galt als gleichwertig und überschrieb
+        // am Server 42 Lektionen Fortschritt (18.09.2026).
+        if ((remoteCount > localCount || remoteTotal > localTotal) && remoteTotal >= localTotal) {
           try {
-            if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(remote.lessons));
-            if (remote.minutes != null) localStorage.setItem(_timeKey,    String(remote.minutes));
+            // Zähler nie verkleinern: hier gespielte Lektionen bleiben erhalten
+            if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(Math.max(remote.lessons, _getTotalLessons())));
+            if (remote.minutes != null) localStorage.setItem(_timeKey,    String(Math.max(remote.minutes, _getTotalMinutes())));
           } catch(e) {}
           _counterRemember();
           // Genauso bereinigen wie beim lokalen Laden (Zähler zuerst, weil
