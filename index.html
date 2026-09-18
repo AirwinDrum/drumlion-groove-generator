@@ -5831,6 +5831,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // aktuellen Level noch gesperrt ist. Werden nachgeholt, sobald das
       // Level stimmt — siehe `_introNext`.
       if (!p.cats[c].skip) p.cats[c].skip = [];
+      // 18.09.2026: Nachschub zählt Stufen statt Erscheinungen. Bestandsstände
+      // übernehmen ihren Platz im alten Fünfer-Takt, sonst käme die nächste
+      // neue Übung einmalig bis zu fünf Erscheinungen später.
+      if (typeof p.cats[c].sinceNew !== 'number') p.cats[c].sinceNew = (p.cats[c].counter || 0) % STEPS_PER_NEW_EX;
     });
     // Übungen können aus dem Bestand fallen (z.B. die Unisono-Übungen
     // am 02.09.2026). Aktive Einträge, die auf eine nicht mehr vorhandene
@@ -5946,7 +5950,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-101832';
+  var DL_BUILD = '20260918-102715';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
