@@ -5950,7 +5950,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-110229';
+  var DL_BUILD = '20260918-110942';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6692,6 +6692,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // ============================================================
   // SPEED TABELLE — exakt aus "Speed Tabelle.pdf" von Erwin Eitsen
+  // Seit dem 18.09.2026 nicht mehr in Gebrauch: die Anlauftempi kommen aus
+  // RAMP_PCT (70/85/100 %). Die Tabelle bleibt hier stehen, falls wir sie
+  // zurückholen wollen.
   // Für Zieltempo 161-200 und 201-250: explizite Lookup-Tabelle
   // (b1,b2,b3,b4; b5 = Ziel-BPM)
   // ============================================================
@@ -6760,24 +6763,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var q = _stepIndexFor(ex, bpm) / steps;       // Position in der Übung, 0 bis 1
     return q < 0.5 ? 1 : (q < 0.75 ? 2 : 3);
   }
-  // Anlauftempi. Ab 100 BPM aus der Speed-Tabelle wie bisher, darunter gab es
-  // keine — dort 80 % und 90 % des Zieltempos, dasselbe Verhältnis wie oben.
+  // Anlauftempi: gleichmäßig verteilte Anteile des Zieltempos (Erwin, 18.09.2026).
+  // Vorher kamen sie ab 100 BPM aus der Speed-Tabelle (rund 80/90 %) und
+  // darunter gab es gar keine — der Abstand war je nach Tempo unterschiedlich.
+  // Jetzt überall gleich: drei Blöcke 70/85/100 %, zwei Blöcke 85/100 %.
+  // Untergrenze 30 BPM; fallen zwei Stufen zusammen, bleibt eine.
+  var RAMP_PCT = [0.70, 0.85, 1.00];
   function _rampBpms(t, n) {
     if (n <= 1) return [t];
-    if (t >= 100) {
-      var list;
-      if      (t <= 110) list = [t-30,t-20,t-10,t];
-      else if (t <= 160) list = [t-40,t-30,t-20,t-10,t];
-      else if (t <= 200) { var r1 = RAW_161[t-161]; list = [r1[0],r1[1],r1[2],r1[3],t]; }
-      else if (t <= 250) { var r2 = RAW_201[t-201]; list = [r2[0],r2[1],r2[2],r2[3],t]; }
-      else               list = [t-120,t-90,t-60,t-30,t];
-      return list.slice(-n);
-    }
-    var out = [];
-    if (n >= 3) out.push(Math.max(30, Math.round(t * 0.8)));
-    if (n >= 2) out.push(Math.max(30, Math.round(t * 0.9)));
-    out.push(t);
-    // Bei sehr langsamen Tempi können zwei Stufen zusammenfallen
+    var pct = RAMP_PCT.slice(-n);
+    var out = pct.map(function(f) { return Math.max(30, Math.round(t * f)); });
     return out.filter(function(b, i) { return out.indexOf(b) === i; });
   }
 
