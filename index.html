@@ -5950,7 +5950,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-115811';
+  var DL_BUILD = '20260918-120632';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8135,14 +8135,31 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   // GESAMT-TIMER
   // ============================================================
-  var totalStart=0, totalInt=null;
+  var totalStart=0, totalInt=null, totalPlanSec=0;
+  // Gesamtdauer der Lektion: alle Blöcke, alle Pausen und die Vorzähler
+  // (zwei Takte ab 60 BPM, sonst einer) — also das, was auf der Uhr steht.
+  function _lessonPlanSec() {
+    var sec = 0;
+    if (typeof blocks === 'undefined') return 0;
+    blocks.forEach(function(b) {
+      var beats = (b.bpm >= 60) ? 8 : 4;
+      sec += beats * 60 / b.bpm;      // Vorzähler vor jedem Block
+      sec += b.dur;
+    });
+    if (typeof pauses !== 'undefined') pauses.forEach(function(p) { if (p) sec += p; });
+    return sec;
+  }
+  function _mmss(sec) {
+    return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(Math.floor(sec % 60)).padStart(2, '0');
+  }
   function startTotal() {
     totalStart = Date.now();
+    totalPlanSec = (typeof _rampMode !== 'undefined' && _rampMode) ? 0 : _lessonPlanSec();
     var el = document.getElementById('dgTotal');
     el.style.display = 'inline';
     totalInt = setInterval(function() {
       var e = (Date.now()-totalStart)/1000;
-      el.textContent = 'Total: '+String(Math.floor(e/60)).padStart(2,'0')+':'+String(Math.floor(e%60)).padStart(2,'0')+' · ';
+      el.textContent = 'Total: ' + _mmss(e) + (totalPlanSec ? ' / ' + _mmss(totalPlanSec) : '') + ' · ';
     }, 500);
   }
   function stopTotal() {
