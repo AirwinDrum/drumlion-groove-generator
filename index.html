@@ -1867,6 +1867,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (ch) _statsSave();
     return ch;
   }
+  // Nach jedem Pull/Push-Abgleich: zu hohe Altwerte glattziehen
+  function _statsMergeAndClamp(o) {
+    var ch = _statsMerge(o);
+    return _statsClamp() || ch;
+  }
   function _slotStrokes(slot) {
     var c = 0;
     (slot || []).forEach(function(nn) {
@@ -1948,7 +1953,34 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     GROOVE = saved;
     return out;
   }
-  function _statsBackfill() { _statsMerge(_statsFromCourse(_cState)); }
+  // Rückrechnung NUR, solange es noch gar keine echten Zahlen gibt — sie war
+  // als einmalige Hilfe für die Zeit vor dem Zähler gedacht (16.09.2026).
+  // Wer mit Zähler spielt und „Too easy" drückt, bekam sonst jede übersprungene
+  // Stufe als gespielte Zeit gutgeschrieben: Bela stand nach 42 Lektionen bei
+  // 91 statt 37 Minuten (18.09.2026).
+  function _statsBackfill() {
+    if (_stats.sec > 0 || _stats.strokes > 0) return;
+    _statsMerge(_statsFromCourse(_cState));
+    _statsClamp();
+  }
+
+  // Sicherung gegen zu hohe Werte: gespielte Zeit kann nie länger sein als die
+  // Lektionszeit insgesamt — die enthält ja zusätzlich Pausen und Vorzähler.
+  // Läuft beim Start und nach jeder Übernahme fremder Zahlen, nicht während
+  // des Spielens (dort wächst `sec`, bevor die Lektion in `minutes` landet).
+  function _statsClamp() {
+    var cap = _getTotalMinutes() * 60;
+    if (!(cap > 0)) return false;
+    var grenze = cap * 1.15 + 120;          // Spielraum für abgebrochene Durchgänge
+    if (_stats.sec <= grenze) return false;
+    var f = cap / _stats.sec;
+    _stats.sec     = Math.round(cap);
+    _stats.strokes = Math.round(_stats.strokes * f);
+    if (_stats.wkSec   > _stats.sec) _stats.wkSec   = _stats.sec;
+    if (_stats.bestSec > _stats.sec) _stats.bestSec = _stats.sec;
+    _statsSave();
+    return true;
+  }
 
   function _addLessonTime(mins) {
     var prevLessons = _getTotalLessons();
@@ -5955,7 +5987,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260918-143320';
+  var DL_BUILD = '20260918-152157';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -6231,7 +6263,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           return;
         }
         // Ein anderes Gerät kann bei gleicher Lektionszahl mehr Schläge haben
-        if (remoteParsed) _statsMerge(remoteParsed.stats);
+        if (remoteParsed) _statsMergeAndClamp(remoteParsed.stats);
         _syncWrite(false);
       }).catch(function() { _syncWrite(false); });
       return;
@@ -6336,7 +6368,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             localStorage.removeItem(_dailyMinsKey);
           } catch(e) {}
           _statsClear();
-          _statsMerge(remote.stats);
+          _statsMergeAndClamp(remote.stats);
           _cState = Object.keys(remote.course.cats).length ? _sanitizeCourse(remote.course) : _initState();
           _masteredInvalidate();
           _cState.pfloor = 0;   // Reset: auch die Untergrenze fällt weg
@@ -6378,7 +6410,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var _cleaned = JSON.stringify(_cState) !== _before;
           try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
           if (_cleaned) _syncSchedule();   // bereinigten Stand zurückschreiben
-          _statsMerge(remote.stats);
+          _statsMergeAndClamp(remote.stats);
           _statsBackfill();
           _syncSetStatus('ok', 'Progress loaded ✓');
           onDone(true); // state changed, needs UI reload
@@ -6394,7 +6426,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               localStorage.setItem(_timeKey, String(remote.minutes));
           } catch(e) {}
           _counterRemember();
-          _statsMerge(remote.stats);
+          _statsMergeAndClamp(remote.stats);
           if (_getTotalLessons() >= remote.lessons) {
             _syncSetStatus('ok', 'Progress loaded ✓');
             if (localTotal > remoteTotal) _syncSchedule();   // lokal weiter gespielter Kurs
@@ -6404,7 +6436,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           onDone(true);
         } else {
           _syncSetStatus('ok', 'Up to date ✓');
-          _statsMerge(remote.stats);
+          _statsMergeAndClamp(remote.stats);
           var _rs = remote.stats || {};
           if (remoteCount < localCount) _syncPush();
           else if (_stats.strokes > (+_rs.strokes || 0) || Math.round(_stats.sec) > (+_rs.sec || 0)) _syncSchedule();
@@ -9560,6 +9592,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   })();
 
   _statsBackfill();
+  _statsClamp();     // zu hohe Altwerte aus der Rückrechnung glattziehen
 
   if (_resetRequested) {
     // Kein Pull — sonst käme der zu löschende Stand sofort zurück.
