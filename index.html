@@ -14495,7 +14495,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-125037';
+  var DL_BUILD = '20260921-125548';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17755,21 +17755,67 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // ── HTML: Exercise Picker ────────────────────────────────
+    // Nach Unterkategorien gegliedert (Erwin, 21.09.2026): jede Säule als
+    // Überschrift, darunter jede Unterkategorie (catLabel) als aufklappbare
+    // Zeile mit Anzahl und Bereich — in Kursreihenfolge, also so, wie der
+    // Kurs sie einführt. Vorher stand jede Säule als eine lange Knopfliste da
+    // (Grooves: 660 Knöpfe am Stück).
+    // Aufgeklappte Gruppen merkt sich `_pickOpen`, solange die Seite offen ist;
+    // die Gruppe der gerade geladenen Übung geht von selbst auf, ihr Knopf ist gold.
+    var _pickOpen = {};
+    function _pickEsc(t) {
+      return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
     function renderPicker() {
       var cats2 = ['grooves','fillins','notes','rudiments','coordination'];
       var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments', coordination:'Coordination'};
-      var h = '';
+      var cur = (typeof GROOVE !== 'undefined' && GROOVE) ? GROOVE.id : null;
+      // Safari zeichnet neben dem eigenen Pfeil sonst noch seinen Standard-Marker
+      var h = '<style>details[data-pk] > summary::-webkit-details-marker{display:none}</style>'
+            + '<div style="font-size:12px;color:#777;margin-bottom:16px;">'
+            + EXERCISES.length + ' exercises · open a category to see its exercises</div>';
       cats2.forEach(function(cat) {
         var exs = EXERCISES.filter(function(e){ return e.cat === cat; });
         if (!exs.length) return;
-        h += '<div style="margin-bottom:18px;">';
-        h += '<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;margin-bottom:8px;">' + labels[cat] + '</div>';
-        h += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+        // Aufeinanderfolgende Übungen mit gleichem catLabel = eine Gruppe.
+        var groups = [];
         exs.forEach(function(ex) {
-          h += '<button data-exid="' + ex.id + '" style="background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#E8E4DB;font-size:12px;padding:5px 10px;cursor:pointer;font-family:DM Sans,system-ui,sans-serif;">'
-             + ex.name + '</button>';
+          var lbl = ex.catLabel || labels[cat];
+          var g = groups[groups.length - 1];
+          if (!g || g.label !== lbl) { g = { label: lbl, items: [] }; groups.push(g); }
+          g.items.push(ex);
         });
-        h += '</div></div>';
+        h += '<div style="margin-bottom:22px;">';
+        h += '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;">'
+           +   '<span style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;font-weight:700;">' + labels[cat] + '</span>'
+           +   '<span style="font-size:11px;color:#666;">' + exs.length + ' exercises · ' + groups.length + (groups.length === 1 ? ' category' : ' categories') + '</span>'
+           + '</div>';
+        groups.forEach(function(g, gi) {
+          var key    = cat + '|' + gi + '|' + g.label;
+          var hasCur = g.items.some(function(e){ return e.id === cur; });
+          var open   = _pickOpen[key] || hasCur;
+          var first  = g.items[0].name, last = g.items[g.items.length - 1].name;
+          var range  = g.items.length > 1 ? (first + ' – ' + last) : first;
+          h += '<details data-pk="' + _pickEsc(key) + '"' + (open ? ' open' : '')
+             + ' style="border:1px solid ' + (hasCur ? 'rgba(201,168,76,0.45)' : '#262626') + ';border-radius:8px;margin-bottom:6px;background:#141414;">';
+          h += '<summary style="cursor:pointer;padding:8px 12px;display:flex;align-items:baseline;gap:10px;color:#E8E4DB;font-size:13px;list-style:none;">'
+             +   '<span class="dev-pk-caret" style="color:#C9A84C;width:10px;display:inline-block;">' + (open ? '▾' : '▸') + '</span>'
+             +   '<span style="font-weight:600;white-space:nowrap;flex-shrink:0;">' + _pickEsc(g.label) + '</span>'
+             +   '<span style="color:#777;font-size:11px;font-variant-numeric:tabular-nums;flex-shrink:0;">' + g.items.length + '</span>'
+             // Bereich kürzt sich, nicht der Kategoriename (Koordination hat sehr lange Übungsnamen)
+             +   '<span title="' + _pickEsc(range) + '" style="color:#555;font-size:11px;margin-left:auto;min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;padding-left:12px;">' + _pickEsc(range) + '</span>'
+             + '</summary>';
+          h += '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 12px 12px 32px;">';
+          g.items.forEach(function(ex) {
+            var isCur = ex.id === cur;
+            h += '<button data-exid="' + ex.id + '" title="id ' + ex.id + '" style="background:' + (isCur ? 'rgba(201,168,76,0.18)' : '#1a1a1a')
+               + ';border:1px solid ' + (isCur ? '#C9A84C' : '#333') + ';border-radius:6px;color:' + (isCur ? '#C9A84C' : '#E8E4DB')
+               + ';font-size:12px;padding:5px 10px;cursor:pointer;font-family:DM Sans,system-ui,sans-serif;">'
+               + _pickEsc(ex.name) + '</button>';
+          });
+          h += '</div></details>';
+        });
+        h += '</div>';
       });
       return h;
     }
@@ -17840,7 +17886,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // ── Init ─────────────────────────────────────────────────
+    var _devTab = 'picker';
     function showTab(tab) {
+      _devTab = tab;
       var h = renderHeader(tab);
       h += (tab === 'picker') ? renderPicker() : renderCourseMap();
       h += renderFooter();
@@ -17867,13 +17915,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     document.body.appendChild(panel);
+    panel.addEventListener('toggle', function(e) {
+      var d = e.target;
+      if (!d || d.tagName !== 'DETAILS' || !d.hasAttribute('data-pk')) return;
+      var key = d.getAttribute('data-pk');
+      if (d.open) _pickOpen[key] = true; else delete _pickOpen[key];
+      var c = d.querySelector('.dev-pk-caret');
+      if (c) c.textContent = d.open ? '▾' : '▸';
+    }, true);
     showTab('picker');
 
     document.addEventListener('keydown', function(e) {
       if (e.code !== 'KeyD') return;
       if (!_devMode) return;   // nur auf freigeschalteten Geräten, siehe DEV-MODUS
       if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      var opening = panel.style.display === 'none';
+      if (opening && _devTab === 'picker') showTab('picker');   // aktuelle Übung markieren
+      panel.style.display = opening ? 'block' : 'none';
     });
   })();
 
