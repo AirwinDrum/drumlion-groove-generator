@@ -14571,7 +14571,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-220406';
+  var DL_BUILD = '20260921-220558';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17882,6 +17882,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
              + ' style="border:1px solid ' + (hasCur ? 'rgba(201,168,76,0.45)' : '#262626') + ';border-radius:8px;margin-bottom:6px;background:#141414;">';
           h += '<summary style="cursor:pointer;padding:8px 12px;display:flex;align-items:baseline;gap:10px;color:#E8E4DB;font-size:13px;list-style:none;">'
              +   '<span class="dev-pk-caret" style="color:#C9A84C;width:10px;display:inline-block;">' + (open ? '▾' : '▸') + '</span>'
+             // Position in der Kursreihenfolge je Säule (Erwin, 21.09.2026 — zum Umsortieren)
+             +   '<span style="color:#C9A84C;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;min-width:22px;text-align:right;flex-shrink:0;">' + (gi + 1) + '</span>'
              +   '<span style="font-weight:600;white-space:nowrap;flex-shrink:0;">' + _pickEsc(g.label) + '</span>'
              +   '<span style="color:#777;font-size:11px;font-variant-numeric:tabular-nums;flex-shrink:0;">' + g.items.length + '</span>'
              // Bereich kürzt sich, nicht der Kategoriename (Koordination hat sehr lange Übungsnamen)
