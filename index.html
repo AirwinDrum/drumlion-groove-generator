@@ -14197,8 +14197,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Level-Berechnung: content-basiert, dynamisch an Gesamtmenge angepasst
   var TOTAL_CONTENT_LESSONS = _calcTotalContentLessons();
-  var LESSONS_PER_LEVEL   = Math.max(1, Math.ceil(TOTAL_CONTENT_LESSONS / TOTAL_LEVELS));
-  var LESSONS_PER_CHAPTER = Math.max(1, Math.ceil(LESSONS_PER_LEVEL / CHAPTERS_PER_LEVEL));
+  // Level- und Chapter-Größe FEST (21.09.2026). Bis hierher wurden sie aus der
+  // Gesamtmenge berechnet (Gesamt ÷ 100 Level). Jede neue Übung machte damit
+  // jedes Level größer — und die Balken aller Mitglieder liefen rückwärts:
+  // mit den 540 neuen Grooves vom 21.09. wuchs ein Level von 203 auf 322 Stufen,
+  // 16700147 fiel von Level 4 Chapter 6 auf Level 3 Chapter 2, Bela von Chapter 6
+  // auf 4. Eingefroren auf den Stand vom Morgen des 21.09. (Gesamt damals 20.212
+  // Stufen → 203 / 21), damit jeder wieder genau dort steht und neuer Inhalt nie
+  // wieder jemanden zurückwirft. Academy % bleibt der Anteil am ganzen Kurs.
+  // Wie groß ein Level künftig sein soll, entscheidet Erwin — dann nur diese
+  // zwei Zahlen ändern und vorher alle Server-Stände durchrechnen (kein Rückschritt).
+  var LESSONS_PER_LEVEL   = 203;
+  var LESSONS_PER_CHAPTER = 21;
 
   // ── Section aus URL ──────────────────────────────────────────
   // ============================================================
@@ -14495,7 +14505,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-125548';
+  var DL_BUILD = '20260921-130048';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
