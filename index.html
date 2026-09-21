@@ -175,7 +175,11 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   display: flex;
   align-items: center;
   gap: clamp(6px, 1.2vw, 14px);
-  min-width: 0;
+  /* max-content statt 0 (Erwin, 21.09.2026): mit 0 durfte die Spalte unter
+     ihren Inhalt schrumpfen, und ein langer Kategoriename in der Mitte
+     („16th Note Hi-Hat Grooves (alternating)") schob sich über „1 Block".
+     So behalten die Ränder ihre Breite, und die Mitte kürzt sich selbst. */
+  min-width: max-content;
 }
 .ni-left  { justify-self: start; }
 .ni-right { justify-self: end; }
@@ -213,6 +217,9 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   letter-spacing: 2px;
   line-height: 1;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .notation-info-title {
   font-size: clamp(24px, 4.5vw, 42px);
@@ -4239,6 +4246,416 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       [{inst:'hh',line:-0.5,head:'x'}]
     ]},
 
+        // ── 16TH NOTE HI-HAT GROOVES (alternating) (331–350, Groove 181–200) ──
+    // Basic Grooves 1 mit doppelt so vielen Hi-Hat-Schlägen (Erwin, 21.09.2026):
+    // 16tel statt Achtel, zweihändig streng abwechselnd R L R L. Wo die Snare
+    // kommt, fehlt die Hi-Hat — die Hand geht dort zur Snare. Die Snare liegt in
+    // allen zwanzig auf 2 und 4, also auf einem R: die rechte Hand spielt sie.
+    // Sticking steht als `hand` an jeder Hi-Hat-Note und wird links neben den
+    // Kopf geschrieben, wie bei den Unabhängigkeitsübungen.
+    // Tempo, Stufen und Warm-up wie die Vorlage: 16tel abwechselnd sind pro
+    // Hand genauso viele Schläge wie Achtel mit einer Hand (spmFactor 4×0,5 = 2×1).
+    // Groove 181 = Groove 1 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:331, cat:'grooves', name:'Groove 181', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:60, maxSPHM:500, minBPM:80, maxBPM:250, step:10, warmup:{minBPM:30,step:4},
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 182 = Groove 2 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:332, cat:'grooves', name:'Groove 182', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:70, maxSPHM:500, minBPM:80, maxBPM:250, step:10, warmup:{minBPM:31,step:4},
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 183 = Groove 3 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:333, cat:'grooves', name:'Groove 183', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:70, maxSPHM:500, minBPM:80, maxBPM:250, step:10, warmup:{minBPM:32,step:4},
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 184 = Groove 4 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:334, cat:'grooves', name:'Groove 184', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:70, maxSPHM:500, minBPM:33, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 185 = Groove 5 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:335, cat:'grooves', name:'Groove 185', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:70, maxSPHM:500, minBPM:34, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 186 = Groove 6 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:336, cat:'grooves', name:'Groove 186', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:70, maxSPHM:500, minBPM:35, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 187 = Groove 7 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:337, cat:'grooves', name:'Groove 187', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:80, maxSPHM:500, minBPM:36, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 188 = Groove 8 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:338, cat:'grooves', name:'Groove 188', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:80, maxSPHM:500, minBPM:37, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 189 = Groove 9 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:339, cat:'grooves', name:'Groove 189', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:80, maxSPHM:500, minBPM:38, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 190 = Groove 10 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:340, cat:'grooves', name:'Groove 190', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:80, maxSPHM:500, minBPM:39, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 191 = Groove 11 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:341, cat:'grooves', name:'Groove 191', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:80, maxSPHM:500, minBPM:40, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 192 = Groove 12 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:342, cat:'grooves', name:'Groove 192', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:90, maxSPHM:500, minBPM:41, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 193 = Groove 13 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:343, cat:'grooves', name:'Groove 193', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:90, maxSPHM:500, minBPM:42, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 194 = Groove 14 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:344, cat:'grooves', name:'Groove 194', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:90, maxSPHM:500, minBPM:43, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 195 = Groove 15 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:345, cat:'grooves', name:'Groove 195', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:90, maxSPHM:500, minBPM:44, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 196 = Groove 16 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:346, cat:'grooves', name:'Groove 196', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:90, maxSPHM:500, minBPM:45, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 197 = Groove 17 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:347, cat:'grooves', name:'Groove 197', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:100, maxSPHM:500, minBPM:46, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 198 = Groove 18 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:348, cat:'grooves', name:'Groove 198', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:100, maxSPHM:500, minBPM:47, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 199 = Groove 19 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:349, cat:'grooves', name:'Groove 199', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:100, maxSPHM:500, minBPM:48, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+    // Groove 200 = Groove 20 mit 16tel-Hi-Hat, abwechselnd R L R L
+    {id:350, cat:'grooves', name:'Groove 200', noteValue:'sixteenth', hihatHands:'alternate', minSPHM:100, maxSPHM:500, minBPM:49, maxBPM:250, step:10,
+     catLabel:'16th Note Hi-Hat Grooves (alternating)', beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'R'}],
+      [{inst:'hh',line:-0.5,head:'x',hand:'L'}]
+    ]},
+
         // ── DOWNBEAT ACCENTS (111–130) ──────────────────────────────
     // Gleiche Patterns wie Basic Grooves 1 — hh auf Downbeats (pos 0,2,4,6) → hhAccent
     {id:111,cat:'grooves',name:'Groove 81',noteValue:'eighth',hihatHands:'one',minSPHM:60,maxSPHM:500,catLabel:'Downbeat Accents',minBPM:45,maxBPM:200,step:5,beats:[
@@ -7172,7 +7589,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-122954';
+  var DL_BUILD = '20260921-123344';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -8899,8 +9316,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           // Bei Fills und Rudiments wechselt der Handsatz von Schlag zu Schlag;
           // die stehen weiter unter dem System, wo mehr Platz ist.
           // Links vom Kopf, weil dort weder Hals noch Balken sitzen.
-          if (GROOVE.limbs && GROOVE.gridPer && GROOVE.gridPer <= 4) {
-            var _lb = GROOVE.limbs[n.inst];
+          // `hand` an der einzelnen Note (Erwin, 21.09.2026): wenn die Hand auf
+          // demselben Instrument wechselt — z.B. 16tel-Hi-Hat abwechselnd
+          // R L R L. Gleiche Schrift und Stelle wie bei Unabhängigkeit.
+          var _lb = n.hand ||
+                    ((GROOVE.limbs && GROOVE.gridPer && GROOVE.gridPer <= 4) ? GROOVE.limbs[n.inst] : null);
+          {
             if (_lb) {
               h += '<text x="'+(x + offArr[ci] - 10)+'" y="'+(y + 4)+
                    '" text-anchor="middle" fill="'+nc+'" font-size="9" font-weight="600"' +
