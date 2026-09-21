@@ -14253,7 +14253,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
 
   var STEPS_PER_NEW_EX  = 5;   // alle N Kategorie-Erscheinungen → neue Übung
-  var MAX_ACTIVE_PER_CAT = 100; // max aktive Übungen pro Kategorie (01.09.2026 von 50 erhöht)
+  // Höchstens 10 offene Übungen pro Säule (Erwin, 21.09.2026). Vorher 100: neue
+  // Übungen kamen alle 5 Stufen, eine Übung braucht aber ~20 — die offenen
+  // wuchsen bis zur Grenze (16700147: 94 offen nach 297 Lektionen) und dieselbe
+  // Übung kam nur noch alle ~280 Lektionen dran. Mit 10 kommt am Anfang Neues
+  // so schnell wie bisher, danach eine neue pro fertiger. Wie oft auf Dauer
+  // Neues kommt, bestimmen die Ranges (Faustregel: ~6 Stufen = neuer Groove
+  // etwa alle 20 Lektionen). Überzählige warten in `cs.park`, siehe
+  // `_trimActive`.
+  var MAX_ACTIVE_PER_CAT = 10;
   var COURSE_KEY = _nsKey('drumlion_v4_course');   // pro Konto, siehe _ID_NS
 
   // Übungen pro Kategorie, sortiert nach ID
@@ -14407,6 +14415,29 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // `_peekLesson` übersprang die Kategorie dann für immer und spielte an ihrer
   // Stelle einen Groove — bei Leon zweimal Groove hintereinander, keine
   // Unabhängigkeit.
+  // Warteliste (Erwin, 21.09.2026): Überzählige wandern mit ihrem erreichten
+  // Tempo nach `cs.park`, sortiert nach Kursreihenfolge, und rücken über
+  // `_unparkDue` nach, sobald ein Platz frei wird — vor jeder neuen Übung.
+  // Behalten werden die, die ihrem Endtempo am nächsten sind (Anteil der
+  // erreichten Stufen), damit schnell Plätze frei werden. Die gerade angezeigte
+  // Lektion wird nie geparkt. Für Level und Balken zählt `park` voll mit.
+  function _trimActive(cat, cs) {
+    if (!cs || !cs.active || cs.active.length <= MAX_ACTIVE_PER_CAT) return;
+    var pool = _catPool[cat] || [];
+    function exOf(id) { for (var i = 0; i < pool.length; i++) if (pool[i].id === id) return pool[i]; return null; }
+    function posOf(id) { for (var i = 0; i < pool.length; i++) if (pool[i].id === id) return i; return 1e9; }
+    function frac(en) { var ex = exOf(en.id); var n = ex ? _exSteps(ex) : 1; return Math.max(en.best || 0, en.bpmStep || 0) / Math.max(1, n); }
+    var shownId = (typeof _shownLesson !== 'undefined' && _shownLesson && _shownLesson.entry) ? _shownLesson.entry.id : null;
+    var ranked = cs.active.slice().sort(function(a, b) {
+      if (a.id === shownId) return -1; if (b.id === shownId) return 1;
+      return frac(b) - frac(a);
+    });
+    var keep = ranked.slice(0, MAX_ACTIVE_PER_CAT), wait = ranked.slice(MAX_ACTIVE_PER_CAT);
+    var keepIds = {}; keep.forEach(function(e) { keepIds[e.id] = 1; });
+    cs.active = cs.active.filter(function(e) { return keepIds[e.id]; });   // Reihenfolge der Rotation bleibt
+    cs.park = (cs.park || []).concat(wait).sort(function(a, b) { return posOf(a.id) - posOf(b.id); });
+  }
+
   function _sanitizeCourse(p) {
     // Kommt später eine Kategorie dazu, fehlt sie in allen gespeicherten
     // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
@@ -14423,6 +14454,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // neue Übung einmalig bis zu fünf Erscheinungen später.
       if (typeof p.cats[c].sinceNew !== 'number') p.cats[c].sinceNew = (p.cats[c].counter || 0) % STEPS_PER_NEW_EX;
     });
+    // Mehr als MAX_ACTIVE_PER_CAT offen (Stände aus der Zeit mit Grenze 100)?
+    // Dann bleiben die, die ihrem Ende am nächsten sind; der Rest wartet.
+    Object.keys(p.cats).forEach(function(c) { _trimActive(c, p.cats[c]); });
     // Übungen können aus dem Bestand fallen (z.B. die Unisono-Übungen
     // am 02.09.2026). Aktive Einträge, die auf eine nicht mehr vorhandene
     // Übung zeigen, blockieren sonst ihre Kategorie dauerhaft: `_peekLesson`
@@ -14537,7 +14571,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-153051';
+  var DL_BUILD = '20260921-220406';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -15133,8 +15167,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // Neue Übung einführen: alle STEPS_PER_NEW_EX Stufen ODER wenn keine aktive mehr
+    // Wartet jemand auf der Warteliste, rückt zuerst er nach (`_unparkDue` unten).
     if ((cs.sinceNew >= STEPS_PER_NEW_EX || cs.active.length === 0) &&
-        cs.active.length < MAX_ACTIVE_PER_CAT) {
+        cs.active.length < MAX_ACTIVE_PER_CAT && !(cs.park && cs.park.length)) {
       var _nx = _introNext(cat, cs);
       if (_nx) { cs.active.push({ id: _nx.id, bpmStep: 0 }); cs.sinceNew = 0; }
     }
