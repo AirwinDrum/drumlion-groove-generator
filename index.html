@@ -2204,16 +2204,54 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return n;
   }
 
+  // ── Level-Spur (Erwin, 21.09.2026) ────────────────────────────────────
+  // Die Level-Größe folgt dem Kurs (Gesamtstufen ÷ 100 Level) und wächst mit
+  // jeder neuen Kategorie. Ohne Spur fiel dabei jeder zurück (21.09.: Level
+  // 203 → 322 Stufen, 16700147 von Level 4 auf 3). Mit Spur bleibt jeder genau
+  // an seiner Stelle, wenn sich die Größe ändert, und läuft ab da im neuen
+  // Tempo weiter — nie rückwärts, nie Stillstand.
+  //   lvTrack.pos = Stelle in Leveln (z.B. 3.47 = Level 4, 47 %) beim Anker
+  //   lvTrack.m   = gemeisterte Stufen beim Anker
+  //   lvTrack.lpl = Level-Größe beim Anker
+  // Anzeige in Stufen der AKTUELLEN Größe: pos × L + (Stufen − m).
+  // Stände ohne Spur starten mit der Größe, die sie bis zum 21.09. gesehen
+  // haben (203) — so steht beim ersten Laden jeder exakt dort wie vorher.
+  var LEVEL_SIZE_LEGACY = 203;
+  var _lvTrackSavePending = false;
+  function _levelSteps() {
+    var m = _masteredSteps();
+    // Beim Start kann das hier laufen, bevor die Level-Größe berechnet ist —
+    // dann nichts verankern, sonst stünde eine leere Größe in der Spur.
+    if (!_cState || !(LESSONS_PER_LEVEL > 0)) return m;
+    var L = LESSONS_PER_LEVEL, t = _cState.lvTrack, changed = false;
+    if (!t || typeof t.pos !== 'number' || typeof t.m !== 'number' || !t.lpl) {
+      t = _cState.lvTrack = { pos: m / LEVEL_SIZE_LEGACY, m: m, lpl: LEVEL_SIZE_LEGACY };
+      changed = true;
+    }
+    if (m < t.m) { t.m = m; changed = true; }            // weniger Stufen: Stelle halten
+    if (t.lpl !== L) {                                    // neue Level-Größe: Stelle mitnehmen
+      t.pos = t.pos + (m - t.m) / t.lpl;
+      t.m = m; t.lpl = L; changed = true;
+    }
+    if (changed && !_lvTrackSavePending) {
+      _lvTrackSavePending = true;
+      setTimeout(function() { _lvTrackSavePending = false; if (_cState) _saveState(); }, 0);
+    }
+    return t.pos * L + (m - t.m);
+  }
+
   function _getLevelInfo(offset) {
-    var totalLessons    = _masteredSteps() + (offset || 0);
+    var totalLessons    = _levelSteps() + (offset || 0);
     var level           = Math.min(TOTAL_LEVELS, Math.floor(totalLessons / LESSONS_PER_LEVEL) + 1);
     var lessonsInLevel  = totalLessons % LESSONS_PER_LEVEL;
     var chapter         = Math.min(CHAPTERS_PER_LEVEL, Math.floor(lessonsInLevel / LESSONS_PER_CHAPTER) + 1);
     var levelPct        = (lessonsInLevel / LESSONS_PER_LEVEL) * 100;
     var chapterPct      = ((lessonsInLevel % LESSONS_PER_CHAPTER) / LESSONS_PER_CHAPTER) * 100;
-    var lessons         = (lessonsInLevel % LESSONS_PER_CHAPTER) + 1;
+    var lessons         = Math.floor(lessonsInLevel % LESSONS_PER_CHAPTER) + 1;
     var chapterLessons  = (_cState && _cState.chapterLessons) ? _cState.chapterLessons : 0;
-    var academyPct      = Math.min(100, (totalLessons / TOTAL_CONTENT_LESSONS) * 100);
+    // Academy = Stelle auf der Spur ÷ 100 Level, damit auch dieser Balken nie
+    // zurückläuft, wenn der Kurs wächst (vorher Stufen ÷ Gesamtstufen).
+    var academyPct      = Math.min(100, (totalLessons / (LESSONS_PER_LEVEL * TOTAL_LEVELS)) * 100);
     return { level: level, chapter: chapter, levelPct: levelPct, chapterPct: chapterPct,
              lessons: lessons, chapterLessons: chapterLessons, academyPct: academyPct };
   }
@@ -14197,18 +14235,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Level-Berechnung: content-basiert, dynamisch an Gesamtmenge angepasst
   var TOTAL_CONTENT_LESSONS = _calcTotalContentLessons();
-  // Level- und Chapter-Größe FEST (21.09.2026). Bis hierher wurden sie aus der
-  // Gesamtmenge berechnet (Gesamt ÷ 100 Level). Jede neue Übung machte damit
-  // jedes Level größer — und die Balken aller Mitglieder liefen rückwärts:
-  // mit den 540 neuen Grooves vom 21.09. wuchs ein Level von 203 auf 322 Stufen,
-  // 16700147 fiel von Level 4 Chapter 6 auf Level 3 Chapter 2, Bela von Chapter 6
-  // auf 4. Eingefroren auf den Stand vom Morgen des 21.09. (Gesamt damals 20.212
-  // Stufen → 203 / 21), damit jeder wieder genau dort steht und neuer Inhalt nie
-  // wieder jemanden zurückwirft. Academy % bleibt der Anteil am ganzen Kurs.
-  // Wie groß ein Level künftig sein soll, entscheidet Erwin — dann nur diese
-  // zwei Zahlen ändern und vorher alle Server-Stände durchrechnen (kein Rückschritt).
-  var LESSONS_PER_LEVEL   = 203;
-  var LESSONS_PER_CHAPTER = 21;
+  // Level-Größe folgt dem Kurs: Gesamtstufen ÷ 100 Level (Erwin, 21.09.2026:
+  // „unbedingt bei 100 Leveln, dann werden die halt größer"). Dass dabei niemand
+  // zurückfällt, sichert die Level-Spur (`_levelSteps`). Vom 21.09. 13:00 bis zur
+  // Spur stand hier fest 203 / 21 als Notbremse.
+  var LESSONS_PER_LEVEL   = Math.max(1, Math.ceil(TOTAL_CONTENT_LESSONS / TOTAL_LEVELS));
+  var LESSONS_PER_CHAPTER = Math.max(1, Math.ceil(LESSONS_PER_LEVEL / CHAPTERS_PER_LEVEL));
 
   // ── Section aus URL ──────────────────────────────────────────
   // ============================================================
@@ -14505,7 +14537,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-130249';
+  var DL_BUILD = '20260921-132907';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -14895,6 +14927,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           _cState = Object.keys(remote.course.cats).length ? _sanitizeCourse(remote.course) : _initState();
           _masteredInvalidate();
           _cState.pfloor = 0;   // Reset: auch die Untergrenze fällt weg
+          delete _cState.lvTrack;   // … und die Level-Spur (startet neu bei 0)
           if (!_cState.bpmHalved) _cState.bpmHalved = 1;
           try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
           _markResetSeen(remote.resetId);
