@@ -3203,6 +3203,383 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           [{inst:'hhOpen',line:-0.5,head:'x'}]
         ]},
 
+        // ── TRIPLET GROOVES (151+, Groove 121+) ─────────────────────
+    // Keine eigene Säule, sondern eine weitere Unterkategorie der Grooves
+    // (Erwin, 18.09.2026). Seit 21.09.2026 steht sie VOR den Hi-Hat-Akzenten:
+    // im Pool direkt nach Groove 80, also Pool-Position 80–99; die Akzente
+    // (Groove 81–120) rücken auf 100–139. Die Nummern bleiben, wie sie sind —
+    // auf Groove 80 folgt im Kurs Groove 121.
+    //
+    // ACHTUNG beim Umsortieren: gespeicherte Stände zeigen mit `introIdx` auf
+    // Pool-POSITIONEN, nicht auf Übungen. Verschieben ist nur gefahrlos,
+    // solange kein Stand über die Einfügestelle hinaus ist. Am 21.09. geprüft:
+    // höchster introIdx aller 20 Zeilen = 50 (real 29), Einfügestelle 80.
+    // Achteltriolen auf der Hi-Hat, durchgehend mit einer Hand — bei 12
+    // Anschlägen pro Takt ist die Hand die Grenze, nicht die Koordination.
+    // Deshalb Einstieg bei 60 BPM (180 Schläge/Hand) und Schluss bei 160
+    // (480), also derselbe Endbereich wie bei den Achtel-Grooves, nur über
+    // 21 Stufen à 5 BPM.
+    {id:151, cat:'grooves', name:'Groove 121', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+    // Groove 121 plus eine Bassdrum auf dem „&" der 3 — also auf der mittleren
+    // Triole der dritten Zählzeit, Position 7 von 12 (Erwin, 18.09.2026).
+    {id:152, cat:'grooves', name:'Groove 122', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+    // Wie Groove 122, aber die zusätzliche Bassdrum auf dem „a" statt dem „&"
+    // der 3 — die letzte Triole der dritten Zählzeit, Position 8 von 12. Sie
+    // liegt damit direkt vor der Snare auf der 4 und zieht ganz anders als
+    // die mittlere (Erwin, 19.09.2026).
+    {id:153, cat:'grooves', name:'Groove 123', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+    // Ab hier gibt Erwin die Bassdrum als Positionen 1–12 im Triolenraster an:
+    //   1 = „1"   2 = „1&"  3 = „1a"   4 = „2"   5 = „2&"   6 = „2a"
+    //   7 = „3"   8 = „3&"  9 = „3a"  10 = „4"  11 = „4&"  12 = „4a"
+    // Snare bleibt auf 2 und 4 (Position 4 und 10), Hi-Hat auf allen zwölf.
+    // Groove 124 = 1 · 6 · 7: die Bassdrum kommt schon auf dem „a" der 2 und
+    // zieht in die 3 hinein.
+    {id:154, cat:'grooves', name:'Groove 124', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 125 = 1 · 6 · 7 · 9  (1 = „1", 6 = „2a", 7 = „3", 9 = „3a")
+    // Groove 124 plus das a der 3 — die Bassdrum umspielt die 3 von beiden Seiten.
+    {id:155, cat:'grooves', name:'Groove 125', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 126 = 1 · 3 · 6 · 7 · 9  (1 = „1", 3 = „1a", 6 = „2a", 7 = „3", 9 = „3a")
+    // Groove 125 plus das a der 1 — jetzt zieht die Bassdrum auch in die 2 hinein.
+    {id:156, cat:'grooves', name:'Groove 126', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 127 = 1 · 5 · 6 · 9  (1 = „1", 5 = „2&", 6 = „2a", 9 = „3a")
+    // Die 3 bleibt frei — die Bassdrum laeuft vorher durch und faengt erst auf dem a der 3 wieder an.
+    {id:157, cat:'grooves', name:'Groove 127', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 128 = 1 · 5 · 7 · 12  (1 = „1", 5 = „2&", 7 = „3", 12 = „4a")
+    // Die letzte Triole des Taktes zieht in die naechste Eins hinueber.
+    {id:158, cat:'grooves', name:'Groove 128', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 129 = 1 · 3  (1 = „1", 3 = „1a")
+    // Nur zwei Schlaege: die Eins und ihr a, das in die 2 zieht.
+    {id:159, cat:'grooves', name:'Groove 129', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 130 = 1 · 7 · 11  (1 = „1", 7 = „3", 11 = „4&")
+    // Die Bassdrum meldet sich erst kurz vor Schluss wieder.
+    {id:160, cat:'grooves', name:'Groove 130', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 131 = 1 · 7 · 12  (1 = „1", 7 = „3", 12 = „4a")
+    // Wie 129, aber die letzte Triole zieht in die naechste Eins.
+    {id:161, cat:'grooves', name:'Groove 131', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 132 = 1 · 3 · 7  (1 = „1", 3 = „1a", 7 = „3")
+    // Auftakt in die 2, dann die 3 gerade.
+    {id:162, cat:'grooves', name:'Groove 132', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 133 = 1 · 2 · 7  (1 = „1", 2 = „1&", 7 = „3")
+    // Doppelschlag gleich auf der Eins — Shuffle-Gefuehl.
+    {id:163, cat:'grooves', name:'Groove 133', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 134 = 1 · 5 · 9  (1 = „1", 5 = „2&", 9 = „3a")
+    // Beide Zusatzschlaege in der zweiten Takthaelfte, gegen die Snare versetzt.
+    {id:164, cat:'grooves', name:'Groove 134', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 135 = 1 · 3 · 9  (1 = „1", 3 = „1a", 9 = „3a")
+    // Die 3 bleibt frei, beide a tragen den Groove.
+    {id:165, cat:'grooves', name:'Groove 135', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 136 = 1 · 6 · 12  (1 = „1", 6 = „2a", 12 = „4a")
+    // Die beiden a vor der 3 und vor der naechsten Eins.
+    {id:166, cat:'grooves', name:'Groove 136', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 137 = 1 · 2 · 5 · 6 · 8 · 9 · 12  (1 = „1", 2 = „1&", 5 = „2&", 6 = „2a", 8 = „3&", 9 = „3a", 12 = „4a")
+    // Drei Doppelschlaege (1/1&, 2&/2a, 3&/3a) und das a der 4, das mit 1/1& ueber den Taktstrich zur Triole wird.
+    {id:167, cat:'grooves', name:'Groove 137', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 138 = 1 · 2 · 3 · 5 · 8 · 9  (1 = „1", 2 = „1&", 3 = „1a", 5 = „2&", 8 = „3&", 9 = „3a")
+    // Volle Triole auf der Bassdrum gleich auf der Eins, dann 2& und das Doppel 3&/3a.
+    {id:168, cat:'grooves', name:'Groove 138', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 139 = 1 · 3 · 6 · 7 · 9 · 12  (1 = „1", 3 = „1a", 6 = „2a", 7 = „3", 9 = „3a", 12 = „4a")
+    // Wie 126, dazu das a der 4 als Auftakt in den naechsten Takt.
+    {id:169, cat:'grooves', name:'Groove 139', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
+    // Groove 140 = 1 · 3 · 5 · 7 · 9 · 11  (1 = „1", 3 = „1a", 5 = „2&", 7 = „3", 9 = „3a", 11 = „4&")
+    // Alle ungeraden Positionen — die Bassdrum laeuft in Vierteltriolen gegen die Achteltriolen der Hi-Hat. Zwei gegen drei, dichteste der Reihe.
+    {id:170, cat:'grooves', name:'Groove 140', noteValue:'triplet', hihatHands:'one',
+     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
+      [{inst:'hh',line:-0.5,head:'x'}]
+    ]},
+
         // ── DOWNBEAT ACCENTS (111–130) ──────────────────────────────
     // Gleiche Patterns wie Basic Grooves 1 — hh auf Downbeats (pos 0,2,4,6) → hhAccent
     {id:111,cat:'grooves',name:'Groove 81',noteValue:'eighth',hihatHands:'one',minSPHM:60,maxSPHM:500,catLabel:'Downbeat Accents',minBPM:45,maxBPM:200,step:5,beats:[
@@ -3608,378 +3985,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       [{inst:'hhAccent',line:-0.5,head:'x'}],
       [{inst:'kick',line:3.5,head:'oval'},{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
       [{inst:'hhAccent',line:-0.5,head:'x'}]
-    ]},
-
-        // ── TRIPLET GROOVES (151+, Groove 121+) ─────────────────────
-    // Keine eigene Säule, sondern eine weitere Unterkategorie der Grooves
-    // (Erwin, 18.09.2026) — sie läuft deshalb in der normalen Groove-Rotation
-    // mit, sobald jemand hinter Groove 120 angekommen ist. Neue Einträge
-    // stehen am Ende des Pools, bestehende `introIdx` zeigen weiter auf
-    // dieselben Übungen.
-    // Achteltriolen auf der Hi-Hat, durchgehend mit einer Hand — bei 12
-    // Anschlägen pro Takt ist die Hand die Grenze, nicht die Koordination.
-    // Deshalb Einstieg bei 60 BPM (180 Schläge/Hand) und Schluss bei 160
-    // (480), also derselbe Endbereich wie bei den Achtel-Grooves, nur über
-    // 21 Stufen à 5 BPM.
-    {id:151, cat:'grooves', name:'Groove 121', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-    // Groove 121 plus eine Bassdrum auf dem „&" der 3 — also auf der mittleren
-    // Triole der dritten Zählzeit, Position 7 von 12 (Erwin, 18.09.2026).
-    {id:152, cat:'grooves', name:'Groove 122', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-    // Wie Groove 122, aber die zusätzliche Bassdrum auf dem „a" statt dem „&"
-    // der 3 — die letzte Triole der dritten Zählzeit, Position 8 von 12. Sie
-    // liegt damit direkt vor der Snare auf der 4 und zieht ganz anders als
-    // die mittlere (Erwin, 19.09.2026).
-    {id:153, cat:'grooves', name:'Groove 123', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-    // Ab hier gibt Erwin die Bassdrum als Positionen 1–12 im Triolenraster an:
-    //   1 = „1"   2 = „1&"  3 = „1a"   4 = „2"   5 = „2&"   6 = „2a"
-    //   7 = „3"   8 = „3&"  9 = „3a"  10 = „4"  11 = „4&"  12 = „4a"
-    // Snare bleibt auf 2 und 4 (Position 4 und 10), Hi-Hat auf allen zwölf.
-    // Groove 124 = 1 · 6 · 7: die Bassdrum kommt schon auf dem „a" der 2 und
-    // zieht in die 3 hinein.
-    {id:154, cat:'grooves', name:'Groove 124', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 125 = 1 · 6 · 7 · 9  (1 = „1", 6 = „2a", 7 = „3", 9 = „3a")
-    // Groove 124 plus das a der 3 — die Bassdrum umspielt die 3 von beiden Seiten.
-    {id:155, cat:'grooves', name:'Groove 125', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 126 = 1 · 3 · 6 · 7 · 9  (1 = „1", 3 = „1a", 6 = „2a", 7 = „3", 9 = „3a")
-    // Groove 125 plus das a der 1 — jetzt zieht die Bassdrum auch in die 2 hinein.
-    {id:156, cat:'grooves', name:'Groove 126', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 127 = 1 · 5 · 6 · 9  (1 = „1", 5 = „2&", 6 = „2a", 9 = „3a")
-    // Die 3 bleibt frei — die Bassdrum laeuft vorher durch und faengt erst auf dem a der 3 wieder an.
-    {id:157, cat:'grooves', name:'Groove 127', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 128 = 1 · 5 · 7 · 12  (1 = „1", 5 = „2&", 7 = „3", 12 = „4a")
-    // Die letzte Triole des Taktes zieht in die naechste Eins hinueber.
-    {id:158, cat:'grooves', name:'Groove 128', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 129 = 1 · 3  (1 = „1", 3 = „1a")
-    // Nur zwei Schlaege: die Eins und ihr a, das in die 2 zieht.
-    {id:159, cat:'grooves', name:'Groove 129', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 130 = 1 · 7 · 11  (1 = „1", 7 = „3", 11 = „4&")
-    // Die Bassdrum meldet sich erst kurz vor Schluss wieder.
-    {id:160, cat:'grooves', name:'Groove 130', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 131 = 1 · 7 · 12  (1 = „1", 7 = „3", 12 = „4a")
-    // Wie 129, aber die letzte Triole zieht in die naechste Eins.
-    {id:161, cat:'grooves', name:'Groove 131', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 132 = 1 · 3 · 7  (1 = „1", 3 = „1a", 7 = „3")
-    // Auftakt in die 2, dann die 3 gerade.
-    {id:162, cat:'grooves', name:'Groove 132', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 133 = 1 · 2 · 7  (1 = „1", 2 = „1&", 7 = „3")
-    // Doppelschlag gleich auf der Eins — Shuffle-Gefuehl.
-    {id:163, cat:'grooves', name:'Groove 133', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 134 = 1 · 5 · 9  (1 = „1", 5 = „2&", 9 = „3a")
-    // Beide Zusatzschlaege in der zweiten Takthaelfte, gegen die Snare versetzt.
-    {id:164, cat:'grooves', name:'Groove 134', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 135 = 1 · 3 · 9  (1 = „1", 3 = „1a", 9 = „3a")
-    // Die 3 bleibt frei, beide a tragen den Groove.
-    {id:165, cat:'grooves', name:'Groove 135', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 136 = 1 · 6 · 12  (1 = „1", 6 = „2a", 12 = „4a")
-    // Die beiden a vor der 3 und vor der naechsten Eins.
-    {id:166, cat:'grooves', name:'Groove 136', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 137 = 1 · 2 · 5 · 6 · 8 · 9 · 12  (1 = „1", 2 = „1&", 5 = „2&", 6 = „2a", 8 = „3&", 9 = „3a", 12 = „4a")
-    // Drei Doppelschlaege (1/1&, 2&/2a, 3&/3a) und das a der 4, das mit 1/1& ueber den Taktstrich zur Triole wird.
-    {id:167, cat:'grooves', name:'Groove 137', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 138 = 1 · 2 · 3 · 5 · 8 · 9  (1 = „1", 2 = „1&", 3 = „1a", 5 = „2&", 8 = „3&", 9 = „3a")
-    // Volle Triole auf der Bassdrum gleich auf der Eins, dann 2& und das Doppel 3&/3a.
-    {id:168, cat:'grooves', name:'Groove 138', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 139 = 1 · 3 · 6 · 7 · 9 · 12  (1 = „1", 3 = „1a", 6 = „2a", 7 = „3", 9 = „3a", 12 = „4a")
-    // Wie 126, dazu das a der 4 als Auftakt in den naechsten Takt.
-    {id:169, cat:'grooves', name:'Groove 139', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}]
-    ]},
-
-    // Groove 140 = 1 · 3 · 5 · 7 · 9 · 11  (1 = „1", 3 = „1a", 5 = „2&", 7 = „3", 9 = „3a", 11 = „4&")
-    // Alle ungeraden Positionen — die Bassdrum laeuft in Vierteltriolen gegen die Achteltriolen der Hi-Hat. Zwei gegen drei, dichteste der Reihe.
-    {id:170, cat:'grooves', name:'Groove 140', noteValue:'triplet', hihatHands:'one',
-     catLabel:'Triplet Grooves', minBPM:60, maxBPM:160, step:5, beats:[
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'snare',line:1.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'kick',line:3.5,head:'oval'},{inst:'hh',line:-0.5,head:'x'}],
-      [{inst:'hh',line:-0.5,head:'x'}]
     ]},
 
         // ── FILL INS (21–50) ────────────────────────────────────────
@@ -6508,7 +6513,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-121101';
+  var DL_BUILD = '20260921-121851';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
