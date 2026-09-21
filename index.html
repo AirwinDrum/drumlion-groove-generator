@@ -14505,7 +14505,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260921-130048';
+  var DL_BUILD = '20260921-130249';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17831,61 +17831,96 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // ── HTML: Course Map ─────────────────────────────────────
-    function renderCourseMap() {
-      var lessons = buildCourseMap();
-      var lpl = LESSONS_PER_LEVEL;
-      var lpc = LESSONS_PER_CHAPTER;
-      var catColor = { grooves:'#C9A84C', notes:'#4a7fd4', fillins:'#559955', rudiments:'#aa5555', coordination:'#888' };
-      var catShort = { grooves:'G', notes:'N', fillins:'F', rudiments:'R', coordination:'C' };
-
-      var h = '<div style="font-size:12px;color:#666;margin-bottom:8px;">'
-            + 'Simulation ab Kurs-Start · ' + lessons.length + ' Lektionen · '
-            + TOTAL_LEVELS + ' Levels · ' + CHAPTERS_PER_LEVEL + ' Chapters/Level · '
-            + lpl + ' Lektionen/Level · ' + lpc + ' Lektionen/Chapter'
-            + '</div>'
-            + '<div style="font-size:11px;color:#555;margin-bottom:16px;">'
-            + '🔒 Rudiments ab Level 3 (in Simulation enthalten) &nbsp;·&nbsp; Coordination läuft ab Level 1'
-            + '</div>';
-
-      var currentLevel = -1, currentChapter = -1;
-
-      for (var i = 0; i < lessons.length; i++) {
-        var l = lessons[i];
-        var lvl     = Math.floor(i / lpl) + 1;
-        var chInLvl = Math.floor((i % lpl) / lpc) + 1;
-        var lesInCh = (i % lpc) + 1;
-
-        if (lvl !== currentLevel) {
-          if (currentLevel !== -1) h += '</div></div>'; // close chapter+level
-          else if (currentChapter !== -1) h += '</div>'; // close chapter only
-          currentLevel   = lvl;
-          currentChapter = -1;
-          h += '<div style="margin-bottom:10px;">';
-          h += '<div style="font-size:13px;font-weight:700;color:#C9A84C;margin-bottom:8px;padding:8px 12px;background:#1a1a1a;border-radius:6px;border-left:3px solid #C9A84C;">'
-             + 'Level ' + lvl + '</div>';
-        }
-
-        if (chInLvl !== currentChapter) {
-          if (currentChapter !== -1) h += '</div>'; // close prev chapter
-          currentChapter = chInLvl;
-          h += '<div style="margin-bottom:8px;margin-left:12px;">';
-          h += '<div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#666;margin-bottom:6px;padding:4px 8px;background:#161616;border-radius:4px;">'
-             + 'Chapter ' + chInLvl + '</div>';
-          h += '<div style="display:flex;flex-wrap:wrap;gap:4px;padding-left:8px;">';
-        }
-
-        var col = catColor[l.cat] || '#888';
-        var bpmText = l.bpm ? ' <span style="color:#555;font-size:10px;">@ ' + l.bpm + ' BPM</span>' : '';
-        h += '<div data-exid="' + l.ex.id + '" data-bpm="' + l.bpm + '" style="cursor:pointer;background:#1a1a1a;border:1px solid #252525;border-radius:5px;padding:5px 9px;font-size:11px;display:flex;align-items:center;gap:6px;" title="' + l.ex.name + ' · ' + l.cat + '">'
-           + '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:' + col + '22;border:1px solid ' + col + '66;color:' + col + ';font-size:9px;font-weight:700;text-align:center;line-height:14px;">' + catShort[l.cat] + '</span>'
-           + '<span style="color:#E8E4DB;">' + l.ex.name + '</span>'
-           + bpmText
+    // Aufklappbar nach Level und Chapter (Erwin, 21.09.2026). Vorher lief jedes
+    // Chapter einen Einzug weiter nach rechts: pro Chapter wurden zwei <div>
+    // geöffnet, beim Wechsel aber nur eines geschlossen — jedes Chapter steckte
+    // im vorigen. Jetzt alles auf derselben Kante; Inhalte werden erst beim
+    // Aufklappen gezeichnet (die Simulation hat über 30.000 Lektionen).
+    var _mapLessons = null;
+    var _mapOpen = {};
+    var _MAP_COL   = { grooves:'#C9A84C', notes:'#4a7fd4', fillins:'#559955', rudiments:'#aa5555', coordination:'#888' };
+    var _MAP_SHORT = { grooves:'G', notes:'N', fillins:'F', rudiments:'R', coordination:'C' };
+    function _mapMix(from, to) {
+      var c = {};
+      for (var i = from; i < to; i++) { var k = _mapLessons[i].cat; c[k] = (c[k] || 0) + 1; }
+      return ['grooves','notes','fillins','coordination','rudiments'].filter(function(k){ return c[k]; }).map(function(k) {
+        return '<span style="color:' + _MAP_COL[k] + ';">' + _MAP_SHORT[k] + ' ' + c[k] + '</span>';
+      }).join('<span style="color:#444;"> · </span>');
+    }
+    var _MAP_SUM = 'cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:12px;padding:9px 12px;';
+    function _mapLevelBody(lvl) {
+      var lpl = LESSONS_PER_LEVEL, lpc = LESSONS_PER_CHAPTER, h = '';
+      var start = (lvl - 1) * lpl, end = Math.min(_mapLessons.length, start + lpl);
+      for (var ch = 1; ch <= CHAPTERS_PER_LEVEL; ch++) {
+        var cs = start + (ch - 1) * lpc, ce = Math.min(end, cs + lpc);
+        if (cs >= ce) break;
+        var key = 'c' + lvl + '.' + ch, open = !!_mapOpen[key];
+        h += '<details data-mk="' + key + '"' + (open ? ' open' : '') + ' style="border:1px solid #232323;border-radius:6px;margin:0 0 6px;background:#161616;">'
+           + '<summary style="' + _MAP_SUM + 'font-size:12px;color:#aaa;">'
+           +   '<span class="dev-mk-caret" style="color:#777;width:10px;display:inline-block;">' + (open ? '▾' : '▸') + '</span>'
+           +   '<span style="letter-spacing:1px;text-transform:uppercase;color:#bbb;min-width:84px;">Chapter ' + ch + '</span>'
+           +   '<span style="color:#666;font-variant-numeric:tabular-nums;min-width:120px;">Lessons ' + (cs + 1) + '–' + ce + '</span>'
+           +   '<span style="font-size:11px;">' + _mapMix(cs, ce) + '</span>'
+           + '</summary>'
+           + '<div class="dev-mk-body" data-from="' + cs + '" data-to="' + ce + '" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;padding:2px 10px 10px 32px;">'
+           + (open ? _mapItems(cs, ce) : '') + '</div></details>';
+      }
+      return h;
+    }
+    function _mapItems(from, to) {
+      var h = '';
+      for (var i = from; i < to; i++) {
+        var l = _mapLessons[i], col = _MAP_COL[l.cat] || '#888';
+        h += '<div data-exid="' + l.ex.id + '" data-bpm="' + l.bpm + '" title="' + _pickEsc(l.ex.name) + ' · ' + l.cat + '" style="cursor:pointer;background:#1a1a1a;border:1px solid #252525;border-radius:5px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;min-width:0;">'
+           + '<span style="color:#555;font-size:10px;font-variant-numeric:tabular-nums;width:34px;flex-shrink:0;text-align:right;">' + (i + 1) + '</span>'
+           + '<span style="display:inline-block;width:14px;height:14px;flex-shrink:0;border-radius:3px;background:' + col + '22;border:1px solid ' + col + '66;color:' + col + ';font-size:9px;font-weight:700;text-align:center;line-height:14px;">' + _MAP_SHORT[l.cat] + '</span>'
+           + '<span style="color:#E8E4DB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;">' + _pickEsc(l.ex.name) + '</span>'
+           + (l.bpm ? '<span style="color:#555;font-size:10px;flex-shrink:0;">' + l.bpm + '</span>' : '')
            + '</div>';
       }
-      // close last chapter + level
-      h += '</div></div></div>';
-
       return h;
+    }
+    function renderCourseMap() {
+      _mapLessons = buildCourseMap();
+      var lpl = LESSONS_PER_LEVEL, lpc = LESSONS_PER_CHAPTER;
+      var nLvl = Math.ceil(_mapLessons.length / lpl);
+      if (!Object.keys(_mapOpen).length) { _mapOpen['l1'] = true; _mapOpen['c1.1'] = true; }
+      var h = '<style>details[data-mk] > summary::-webkit-details-marker{display:none}</style>'
+            + '<div style="font-size:12px;color:#777;margin-bottom:6px;">'
+            + 'Simulation from course start · ' + _mapLessons.length + ' lessons · '
+            + lpl + ' lessons/level · ' + lpc + ' lessons/chapter · ' + nLvl + ' levels of content (' + TOTAL_LEVELS + ' in Systeme.io)'
+            + '</div>'
+            + '<div style="font-size:11px;color:#555;margin-bottom:16px;">'
+            + 'Rudiments from level 3 · Coordination from level 1 · '
+            + ['grooves','notes','fillins','coordination','rudiments'].map(function(k){ return '<span style="color:' + _MAP_COL[k] + ';">' + _MAP_SHORT[k] + '</span> ' + k; }).join(' · ')
+            + '</div>';
+      for (var lvl = 1; lvl <= nLvl; lvl++) {
+        var ls = (lvl - 1) * lpl, le = Math.min(_mapLessons.length, ls + lpl);
+        var key = 'l' + lvl, open = !!_mapOpen[key];
+        h += '<details data-mk="' + key + '" data-lvl="' + lvl + '"' + (open ? ' open' : '')
+           + ' style="border:1px solid ' + (lvl > TOTAL_LEVELS ? '#1e1e1e' : '#2a2a2a') + ';border-radius:8px;margin-bottom:6px;background:#131313;">'
+           + '<summary style="' + _MAP_SUM + 'font-size:13px;">'
+           +   '<span class="dev-mk-caret" style="color:#C9A84C;width:10px;display:inline-block;">' + (open ? '▾' : '▸') + '</span>'
+           +   '<span style="font-weight:700;color:' + (lvl > TOTAL_LEVELS ? '#777' : '#C9A84C') + ';min-width:84px;">Level ' + lvl + '</span>'
+           +   '<span style="color:#777;font-size:12px;font-variant-numeric:tabular-nums;min-width:120px;">Lessons ' + (ls + 1) + '–' + le + '</span>'
+           +   '<span style="font-size:11px;">' + _mapMix(ls, le) + '</span>'
+           + '</summary>'
+           + '<div class="dev-mk-lvl" style="padding:0 10px 4px 22px;">' + (open ? _mapLevelBody(lvl) : '') + '</div>'
+           + '</details>';
+      }
+      return h;
+    }
+    // Aufklappen: Zustand merken und Inhalt erst jetzt zeichnen
+    function _mapToggle(d) {
+      var key = d.getAttribute('data-mk');
+      if (d.open) _mapOpen[key] = true; else delete _mapOpen[key];
+      var c = d.querySelector(':scope > summary .dev-mk-caret');
+      if (c) c.textContent = d.open ? '▾' : '▸';
+      if (!d.open) return;
+      var lv = d.querySelector(':scope > .dev-mk-lvl');
+      if (lv && !lv.innerHTML) lv.innerHTML = _mapLevelBody(parseInt(d.getAttribute('data-lvl'), 10));
+      var body = d.querySelector(':scope > .dev-mk-body');
+      if (body && !body.innerHTML) body.innerHTML = _mapItems(parseInt(body.getAttribute('data-from'), 10), parseInt(body.getAttribute('data-to'), 10));
     }
 
     // ── HTML: Footer mit Reset ───────────────────────────────
@@ -17927,6 +17962,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.body.appendChild(panel);
     panel.addEventListener('toggle', function(e) {
       var d = e.target;
+      if (d && d.tagName === 'DETAILS' && d.hasAttribute('data-mk')) { _mapToggle(d); return; }
       if (!d || d.tagName !== 'DETAILS' || !d.hasAttribute('data-pk')) return;
       var key = d.getAttribute('data-pk');
       if (d.open) _pickOpen[key] = true; else delete _pickOpen[key];
