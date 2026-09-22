@@ -14972,7 +14972,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260922-134302';
+  var DL_BUILD = '20260922-135459';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -15845,16 +15845,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   //   1. die Blockzahl — also wie weit die Übung ist (festigen vs. Training),
   //   2. die Anstrengung — Schläge pro Hand und Minute, nicht das nackte Tempo.
   //      Viertel bei 130 BPM sind 130 Schläge, 16tel bei 150 sind 600.
-  // Grundwert × Faktor, auf 5 Sekunden gerundet, höchstens 30 (Erwins Deckel).
+  // Grundwert × Faktor, auf 5 Sekunden gerundet, mindestens 5, höchstens 20.
   // Der Faktor verkürzt nur, er verlängert nie: ab 350 Schlägen/Hand gilt der
   // volle Grundwert, darunter anteilig weniger, mindestens die Hälfte.
-  // Beispiele: Fill 1 @130 (Viertel) 10 s, Groove 1 @110 15 s, @180 20 s,
-  // @250 20+25+30, Double Stroke Roll @300 ebenso.
-  var PAUSE_BASE   = { 2: [20], 3: [20, 25], 4: [20, 25, 30] };
+  // Halbiert am 22.09.2026 (Erwin: „es kann nicht sein, dass man über 100 h
+  // nur da sitzt und wartet") — vorher 20/25/30, Deckel 30; Kurs 91 → 50 h Pause.
+  // Beispiele: Fill 1 @130 (Viertel) 5 s, Groove 1 @180 10 s,
+  // @250 10+15+20, Double Stroke Roll @300 ebenso.
+  var PAUSE_BASE   = { 2: [10], 3: [10, 15], 4: [10, 15, 20] };
   var PAUSE_REF    = 350;   // Schläge pro Hand und Minute für Faktor 1,0
   var PAUSE_MIN_F  = 0.5;
   var PAUSE_MAX_F  = 1.0;
-  var PAUSE_MAX    = 30;
+  var PAUSE_MAX    = 20;
   function getPauses(t, n) {
     if (GROOVE.cat === 'notes') return [];  // Notes: 1 Block, keine Pausen
     if (!n || n <= 1) return [];
