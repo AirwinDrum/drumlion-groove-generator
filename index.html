@@ -14301,8 +14301,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Füllen einer leeren Kategorie Min/Max von hier übernehmen.
   // Nr. 94 kam am 22.09. dazu (Erwin: 50–200, Advanced).
   var GROOVE_PLAN = [
-  [1, 'Basic Grooves 1', 'Nur Achtel (Groove 1–3 starten bei 30/35/40)', 1, 45, 120, ['Basic Grooves 1']],
-  [2, 'Basic Grooves 2', 'Achtel Snare Variation', 1, 50, 130, ['Basic Grooves 2']],
+  [1, 'Basic Grooves 1', 'Nur Achtel (Groove 1–3 starten bei 30/35/40)', 0, 45, 120, ['Basic Grooves 1']],   // Advanced raus 22.09. (Erwin)
+  [2, 'Basic Grooves 2', 'Achtel Snare Variation', 0, 50, 130, ['Basic Grooves 2']],   // Advanced raus 22.09. (Erwin)
   [3, 'Hi-Hat Openings 1', 'Einfacher Achtel Groove', 0, 50, 140, ['Hi-Hat Openings 1']],
   [4, 'Hi-Hat Openings 2', 'Achtel Bassdrum und Achtel Öffnungen', 0, 50, 140, ['Hi-Hat Openings 2']],
   [5, 'Hi-Hat Openings 3', 'Mit 16tel Bassdrums', 0, 50, 120, []],
@@ -15053,6 +15053,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     Object.keys(p.cats).forEach(function(c) {
       var cs = p.cats[c];
       if (!cs) return;
+      // Kategorie nicht mehr Advanced (z.B. Basic Grooves 1/2, 22.09.2026)?
+      // Dann zurück in die Rotation, weiter bei der erreichten Stufe; zu
+      // viele offene parkt `_trimActive` unten wie gewohnt.
+      (cs.active || []).concat(cs.park || []).forEach(function(en) {
+        if (!en.adv) return;
+        var ex = null;
+        for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
+        if (ex && !_exAdvanced(ex)) delete en.adv;
+      });
+      cs.adv = (cs.adv || []).filter(function(en) {
+        var ex = null;
+        for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
+        if (!ex || _exAdvanced(ex)) return true;
+        delete en.adv;
+        cs.active.push(en);
+        return false;
+      });
       ['active', 'park'].forEach(function(list) {
         if (!cs[list]) return;
         cs[list] = cs[list].filter(function(en) {
@@ -15202,7 +15219,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260922-171019';
+  var DL_BUILD = '20260922-175003';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
