@@ -2084,7 +2084,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     Object.keys(cs.cats).forEach(function(c) {
       var k = cs.cats[c];
       if (!k) return;
-      (k.active || []).concat(k.park || []).forEach(function(en) {
+      (k.active || []).concat(k.park || [], k.adv || []).forEach(function(en) {
         if (!en) return;
         steps[en.id] = Math.max(steps[en.id] || 0, en.bpmStep || 0);
       });
@@ -2195,7 +2195,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       Object.keys(_cState.cats || {}).forEach(function(c) {
         var k = _cState.cats[c];
         if (!k) return;
-        (k.active || []).concat(k.park || []).forEach(function(en) {
+        (k.active || []).concat(k.park || [], k.adv || []).forEach(function(en) {
           if (!en || seen[en.id]) return;
           seen[en.id] = 1;
           n += Math.min(Math.max(en.best || 0, en.bpmStep || 0), _exStepsById(en.id));
@@ -2417,6 +2417,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       title: 'Exercise complete!',
       lines: [ex.name + ' — goal tempo of ' + goal + ' BPM reached.',
               'This exercise is finished for good. On to new ones!'],
+      button: 'Keep going!',
+      autoMs: 0
+    });
+  }
+  // Basic-Hälfte einer Advanced-Übung geschafft (Erwin, 22.09.2026)
+  function _showBasicComplete(d) {
+    _celebrate({
+      iconHtml: _CHECK_ICON,
+      title: 'Basic complete!',
+      lines: [d.ex.name + ' — ' + d.bpm + ' BPM reached.',
+              'It comes back in Advanced, right where you left off. On to new ones!'],
       button: 'Keep going!',
       autoMs: 0
     });
@@ -14280,6 +14291,151 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var MAX_ACTIVE_PER_CAT = 10;
   var COURSE_KEY = _nsKey('drumlion_v4_course');   // pro Konto, siehe _ID_NS
 
+  // ── Plan aller Groove-Kategorien (Erwin, 21./22.09.2026) ────────
+  // [Plan-Nr., Name, Zusatz, Advanced (1 = kommt in der zweiten Hälfte
+  // wieder), Min-BPM, Max-BPM, vorhandene Unterkategorien (catLabel)].
+  // Die Plan-Nr. ist nur Erwins Kennung, NICHT die Kursreihenfolge — die
+  // steht im Dev-Picker. Einträge ohne catLabel sind angelegt, aber noch
+  // leer: der Picker zeigt sie hinter den vorhandenen mit ihrer Spanne.
+  // Spannen vorhandener Kategorien stehen in den Übungen selbst; beim
+  // Füllen einer leeren Kategorie Min/Max von hier übernehmen.
+  // Nr. 94 kam am 22.09. dazu (Erwin: 50–200, Advanced).
+  var GROOVE_PLAN = [
+  [1, 'Basic Grooves 1', 'Nur Achtel (Groove 1–3 starten bei 30/35/40)', 1, 45, 120, ['Basic Grooves 1']],
+  [2, 'Basic Grooves 2', 'Achtel Snare Variation', 1, 50, 130, ['Basic Grooves 2']],
+  [3, 'Hi-Hat Openings 1', 'Einfacher Achtel Groove', 0, 50, 140, ['Hi-Hat Openings 1']],
+  [4, 'Hi-Hat Openings 2', 'Achtel Bassdrum und Achtel Öffnungen', 0, 50, 140, ['Hi-Hat Openings 2']],
+  [5, 'Hi-Hat Openings 3', 'Mit 16tel Bassdrums', 0, 50, 120, []],
+  [6, 'Hi-Hat Openings 4', 'Mit 16tel Hi-Hat Öffnungen', 0, 45, 110, []],
+  [7, '16th Notes Bassdrum Grooves', 'Achtel Hi-Hat', 1, 50, 120, []],
+  [8, '16th Notes Hi-Hat Grooves 1 (One Handed)', 'Achtel Bassdrum', 1, 40, 90, ['16th Note Hi-Hat Grooves (downbeat accents)']],
+  [9, '16th Notes Hi-Hat Grooves (One Handed)', '16tel Bassdrum', 1, 40, 85, []],
+  [10, '16th Notes Hi-Hat Grooves 1 (Two Handed)', 'Achtel Bassdrum', 1, 50, 110, ['16th Note Hi-Hat Grooves (alternating)']],
+  [11, '16th Notes Hi-Hat Grooves (Two Handed)', '16tel Bassdrum', 1, 45, 100, []],
+  [12, 'Triplet Grooves 1', 'Achtel Hi-Hat', 1, 50, 130, ['Triplet Grooves']],
+  [13, 'Triplet Grooves 2', '16tel Hi-Hat', 1, 40, 70, []],
+  [14, 'Triplet Grooves 3', '16tel Bassdrums', 0, 45, 100, []],
+  [15, 'Triplet Hi-Hat Openings', 'Achtel', 0, 50, 120, []],
+  [16, 'Triplet Shuffle Grooves 1', 'Achtel Shuffle', 0, 60, 140, ['Shuffle Grooves 1']],
+  [17, 'Triplet Shuffle Grooves 2', 'Achtel Shuffle + Ghostnotes', 0, 55, 130, ['Shuffle Grooves 2']],
+  [18, 'Half Time Shuffle Grooves 1', 'Nur Bassdrum Variationen', 0, 50, 100, []],
+  [19, 'Half Time Shuffle Grooves 2', '+ Ghostnotes', 0, 50, 95, []],
+  [20, 'Hi-Hat Accent Grooves 1', 'Akzent auf der Zählzeit', 1, 50, 130, ['Downbeat Accents']],
+  [21, 'Hi-Hat Accent Grooves 2', 'Achtel Off Beat', 1, 50, 130, ['Upbeat Accents']],
+  [22, 'Hi-Hat Accent Grooves 3', 'Mit 16tel Akzenten', 1, 40, 90, ['16th Note Hi-Hat Grooves (offbeat accents)']],
+  [23, 'Ghostnote Grooves 1', '4/4 einfacher Groove', 0, 50, 110, []],
+  [24, 'Ghostnote Grooves 2', '4/4 Groove Variations', 0, 50, 110, []],
+  [25, '32nd Note Hi-Hat Grooves 1', 'Achtel Bassdrum', 1, 35, 60, []],
+  [26, '32nd Note Hi-Hat Grooves 2', '16tel Bassdrum', 1, 35, 55, []],
+  [27, '32nd Bassdrum Grooves', '', 1, 35, 60, []],
+  [28, 'Drag Ghostnotes 1', 'Nur mit Drags', 0, 45, 100, []],
+  [29, 'Drag Ghostnotes 2', 'Drag + Ghostnotes', 0, 45, 95, []],
+  [30, 'Paradiddle Grooves', '', 1, 50, 110, []],
+  [31, 'Para Paradiddle Grooves', '', 1, 45, 100, []],
+  [32, 'Para Diddle Diddle Grooves', '', 1, 45, 100, []],
+  [33, '5/4 Grooves', '', 0, 60, 140, []],
+  [34, '7/8 Grooves', '', 1, 60, 190, []],
+  [35, '9/8 Grooves', '', 1, 60, 190, []],
+  [36, 'Linear Grooves', '', 1, 40, 150, []],
+  [37, 'Tom Grooves', '', 1, 50, 140, []],
+  [38, 'Snare Roll Grooves', '', 0, 45, 130, []],
+  [39, 'Hi-Hat Groupings 1', '', 1, 50, 140, []],
+  [40, 'Hi-Hat Groupings 2', '', 1, 50, 140, []],
+  [41, 'Hi-Hat Groupings 3', '', 1, 50, 140, []],
+  [42, 'Hi-Hat Groupings 4', 'Wie Groupings 1 + Openings', 0, 50, 120, []],
+  [43, 'Hi-Hat Groupings 5', 'Wie Groupings 2 + Openings', 0, 50, 120, []],
+  [44, 'Hi-Hat Groupings 6', 'Wie Groupings 3 + Openings', 0, 50, 120, []],
+  [45, 'Ride Bell Grooves 1', 'On Beat', 0, 50, 140, ['Ride Downbeat Accents · HH Foot 1/4', 'Ride Downbeat Accents · HH Foot Offbeats', 'Ride Downbeat Accents · HH Foot 1/8']],
+  [46, 'Ride Bell Grooves 2', 'Off Beat', 0, 50, 140, ['Ride Upbeat Accents · HH Foot 1/4', 'Ride Upbeat Accents · HH Foot Offbeats', 'Ride Upbeat Accents · HH Foot 1/8']],
+  [47, 'Hi-Hat Steps Grooves 1', 'On Beat / 8tel BD', 0, 50, 140, ['Basic Ride Grooves 1 · HH Foot 1/4']],
+  [48, 'Hi-Hat Steps Grooves 2', 'On Beat / 16tel BD', 0, 45, 120, []],
+  [49, 'Hi-Hat Steps Grooves 3', 'Off Beat / 8tel BD', 0, 50, 140, ['Basic Ride Grooves 1 · HH Foot Offbeats']],
+  [50, 'Hi-Hat Steps Grooves 4', 'Off Beat / 16tel BD', 0, 45, 120, []],
+  [51, 'Hi-Hat Steps Grooves 5', '8th Note Steps / 8tel BD', 0, 50, 130, ['Basic Ride Grooves 1 · HH Foot 1/8']],
+  [52, 'Hi-Hat Steps Grooves 6', '8th Note Steps / 16tel BD', 0, 45, 110, []],
+  [53, 'Clave Grooves 1', '2-3 Son Clave', 0, 60, 120, []],
+  [54, 'Clave Grooves 2', '3-2 Son Clave', 0, 60, 120, []],
+  [55, 'Clave Grooves 3', '2-3 Rumba Clave', 0, 60, 120, []],
+  [56, 'Clave Grooves 4', '3-2 Rumba Clave', 0, 60, 120, []],
+  [57, 'Jazz Grooves 1', 'Ride + Hi-Hat', 1, 80, 250, []],
+  [58, 'Jazz Grooves 2', 'Swing Pattern + Snare', 1, 80, 250, []],
+  [59, 'Jazz Grooves 3', 'Swing Pattern + Bassdrum', 1, 80, 250, []],
+  [60, 'Jazz Grooves 4', 'Swing Pattern + Snare + Bassdrum', 1, 70, 200, []],
+  [61, 'Jazz Grooves 5', 'Swing Pattern + Snare + Bassdrum', 1, 70, 195, []],
+  [62, 'Double Bass Grooves 1', '', 1, 60, 120, []],
+  [63, 'Double Bass Grooves 2', '', 1, 60, 110, []],
+  [64, 'Rhythmic Illusions', '', 0, 50, 110, []],
+  [65, 'Cowbell Grooves', '', 0, 60, 120, []],
+  [66, 'Worship', '', 0, 60, 140, []],
+  [67, 'Disco', '', 0, 80, 150, []],
+  [68, 'New Orleans 2nd Line', '', 0, 60, 120, []],
+  [69, 'Batacuda', '', 0, 60, 120, []],
+  [70, 'Reggae', '', 0, 50, 130, []],
+  [71, 'Calypso', '', 0, 70, 130, []],
+  [72, 'Soca', '', 0, 80, 150, []],
+  [73, 'Bossa Nova', '', 0, 70, 140, []],
+  [74, 'Samba', '', 0, 60, 120, []],
+  [75, 'Merengue', '', 0, 80, 150, []],
+  [76, 'Cha-Cha', '', 0, 70, 140, []],
+  [77, 'Bolero', '', 0, 50, 110, []],
+  [78, 'Mambo', '', 0, 100, 180, []],
+  [79, 'Songo', '', 0, 70, 130, []],
+  [80, 'African Bembe', '6/8', 0, 60, 120, []],
+  [81, 'Afro Cuban', '6/8', 0, 60, 150, []],
+  [82, 'Mozambique', '', 0, 70, 130, []],
+  [83, 'Salsa', '', 0, 100, 180, []],
+  [84, 'Tango', '', 0, 60, 120, []],
+  [85, 'Beguine', '', 0, 60, 120, []],
+  [86, 'Country', '', 0, 70, 160, []],
+  [87, 'Drum\'n Bass', '', 1, 90, 160, []],
+  [88, 'Metal Grooves', '', 1, 80, 180, []],
+  [89, 'Funk', '', 0, 60, 140, []],
+  [90, 'Punk-Rock', '', 1, 100, 180, []],
+  [91, 'Marrokanisch', '', 0, 60, 120, []],
+  [92, 'Gospel', '', 0, 60, 130, []],
+  [93, 'Afoxé (Ijexá)', '', 0, 60, 110, []],
+  [94, 'Double Bass Grooves 3', '', 1, 50, 200, []]
+  ];
+  var _planByLabel = {};
+  GROOVE_PLAN.forEach(function(p) { p[6].forEach(function(l) { _planByLabel[l] = p; }); });
+
+  // ── Neue Coordination-Kategorien (Erwin, 22.09.2026) ────────────
+  // Noch leer, stehen VOR den vorhandenen (Hands — Displaced usw.) und
+  // kommen alle auch in Advanced. Aufbau wie GROOVE_PLAN, ohne Plan-Nr.;
+  // Tempo noch offen (null). Beim Füllen die Übungen vor den erzeugten
+  // Unabhängigkeitsübungen in EXERCISES einreihen, damit sie im Pool vorne
+  // stehen.
+  var COORD_PLAN_FRONT = [
+    [null, 'Bassdrum Slide Technique',         '', 1, null, null, []],
+    [null, 'Single Bassdrum Permutations',     '', 1, null, null, []],
+    [null, 'Single Snare Permutations',        '', 1, null, null, []],
+    [null, 'Double Bassdrum Permutations',     '', 1, null, null, []],
+    [null, 'Double Snare Permutations',        '', 1, null, null, []],
+    [null, 'Triple Bassdrum Permutations',     '', 1, null, null, []],
+    [null, 'Triple Snare Permutations',        '', 1, null, null, []],
+    [null, 'Bassdrum Quads',                   '', 1, null, null, []],
+    [null, 'Snare Quads',                      '', 1, null, null, []]
+  ];
+
+  // ── Neue Fill-Kategorien (Erwin, 22.09.2026) ────────────────────
+  // Noch leer, hinter den vorhandenen (Quarter, Eighth Note, Quarter &
+  // Eighth Fills) in dieser Reihenfolge. Die ersten drei ohne Advanced,
+  // ab 16th Note Triplet Fills alle mit. Tempo noch offen.
+  var FILL_PLAN_BACK = [
+    [null, 'Eighth Note Triplet Fills',        '', 0, null, null, []],
+    [null, '16th Note Fills',                  '', 0, null, null, []],
+    [null, 'Eighth & 16th Note Fills',         '', 0, null, null, []],
+    [null, '16th Note Triplet Fills',          '', 1, null, null, []],
+    [null, '32nd Note Fills',                  '', 1, null, null, []],
+    [null, 'Rudiment Fills',                   '', 1, null, null, []],
+    [null, 'Advanced Fills 1',                 '', 1, null, null, []],
+    [null, 'Advanced Fills 2',                 '', 1, null, null, []],
+    [null, 'Advanced Fills 3',                 '', 1, null, null, []],
+    [null, 'Gospel Chops',                     '', 1, null, null, []],
+    [null, 'Speed Fills',                      '', 1, null, null, []],
+    [null, 'Double Bass Fills',                '', 1, null, null, []]
+  ];
+
   // Übungen pro Kategorie, sortiert nach ID
   // Pillars: Grooves → Notes → Fills → Coordination → Rudiments (ab 200h)
   // Songs: eigene Rotation, kommt später
@@ -14290,6 +14446,49 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     coordination:  EXERCISES.filter(function(e){ return e.cat === 'coordination'; }),
     rudiments:     EXERCISES.filter(function(e){ return e.cat === 'rudiments' && e.beats; })
   };
+
+  // ── Basic und Advanced (Erwin, 22.09.2026) ────────────────────────────
+  // Angehakte Kategorien (Advanced-Spalte in den Plänen oben, Rudiments alle)
+  // teilen ihre Range in der Mitte: untere Hälfte Basic, obere Hälfte Advanced
+  // — dieselbe Übung, kein Zusatzinhalt, Lektionen wie gehabt. Die erste
+  // Advanced-Stufe ist die erste mit Blöcken (`_blockCount`: Stufe ÷ Stufen
+  // ≥ 0,5). Hat eine Übung ihre Basic-Hälfte geschafft, verlässt sie die
+  // Rotation und wartet in `cs.adv` (nach Kursreihenfolge). Erst wenn ihre
+  // Säule keine neuen Übungen mehr einzuführen hat, rücken die Wartenden nach
+  // und machen genau dort weiter, wo Basic aufgehört hat (`entry.adv = 1`).
+  // Umgeschaltet wird je Säule, nicht für den ganzen Kurs: 50 Rudiments
+  // wären sonst lange vor den Grooves durch und kämen ewig nicht mehr dran.
+  var _advLabels = {};
+  [GROOVE_PLAN, COORD_PLAN_FRONT, FILL_PLAN_BACK].forEach(function(list) {
+    list.forEach(function(p) { if (p[3]) p[6].forEach(function(l) { _advLabels[l] = 1; }); });
+  });
+  function _exAdvanced(ex) { return !!ex && (ex.cat === 'rudiments' || !!_advLabels[ex.catLabel]); }
+  function _advStart(ex) { return Math.ceil(_exSteps(ex) / 2); }   // erste Advanced-Stufe
+  function _basicDone(ex, en) {
+    var s = en.bpmStep || 0;
+    return _exAdvanced(ex) && !en.adv && s >= _advStart(ex) && s < _exSteps(ex);
+  }
+  function _advPark(cat, cs, en) {
+    var pool = _catPool[cat] || [];
+    function posOf(id) { for (var i = 0; i < pool.length; i++) if (pool[i].id === id) return i; return 1e9; }
+    if (!cs.adv) cs.adv = [];
+    cs.adv.push(en);
+    cs.adv.sort(function(a, b) { return posOf(a.id) - posOf(b.id); });
+  }
+  // Gibt es in der Säule noch eine nie eingeführte, freigeschaltete Übung?
+  // Dann ist Basic dort nicht vorbei. Gesperrte (`cs.skip`) zählen erst, wenn
+  // ihr Level erreicht ist — und kommen dann auch vor den Wartenden dran.
+  function _basicLeft(cat, cs, completed) {
+    var pool = _catPool[cat] || [], known = _knownIds(cs, completed), skip = {};
+    (cs.skip || []).forEach(function(id) { skip[id] = 1; });
+    for (var i = 0; i < pool.length; i++) {
+      if (known[pool[i].id] && !skip[pool[i].id]) continue;
+      if (_subUnlocked(pool[i])) return true;
+    }
+    return false;
+  }
+  // Übung, die gerade ihre Basic-Hälfte beendet hat — für die Meldung danach
+  var _justBasicDone = null;
 
   // ── Unterteilungen nach Level freischalten (Erwin, 10.09.2026) ────────
   // Bei Unabhängigkeit war bisher schon in Level 1 alles möglich, bis hinauf
@@ -14333,7 +14532,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Kategorien umsortiert (21.09.2026): `introIdx` ist nur eine Position im Pool.
   function _knownIds(cs, completed) {
     var k = {};
-    ['active', 'park'].forEach(function(l) { (cs[l] || []).forEach(function(e) { k[e.id] = 1; }); });
+    ['active', 'park', 'adv'].forEach(function(l) { (cs[l] || []).forEach(function(e) { k[e.id] = 1; }); });
     (cs.skip || []).forEach(function(id) { k[id] = 1; });
     (completed || []).forEach(function(id) { k[id] = 1; });
     return k;
@@ -14371,7 +14570,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function _initCat(cat) {
-    var cs = { active: [], park: [], skip: [], introIdx: 0, counter: 0, lastId: null };
+    var cs = { active: [], park: [], adv: [], skip: [], introIdx: 0, counter: 0, lastId: null };
     // Über _introNext statt direkt pool[0], damit auch die allererste Übung
     // durch das Unterteilungs-Gate muss. Bei Unabhängigkeit steht vorn zwar
     // ohnehin ein Achtelraster — aber die Reihenfolge im Pool kann sich ändern.
@@ -14743,7 +14942,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     Object.keys(p.cats || {}).forEach(function(c) {
       var k = p.cats[c];
       if (!k) return;
-      (k.active || []).concat(k.park || []).forEach(function(en) {
+      (k.active || []).concat(k.park || [], k.adv || []).forEach(function(en) {
         if (!en || seen[en.id]) return;
         seen[en.id] = 1;
         n += Math.min(Math.max(en.best || 0, en.bpmStep || 0), stepsOf(en.id));
@@ -14772,7 +14971,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       Object.keys(p.cats).forEach(function(c) {
         var cs = p.cats[c];
         if (!cs) return;
-        ['active', 'park'].forEach(function(list) {
+        ['active', 'park', 'adv'].forEach(function(list) {
           if (!cs[list]) return;
           cs[list] = cs[list].filter(function(en) {
             var o = m.old[en.id];
@@ -14831,8 +15030,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Ständen. Ohne diesen Eintrag greift die Lazy-Init nicht und die
     // Kategorie bliebe für Bestandsnutzer für immer unsichtbar.
     ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'].forEach(function(c) {
-      if (!p.cats[c]) p.cats[c] = { active: [], park: [], skip: [], introIdx: 0, counter: 0, lastId: null };
+      if (!p.cats[c]) p.cats[c] = { active: [], park: [], adv: [], skip: [], introIdx: 0, counter: 0, lastId: null };
       if (!p.cats[c].park) p.cats[c].park = [];
+      if (!p.cats[c].adv) p.cats[c].adv = [];   // Warteliste für Advanced (22.09.2026)
       // 10.09.2026: übersprungene Übungen, deren Unterteilung im
       // aktuellen Level noch gesperrt ist. Werden nachgeholt, sobald das
       // Level stimmt — siehe `_introNext`.
@@ -14844,6 +15044,27 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     // Geänderte Tempo-Ranges: gespeicherte Stufen aufs neue Raster umrechnen
     _applyRangeMigrations(p);
+    // Basic-Hälfte schon geschafft, aber noch nicht im Advanced-Teil (Stände
+    // von vor dem 22.09.2026, oder eine Range hat sich geändert)? Dann wartet
+    // die Übung mit ihrem Tempo auf Advanced. Wie viele dadurch aus der
+    // Rotation gehen, merkt sich `leftActive` — die Plätze füllen unten neue
+    // Übungen, damit die Rotation nicht plötzlich auf zwei, drei Übungen schrumpft.
+    var leftActive = {};
+    Object.keys(p.cats).forEach(function(c) {
+      var cs = p.cats[c];
+      if (!cs) return;
+      ['active', 'park'].forEach(function(list) {
+        if (!cs[list]) return;
+        cs[list] = cs[list].filter(function(en) {
+          var ex = null;
+          for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
+          if (!ex || !_basicDone(ex, en)) return true;
+          _advPark(c, cs, en);
+          if (list === 'active') leftActive[c] = (leftActive[c] || 0) + 1;
+          return false;
+        });
+      });
+    });
     // Position im Pool aus den bekannten Übungen bestimmen: so viele, wie am
     // Anfang des Pools lückenlos bekannt sind. Ohne Umsortieren ist das exakt
     // der alte Wert; nach einem Umsortieren kommen vorgezogene, noch unbekannte
@@ -14872,6 +15093,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!cs.active.length && cs.introIdx > 0) {
         var _nx2 = _introNext(c, cs, p.completed);
         if (_nx2) cs.active.push({ id: _nx2.id, bpmStep: 0 });
+      }
+      // Nach Advanced verschobene Plätze mit neuen Basic-Übungen füllen. Hat
+      // die Säule keine mehr, rücken die Wartenden über `_unparkDue` nach.
+      var fill = Math.min(leftActive[c] || 0, MAX_ACTIVE_PER_CAT - cs.active.length);
+      for (var f = 0; f < fill; f++) {
+        var _nx3 = _introNext(c, cs, p.completed);
+        if (!_nx3) break;
+        cs.active.push({ id: _nx3.id, bpmStep: 0 });
+        cs.sinceNew = 0;
       }
     });
     return p;
@@ -14972,7 +15202,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20260922-135459';
+  var DL_BUILD = '20260922-171019';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -15473,6 +15703,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var nx = _introNext(cat, cs);
         if (nx) { cs.active.push({ id: nx.id, bpmStep: 0 }); cs.sinceNew = 0; }
       }
+      // Advanced: erst wenn die Säule keine neuen Übungen mehr hat, dann jeden
+      // freien Platz — in Kursreihenfolge, weiter bei der gespeicherten Stufe
+      if (!cs.adv) cs.adv = [];
+      if (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT && !_basicLeft(cat, cs, _cState.completed)) {
+        while (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT) {
+          var a = cs.adv.shift();
+          if (!EXERCISES.some(function(e){ return e.id === a.id; })) continue;   // Übung entfernt
+          a.adv = 1;
+          delete a.fbEasy; delete a.fbHard;   // „Too easy"-Serie von damals zählt nicht mehr
+          cs.active.push(a);
+        }
+      }
     });
   }
 
@@ -15566,6 +15808,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
     }
+    // Basic-Hälfte geschafft → wartet mit ihrem Tempo auf Advanced
+    else if (_basicDone(lesson.ex, entry)) {
+      cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
+      _advPark(cat, cs, entry);
+      _justBasicDone = { ex: lesson.ex, bpm: lesson.bpm };
+    }
 
     // Neue Übung einführen: alle STEPS_PER_NEW_EX Stufen ODER wenn keine aktive mehr
     // Wartet jemand auf der Warteliste, rückt zuerst er nach (`_unparkDue` unten).
@@ -15640,7 +15888,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _cl = document.getElementById('dgCatLabel');
     // Abweichende Taktart steht neben der Kategorie — links neben dem Tempo
     // drückte sie lange Übungsnamen zusammen (Seventeen Stroke Roll, 5/4).
-    if (_cl) _cl.textContent = (ex.catLabel || '') + (ex.beatsPerBar && ex.beatsPerBar !== 4 ? ' · ' + ex.beatsPerBar + '/4' : '');
+    // Advanced-Teil einer Übung: steht hinter der Kategorie (22.09.2026)
+    var _isAdv = !!(_cState && _cState.cats && _cState.cats[ex.cat] &&
+                    (_cState.cats[ex.cat].active || []).some(function(e) { return e.id === ex.id && e.adv; }));
+    if (_cl) _cl.textContent = (ex.catLabel || '') + (_isAdv ? ' · Advanced' : '') + (ex.beatsPerBar && ex.beatsPerBar !== 4 ? ' · ' + ex.beatsPerBar + '/4' : '');
     setMetronomeDefault(ex.cat);
     updateBpm();
   }
@@ -17892,6 +18143,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!tg) { sub.textContent = ''; return; }
       var n = _feedbackStep(tg.ex, tg.entry, v);
       if (n >= _exSteps(tg.ex)) { sub.textContent = 'Exercise complete ✓'; return; }
+      if (_basicDone(tg.ex, { bpmStep: n, adv: tg.entry.adv })) { sub.textContent = 'Basic complete ✓'; return; }
       var now = _exBpm(tg.ex, tg.entry.bpmStep || 0), nb = _exBpm(tg.ex, n);
       sub.textContent = (nb === now) ? 'Stays at ' + nb + ' BPM' : 'Next time ' + nb + ' BPM';
     });
@@ -17922,7 +18174,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var played = _shownLesson;
     var doneBefore = (_cState.completed || []).length;
     var lvlBefore = _getLevelInfo();
+    _justBasicDone = null;
     _advanceState();
+    var basicDone = _justBasicDone;
+    _justBasicDone = null;
     _masteredInvalidate();
     var lvlAfter = _getLevelInfo();
     var milestone = (lvlAfter.level > lvlBefore.level) ? 'level'
@@ -17940,12 +18195,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (milestone === 'level')   setInfo('🎯 Level complete!');
         if (milestone === 'chapter') setInfo('⭐ Chapter complete!');
         if (mastered) _showExerciseComplete(mastered);
+        else if (basicDone) _showBasicComplete(basicDone);
       }, 400);
     } else {
       _loadCurrentLesson(false);
       if (milestone === 'level')   setInfo('🎯 Level complete!');
       if (milestone === 'chapter') setInfo('⭐ Chapter complete!');
       if (mastered) _showExerciseComplete(mastered);
+      else if (basicDone) _showBasicComplete(basicDone);
     }
   }
 
@@ -18171,9 +18428,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           active: first ? [{id: first.id, bpmStep: 0}] : [],
           introIdx: first ? 1 : 0,
           counter: 0,
-          lastId: null
+          lastId: null,
+          adv: []
         };
       });
+      // Kursreihenfolge je Säule — die Advanced-Warteliste folgt ihr
+      var poolPos = {};
+      Object.keys(_catPool).forEach(function(c) { (_catPool[c] || []).forEach(function(e, i) { poolPos[e.id] = i; }); });
 
       var lessons = [];
       var maxLessons = TOTAL_CONTENT_LESSONS + 10;
@@ -18190,7 +18451,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             pool: _catPool.rudiments,
             active: _catPool.rudiments[0] ? [{id: _catPool.rudiments[0].id, bpmStep: 0}] : [],
             introIdx: _catPool.rudiments[0] ? 1 : 0,
-            counter: 0, lastId: null
+            counter: 0, lastId: null, adv: []
           };
           rudimentsAdded = true;
         }
@@ -18213,20 +18474,32 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (!ex) { rotPos++; continue; }
 
         var bpm = devExBpm(ex, entry.bpmStep);
-        lessons.push({ cat: foundCat, ex: ex, bpm: bpm, stepIdx: entry.bpmStep });
+        lessons.push({ cat: foundCat, ex: ex, bpm: bpm, stepIdx: entry.bpmStep, adv: !!entry.adv });
 
         // Advance
         entry.bpmStep++;
         cs.lastId  = entry.id;
         cs.counter = (cs.counter || 0) + 1;
 
-        if (entry.bpmStep >= devExSteps(ex)) {
+        var nSt = devExSteps(ex);
+        if (entry.bpmStep >= nSt) {
           cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
+        } else if (!entry.adv && _exAdvanced(ex) && entry.bpmStep >= Math.ceil(nSt / 2)) {
+          // Basic-Hälfte geschafft → wartet auf Advanced (wie `_advanceState`)
+          cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
+          cs.adv.push(entry);
+          cs.adv.sort(function(a, b) { return poolPos[a.id] - poolPos[b.id]; });
         }
         if ((cs.counter % 5 === 0 || cs.active.length === 0) &&
             cs.active.length < MAX_ACTIVE_PER_CAT && cs.introIdx < cs.pool.length) {
           cs.active.push({ id: cs.pool[cs.introIdx].id, bpmStep: 0 });
           cs.introIdx++;
+        }
+        // Säule ohne neue Übungen → die Wartenden rücken in jeden freien Platz
+        if (cs.introIdx >= cs.pool.length) {
+          while (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT) {
+            var aw = cs.adv.shift(); aw.adv = true; cs.active.push(aw);
+          }
         }
         rotPos = (rotPos + 1) % rotation.length;
       }
@@ -18244,151 +18517,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
            + '</div>'
            + '<div style="border-top:1px solid #333;margin-bottom:20px;"></div>';
     }
-
-    // ── Plan aller Groove-Kategorien (Erwin, 21./22.09.2026) ────────
-    // [Plan-Nr., Name, Zusatz, Advanced (1 = kommt in der zweiten Hälfte
-    // wieder), Min-BPM, Max-BPM, vorhandene Unterkategorien (catLabel)].
-    // Die Plan-Nr. ist nur Erwins Kennung, NICHT die Kursreihenfolge — die
-    // steht im Dev-Picker. Einträge ohne catLabel sind angelegt, aber noch
-    // leer: der Picker zeigt sie hinter den vorhandenen mit ihrer Spanne.
-    // Spannen vorhandener Kategorien stehen in den Übungen selbst; beim
-    // Füllen einer leeren Kategorie Min/Max von hier übernehmen.
-    // Nr. 94 kam am 22.09. dazu (Erwin: 50–200, Advanced).
-    var GROOVE_PLAN = [
-    [1, 'Basic Grooves 1', 'Nur Achtel (Groove 1–3 starten bei 30/35/40)', 1, 45, 120, ['Basic Grooves 1']],
-    [2, 'Basic Grooves 2', 'Achtel Snare Variation', 1, 50, 130, ['Basic Grooves 2']],
-    [3, 'Hi-Hat Openings 1', 'Einfacher Achtel Groove', 0, 50, 140, ['Hi-Hat Openings 1']],
-    [4, 'Hi-Hat Openings 2', 'Achtel Bassdrum und Achtel Öffnungen', 0, 50, 140, ['Hi-Hat Openings 2']],
-    [5, 'Hi-Hat Openings 3', 'Mit 16tel Bassdrums', 0, 50, 120, []],
-    [6, 'Hi-Hat Openings 4', 'Mit 16tel Hi-Hat Öffnungen', 0, 45, 110, []],
-    [7, '16th Notes Bassdrum Grooves', 'Achtel Hi-Hat', 1, 50, 120, []],
-    [8, '16th Notes Hi-Hat Grooves 1 (One Handed)', 'Achtel Bassdrum', 1, 40, 90, ['16th Note Hi-Hat Grooves (downbeat accents)']],
-    [9, '16th Notes Hi-Hat Grooves (One Handed)', '16tel Bassdrum', 1, 40, 85, []],
-    [10, '16th Notes Hi-Hat Grooves 1 (Two Handed)', 'Achtel Bassdrum', 1, 50, 110, ['16th Note Hi-Hat Grooves (alternating)']],
-    [11, '16th Notes Hi-Hat Grooves (Two Handed)', '16tel Bassdrum', 1, 45, 100, []],
-    [12, 'Triplet Grooves 1', 'Achtel Hi-Hat', 1, 50, 130, ['Triplet Grooves']],
-    [13, 'Triplet Grooves 2', '16tel Hi-Hat', 1, 40, 70, []],
-    [14, 'Triplet Grooves 3', '16tel Bassdrums', 0, 45, 100, []],
-    [15, 'Triplet Hi-Hat Openings', 'Achtel', 0, 50, 120, []],
-    [16, 'Triplet Shuffle Grooves 1', 'Achtel Shuffle', 0, 60, 140, ['Shuffle Grooves 1']],
-    [17, 'Triplet Shuffle Grooves 2', 'Achtel Shuffle + Ghostnotes', 0, 55, 130, ['Shuffle Grooves 2']],
-    [18, 'Half Time Shuffle Grooves 1', 'Nur Bassdrum Variationen', 0, 50, 100, []],
-    [19, 'Half Time Shuffle Grooves 2', '+ Ghostnotes', 0, 50, 95, []],
-    [20, 'Hi-Hat Accent Grooves 1', 'Akzent auf der Zählzeit', 1, 50, 130, ['Downbeat Accents']],
-    [21, 'Hi-Hat Accent Grooves 2', 'Achtel Off Beat', 1, 50, 130, ['Upbeat Accents']],
-    [22, 'Hi-Hat Accent Grooves 3', 'Mit 16tel Akzenten', 1, 40, 90, ['16th Note Hi-Hat Grooves (offbeat accents)']],
-    [23, 'Ghostnote Grooves 1', '4/4 einfacher Groove', 0, 50, 110, []],
-    [24, 'Ghostnote Grooves 2', '4/4 Groove Variations', 0, 50, 110, []],
-    [25, '32nd Note Hi-Hat Grooves 1', 'Achtel Bassdrum', 1, 35, 60, []],
-    [26, '32nd Note Hi-Hat Grooves 2', '16tel Bassdrum', 1, 35, 55, []],
-    [27, '32nd Bassdrum Grooves', '', 1, 35, 60, []],
-    [28, 'Drag Ghostnotes 1', 'Nur mit Drags', 0, 45, 100, []],
-    [29, 'Drag Ghostnotes 2', 'Drag + Ghostnotes', 0, 45, 95, []],
-    [30, 'Paradiddle Grooves', '', 1, 50, 110, []],
-    [31, 'Para Paradiddle Grooves', '', 1, 45, 100, []],
-    [32, 'Para Diddle Diddle Grooves', '', 1, 45, 100, []],
-    [33, '5/4 Grooves', '', 0, 60, 140, []],
-    [34, '7/8 Grooves', '', 1, 60, 190, []],
-    [35, '9/8 Grooves', '', 1, 60, 190, []],
-    [36, 'Linear Grooves', '', 1, 40, 150, []],
-    [37, 'Tom Grooves', '', 1, 50, 140, []],
-    [38, 'Snare Roll Grooves', '', 0, 45, 130, []],
-    [39, 'Hi-Hat Groupings 1', '', 1, 50, 140, []],
-    [40, 'Hi-Hat Groupings 2', '', 1, 50, 140, []],
-    [41, 'Hi-Hat Groupings 3', '', 1, 50, 140, []],
-    [42, 'Hi-Hat Groupings 4', 'Wie Groupings 1 + Openings', 0, 50, 120, []],
-    [43, 'Hi-Hat Groupings 5', 'Wie Groupings 2 + Openings', 0, 50, 120, []],
-    [44, 'Hi-Hat Groupings 6', 'Wie Groupings 3 + Openings', 0, 50, 120, []],
-    [45, 'Ride Bell Grooves 1', 'On Beat', 0, 50, 140, ['Ride Downbeat Accents · HH Foot 1/4', 'Ride Downbeat Accents · HH Foot Offbeats', 'Ride Downbeat Accents · HH Foot 1/8']],
-    [46, 'Ride Bell Grooves 2', 'Off Beat', 0, 50, 140, ['Ride Upbeat Accents · HH Foot 1/4', 'Ride Upbeat Accents · HH Foot Offbeats', 'Ride Upbeat Accents · HH Foot 1/8']],
-    [47, 'Hi-Hat Steps Grooves 1', 'On Beat / 8tel BD', 0, 50, 140, ['Basic Ride Grooves 1 · HH Foot 1/4']],
-    [48, 'Hi-Hat Steps Grooves 2', 'On Beat / 16tel BD', 0, 45, 120, []],
-    [49, 'Hi-Hat Steps Grooves 3', 'Off Beat / 8tel BD', 0, 50, 140, ['Basic Ride Grooves 1 · HH Foot Offbeats']],
-    [50, 'Hi-Hat Steps Grooves 4', 'Off Beat / 16tel BD', 0, 45, 120, []],
-    [51, 'Hi-Hat Steps Grooves 5', '8th Note Steps / 8tel BD', 0, 50, 130, ['Basic Ride Grooves 1 · HH Foot 1/8']],
-    [52, 'Hi-Hat Steps Grooves 6', '8th Note Steps / 16tel BD', 0, 45, 110, []],
-    [53, 'Clave Grooves 1', '2-3 Son Clave', 0, 60, 120, []],
-    [54, 'Clave Grooves 2', '3-2 Son Clave', 0, 60, 120, []],
-    [55, 'Clave Grooves 3', '2-3 Rumba Clave', 0, 60, 120, []],
-    [56, 'Clave Grooves 4', '3-2 Rumba Clave', 0, 60, 120, []],
-    [57, 'Jazz Grooves 1', 'Ride + Hi-Hat', 1, 80, 250, []],
-    [58, 'Jazz Grooves 2', 'Swing Pattern + Snare', 1, 80, 250, []],
-    [59, 'Jazz Grooves 3', 'Swing Pattern + Bassdrum', 1, 80, 250, []],
-    [60, 'Jazz Grooves 4', 'Swing Pattern + Snare + Bassdrum', 1, 70, 200, []],
-    [61, 'Jazz Grooves 5', 'Swing Pattern + Snare + Bassdrum', 1, 70, 195, []],
-    [62, 'Double Bass Grooves 1', '', 1, 60, 120, []],
-    [63, 'Double Bass Grooves 2', '', 1, 60, 110, []],
-    [64, 'Rhythmic Illusions', '', 0, 50, 110, []],
-    [65, 'Cowbell Grooves', '', 0, 60, 120, []],
-    [66, 'Worship', '', 0, 60, 140, []],
-    [67, 'Disco', '', 0, 80, 150, []],
-    [68, 'New Orleans 2nd Line', '', 0, 60, 120, []],
-    [69, 'Batacuda', '', 0, 60, 120, []],
-    [70, 'Reggae', '', 0, 50, 130, []],
-    [71, 'Calypso', '', 0, 70, 130, []],
-    [72, 'Soca', '', 0, 80, 150, []],
-    [73, 'Bossa Nova', '', 0, 70, 140, []],
-    [74, 'Samba', '', 0, 60, 120, []],
-    [75, 'Merengue', '', 0, 80, 150, []],
-    [76, 'Cha-Cha', '', 0, 70, 140, []],
-    [77, 'Bolero', '', 0, 50, 110, []],
-    [78, 'Mambo', '', 0, 100, 180, []],
-    [79, 'Songo', '', 0, 70, 130, []],
-    [80, 'African Bembe', '6/8', 0, 60, 120, []],
-    [81, 'Afro Cuban', '6/8', 0, 60, 150, []],
-    [82, 'Mozambique', '', 0, 70, 130, []],
-    [83, 'Salsa', '', 0, 100, 180, []],
-    [84, 'Tango', '', 0, 60, 120, []],
-    [85, 'Beguine', '', 0, 60, 120, []],
-    [86, 'Country', '', 0, 70, 160, []],
-    [87, 'Drum\'n Bass', '', 1, 90, 160, []],
-    [88, 'Metal Grooves', '', 1, 80, 180, []],
-    [89, 'Funk', '', 0, 60, 140, []],
-    [90, 'Punk-Rock', '', 1, 100, 180, []],
-    [91, 'Marrokanisch', '', 0, 60, 120, []],
-    [92, 'Gospel', '', 0, 60, 130, []],
-    [93, 'Afoxé (Ijexá)', '', 0, 60, 110, []],
-    [94, 'Double Bass Grooves 3', '', 1, 50, 200, []]
-    ];
-    var _planByLabel = {};
-    GROOVE_PLAN.forEach(function(p) { p[6].forEach(function(l) { _planByLabel[l] = p; }); });
-
-    // ── Neue Coordination-Kategorien (Erwin, 22.09.2026) ────────────
-    // Noch leer, stehen VOR den vorhandenen (Hands — Displaced usw.) und
-    // kommen alle auch in Advanced. Aufbau wie GROOVE_PLAN, ohne Plan-Nr.;
-    // Tempo noch offen (null). Beim Füllen die Übungen vor den erzeugten
-    // Unabhängigkeitsübungen in EXERCISES einreihen, damit sie im Pool vorne
-    // stehen.
-    var COORD_PLAN_FRONT = [
-      [null, 'Bassdrum Slide Technique',         '', 1, null, null, []],
-      [null, 'Single Bassdrum Permutations',     '', 1, null, null, []],
-      [null, 'Single Snare Permutations',        '', 1, null, null, []],
-      [null, 'Double Bassdrum Permutations',     '', 1, null, null, []],
-      [null, 'Double Snare Permutations',        '', 1, null, null, []],
-      [null, 'Triple Bassdrum Permutations',     '', 1, null, null, []],
-      [null, 'Triple Snare Permutations',        '', 1, null, null, []],
-      [null, 'Bassdrum Quads',                   '', 1, null, null, []],
-      [null, 'Snare Quads',                      '', 1, null, null, []]
-    ];
-
-    // ── Neue Fill-Kategorien (Erwin, 22.09.2026) ────────────────────
-    // Noch leer, hinter den vorhandenen (Quarter, Eighth Note, Quarter &
-    // Eighth Fills) in dieser Reihenfolge. Die ersten drei ohne Advanced,
-    // ab 16th Note Triplet Fills alle mit. Tempo noch offen.
-    var FILL_PLAN_BACK = [
-      [null, 'Eighth Note Triplet Fills',        '', 0, null, null, []],
-      [null, '16th Note Fills',                  '', 0, null, null, []],
-      [null, 'Eighth & 16th Note Fills',         '', 0, null, null, []],
-      [null, '16th Note Triplet Fills',          '', 1, null, null, []],
-      [null, '32nd Note Fills',                  '', 1, null, null, []],
-      [null, 'Rudiment Fills',                   '', 1, null, null, []],
-      [null, 'Advanced Fills 1',                 '', 1, null, null, []],
-      [null, 'Advanced Fills 2',                 '', 1, null, null, []],
-      [null, 'Advanced Fills 3',                 '', 1, null, null, []],
-      [null, 'Gospel Chops',                     '', 1, null, null, []],
-      [null, 'Speed Fills',                      '', 1, null, null, []],
-      [null, 'Double Bass Fills',                '', 1, null, null, []]
-    ];
 
     // ── HTML: Exercise Picker ────────────────────────────────
     // Nach Unterkategorien gegliedert (Erwin, 21.09.2026): jede Säule als
@@ -18442,7 +18570,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var lo = Infinity, hi = 0;
           g.items.forEach(function(e) { lo = Math.min(lo, devExBpm(e, 0)); hi = Math.max(hi, devExBpm(e, devExSteps(e) - 1)); });
           var range  = lo + '–' + hi + ' BPM · ' + (g.items.length > 1 ? (first + ' – ' + last) : first);
-          var plan   = _planByLabel[g.label];
+          // Rudiments sind alle Advanced, ohne eigenen Plan-Eintrag
+          var plan   = _planByLabel[g.label] || (cat === 'rudiments' ? [null, g.label, '', 1, null, null, [g.label]] : null);
           h += '<details data-pk="' + _pickEsc(key) + '"' + (open ? ' open' : '')
              + ' style="border:1px solid ' + (hasCur ? 'rgba(201,168,76,0.45)' : '#262626') + ';border-radius:8px;margin-bottom:6px;background:#141414;">';
           h += '<summary style="cursor:pointer;padding:8px 12px;display:flex;align-items:baseline;gap:10px;color:#E8E4DB;font-size:13px;list-style:none;">'
@@ -18502,10 +18631,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _MAP_SHORT = { grooves:'G', notes:'N', fillins:'F', rudiments:'R', coordination:'C' };
     function _mapMix(from, to) {
       var c = {};
-      for (var i = from; i < to; i++) { var k = _mapLessons[i].cat; c[k] = (c[k] || 0) + 1; }
+      var adv = 0;
+      for (var i = from; i < to; i++) { var k = _mapLessons[i].cat; c[k] = (c[k] || 0) + 1; if (_mapLessons[i].adv) adv++; }
       return ['grooves','notes','fillins','coordination','rudiments'].filter(function(k){ return c[k]; }).map(function(k) {
         return '<span style="color:' + _MAP_COL[k] + ';">' + _MAP_SHORT[k] + ' ' + c[k] + '</span>';
-      }).join('<span style="color:#444;"> · </span>');
+      }).join('<span style="color:#444;"> · </span>')
+        + (adv ? '<span style="color:#444;"> · </span><span style="color:#C9A84C;">Advanced ' + adv + '</span>' : '');
     }
     var _MAP_SUM = 'cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:12px;padding:9px 12px;';
     function _mapLevelBody(lvl) {
@@ -18535,6 +18666,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
            + '<span style="color:#555;font-size:10px;font-variant-numeric:tabular-nums;width:34px;flex-shrink:0;text-align:right;">' + (i + 1) + '</span>'
            + '<span style="display:inline-block;width:14px;height:14px;flex-shrink:0;border-radius:3px;background:' + col + '22;border:1px solid ' + col + '66;color:' + col + ';font-size:9px;font-weight:700;text-align:center;line-height:14px;">' + _MAP_SHORT[l.cat] + '</span>'
            + '<span style="color:#E8E4DB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;">' + _pickEsc(l.ex.name) + '</span>'
+           + (l.adv ? '<span title="Advanced" style="color:#C9A84C;font-size:9px;font-weight:700;letter-spacing:1px;flex-shrink:0;">ADV</span>' : '')
            + (l.bpm ? '<span style="color:#555;font-size:10px;flex-shrink:0;">' + l.bpm + '</span>' : '')
            + '</div>';
       }
