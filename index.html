@@ -612,6 +612,9 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   transition: background 0.15s, color 0.15s;
 }
 .legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
+/* Boost (Abo-Stufe, nach dem Launch): an = gold gefüllt */
+#dgBoostBtn { display: none; }
+#dgBoostBtn.boost-on { background: #C9A84C; color: #111; border-color: #C9A84C; }
 
 /* ── Metronom-Cluster: Toggle + Unterteilungs-Auswahl ──
    Beide Teile sitzen in einer gemeinsamen Pille — sie gehören inhaltlich
@@ -1343,6 +1346,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <span class="notation-info-bar" id="dgInfoBar"></span>
         </span>
         <div class="ni-tools">
+          <!-- Boost (Abo-Stufe, nach dem Launch — Erwin, 01.10.2026) -->
+          <button class="legend-btn" id="dgBoostBtn" type="button" title="Boost: this exercise comes up 3× as often" aria-label="Boost this exercise" aria-pressed="false">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <path d="M13.5 2 4.5 13.2h6.1L9.8 22l9.2-11.6h-6.2L13.5 2z"/>
+            </svg>
+          </button>
         <!-- Drum Key -->
           <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
           <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -15068,6 +15077,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var shownId = (typeof _shownLesson !== 'undefined' && _shownLesson && _shownLesson.entry) ? _shownLesson.entry.id : null;
     var ranked = cs.active.slice().sort(function(a, b) {
       if (a.id === shownId) return -1; if (b.id === shownId) return 1;
+      if (!!a.boost !== !!b.boost) return a.boost ? -1 : 1;   // geboostete bleiben offen
       return frac(b) - frac(a);
     });
     var keep = ranked.slice(0, MAX_ACTIVE_PER_CAT), wait = ranked.slice(MAX_ACTIVE_PER_CAT);
@@ -15127,6 +15137,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var ex = null;
           for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
           if (!ex || !_basicDone(ex, en)) return true;
+          delete en.boost;
           _advPark(c, cs, en);
           if (list === 'active') leftActive[c] = (leftActive[c] || 0) + 1;
           return false;
@@ -15271,7 +15282,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261001-151828';
+  var DL_BUILD = '20261001-153751';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -15806,6 +15817,42 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _cState.rotationPos = (from + 1) % rotation.length;
   }
 
+  // ── Boost (Abo-Stufe, nach dem Launch — Erwin, 01.10.2026) ──────────
+  // Eine geboostete Übung kommt innerhalb ihrer Säule dreimal so oft dran;
+  // das Verhältnis der Säulen zueinander bleibt. Höchstens drei pro Säule,
+  // sonst hebt sich der Effekt auf. Endet von selbst, wenn die Übung fertig
+  // ist oder ihre Basic-Hälfte geschafft hat. Bis die Abo-Stufe erkannt wird,
+  // gibt es den Boost nur auf Dev-Geräten (`_premium`).
+  var BOOST_WEIGHT = 3, MAX_BOOST_PER_CAT = 3;
+  function _premium() { return !!_devMode; }
+  function _boosted(e) { return !!(e && e.boost) && _premium(); }
+  // Reihum innerhalb der Säule. Ohne Boost wie immer: die nächste nach der
+  // zuletzt gespielten. Mit Boost: gewichtet reihum (geboostet = 3), gleichmäßig
+  // verteilt; Guthaben je Übung in `cs.wrr`, fortgeschrieben in `_wrrCommit`.
+  // Nie dieselbe zweimal hintereinander, solange es eine andere gibt.
+  function _pickEntry(cs) {
+    var active = cs.active;
+    if (!active.some(_boosted)) {
+      var lastIdx = -1;
+      for (var j = 0; j < active.length; j++) if (active[j].id === cs.lastId) { lastIdx = j; break; }
+      return active[(lastIdx + 1) % active.length];
+    }
+    var w = cs.wrr || {}, best = null, bestV = -Infinity, second = null, secondV = -Infinity;
+    active.forEach(function(e) {
+      var v = (w[e.id] || 0) + (_boosted(e) ? BOOST_WEIGHT : 1);
+      if (v > bestV) { second = best; secondV = bestV; best = e; bestV = v; }
+      else if (v > secondV) { second = e; secondV = v; }
+    });
+    return (best && best.id === cs.lastId && second) ? second : best;
+  }
+  function _wrrCommit(cs, playedId) {
+    if (!cs.active.some(_boosted)) { delete cs.wrr; return; }
+    var w = cs.wrr || (cs.wrr = {}), total = 0, keep = {};
+    cs.active.forEach(function(e) { var k = _boosted(e) ? BOOST_WEIGHT : 1; total += k; w[e.id] = (w[e.id] || 0) + k; keep[e.id] = 1; });
+    if (w[playedId] != null) w[playedId] -= total;
+    Object.keys(w).forEach(function(id) { if (!keep[id]) delete w[id]; });
+  }
+
   // Nächste Lektion ermitteln (ohne State zu ändern)
   function _peekLesson() {
     var rotation = _getRotation();
@@ -15814,13 +15861,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var cat = rotation[(_cState.rotationPos + i) % rotation.length];
       var cs  = _cState.cats[cat];
       if (cs && cs.active.length) {
-        // Round-Robin innerhalb Kategorie: nächste nach lastId
-        var active = cs.active;
-        var lastIdx = -1;
-        for (var j = 0; j < active.length; j++) {
-          if (active[j].id === cs.lastId) { lastIdx = j; break; }
-        }
-        var entry = active[(lastIdx + 1) % active.length];
+        // Reihum innerhalb der Kategorie (mit Boost gewichtet), siehe _pickEntry
+        var entry = _pickEntry(cs);
         var ex = EXERCISES.find(function(e){ return e.id === entry.id; });
         if (!ex) continue;
         var rawBpm = _exBpm(ex, entry.bpmStep);
@@ -15865,6 +15907,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     entry.best = Math.max(entry.best || 0, entry.bpmStep);
     if (_fb === 'easy') entry.fbEasy = (entry.fbEasy || 0) + 1; else delete entry.fbEasy;
     if (_fb === 'hard') entry.fbHard = (entry.fbHard || 0) + 1; else delete entry.fbHard;
+    _wrrCommit(cs, entry.id);
     cs.lastId  = entry.id;
     cs.counter = (cs.counter || 0) + 1;
     // Nachschub nach STUFEN, nicht nach Erscheinungen (Erwin, 18.09.2026):
@@ -15875,11 +15918,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     // Graduation: Endtempo gespielt → abgeschlossen, kommt nie wieder
     if (entry.bpmStep >= _exSteps(lesson.ex)) {
+      delete entry.boost;
       cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
     }
     // Basic-Hälfte geschafft → wartet mit ihrem Tempo auf Advanced
     else if (_basicDone(lesson.ex, entry)) {
+      delete entry.boost;
       cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
       _advPark(cat, cs, entry);
       _justBasicDone = { ex: lesson.ex, bpm: lesson.bpm };
@@ -15962,6 +16007,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _isAdv = !!(_cState && _cState.cats && _cState.cats[ex.cat] &&
                     (_cState.cats[ex.cat].active || []).some(function(e) { return e.id === ex.id && e.adv; }));
     if (_cl) _cl.textContent = (ex.catLabel || '') + (_isAdv ? ' · Advanced' : '') + (ex.beatsPerBar && ex.beatsPerBar !== 4 ? ' · ' + ex.beatsPerBar + '/4' : '');
+    _updateBoostBtn();
     setMetronomeDefault(ex.cat);
     updateBpm();
   }
@@ -19504,6 +19550,38 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _statsBuilt = false;          // beim nächsten Öffnen wieder mit Animation
     }
   }
+  // ── Boost-Knopf ─────────────────────────────────────────────────────
+  // Gilt für die Übung auf dem Schirm, wenn sie gerade in der Rotation ist.
+  function _boostEntryFor(ex) {
+    if (!ex || !_cState || !_cState.cats || !_cState.cats[ex.cat]) return null;
+    return (_cState.cats[ex.cat].active || []).find(function(e) { return e.id === ex.id; }) || null;
+  }
+  function _updateBoostBtn() {
+    var b = document.getElementById('dgBoostBtn');
+    if (!b) return;
+    var en = (typeof GROOVE !== 'undefined') ? _boostEntryFor(GROOVE) : null;
+    b.style.display = (_premium() && en) ? 'flex' : 'none';
+    var on = !!(en && en.boost);
+    b.classList.toggle('boost-on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.title = on ? 'Boost on: comes up 3× as often (tap to turn off)' : 'Boost: this exercise comes up 3× as often';
+  }
+  document.getElementById('dgBoostBtn').addEventListener('click', function() {
+    var en = _boostEntryFor(GROOVE);
+    if (!en || !_premium()) return;
+    if (en.boost) {
+      delete en.boost;
+      setInfo('Boost off');
+    } else {
+      var n = _cState.cats[GROOVE.cat].active.filter(function(e) { return e.boost; }).length;
+      if (n >= MAX_BOOST_PER_CAT) { setInfo('You can boost up to ' + MAX_BOOST_PER_CAT + ' exercises per category'); return; }
+      en.boost = 1;
+      setInfo('⚡ Boost on — comes up 3× as often');
+    }
+    _saveState();
+    _updateBoostBtn();
+  });
+
   document.getElementById('dgStatsBtn').addEventListener('click', function() {
     _renderStats(true);            // beim Öffnen mit Animation
     statsOverlay.classList.add('open');
