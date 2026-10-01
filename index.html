@@ -612,9 +612,38 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   transition: background 0.15s, color 0.15s;
 }
 .legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
-/* Boost (Abo-Stufe, nach dem Launch): an = gold gefüllt */
-#dgBoostBtn { display: none; }
-#dgBoostBtn.boost-on { background: #C9A84C; color: #111; border-color: #C9A84C; }
+/* Favorit und Boost (Abo-Stufe, nach dem Launch — 01.10.2026): beschriftete
+   Knöpfe unter der Notenzeile. In der Kopfzeile hätten sie auf dem Handy den
+   Titel der Übung verdrängt. An = gold gefüllt. */
+.dl-ex-actions { display: none; justify-content: center; gap: 8px; margin: 10px 0 0; }
+.dl-ex-actions.on { display: flex; }
+.dl-pill { display: none; align-items: center; gap: 6px; height: 30px; padding: 0 13px; border-radius: 15px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.85);
+  font: 600 12px 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }
+.dl-pill:hover { border-color: #C9A84C; color: #C9A84C; }
+.dl-pill:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
+.dl-pill.on { background: #C9A84C; color: #111; border-color: #C9A84C; }
+/* „My Exercises" in der Kopfzeile */
+#dgMineBtn { display: none; }
+.dl-mine-list { display: flex; flex-direction: column; gap: 6px; }
+.dl-mine-item { display: flex; align-items: center; gap: 12px; width: 100%; background: #141414; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left; color: #fff; font: inherit; }
+.dl-mine-item:hover, .dl-mine-item:focus-visible { border-color: #C9A84C; outline: none; }
+.dl-mine-txt { display: flex; flex-direction: column; min-width: 0; }
+.dl-mine-name { font-size: 14px; font-weight: 600; }
+.dl-mine-sub { font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-mine-go { margin-left: auto; color: #C9A84C; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+/* Freies Üben: Leiste über dem Start-Knopf */
+#dgFree { display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 2px;
+  font-size: 13px; color: rgba(255,255,255,0.8); }
+#dgFree.on { display: flex; }
+#dgFree .fr-lbl { letter-spacing: 1.5px; text-transform: uppercase; font-size: 11px; color: #C9A84C; font-weight: 700; }
+#dgFree .fr-tp { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; font-size: 17px; line-height: 1; cursor: pointer; font-family: inherit; }
+#dgFree .fr-tp:hover { border-color: #C9A84C; color: #C9A84C; }
+#dgFree .fr-bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; color: #fff; min-width: 70px; text-align: center; }
+#dgFree .fr-back { background: none; border: none; color: #C9A84C; font: inherit; font-size: 13px; text-decoration: underline;
+  text-underline-offset: 3px; cursor: pointer; padding: 0 4px; }
 
 /* ── Metronom-Cluster: Toggle + Unterteilungs-Auswahl ──
    Beide Teile sitzen in einer gemeinsamen Pille — sie gehören inhaltlich
@@ -1193,6 +1222,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   .dg-body > .phase-info { grid-area: info; }
   .dg-body > #dgBlocks   { grid-area: blocks; }
   .dg-body > .nav-row    { grid-area: action; margin-top: 0; align-self: center; }
+  /* Freies Üben: Tempo-Leiste rechts oben über dem Start-Knopf, sonst läge sie
+     unter dem Bildrand. Nur solange sie da ist — das normale Querformat bleibt. */
+  .dg-body:has(#dgFree.on) {
+    grid-template-areas:
+      "status free"
+      "info   action"
+      "blocks action";
+  }
+  .dg-body > #dgFree { grid-area: free; margin: 0; gap: 6px; }
+  .dg-body > #dgFree .fr-lbl { display: none; }
   /* Alles Weitere läuft in eigenen Zeilen unter den beiden Spalten durch */
   .dg-body > .dev-tempo,
   .dg-body > #dgCompletedBanner,
@@ -1346,10 +1385,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <span class="notation-info-bar" id="dgInfoBar"></span>
         </span>
         <div class="ni-tools">
-          <!-- Boost (Abo-Stufe, nach dem Launch — Erwin, 01.10.2026) -->
-          <button class="legend-btn" id="dgBoostBtn" type="button" title="Boost: this exercise comes up 3× as often" aria-label="Boost this exercise" aria-pressed="false">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M13.5 2 4.5 13.2h6.1L9.8 22l9.2-11.6h-6.2L13.5 2z"/>
+          <!-- Eigene Liste: Favoriten (später auch selbst gebaute Übungen) -->
+          <button class="legend-btn" id="dgMineBtn" type="button" title="My exercises" aria-label="My exercises">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+              <line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+              <circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/>
             </svg>
           </button>
         <!-- Drum Key -->
@@ -1406,6 +1446,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         <button class="legend-close" type="button" aria-label="Close">×</button>
         <h3 id="dgStatsTitle">Your Stats</h3>
         <div id="dgStatsBody"></div>
+      </div>
+    </div>
+
+    <!-- My Exercises (Abo-Stufe, nach dem Launch — 01.10.2026): Favoriten, später
+         auch selbst gebaute Übungen. Inhalt baut _renderMine(). -->
+    <div class="legend-overlay" id="dgMineOverlay" role="dialog" aria-modal="true" aria-labelledby="dgMineTitle">
+      <div class="legend-modal dl-panel">
+        <button class="legend-close" type="button" aria-label="Close">×</button>
+        <h3 id="dgMineTitle">My Exercises</h3>
+        <div id="dgMineBody"></div>
       </div>
     </div>
 
@@ -1547,6 +1597,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       </div>
     </div>
 
+    <!-- Übung merken / öfter üben (Abo-Stufe, nach dem Launch — Erwin, 01.10.2026) -->
+    <div class="dl-ex-actions" id="dgExActions">
+      <button type="button" class="dl-pill" id="dgFavBtn" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>
+        <span class="dl-pill-t">Favorite</span>
+      </button>
+      <button type="button" class="dl-pill" id="dgBoostBtn" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M13.5 2 4.5 13.2h6.1L9.8 22l9.2-11.6h-6.2L13.5 2z"/></svg>
+        <span class="dl-pill-t">Boost</span>
+      </button>
+    </div>
+
     <div class="dg-body">
 
     <div class="phase-row">
@@ -1585,6 +1647,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         </div>
         <button type="button" class="dl-fbx-again" id="dgFeedbackAgain">Play again</button>
       </div>
+    </div>
+
+    <!-- Freies Üben einer Übung aus „My Exercises": eigenes Tempo, Kurs rückt nicht weiter -->
+    <div id="dgFree" aria-live="polite">
+      <span class="fr-lbl">Free practice</span>
+      <button type="button" class="fr-tp" id="dgFreeDown" aria-label="5 BPM slower">−</button>
+      <span class="fr-bpm" id="dgFreeBpm"></span>
+      <button type="button" class="fr-tp" id="dgFreeUp" aria-label="5 BPM faster">+</button>
+      <button type="button" class="fr-back" id="dgFreeBack">Back to course</button>
     </div>
 
     <div class="nav-row">
@@ -15282,7 +15353,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261001-153751';
+  var DL_BUILD = '20261001-155305';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -15803,6 +15874,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // diese fort — sonst kann sich zwischen Anzeige und Klick der aktive Satz
   // ändern (Levelaufstieg, Unparken) und es trifft die falsche Übung.
   var _shownLesson = null;
+  // Freies Üben einer Übung aus „My Exercises" (Abo-Stufe, 01.10.2026):
+  // eigenes Tempo, ein Block, keine Rückmeldung, der Kurs rückt nicht weiter.
+  // `_shownLesson` bleibt die Kurs-Lektion — „Back to course" kehrt dorthin zurück.
+  var _freeMode = null;
 
   // Weiter hinter die Kategorie, die TATSÄCHLICH gespielt wurde. `_peekLesson`
   // überspringt Kategorien ohne spielbare Übung (leer, alles geparkt, noch
@@ -16008,6 +16083,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                     (_cState.cats[ex.cat].active || []).some(function(e) { return e.id === ex.id && e.adv; }));
     if (_cl) _cl.textContent = (ex.catLabel || '') + (_isAdv ? ' · Advanced' : '') + (ex.beatsPerBar && ex.beatsPerBar !== 4 ? ' · ' + ex.beatsPerBar + '/4' : '');
     _updateBoostBtn();
+    _updateFavBtn();
     setMetronomeDefault(ex.cat);
     updateBpm();
   }
@@ -16029,6 +16105,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Aktuelle Lektion in den Player laden
   function _loadCurrentLesson(autoStart) {
     if (playing) stopExercise();
+    if (_freeMode) { _freeMode = null; _renderFree(); }
     // Auch beim Laden prüfen — sonst kämen geparkte Übungen nach einem
     // Level-Aufstieg erst mit der übernächsten Lektion zurück.
     _unparkDue();
@@ -16197,6 +16274,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return [{ bpm: t, bars: bars, dur: bars * secPerBar }];
     }
 
+    // Freies Üben: ein Block im gewählten Tempo, ohne Anlauf
+    if (_freeMode) {
+      var fb = getBarsFromBase(t, _blockBase(t));
+      return [{ bpm: t, bars: fb, dur: fb * (GROOVE.beatsPerBar || 4) * 60 / t }];
+    }
     var want  = _blockCount(GROOVE, t);
     var bpms  = _rampBpms(t, want);
     // Dauern wie die Anlauftempi: bei weniger Blöcken die hinteren Werte
@@ -17542,7 +17624,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     pauses = getPauses(tBpm, blocks.length);
     var _curLesson = (typeof _peekLesson === 'function') ? _peekLesson() : null;
     var _repStr = '';
-    if (_curLesson) {
+    if (_freeMode) {
+      _repStr = 'Free';
+      var _fbpm = document.getElementById('dgFreeBpm');
+      if (_fbpm) _fbpm.textContent = tBpm + ' BPM';
+    } else if (_curLesson) {
       var _step = _curLesson.entry.bpmStep || 0;
       _repStr = _step === 0 ? 'First time 🎯' : 'Rep '+_step;
     }
@@ -18335,6 +18421,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function finishExercise() {
+    if (_freeMode) { _finishFree(); return; }
     playDoneSound();
     playing=false; _visReset(); phase='done'; bIdx=blocks.length;
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
@@ -19559,12 +19646,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _updateBoostBtn() {
     var b = document.getElementById('dgBoostBtn');
     if (!b) return;
-    var en = (typeof GROOVE !== 'undefined') ? _boostEntryFor(GROOVE) : null;
-    b.style.display = (_premium() && en) ? 'flex' : 'none';
+    var en = (typeof GROOVE !== 'undefined' && !_freeMode) ? _boostEntryFor(GROOVE) : null;
+    b.style.display = (_premium() && en) ? 'inline-flex' : 'none';
     var on = !!(en && en.boost);
-    b.classList.toggle('boost-on', on);
+    b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.querySelector('.dl-pill-t').textContent = on ? 'Boosted' : 'Boost';
     b.title = on ? 'Boost on: comes up 3× as often (tap to turn off)' : 'Boost: this exercise comes up 3× as often';
+    _updateExActions();
+  }
+  // Knopfzeile nur zeigen, wenn mindestens ein Knopf darin sichtbar ist —
+  // ohne Abo bleibt das Layout wie bisher
+  function _updateExActions() {
+    var row = document.getElementById('dgExActions');
+    if (!row) return;
+    var any = ['dgFavBtn', 'dgBoostBtn'].some(function(id) { var el = document.getElementById(id); return el && el.style.display !== 'none' && el.style.display !== ''; });
+    row.classList.toggle('on', any);
   }
   document.getElementById('dgBoostBtn').addEventListener('click', function() {
     var en = _boostEntryFor(GROOVE);
@@ -19582,6 +19679,114 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _updateBoostBtn();
   });
 
+  // ── Favoriten + „My Exercises" (Abo-Stufe, nach dem Launch — 01.10.2026) ──
+  // Favoriten liegen im Kursstand (`_cState.favs`, Übungs-ids) und wandern mit
+  // dem Sync auf alle Geräte. Die Liste öffnet eine Übung zum freien Üben.
+  var mineOverlay = document.getElementById('dgMineOverlay');
+  function _favs() { return (_cState && _cState.favs) || []; }
+  function _updateFavBtn() {
+    var b = document.getElementById('dgFavBtn'), m = document.getElementById('dgMineBtn');
+    if (!b || !m) return;
+    var show = _premium() && typeof GROOVE !== 'undefined' && GROOVE && !_rampMode;
+    b.style.display = show ? 'inline-flex' : 'none';
+    m.style.display = (_premium() && !_rampMode) ? 'flex' : 'none';
+    var on = !!(show && _favs().indexOf(GROOVE.id) > -1);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.querySelector('.dl-pill-t').textContent = on ? 'Favorite' : 'Add to favorites';
+    b.title = on ? 'In My Exercises (tap to remove)' : 'Save to My Exercises';
+    _updateExActions();
+  }
+  document.getElementById('dgFavBtn').addEventListener('click', function() {
+    if (!_premium() || !GROOVE || !_cState) return;
+    var f = _cState.favs || (_cState.favs = []), i = f.indexOf(GROOVE.id);
+    if (i > -1) { f.splice(i, 1); setInfo('Removed from favorites'); }
+    else { f.push(GROOVE.id); setInfo('★ Added to My Exercises'); }
+    _saveState();
+    _updateFavBtn();
+  });
+  // Tempo für freies Üben: zuletzt selbst gewählt, sonst das aktuelle Kurstempo
+  // der Übung, bei fertigen ihr Endtempo, sonst ihr Starttempo
+  function _freeBpmFor(ex) {
+    var saved = _cState && _cState.freeBpm && _cState.freeBpm[ex.id];
+    if (saved) return saved;
+    var en = _boostEntryFor(ex);
+    if (en) return _exBpm(ex, en.bpmStep || 0);
+    if (_cState && (_cState.completed || []).indexOf(ex.id) > -1) return _exBpm(ex, _exSteps(ex) - 1);
+    return _exBpm(ex, 0);
+  }
+  function _renderMine() {
+    var body = document.getElementById('dgMineBody'), h = '';
+    var favs = _favs().map(function(id) { return EXERCISES.find(function(e) { return e.id === id; }); }).filter(Boolean);
+    h += '<section class="dl-set-sec"><div class="dl-set-h">Favorites</div>';
+    if (!favs.length) {
+      h += '<p class="dl-set-p">No favorites yet. Tap the star during an exercise to save it here.</p>';
+    } else {
+      h += '<div class="dl-mine-list">';
+      favs.forEach(function(ex) {
+        h += '<button type="button" class="dl-mine-item" data-free="' + ex.id + '">'
+           +   '<span class="dl-mine-txt"><span class="dl-mine-name">' + ex.name + '</span>'
+           +   '<span class="dl-mine-sub">' + (ex.catLabel || '') + ' · ' + _freeBpmFor(ex) + ' BPM</span></span>'
+           +   '<span class="dl-mine-go">Practice →</span>'
+           + '</button>';
+      });
+      h += '</div>';
+    }
+    h += '</section>';
+    body.innerHTML = h;
+  }
+  document.getElementById('dgMineBtn').addEventListener('click', function() {
+    _renderMine();
+    mineOverlay.classList.add('open');
+  });
+  document.getElementById('dgMineBody').addEventListener('click', function(e) {
+    var it = e.target.closest('[data-free]');
+    if (!it) return;
+    var ex = EXERCISES.find(function(x) { return x.id === +it.getAttribute('data-free'); });
+    if (!ex) return;
+    _closePanel(mineOverlay);
+    _startFree(ex);
+  });
+  function _renderFree() {
+    var bar = document.getElementById('dgFree');
+    if (bar) bar.classList.toggle('on', !!_freeMode);
+  }
+  function _startFree(ex) {
+    if (playing) stopExercise();
+    _freeMode = { id: ex.id };
+    _setGroove(ex, _freeBpmFor(ex));
+    document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+    document.getElementById('dgStart2').addEventListener('click', startExercise);
+    _showCompletedBanner(null);
+    _renderFree();
+    updateBpm();
+    setInfo('Free practice — your course stays where it is');
+  }
+  function _freeStep(d) {
+    if (!_freeMode || playing || !_cState) return;
+    tBpm = Math.max(20, Math.min(300, tBpm + d));
+    if (!_cState.freeBpm) _cState.freeBpm = {};
+    _cState.freeBpm[_freeMode.id] = tBpm;
+    _saveState();
+    updateBpm();
+  }
+  function _finishFree() {
+    playDoneSound();
+    playing=false; _visReset(); phase='done'; bIdx=blocks.length;
+    setBadge('done'); setInfo('Great job!'); setCountdown(0);
+    renderBlocksBar(); renderNot(-1, false); stopTotal();
+    _statsCommit(true);                      // Übungszeit und Schläge zählen mit
+    var _dm = _addDailyTime(_lessonDurationMinutes());
+    if (_dm) setTimeout(function(){ _showDailyCelebration(_dm); }, 1400);
+    document.getElementById('dgTotal').style.display='inline';
+    document.getElementById('dgCtrl').innerHTML =
+      '<button class="btn-go" id="dgAgain"><span class="btn-play-icon"></span>Again</button>';
+    document.getElementById('dgAgain').addEventListener('click', startExercise);
+  }
+  document.getElementById('dgFreeDown').addEventListener('click', function() { _freeStep(-5); });
+  document.getElementById('dgFreeUp').addEventListener('click', function() { _freeStep(5); });
+  document.getElementById('dgFreeBack').addEventListener('click', function() { _loadCurrentLesson(false); });
+
   document.getElementById('dgStatsBtn').addEventListener('click', function() {
     _renderStats(true);            // beim Öffnen mit Animation
     statsOverlay.classList.add('open');
@@ -19592,13 +19797,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _renderSettings();
     settingsOverlay.classList.add('open');
   });
-  [statsOverlay, settingsOverlay].forEach(function(ov) {
+  [statsOverlay, settingsOverlay, mineOverlay].forEach(function(ov) {
     ov.addEventListener('click', function(e) { if (e.target === ov) _closePanel(ov); });
     ov.querySelector('.legend-close').addEventListener('click', function() { _closePanel(ov); });
   });
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
-    [statsOverlay, settingsOverlay, legendOverlay].forEach(function(ov) {
+    [statsOverlay, settingsOverlay, legendOverlay, mineOverlay].forEach(function(ov) {
       if (ov.classList.contains('open')) _closePanel(ov);
     });
   });
