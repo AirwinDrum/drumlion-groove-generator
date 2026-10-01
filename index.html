@@ -2270,9 +2270,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_cState || typeof _cState.pfloor === 'number') return;
     _cState.pfloor = Math.max(_masteredRaw(), _getTotalLessons() || 0);
   }
+  // Die Untergrenze `pfloor` zählt seit dem 01.10.2026 NICHT mehr mit: Als
+  // Maximum fror sie den Fortschritt ein, solange die erreichten Stufen
+  // darunter lagen (Joel: 661 Stufen, Untergrenze 861 aus Dev-Sprüngen — jede
+  // Lektion verpuffte, 200 Stufen lang). Dass niemand zurückfällt, sichert
+  // inzwischen die Level-Spur; `pfloor` setzt nur noch deren Startpunkt.
   function _masteredSteps() {
     _ensureProgressFloor();
-    return Math.max(_masteredRaw(), (_cState && _cState.pfloor) || 0);
+    return _masteredRaw();
   }
   function _masteredRaw() {
     if (_masteredCache != null) return _masteredCache;
@@ -2317,7 +2322,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_cState || !(LESSONS_PER_LEVEL > 0)) return m;
     var L = LESSONS_PER_LEVEL, t = _cState.lvTrack, changed = false;
     if (!t || typeof t.pos !== 'number' || typeof t.m !== 'number' || !t.lpl) {
-      t = _cState.lvTrack = { pos: m / LEVEL_SIZE_LEGACY, m: m, lpl: LEVEL_SIZE_LEGACY };
+      // Startpunkt wie bisher angezeigt (inkl. Untergrenze), gezählt wird ab jetzt jede Stufe
+      var m0 = Math.max(m, _cState.pfloor || 0);
+      t = _cState.lvTrack = { pos: m0 / LEVEL_SIZE_LEGACY, m: m, lpl: LEVEL_SIZE_LEGACY };
       changed = true;
     }
     if (m < t.m) { t.m = m; changed = true; }            // weniger Stufen: Stelle halten
@@ -15073,7 +15080,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         n += Math.min(Math.max(en.best || 0, en.bpmStep || 0), stepsOf(en.id));
       });
     });
-    return Math.max(n, typeof p.pfloor === 'number' ? p.pfloor : 0);
+    return n;
   }
   function _applyRangeMigrations(p) {
     if (!p || !p.cats) return;
@@ -15090,7 +15097,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     pending.forEach(function(m) { Object.keys(m.old).forEach(function(id) { if (!oldRec[id]) oldRec[id] = m.old[id]; }); });
     var mBefore = _masteredOf(p, oldRec), t = p.lvTrack, posBefore;
     if (t && typeof t.pos === 'number' && typeof t.m === 'number' && t.lpl) posBefore = t.pos + Math.max(0, mBefore - t.m) / t.lpl;
-    else posBefore = mBefore / LEVEL_SIZE_LEGACY;
+    else posBefore = Math.max(mBefore, typeof p.pfloor === 'number' ? p.pfloor : 0) / LEVEL_SIZE_LEGACY;
     // Jede Übung wird pro Durchlauf nur EINMAL umgerechnet: Nach der ersten
     // offenen Umstellung steht ihr Index schon im aktuellen Raster; eine zweite
     // würde ihn ein zweites Mal verschieben (z.B. Fill 1 erst 40–140 → 60–120,
@@ -15353,7 +15360,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261001-155305';
+  var DL_BUILD = '20261001-160953';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
