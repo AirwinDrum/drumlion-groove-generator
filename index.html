@@ -2062,6 +2062,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
   }
   // Nach Stop und Lektionsende: lokal sichern, auf Wunsch zum Server.
+  // ── Dev: Tempo-Bereiche lokal ausprobieren (Erwin, 01.10.2026) ────────
+  // Die Werte aus der Dev-Ansicht überschreiben in DIESEM Browser die Ranges
+  // der Übungen, damit man die Tempi sofort spielen kann. Solange das aktiv
+  // ist, wird nichts gespeichert und nichts zum Server geschickt: Die
+  // gespeicherten Stufen-Indizes stünden sonst plötzlich für andere Tempi.
+  var DEV_RANGES_KEY  = 'drumlion_dev_ranges';
+  var _devRanges      = null;
+  var _devRangeActive = false;
+
   function _statsCommit(toServer) {
     _statsSave();
     if (toServer && _statsDirty && _syncReady()) { _statsDirty = false; _syncSchedule(); }
@@ -2141,6 +2150,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function _addLessonTime(mins) {
+    if (_devRangeActive) return null;           // Range-Test: Zähler bleiben stehen
     var prevLessons = _getTotalLessons();
     var newMins     = _getTotalMinutes() + mins;
     var newLessons  = prevLessons + 1;
@@ -14260,6 +14270,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   })();
 
 
+  // Dev-Ranges aus diesem Browser auf die Übungen legen (siehe oben)
+  (function _applyDevRanges() {
+    try {
+      var raw = localStorage.getItem(DEV_RANGES_KEY);
+      if (!raw) return;
+      var o = JSON.parse(raw);
+      if (!o || !Object.keys(o).length) return;
+      EXERCISES.forEach(function(ex) {
+        var r = o[ex.catLabel || ex.cat];
+        if (!r || !(r.min > 0) || !(r.max > r.min) || !(r.step > 0)) return;
+        ex.minBPM = r.min; ex.maxBPM = r.max; ex.step = r.step;
+        delete ex.warmup;
+        _devRangeActive = true;
+      });
+      if (_devRangeActive) _devRanges = o;
+    } catch(e) {}
+  })();
+
   // Level-Berechnung: content-basiert, dynamisch an Gesamtmenge angepasst
   var TOTAL_CONTENT_LESSONS = _calcTotalContentLessons();
   // Level-Größe folgt dem Kurs: Gesamtstufen ÷ 100 Level (Erwin, 21.09.2026:
@@ -15178,6 +15206,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function _saveState() {
     _masteredInvalidate();
+    if (_devRangeActive) return;                // Range-Test: nichts speichern
     // localStorage sofort (kostet nichts, ist der Offline-Fallback),
     // der Server-Schreibvorgang wird gedrosselt — siehe _syncSchedule().
     try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
@@ -15242,7 +15271,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261001-145800';
+  var DL_BUILD = '20261001-151828';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -15450,6 +15479,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function _syncReady() {
+    if (_devRangeActive) return false;          // Range-Test: nichts zum Server
     return !!_syncKey()
         && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1
         && _SB_KEY.indexOf('SUPABASE_ANON_KEY') === -1;
@@ -18564,6 +18594,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
            + '<div>'
            + '<button id="devTabPicker" style="' + (activeTab==='picker' ? tabActiveS : tabStyle) + '">Exercise Picker</button>'
            + '<button id="devTabMap"    style="' + (activeTab==='map'    ? tabActiveS : tabStyle) + '">Course Map</button>'
+           + '<button id="devTabRanges" style="' + (activeTab==='ranges' ? tabActiveS : tabStyle) + '">Ranges</button>'
            + '</div>'
            + '<span style="font-size:12px;color:#555;padding-bottom:6px;">Press D to close</span>'
            + '</div>'
@@ -18669,6 +18700,153 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!p) return '';
       return (p[0] != null ? '<span style="color:#666;font-size:10px;font-variant-numeric:tabular-nums;flex-shrink:0;">Plan ' + p[0] + '</span>' : '')
            + (p[3] ? '<span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#C9A84C;border:1px solid rgba(201,168,76,0.45);border-radius:4px;padding:0 5px;flex-shrink:0;">Advanced</span>' : '');
+    }
+
+    // ── HTML: Ranges ─────────────────────────────────────────
+    // Tempo-Bereiche je Kategorie ändern und sofort sehen, was daraus wird
+    // (Erwin, 01.10.2026). Die Werte gelten nur in diesem Browser und nur zum
+    // Ausprobieren — solange sie aktiv sind, speichert der Player nichts und
+    // schickt nichts zum Server. Was fest werden soll, geht über „Text kopieren".
+    function _rangeGroups() {
+      var cats2 = ['grooves','fillins','notes','rudiments','coordination'];
+      var labels = {grooves:'Grooves', fillins:'Fills', notes:'Note Reading', rudiments:'Rudiments', coordination:'Coordination'};
+      var out = [];
+      cats2.forEach(function(cat) {
+        var groups = [];
+        EXERCISES.filter(function(e){ return e.cat === cat && e.beats; }).forEach(function(ex) {
+          var lbl = ex.catLabel || labels[cat];
+          var g = groups[groups.length - 1];
+          if (!g || g.label !== lbl) { g = { cat: cat, pillar: labels[cat], label: lbl, items: [] }; groups.push(g); }
+          g.items.push(ex);
+        });
+        out = out.concat(groups);
+      });
+      return out;
+    }
+    // Stufen, Spielzeit und Basic-Grenze für einen Bereich — mit denselben
+    // Regeln wie im Kurs (Blöcke, Pausen, Vorzähler)
+    // Summe der Gruppe, so wie sie heute wirklich im Kurs steht
+    function _rangeCalcActual(g) {
+      var saved = GROOVE, steps = 0, sec = 0, n0 = null;
+      try {
+        g.items.forEach(function(ex) {
+          var n = _exSteps(ex);
+          if (n0 === null) n0 = n;
+          GROOVE = ex;
+          for (var i = 0; i < n; i++) {
+            var bpm = _exBpm(ex, i), bl = getBlocks(bpm), pa = getPauses(bpm, bl.length);
+            bl.forEach(function(b){ sec += ((b.bpm >= 60) ? 8 : 4) * 60 / b.bpm + b.dur; });
+            (pa || []).forEach(function(p){ if (p) sec += p; });
+          }
+          steps += n;
+        });
+      } finally { GROOVE = saved; }
+      var ex0 = g.items[0];
+      return { n: n0, steps: steps, h: sec / 3600,
+               basic: _exAdvanced(ex0) ? _exBpm(ex0, Math.ceil(_exSteps(ex0) / 2) - 1) : null };
+    }
+    function _rangeCalc(g, min, max, step) {
+      var saved = GROOVE, ex = Object.assign({}, g.items[0]);
+      ex.minBPM = min; ex.maxBPM = max; ex.step = step; delete ex.warmup;
+      try {
+        var n = _exSteps(ex), sec = 0;
+        GROOVE = ex;
+        for (var i = 0; i < n; i++) {
+          var bpm = _exBpm(ex, i), bl = getBlocks(bpm), pa = getPauses(bpm, bl.length);
+          bl.forEach(function(b){ sec += ((b.bpm >= 60) ? 8 : 4) * 60 / b.bpm + b.dur; });
+          (pa || []).forEach(function(p){ if (p) sec += p; });
+        }
+        return { n: n, steps: n * g.items.length, h: sec * g.items.length / 3600,
+                 basic: _exAdvanced(ex) ? _exBpm(ex, Math.ceil(n / 2) - 1) : null };
+      } finally { GROOVE = saved; }
+    }
+    function renderRanges() {
+      var gs = _rangeGroups(), pillar = null;
+      var h = '<style>.dv-rg input{width:62px;height:30px;padding:0 6px;text-align:right;background:#111;border:1px solid #333;border-radius:6px;color:#E8E4DB;font-family:ui-monospace,monospace;font-size:12px}</style>'
+            + '<div style="font-size:12px;color:#777;margin-bottom:10px;">Nur dieser Browser, nur zum Ausprobieren. Solange Werte aktiv sind, wird kein Fortschritt gespeichert und nichts zum Server geschickt.</div>'
+            + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">'
+            +   '<button id="rgApply" style="background:#C9A84C;border:0;border-radius:6px;color:#111;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer;">Lokal testen (neu laden)</button>'
+            +   '<button id="rgReset" style="background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#E8E4DB;font-size:12px;padding:7px 12px;cursor:pointer;">Zurücksetzen</button>'
+            +   '<button id="rgCopy"  style="background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#E8E4DB;font-size:12px;padding:7px 12px;cursor:pointer;">Text kopieren</button>'
+            +   '<span id="rgInfo" style="font-size:12px;color:#777;align-self:center;"></span>'
+            + '</div>'
+            + '<textarea id="rgOut" readonly style="display:none;width:100%;height:120px;background:#111;border:1px solid #333;border-radius:8px;color:#E8E4DB;font-family:ui-monospace,monospace;font-size:12px;padding:8px;margin-bottom:14px;"></textarea>';
+      gs.forEach(function(g, gi) {
+        if (g.pillar !== pillar) {
+          pillar = g.pillar;
+          h += '<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;font-weight:700;margin:16px 0 6px;">' + pillar + '</div>';
+        }
+        var ex = g.items[0];
+        var mins = g.items.map(function(e){ return e.minBPM; }), maxs = g.items.map(function(e){ return e.maxBPM; });
+        var loMin = Math.min.apply(null, mins), hiMin = Math.max.apply(null, mins);
+        var loMax = Math.min.apply(null, maxs), hiMax = Math.max.apply(null, maxs);
+        var mixed = (loMin !== hiMin) || (loMax !== hiMax);
+        h += '<div class="dv-rg" data-rg="' + gi + '" data-orig="' + loMin + ',' + hiMax + ',' + ex.step + '" style="display:grid;grid-template-columns:minmax(0,1fr) 62px 62px 62px 150px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid #1e1e1e;font-size:13px;">'
+           +   '<div style="min-width:0;"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">' + _pickEsc(g.label) + '</span>'
+           +     '<span style="font-size:11px;color:#666;">' + g.items.length + ' Übungen' + (_exAdvanced(ex) ? ' · Advanced' : '')
+           +       (mixed ? ' · heute ' + loMin + '–' + hiMin + ' bis ' + loMax + '–' + hiMax + ', Änderung setzt alle gleich' : '') + '</span></div>'
+           +   '<input type="number" data-f="min" value="' + loMin + '" min="20" max="400">'
+           +   '<input type="number" data-f="max" value="' + hiMax + '" min="20" max="400">'
+           +   '<input type="number" data-f="step" value="' + ex.step + '" min="1" max="60">'
+           +   '<span data-out style="font-size:11px;color:#777;font-family:ui-monospace,monospace;text-align:right;"></span>'
+           + '</div>';
+      });
+      return h;
+    }
+    function _rangeRead(row) {
+      var v = {};
+      ['min','max','step'].forEach(function(f) { v[f] = parseInt(row.querySelector('[data-f="' + f + '"]').value, 10); });
+      return v;
+    }
+    function _rangeRefresh() {
+      var gs = _rangeGroups(), totalH = 0, totalSt = 0, changed = 0;
+      Array.prototype.forEach.call(panel.querySelectorAll('[data-rg]'), function(row) {
+        var g = gs[+row.getAttribute('data-rg')], v = _rangeRead(row), out = row.querySelector('[data-out]');
+        var ex = g.items[0];
+        if (!(v.min > 0 && v.max > v.min && v.step > 0)) { out.textContent = '—'; return; }
+        var orig = (row.getAttribute('data-orig') || '').split(',').map(Number);
+        var untouched = (v.min === orig[0] && v.max === orig[1] && v.step === orig[2]);
+        var c = untouched ? _rangeCalcActual(g) : _rangeCalc(g, v.min, v.max, v.step);
+        totalH += c.h; totalSt += c.steps;
+        if (!untouched) changed++;
+        out.innerHTML = c.n + ' Stufen · ' + c.steps + ' Lekt. · ' + c.h.toFixed(1).replace('.', ',') + ' h'
+                      + (c.basic ? '<br><span style="color:#C9A84C;">Basic bis ' + c.basic + '</span>' : '');
+      });
+      var inf = document.getElementById('rgInfo');
+      if (inf) inf.textContent = 'Kurs ' + totalSt.toLocaleString('de-DE') + ' Lektionen · ' + Math.round(totalH) + ' h'
+                               + (changed ? ' · ' + changed + ' geändert' : '') + (_devRangeActive ? ' · Test aktiv' : '');
+    }
+    function _rangeCollect() {
+      var gs = _rangeGroups(), o = {}, txt = [];
+      Array.prototype.forEach.call(panel.querySelectorAll('[data-rg]'), function(row) {
+        var g = gs[+row.getAttribute('data-rg')], v = _rangeRead(row), ex = g.items[0];
+        if (!(v.min > 0 && v.max > v.min && v.step > 0)) return;
+        var orig = (row.getAttribute('data-orig') || '').split(',').map(Number);
+        if (v.min === orig[0] && v.max === orig[1] && v.step === orig[2]) return;   // unverändert
+        o[g.label] = v;
+        txt.push(g.label + ': ' + v.min + '-' + v.max + '/' + v.step);
+      });
+      return { map: o, text: txt };
+    }
+    function _rangeBind() {
+      panel.addEventListener('input', function(e) { if (e.target.closest('.dv-rg')) _rangeRefresh(); });
+      document.getElementById('rgApply').onclick = function() {
+        var c = _rangeCollect();
+        try { localStorage.setItem(DEV_RANGES_KEY, JSON.stringify(c.map)); } catch(e) {}
+        location.reload();
+      };
+      document.getElementById('rgReset').onclick = function() {
+        try { localStorage.removeItem(DEV_RANGES_KEY); } catch(e) {}
+        location.reload();
+      };
+      document.getElementById('rgCopy').onclick = function() {
+        var ta = document.getElementById('rgOut'), c = _rangeCollect();
+        ta.style.display = 'block';
+        ta.value = c.text.length ? ('Ranges geändert:\n' + c.text.join('\n')) : 'Nichts geändert.';
+        ta.select();
+        try { document.execCommand('copy'); } catch(e) {}
+      };
+      _rangeRefresh();
     }
 
     // ── HTML: Course Map ─────────────────────────────────────
@@ -18779,12 +18957,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     function showTab(tab) {
       _devTab = tab;
       var h = renderHeader(tab);
-      h += (tab === 'picker') ? renderPicker() : renderCourseMap();
+      h += (tab === 'picker') ? renderPicker() : (tab === 'ranges' ? renderRanges() : renderCourseMap());
       h += renderFooter();
       panel.innerHTML = h;
 
       document.getElementById('devTabPicker').onclick = function(){ showTab('picker'); };
       document.getElementById('devTabMap').onclick    = function(){ showTab('map'); };
+      document.getElementById('devTabRanges').onclick = function(){ showTab('ranges'); };
+      if (tab === 'ranges') _rangeBind();
 
       panel.onclick = function(e) {
         var btn = e.target.closest('[data-exid]');
@@ -18814,6 +18994,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (c) c.textContent = d.open ? '▾' : '▸';
     }, true);
     showTab('picker');
+
+    // Hinweisleiste, solange Dev-Ranges aktiv sind — sonst merkt man nicht,
+    // dass gerade nichts gespeichert wird
+    if (_devRangeActive) {
+      var rgBar = document.createElement('div');
+      rgBar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#C9A84C;color:#111;'
+        + 'font:600 12px/1.3 "DM Sans",system-ui,sans-serif;padding:7px 12px;display:flex;gap:10px;align-items:center;justify-content:center;';
+      rgBar.appendChild(document.createTextNode('DEV: Range-Test aktiv — Fortschritt wird nicht gespeichert'));
+      var rgBtn = document.createElement('button');
+      rgBtn.textContent = 'Zurücksetzen';
+      rgBtn.style.cssText = 'background:#111;color:#E8E4DB;border:0;border-radius:6px;font-size:12px;padding:4px 10px;cursor:pointer;font-family:inherit;';
+      rgBtn.onclick = function() { try { localStorage.removeItem(DEV_RANGES_KEY); } catch(e) {} location.reload(); };
+      rgBar.appendChild(rgBtn);
+      document.body.appendChild(rgBar);
+    }
 
     document.addEventListener('keydown', function(e) {
       if (e.code !== 'KeyD') return;
