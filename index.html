@@ -17,6 +17,17 @@
      landet dann trotzdem im Index, nur ohne Inhalt. Das Meta-Tag ist der Weg,
      der die Seite tatsächlich wieder aus dem Index nimmt. -->
 <meta name="robots" content="noindex, nofollow">
+<script>
+// Farbschema vor dem ersten Bild setzen (Einstellung „Appearance", 20.10.2026),
+// sonst blitzt beim Laden kurz das dunkle Schema auf.
+(function () {
+  try {
+    var t = localStorage.getItem('drumlion_v1_theme') || 'dark';
+    if (t === 'auto') t = (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  } catch (e) {}
+})();
+</script>
 <!-- Schrift bewusst NICHT von fonts.googleapis.com.
      Ein Font-Link zum Google-CDN überträgt bei jedem einzelnen Seitenaufruf die
      IP-Adresse des Besuchers an Google in die USA — ohne Einwilligung. Genau
@@ -30,9 +41,46 @@
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Farbschema (Erwin, 20.10.2026): Dunkel ist der Standard, Hell und Automatisch
+   in den Einstellungen. `data-theme="light"` am <html> setzt das Skript im <head>
+   vor dem ersten Bild. Gold bleibt in beiden Schemata; goldene SCHRIFT wird im
+   hellen dunkler, sonst ist sie auf Weiß kaum lesbar. */
+:root {
+  --dl-page: #0a0a0a;      /* Seitenhintergrund */
+  --dl-paper: #141414;     /* Notenfläche, Felder */
+  --dl-panel: #1a1a1a;     /* Fenster */
+  --dl-raise: #161616;     /* Knöpfe, Kacheln */
+  --dl-raise-h: #242424;   /* Knöpfe beim Darüberfahren */
+  --dl-menu: #16161a;      /* Aufklappmenüs */
+  --dl-input: #111;        /* Eingabefelder, Sync-Leiste */
+  --dl-line: #333;         /* Rahmen */
+  --dl-line-2: #2a2a2a;    /* leere Balken */
+  --dl-line-3: #222;       /* feine Trennlinien */
+  --dl-ink: #ffffff;       /* Schrift, Notenlinien */
+  --dl-ink-rgb: 255,255,255;
+  --dl-gold-ink: #C9A84C;  /* goldene Schrift */
+  color-scheme: dark;
+}
+html[data-theme="light"] {
+  --dl-page: #f3f1ec;
+  --dl-paper: #ffffff;
+  --dl-panel: #ffffff;
+  --dl-raise: #ffffff;
+  --dl-raise-h: #ebe7de;
+  --dl-menu: #ffffff;
+  --dl-input: #ffffff;
+  --dl-line: #d6d0c3;
+  --dl-line-2: #e2ddd2;
+  --dl-line-3: #e2ddd2;
+  --dl-ink: #1c1b18;
+  --dl-ink-rgb: 28,27,24;
+  --dl-gold-ink: #8a6a1c;
+  color-scheme: light;
+}
+
 html, body {
   height: 100%;
-  background: #0a0a0a;
+  background: var(--dl-page);
   /* Senkrecht scrollen, sobald der Inhalt höher ist als das Fenster. Bis zum
      16.09.2026 stand hier `overflow: hidden` — solange der iFrame fest 800px
      hoch war, passte alles hinein. Seit der Player den ganzen Bildschirm unter
@@ -50,7 +98,7 @@ body {
   align-items: flex-start;
   justify-content: center;
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: #ffffff;
+  color: var(--dl-ink);
 }
 
 .dg-wrap {
@@ -127,10 +175,10 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 
 .dg-header {
   position: fixed; top: 0; left: 0; right: 0; height: 56px;
-  background: #0a0a0a; z-index: 9999;
+  background: var(--dl-page); z-index: 9999;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(var(--dl-ink-rgb),0.08);
   box-sizing: border-box;
 }
 .dg-header-logo {
@@ -138,15 +186,15 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .dg-header-logo img { height: 32px; width: 32px; object-fit: contain; }
 .dg-header-logo span {
-  color: #fff; font-weight: 800; font-size: 16px;
+  color: var(--dl-ink); font-weight: 800; font-size: 16px;
   letter-spacing: 0.5px; font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; white-space: nowrap;
 }
-.dg-header-logo span em { color: #C9A84C; font-style: normal; }
+.dg-header-logo span em { color: var(--dl-gold-ink); font-style: normal; }
 .dg-header-logout {
-  color: rgba(255,255,255,0.45); text-decoration: none;
+  color: rgba(var(--dl-ink-rgb),0.45); text-decoration: none;
   display: flex; align-items: center; padding: 8px;
 }
-.dg-header-logout:hover { color: #C9A84C; }
+.dg-header-logout:hover { color: var(--dl-gold-ink); }
 
 /* Info bar above notation — 3-column: BPM | Title | Blocks */
 .notation-info {
@@ -197,7 +245,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   .notation-info { grid-template-columns: auto minmax(0, 1fr) auto; }
 }
 .notation-info-left {
-  color: #ffffff;
+  color: var(--dl-ink);
   font-size: clamp(17px, 3vw, 24px);
   font-weight: 600;
   white-space: nowrap;
@@ -212,7 +260,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .notation-info-cat {
   font-size: clamp(11px, 1.8vw, 15px);
-  color: #ffffff;
+  color: var(--dl-ink);
   text-transform: uppercase;
   letter-spacing: 2px;
   line-height: 1;
@@ -224,7 +272,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .notation-info-title {
   font-size: clamp(24px, 4.5vw, 42px);
   font-weight: 700;
-  color: #C9A84C;
+  color: var(--dl-gold-ink);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -244,7 +292,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   min-width: 0;
 }
 .notation-info-right {
-  color: #ffffff;
+  color: var(--dl-ink);
   font-size: clamp(17px, 3vw, 24px);
   font-weight: 600;
   text-align: right;
@@ -252,7 +300,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   line-height: 1.05;
 }
 .notation-info-bar {
-  color: rgba(255,255,255,0.72);
+  color: rgba(var(--dl-ink-rgb),0.72);
   font-size: clamp(11px, 1.8vw, 15px);
   font-weight: 500;
   text-align: right;
@@ -263,11 +311,11 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 
 /* Notation box — volle Breite, kein seitlicher Radius */
 .notation-box {
-  background: #141414;
+  background: var(--dl-paper);
   border-radius: 0;
   padding: clamp(6px, 1.2vh, 12px) clamp(12px, 2vw, 24px);
-  border-top: 1px solid #222;
-  border-bottom: 1px solid #222;
+  border-top: 1px solid var(--dl-line-3);
+  border-bottom: 1px solid var(--dl-line-3);
   position: relative;
   overflow: hidden;
   width: 100%;
@@ -290,7 +338,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .countin-number {
   font-size: clamp(64px, 20vw, 124px);
-  font-weight: 700; color: #C9A84C;
+  font-weight: 700; color: var(--dl-gold-ink);
   text-shadow: 0 0 30px rgba(201,168,76,1), 0 2px 8px rgba(0,0,0,0.9);
   animation: dgPulse 0.28s ease-out;
   transition: opacity 0.1s;
@@ -363,12 +411,12 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .countdown {
   font-size: clamp(28px, 6vw, 40px); font-weight: 700;
-  font-variant-numeric: tabular-nums; color: #ffffff;
+  font-variant-numeric: tabular-nums; color: var(--dl-ink);
   min-width: 52px; text-align: center;
 }
 .countdown:empty { display: none; }
 .phase-info {
-  color: #ffffff;
+  color: var(--dl-ink);
   font-size: clamp(17px, 3vw, 22px);
   text-align: center; min-height: clamp(28px, 4vh, 36px);
   font-weight: 500;
@@ -381,15 +429,15 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .block-seg {
   min-height: 38px; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  border: 1px solid #2a2a2a; transition: all 0.3s ease;
+  border: 1px solid var(--dl-line-2); transition: all 0.3s ease;
   flex-direction: column; line-height: 1.3;
   min-width: 0; overflow: hidden; padding: 4px 8px;
 }
-.b-bpm { font-size: clamp(11px, 2vw, 14px); font-weight: 700; white-space: nowrap; color: #ffffff; }
-.b-dur { font-size: clamp(10px, 1.6vw, 13px); opacity: 1; white-space: nowrap; color: #ffffff; }
+.b-bpm { font-size: clamp(11px, 2vw, 14px); font-weight: 700; white-space: nowrap; color: var(--dl-ink); }
+.b-dur { font-size: clamp(10px, 1.6vw, 13px); opacity: 1; white-space: nowrap; color: var(--dl-ink); }
 .pause-seg {
   height: 30px; display: flex; align-items: center; justify-content: center;
-  font-size: clamp(9px, 1.5vw, 11px); color: #ffffff;
+  font-size: clamp(9px, 1.5vw, 11px); color: var(--dl-ink);
   min-width: 18px; flex-shrink: 0;
 }
 
@@ -401,21 +449,21 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .bpm-btn {
   width: clamp(44px, 10vw, 60px); height: clamp(44px, 10vw, 60px);
-  border-radius: 50%; border: 1px solid #333; background: #161616;
-  color: #ffffff; font-size: clamp(20px, 4.5vw, 28px);
+  border-radius: 50%; border: 1px solid var(--dl-line); background: var(--dl-raise);
+  color: var(--dl-ink); font-size: clamp(20px, 4.5vw, 28px);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: background 0.2s; flex-shrink: 0; user-select: none;
 }
-.bpm-btn:hover { background: #242424; }
-.bpm-btn:active { background: #333; }
+.bpm-btn:hover { background: var(--dl-raise-h); }
+.bpm-btn:active { background: var(--dl-line); }
 .bpm-display { text-align: center; min-width: 0; flex: 1; max-width: 160px; }
 .bpm-val {
   font-size: clamp(44px, 12vw, 78px); font-weight: 700;
-  line-height: 1; color: #ffffff;
+  line-height: 1; color: var(--dl-ink);
   display: block; white-space: nowrap; overflow: hidden;
 }
 .bpm-lbl {
-  font-size: clamp(10px, 2vw, 13px); color: #ffffff;
+  font-size: clamp(10px, 2vw, 13px); color: var(--dl-ink);
   text-transform: uppercase; letter-spacing: 2px; display: block;
 }
 .bpm-slider {
@@ -442,9 +490,9 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .btn-go:hover { background: #d4b85a; }
 .btn-go:active { transform: scale(0.98); }
 .btn-stp {
-  background: #161616; color: #ffffff; border: 1px solid #333;
+  background: var(--dl-raise); color: var(--dl-ink); border: 1px solid var(--dl-line);
 }
-.btn-stp:hover { background: #222; }
+.btn-stp:hover { background: var(--dl-raise-h); }
 .btn-play-icon {
   display: inline-block; width: 0; height: 0;
   border-style: solid;
@@ -463,7 +511,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .dl-fbx.open { display: flex; }
 .dl-fbx-card {
   width: min(460px, 100%); max-height: 100%; overflow-y: auto; box-sizing: border-box;
-  background: #1a1a1a; border: 1px solid rgba(201,168,76,0.45); border-radius: 18px;
+  background: var(--dl-panel); border: 1px solid rgba(201,168,76,0.45); border-radius: 18px;
   padding: 28px 20px 14px; text-align: center; position: relative; outline: none;
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   box-shadow: 0 20px 60px rgba(0,0,0,0.6);
@@ -471,14 +519,14 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 @keyframes dlFbxIn { from { transform: translateY(14px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .dl-fbx-card { animation: none; } }
-.dl-fbx-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #C9A84C; }
-.dl-fbx-title { margin: 6px 0 20px; font-size: clamp(26px, 7vw, 32px); font-weight: 800; color: #ffffff; line-height: 1.15; text-wrap: balance; }
+.dl-fbx-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dl-gold-ink); }
+.dl-fbx-title { margin: 6px 0 20px; font-size: clamp(26px, 7vw, 32px); font-weight: 800; color: var(--dl-ink); line-height: 1.15; text-wrap: balance; }
 .dl-fbx-opts { display: flex; flex-direction: column; gap: 12px; }
 .dl-fbx-btn {
   /* Emoji links, Text mittig; die leere dritte Spalte hält den Text in der Mitte */
   display: grid; grid-template-columns: 48px 1fr 48px; align-items: center;
   width: 100%; min-height: 78px; padding: 12px 16px; box-sizing: border-box;
-  background: #141414; color: #ffffff; border: 2px solid #3a3a3a; border-radius: 14px;
+  background: var(--dl-paper); color: var(--dl-ink); border: 2px solid var(--dl-line); border-radius: 14px;
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
@@ -494,18 +542,18 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .dl-fbx-sub { font-size: 14px; font-weight: 500; opacity: 0.75; font-variant-numeric: tabular-nums; }
 .dl-fbx-sub:empty { display: none; }
 .dl-fbx-again {
-  margin-top: 10px; background: none; border: none; color: rgba(255,255,255,0.65);
+  margin-top: 10px; background: none; border: none; color: rgba(var(--dl-ink-rgb),0.65);
   font: inherit; font-size: 16px; padding: 12px 16px; cursor: pointer;
   text-decoration: underline; text-underline-offset: 3px;
 }
-.dl-fbx-again:hover { color: #ffffff; }
+.dl-fbx-again:hover { color: var(--dl-ink); }
 .dl-fbx-again:focus-visible, .dl-fbx-close:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
 .dl-fbx-close {
   position: absolute; top: 6px; right: 6px; width: 44px; height: 44px;
-  background: none; border: none; color: rgba(255,255,255,0.5);
+  background: none; border: none; color: rgba(var(--dl-ink-rgb),0.5);
   font-size: 28px; line-height: 1; cursor: pointer;
 }
-.dl-fbx-close:hover { color: #ffffff; }
+.dl-fbx-close:hover { color: var(--dl-ink); }
 
 .dl-completed-banner {
   display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -517,10 +565,10 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 
 .total-timer {
   text-align: center; font-size: clamp(17px, 2.6vw, 20px);
-  color: #ffffff; font-variant-numeric: tabular-nums;
+  color: var(--dl-ink); font-variant-numeric: tabular-nums;
 }
-.space-hint { text-align: center; font-size: 17px; color: #ffffff; }
-.foot { text-align: center; font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 2px; }
+.space-hint { text-align: center; font-size: 17px; color: var(--dl-ink); }
+.foot { text-align: center; font-size: 10px; color: rgba(var(--dl-ink-rgb),0.35); text-transform: uppercase; letter-spacing: 2px; }
 
 /* Done checkmark animation */
 @keyframes dgCheckBounce {
@@ -552,38 +600,38 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .nav-btn {
   padding: clamp(12px,2.5vh,18px) clamp(20px,5vw,36px);
-  border-radius: 10px; border: 1px solid #333; background: #161616;
-  color: #ffffff; font-size: clamp(15px,3vw,20px); font-weight: 600;
+  border-radius: 10px; border: 1px solid var(--dl-line); background: var(--dl-raise);
+  color: var(--dl-ink); font-size: clamp(15px,3vw,20px); font-weight: 600;
   cursor: pointer; font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
 }
-.nav-btn:hover:not(:disabled) { background: #242424; }
+.nav-btn:hover:not(:disabled) { background: var(--dl-raise-h); }
 .nav-btn:disabled { opacity: 0.25; cursor: default; }
 .level-display {
-  font-size: clamp(17px,2.8vw,21px); color: #ffffff;
+  font-size: clamp(17px,2.8vw,21px); color: var(--dl-ink);
   text-align: center; font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
   display: flex; align-items: center; justify-content: center; gap: 10px;
 }
-.level-display strong { color: #C9A84C; font-weight: 700; }
+.level-display strong { color: var(--dl-gold-ink); font-weight: 700; }
 .level-nav-btn {
-  background: none; border: 1px solid #333; border-radius: 6px;
-  color: #ffffff; font-size: 12px; cursor: pointer;
+  background: none; border: 1px solid var(--dl-line); border-radius: 6px;
+  color: var(--dl-ink); font-size: 12px; cursor: pointer;
   padding: 2px 8px; font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   transition: all 0.15s; line-height: 1.4; flex-shrink: 0;
 }
-.level-nav-btn:hover:not(:disabled) { border-color: #C9A84C; color: #C9A84C; }
+.level-nav-btn:hover:not(:disabled) { border-color: #C9A84C; color: var(--dl-gold-ink); }
 .level-nav-btn:disabled { opacity: 0.2; cursor: default; }
 .progress-row {
   display: flex; align-items: center; gap: 10px;
 }
 .progress-lbl {
-  font-size: clamp(11px,1.6vw,13px); color: #ffffff;
+  font-size: clamp(11px,1.6vw,13px); color: var(--dl-ink);
   text-transform: uppercase; letter-spacing: 1.5px;
   width: 68px; flex-shrink: 0; text-align: right; white-space: nowrap;
 }
 .progress-pct {
-  font-size: clamp(11px,1.6vw,13px); color: #ffffff;
+  font-size: clamp(11px,1.6vw,13px); color: var(--dl-ink);
   width: 36px; flex-shrink: 0; text-align: left;
   font-variant-numeric: tabular-nums;
 }
@@ -595,54 +643,54 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 }
 .progress-segs.dense { gap: 1px; }
 .progress-seg {
-  flex: 1; border-radius: 1px; background: #2a2a2a; transition: background 0.3s ease;
+  flex: 1; border-radius: 1px; background: var(--dl-line-2); transition: background 0.3s ease;
 }
 .section-badge {
   text-align: center; font-size: clamp(9px,1.6vw,11px);
-  color: #ffffff; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--dl-ink); text-transform: uppercase; letter-spacing: 2px;
 }
 
 /* Drum Legend */
 .legend-btn {
-  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-  color: #ffffff; font-size: 13px; font-weight: 600;
+  background: rgba(var(--dl-ink-rgb),0.07); border: 1px solid rgba(var(--dl-ink-rgb),0.15);
+  color: var(--dl-ink); font-size: 13px; font-weight: 600;
   width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s, color 0.15s;
 }
-.legend-btn:hover { background: rgba(201,168,76,0.2); color: #C9A84C; border-color: #C9A84C; }
+.legend-btn:hover { background: rgba(201,168,76,0.2); color: var(--dl-gold-ink); border-color: #C9A84C; }
 /* Favorit und Boost (Abo-Stufe, nach dem Launch — 01.10.2026): beschriftete
    Knöpfe unter der Notenzeile. In der Kopfzeile hätten sie auf dem Handy den
    Titel der Übung verdrängt. An = gold gefüllt. */
 .dl-ex-actions { display: none; justify-content: center; gap: 8px; margin: 10px 0 0; }
 .dl-ex-actions.on { display: flex; }
 .dl-pill { display: none; align-items: center; gap: 6px; height: 30px; padding: 0 13px; border-radius: 15px;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.85);
+  background: rgba(var(--dl-ink-rgb),0.06); border: 1px solid rgba(var(--dl-ink-rgb),0.15); color: rgba(var(--dl-ink-rgb),0.85);
   font: 600 12px 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }
-.dl-pill:hover { border-color: #C9A84C; color: #C9A84C; }
+.dl-pill:hover { border-color: #C9A84C; color: var(--dl-gold-ink); }
 .dl-pill:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
 .dl-pill.on { background: #C9A84C; color: #111; border-color: #C9A84C; }
 /* „My Exercises" in der Kopfzeile */
 #dgMineBtn { display: none; }
 .dl-mine-list { display: flex; flex-direction: column; gap: 6px; }
-.dl-mine-item { display: flex; align-items: center; gap: 12px; width: 100%; background: #141414; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left; color: #fff; font: inherit; }
+.dl-mine-item { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--dl-paper); border: 1px solid rgba(var(--dl-ink-rgb),0.08);
+  border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left; color: var(--dl-ink); font: inherit; }
 .dl-mine-item:hover, .dl-mine-item:focus-visible { border-color: #C9A84C; outline: none; }
 .dl-mine-txt { display: flex; flex-direction: column; min-width: 0; }
 .dl-mine-name { font-size: 14px; font-weight: 600; }
-.dl-mine-sub { font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dl-mine-go { margin-left: auto; color: #C9A84C; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.dl-mine-sub { font-size: 12px; color: rgba(var(--dl-ink-rgb),0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-mine-go { margin-left: auto; color: var(--dl-gold-ink); font-size: 13px; font-weight: 600; flex-shrink: 0; }
 /* Freies Üben: Leiste über dem Start-Knopf */
 #dgFree { display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 2px;
-  font-size: 13px; color: rgba(255,255,255,0.8); }
+  font-size: 13px; color: rgba(var(--dl-ink-rgb),0.8); }
 #dgFree.on { display: flex; }
-#dgFree .fr-lbl { letter-spacing: 1.5px; text-transform: uppercase; font-size: 11px; color: #C9A84C; font-weight: 700; }
-#dgFree .fr-tp { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-  color: #fff; font-size: 17px; line-height: 1; cursor: pointer; font-family: inherit; }
-#dgFree .fr-tp:hover { border-color: #C9A84C; color: #C9A84C; }
-#dgFree .fr-bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; color: #fff; min-width: 70px; text-align: center; }
-#dgFree .fr-back { background: none; border: none; color: #C9A84C; font: inherit; font-size: 13px; text-decoration: underline;
+#dgFree .fr-lbl { letter-spacing: 1.5px; text-transform: uppercase; font-size: 11px; color: var(--dl-gold-ink); font-weight: 700; }
+#dgFree .fr-tp { width: 34px; height: 34px; border-radius: 50%; background: rgba(var(--dl-ink-rgb),0.07); border: 1px solid rgba(var(--dl-ink-rgb),0.15);
+  color: var(--dl-ink); font-size: 17px; line-height: 1; cursor: pointer; font-family: inherit; }
+#dgFree .fr-tp:hover { border-color: #C9A84C; color: var(--dl-gold-ink); }
+#dgFree .fr-bpm { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; color: var(--dl-ink); min-width: 70px; text-align: center; }
+#dgFree .fr-back { background: none; border: none; color: var(--dl-gold-ink); font: inherit; font-size: 13px; text-decoration: underline;
   text-underline-offset: 3px; cursor: pointer; padding: 0 4px; }
 
 /* ── Metronom-Cluster: Toggle + Unterteilungs-Auswahl ──
@@ -654,8 +702,8 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   --metro-h: clamp(30px, 4.4vw, 42px);
   display: inline-flex; align-items: stretch;
   height: var(--metro-h);
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(var(--dl-ink-rgb),0.05);
+  border: 1px solid rgba(var(--dl-ink-rgb),0.14);
   border-radius: calc(var(--metro-h) / 2);
   overflow: visible;
   transition: border-color 0.15s, background 0.15s;
@@ -667,7 +715,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 
 .metro-btn {
   background: none; border: none;
-  color: rgba(255,255,255,0.5);
+  color: rgba(var(--dl-ink-rgb),0.5);
   width: var(--metro-h); height: 100%;
   cursor: pointer; padding: 0;
   display: flex; align-items: center; justify-content: center;
@@ -675,8 +723,8 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   transition: color 0.15s, background 0.15s;
 }
 .metro-btn svg { width: 58%; height: 58%; }
-.metro-btn:hover { color: rgba(201,168,76,0.85); background: rgba(255,255,255,0.05); }
-.metro-btn.active { color: #C9A84C; }
+.metro-btn:hover { color: rgba(201,168,76,0.85); background: rgba(var(--dl-ink-rgb),0.05); }
+.metro-btn.active { color: var(--dl-gold-ink); }
 
 .metro-select { position: relative; display: flex; }
 
@@ -684,16 +732,16 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   display: flex; align-items: center; gap: 5px;
   height: 100%; padding: 0 clamp(8px, 1.2vw, 14px) 0 clamp(7px, 1vw, 11px);
   background: none; border: none;
-  border-left: 1px solid rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.62);
+  border-left: 1px solid rgba(var(--dl-ink-rgb),0.14);
+  color: rgba(var(--dl-ink-rgb),0.62);
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: clamp(11px, 1.35vw, 15px); font-weight: 600;
   letter-spacing: 0.3px; white-space: nowrap; cursor: pointer;
   border-radius: 0 calc(var(--metro-h) / 2) calc(var(--metro-h) / 2) 0;
   transition: color 0.15s, background 0.15s;
 }
-.metro-cluster.on .metro-div-trigger { color: #C9A84C; border-left-color: rgba(201,168,76,0.4); }
-.metro-div-trigger:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.metro-cluster.on .metro-div-trigger { color: var(--dl-gold-ink); border-left-color: rgba(201,168,76,0.4); }
+.metro-div-trigger:hover { background: rgba(var(--dl-ink-rgb),0.06); color: var(--dl-ink); }
 .metro-div-glyph { font-variant-numeric: tabular-nums; }
 /* Der Wortlaut verschwindet erst, wenn die Kopfzeile wirklich eng wird —
    das Kürzel allein bleibt eindeutig. */
@@ -711,8 +759,8 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .metro-div-menu {
   position: absolute; top: calc(100% + 6px); left: 0;
   min-width: max(150px, 100%);
-  background: #16161a;
-  border: 1px solid rgba(255,255,255,0.14);
+  background: var(--dl-menu);
+  border: 1px solid rgba(var(--dl-ink-rgb),0.14);
   border-radius: 12px;
   padding: 5px;
   display: none; flex-direction: column;
@@ -726,7 +774,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   background: none; border: none; width: 100%;
   padding: clamp(7px, 1vh, 10px) 11px;
   border-radius: 8px;
-  color: rgba(255,255,255,0.72);
+  color: rgba(var(--dl-ink-rgb),0.72);
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: clamp(13px, 1.3vw, 15px); font-weight: 500;
   text-align: left; white-space: nowrap; cursor: pointer;
@@ -736,13 +784,28 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   min-width: 30px; text-align: center;
   font-size: 0.82em; font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: rgba(255,255,255,0.4);
+  color: rgba(var(--dl-ink-rgb),0.4);
   transition: color 0.12s;
 }
-.metro-div-opt:hover { background: rgba(255,255,255,0.07); color: #fff; }
-.metro-div-opt:hover .opt-glyph { color: rgba(255,255,255,0.7); }
-.metro-div-opt.active { background: rgba(201,168,76,0.16); color: #C9A84C; }
-.metro-div-opt.active .opt-glyph { color: #C9A84C; }
+.metro-div-opt:hover { background: rgba(var(--dl-ink-rgb),0.07); color: var(--dl-ink); }
+.metro-div-opt:hover .opt-glyph { color: rgba(var(--dl-ink-rgb),0.7); }
+.metro-div-opt.active { background: rgba(201,168,76,0.16); color: var(--dl-gold-ink); }
+.metro-div-opt.active .opt-glyph { color: var(--dl-gold-ink); }
+/* Zählstimme als Schalter unter den Unterteilungen (20.10.2026) */
+.metro-div-sep { height: 1px; margin: 4px 8px; background: rgba(var(--dl-ink-rgb),0.12); }
+.metro-voice-opt .opt-glyph { display: flex; justify-content: center; }
+.metro-voice-opt .opt-glyph svg { width: 15px; height: 15px; display: block; }
+.metro-voice-box {
+  position: relative; flex: none; margin-left: auto; width: 17px; height: 17px;
+  border: 1.5px solid rgba(var(--dl-ink-rgb),0.4); border-radius: 4px;
+}
+.metro-voice-opt.active .metro-voice-box { background: #C9A84C; border-color: #C9A84C; }
+.metro-voice-opt.active .metro-voice-box::after {
+  content: ''; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px;
+  border: solid #0a0a0a; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+/* Schmale Displays zeigen nur das Kürzel — dort steht „+V" für die Zählstimme */
+@media (max-width: 619px) { .metro-div-trigger.voice .metro-div-glyph::after { content: ' +V'; } }
 
 /* ── Speed-Test-Rampe ── */
 .ramp-hud {
@@ -755,17 +818,17 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .ramp-bpm-wrap { display: flex; align-items: baseline; gap: 8px; }
 .ramp-bpm {
   font-size: clamp(56px, 15vw, 132px); font-weight: 700; line-height: 1;
-  color: #C9A84C; font-variant-numeric: tabular-nums;
+  color: var(--dl-gold-ink); font-variant-numeric: tabular-nums;
 }
 .ramp-bpm-lbl {
   font-size: clamp(14px, 2.5vw, 22px); font-weight: 600;
-  letter-spacing: 3px; color: rgba(255,255,255,0.5);
+  letter-spacing: 3px; color: rgba(var(--dl-ink-rgb),0.5);
 }
-.ramp-hint { font-size: clamp(13px, 2vw, 17px); color: rgba(255,255,255,0.6); }
+.ramp-hint { font-size: clamp(13px, 2vw, 17px); color: rgba(var(--dl-ink-rgb),0.6); }
 .ramp-done {
   margin-top: 6px; padding: 10px 16px; border-radius: 10px;
   background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.45);
-  color: #E8E4DB; font-size: clamp(13px, 2vw, 16px); max-width: 460px;
+  color: var(--dl-ink); font-size: clamp(13px, 2vw, 16px); max-width: 460px;
 }
 .ramp-done.hidden { display: none; }
 /* Im Rampen-Modus bleibt nur Notation + Start/Stop stehen */
@@ -803,25 +866,25 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 .ramp-ask.hidden { display: none; }
 .ramp-ask-card {
   margin: auto;
-  background: #16161a; border: 1px solid rgba(255,255,255,0.14);
+  background: var(--dl-menu); border: 1px solid rgba(var(--dl-ink-rgb),0.14);
   border-radius: 16px; padding: clamp(18px, 3vw, 30px);
   width: 100%; max-width: 400px; text-align: center;
   display: flex; flex-direction: column; gap: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7);
 }
-.ramp-ask-card h3 { font-size: clamp(18px, 3vw, 23px); font-weight: 700; color: #C9A84C; }
-.ramp-ask-card p  { font-size: clamp(13px, 2vw, 15px); color: rgba(255,255,255,0.62); line-height: 1.5; }
+.ramp-ask-card h3 { font-size: clamp(18px, 3vw, 23px); font-weight: 700; color: var(--dl-gold-ink); }
+.ramp-ask-card p  { font-size: clamp(13px, 2vw, 15px); color: rgba(var(--dl-ink-rgb),0.62); line-height: 1.5; }
 .ramp-ask-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .ramp-ask-input {
   width: 150px; padding: 12px 14px; text-align: center;
-  background: #0d0d10; border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 10px; color: #fff;
+  background: var(--dl-input); border: 1px solid rgba(var(--dl-ink-rgb),0.2);
+  border-radius: 10px; color: var(--dl-ink);
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 30px; font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .ramp-ask-input:focus { outline: none; border-color: #C9A84C; }
 .ramp-ask-unit {
-  font-size: 14px; letter-spacing: 2px; color: rgba(255,255,255,0.45); font-weight: 600;
+  font-size: 14px; letter-spacing: 2px; color: rgba(var(--dl-ink-rgb),0.45); font-weight: 600;
 }
 .ramp-ask-err { color: #e06a5a; font-size: 13.5px; min-height: 18px; }
 .ramp-ask-btn {
@@ -831,10 +894,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 }
 .ramp-ask-btn:hover { background: #d4b85a; }
 .ramp-ask-skip {
-  background: none; border: none; color: rgba(255,255,255,0.5);
+  background: none; border: none; color: rgba(var(--dl-ink-rgb),0.5);
   font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; cursor: pointer; padding: 4px;
 }
-.ramp-ask-skip:hover { color: #C9A84C; }
+.ramp-ask-skip:hover { color: var(--dl-gold-ink); }
 /* Flache Fenster: Dialog kompakter, damit er ohne Scrollen passt */
 @media (max-height: 560px) {
   .ramp-ask-card { padding: 14px 16px; gap: 8px; }
@@ -847,10 +910,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 /* ── Sync UI ── */
 .sync-bar {
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: #111; border-top: 1px solid rgba(255,255,255,0.08);
+  background: var(--dl-input); border-top: 1px solid rgba(var(--dl-ink-rgb),0.08);
   display: flex; align-items: center; justify-content: center;
   gap: 10px; padding: 10px 16px; z-index: 900; font-size: 13px;
-  color: rgba(255,255,255,0.5); transition: opacity 0.3s;
+  color: rgba(var(--dl-ink-rgb),0.5); transition: opacity 0.3s;
 }
 .sync-bar.hidden { display: none; }
 .sync-bar-dot {
@@ -864,7 +927,7 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   animation: syncSpin 0.7s linear infinite;
 }
 @keyframes syncSpin { to { transform: rotate(360deg); } }
-.sync-bar-link { color: #C9A84C; cursor: pointer; text-decoration: underline; font-size: 13px; }
+.sync-bar-link { color: var(--dl-gold-ink); cursor: pointer; text-decoration: underline; font-size: 13px; }
 .sync-overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.75); z-index: 1100;
@@ -872,14 +935,14 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 }
 .sync-overlay.open { display: flex; }
 .sync-modal {
-  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12);
+  background: var(--dl-panel); border: 1px solid rgba(var(--dl-ink-rgb),0.12);
   border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%;
 }
 .sync-modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-.sync-modal p  { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px; line-height: 1.5; }
+.sync-modal p  { font-size: 13px; color: rgba(var(--dl-ink-rgb),0.6); margin-bottom: 20px; line-height: 1.5; }
 .sync-input {
-  width: 100%; background: #111; border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 14px;
+  width: 100%; background: var(--dl-input); border: 1px solid rgba(var(--dl-ink-rgb),0.2);
+  border-radius: 8px; padding: 10px 12px; color: var(--dl-ink); font-size: 14px;
   font-family: inherit; outline: none; margin-bottom: 12px;
 }
 .sync-input:focus { border-color: #C9A84C; }
@@ -890,11 +953,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 }
 .sync-btn:hover { background: #d4b05a; }
 .sync-btn-skip {
-  width: 100%; background: none; border: none; color: rgba(255,255,255,0.35);
+  width: 100%; background: none; border: none; color: rgba(var(--dl-ink-rgb),0.35);
   font-size: 12px; margin-top: 10px; cursor: pointer; font-family: inherit;
   padding: 4px;
 }
-.sync-btn-skip:hover { color: rgba(255,255,255,0.6); }
+.sync-btn-skip:hover { color: rgba(var(--dl-ink-rgb),0.6); }
 .sync-error { color: #e53935; font-size: 12px; margin-top: -8px; margin-bottom: 12px; }
 
 .legend-overlay {
@@ -904,35 +967,35 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
 }
 .legend-overlay.open { display: flex; }
 .legend-modal {
-  background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12);
+  background: var(--dl-panel); border: 1px solid rgba(var(--dl-ink-rgb),0.12);
   border-radius: 14px; padding: 20px 24px;
   width: min(620px, 94vw);
   max-width: 94vw;
   position: relative;
 }
 .legend-modal h3 {
-  color: #C9A84C; font-size: 19px; font-weight: 800;
+  color: var(--dl-gold-ink); font-size: 19px; font-weight: 800;
   letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px;
   text-align: center;
 }
 .legend-close {
   position: absolute; top: 12px; right: 14px;
-  background: none; border: none; color: rgba(255,255,255,0.4);
+  background: none; border: none; color: rgba(var(--dl-ink-rgb),0.4);
   font-size: 20px; cursor: pointer; line-height: 1;
   transition: color 0.15s;
 }
-.legend-close:hover { color: #fff; }
+.legend-close:hover { color: var(--dl-ink); }
 .legend-table { width: 100%; border-collapse: collapse; }
 .legend-table tr td {
-  padding: 7px 6px; font-size: 14px; color: #fff;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 7px 6px; font-size: 14px; color: var(--dl-ink);
+  border-bottom: 1px solid rgba(var(--dl-ink-rgb),0.06);
 }
 .legend-table tr:last-child td { border-bottom: none; }
 .legend-table .leg-sym {
   width: 44px; text-align: center;
 }
-.legend-table .leg-name { color: rgba(255,255,255,0.85); }
-.legend-table .leg-pos { color: #ffffff; font-size: 12px; text-align: right; }
+.legend-table .leg-name { color: rgba(var(--dl-ink-rgb),0.85); }
+.legend-table .leg-pos { color: var(--dl-ink); font-size: 12px; text-align: right; }
 
 /* Dev-Tempo-Regler (Erwin, 16.09.2026) — nur im Dev-Modus sichtbar */
 .dev-tempo {
@@ -940,15 +1003,15 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   width: 100%; max-width: 560px; margin: 0 auto; box-sizing: border-box;
   padding: 6px 12px; border: 1px dashed rgba(201,168,76,0.5); border-radius: 10px;
 }
-.dev-tempo-lbl { font-size: 10px; letter-spacing: 1.5px; color: #C9A84C; font-weight: 700; }
+.dev-tempo-lbl { font-size: 10px; letter-spacing: 1.5px; color: var(--dl-gold-ink); font-weight: 700; }
 .dev-tempo input[type=range] { flex: 1; min-width: 0; accent-color: #C9A84C; }
 .dev-tempo input[type=number] {
-  width: 60px; background: #141414; color: #fff; border: 1px solid #333; border-radius: 6px;
+  width: 60px; background: var(--dl-paper); color: var(--dl-ink); border: 1px solid var(--dl-line); border-radius: 6px;
   padding: 3px 6px; font: inherit; font-size: 14px;
 }
-.dev-tempo-unit { font-size: 12px; color: rgba(255,255,255,0.6); }
+.dev-tempo-unit { font-size: 12px; color: rgba(var(--dl-ink-rgb),0.6); }
 .dev-tempo-range {
-  font-size: 12px; color: #C9A84C; white-space: nowrap; font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--dl-gold-ink); white-space: nowrap; font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
 }
 
@@ -975,12 +1038,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
 /* Stats + Einstellungen (16.09.2026) — gleiche Hülle wie der Drum Key */
 .legend-modal.dl-panel { width: min(440px, 94vw); max-height: 92vh; overflow-y: auto; }
-.dl-stat-where { text-align: center; font-size: 18px; color: #ffffff; margin: -4px 0 20px; font-weight: 600; }
-.dl-stat-where strong { color: #C9A84C; font-weight: 800; }
+.dl-stat-where { text-align: center; font-size: 18px; color: var(--dl-ink); margin: -4px 0 20px; font-weight: 600; }
+.dl-stat-where strong { color: var(--dl-gold-ink); font-weight: 800; }
 .dl-stat-bars { display: grid; gap: 11px; }
 .dl-stat-bar-row { display: grid; grid-template-columns: 92px 1fr 58px; align-items: center; gap: 10px; }
-.dl-stat-bar-lbl { font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; color: #ffffff; font-weight: 700; }
-.dl-stat-bar { height: 10px; background: #262626; border-radius: 6px; overflow: hidden; }
+.dl-stat-bar-lbl { font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dl-ink); font-weight: 700; }
+.dl-stat-bar { height: 10px; background: var(--dl-line-2); border-radius: 6px; overflow: hidden; }
 .dl-stat-bar > i {
   display: block; height: 100%; width: 0; background: #C9A84C; border-radius: 6px;
   position: relative; overflow: hidden;
@@ -995,21 +1058,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   animation: dlShine 2.6s ease-in-out 0.9s infinite;
 }
 @keyframes dlShine { 0% { transform: translateX(-120%); } 55%, 100% { transform: translateX(220%); } }
-.dl-stat-bar-pct { text-align: right; font-size: 15px; font-weight: 700; color: #ffffff; font-variant-numeric: tabular-nums; }
+.dl-stat-bar-pct { text-align: right; font-size: 15px; font-weight: 700; color: var(--dl-ink); font-variant-numeric: tabular-nums; }
 .dl-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
 .dl-stat-tile {
-  background: #161616; border: 1px solid rgba(255,255,255,0.18); border-radius: 14px;
+  background: var(--dl-raise); border: 1px solid rgba(var(--dl-ink-rgb),0.18); border-radius: 14px;
   padding: 18px 8px 16px; text-align: center; min-width: 0;
 }
 .dl-stat-num {
-  font-size: clamp(27px, 7.5vw, 38px); font-weight: 800; color: #ffffff; line-height: 1.1;
+  font-size: clamp(27px, 7.5vw, 38px); font-weight: 800; color: var(--dl-ink); line-height: 1.1;
   font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.5px;
 }
-.dl-stat-num small { font-size: 0.5em; font-weight: 600; color: rgba(255,255,255,0.8); margin: 0 5px 0 2px; letter-spacing: 0; }
+.dl-stat-num small { font-size: 0.5em; font-weight: 600; color: rgba(var(--dl-ink-rgb),0.8); margin: 0 5px 0 2px; letter-spacing: 0; }
 .dl-stat-num small:last-child { margin-right: 0; }
-.dl-stat-lbl { font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; color: #ffffff; margin-top: 8px; font-weight: 700; }
-.dl-stat-cap { font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 4px; font-variant-numeric: tabular-nums; }
-.dl-stat-note { font-size: 14px; color: rgba(255,255,255,0.8); text-align: center; margin-top: 16px; line-height: 1.6; }
+.dl-stat-lbl { font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dl-ink); margin-top: 8px; font-weight: 700; }
+.dl-stat-cap { font-size: 14px; color: rgba(var(--dl-ink-rgb),0.8); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.dl-stat-note { font-size: 14px; color: rgba(var(--dl-ink-rgb),0.8); text-align: center; margin-top: 16px; line-height: 1.6; }
 .dl-stat-wide { grid-column: 1 / -1; }
 /* Kacheln, Balken und Text kommen nacheinander herein */
 @keyframes dlStatIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
@@ -1017,34 +1080,44 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   animation: dlStatIn 0.5s cubic-bezier(.16,.84,.30,1) both;
 }
 /* Kurzes Aufblitzen, wenn sich ein Wert beim Spielen ändert */
-@keyframes dlBump { 0% { transform: scale(1); } 35% { transform: scale(1.09); color: #C9A84C; } 100% { transform: scale(1); } }
+@keyframes dlBump { 0% { transform: scale(1); } 35% { transform: scale(1.09); color: var(--dl-gold-ink); } 100% { transform: scale(1); } }
 .dl-stat-num.bump { animation: dlBump 0.4s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .dl-stat-where, .dl-stat-bar-row, .dl-stat-tile, .dl-stat-note, .dl-stat-num.bump { animation: none; }
   .dl-stat-bar > i { transition: none; }
   .dl-stat-bar > i::after { animation: none; opacity: 0; }
 }
-.dl-stat-note { font-size: 14px; color: rgba(255,255,255,0.7); text-align: center; margin-top: 16px; line-height: 1.6; }
+.dl-stat-note { font-size: 14px; color: rgba(var(--dl-ink-rgb),0.7); text-align: center; margin-top: 16px; line-height: 1.6; }
 
-.dl-set-sec { padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.dl-set-sec { padding: 16px 0; border-top: 1px solid rgba(var(--dl-ink-rgb),0.08); }
 .dl-set-sec:first-of-type { border-top: none; padding-top: 0; }
-.dl-set-h { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 8px; }
-.dl-set-p { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.5; margin: 0 0 12px; }
+.dl-set-h { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(var(--dl-ink-rgb),0.55); margin-bottom: 8px; }
+.dl-set-p { font-size: 14px; color: rgba(var(--dl-ink-rgb),0.85); line-height: 1.5; margin: 0 0 12px; }
 .dl-set-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
 .dl-set-btn { display: inline-flex; align-items: center; gap: 6px; background: #C9A84C; color: #000; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; text-decoration: none; }
 .dl-set-btn:hover { background: #d4b05a; }
-.dl-set-link { background: none; border: none; padding: 0; color: #C9A84C; font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.dl-set-link { background: none; border: none; padding: 0; color: var(--dl-gold-ink); font: inherit; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .dl-set-link:hover { color: #d4b05a; }
+.dl-set-seg { display: inline-flex; border: 1px solid var(--dl-line); border-radius: 10px; overflow: hidden; }
+.dl-set-seg button {
+  background: var(--dl-raise); color: var(--dl-ink); border: 0; border-right: 1px solid var(--dl-line);
+  font: inherit; font-size: 14px; font-weight: 600; padding: 9px 18px; cursor: pointer;
+}
+.dl-set-seg button:last-child { border-right: 0; }
+.dl-set-seg button:hover { background: var(--dl-raise-h); }
+.dl-set-seg button[aria-checked="true"] { background: #C9A84C; color: #0a0a0a; }
+.dl-set-seg button:focus-visible { outline: 2px solid #C9A84C; outline-offset: -2px; }
+.dl-set-hint { margin: 10px 0 0; font-size: 13px; color: rgba(var(--dl-ink-rgb),0.6); }
 .dl-set-offset { display: flex; align-items: center; gap: 10px; }
 .dl-set-offset input[type=range] { flex: 1; min-width: 0; accent-color: #C9A84C; }
-.dl-set-offset-end { font-size: 12px; color: rgba(255,255,255,0.55); }
+.dl-set-offset-end { font-size: 12px; color: rgba(var(--dl-ink-rgb),0.55); }
 .dl-set-offset-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.dl-set-offset-val { font-size: 14px; color: #fff; font-variant-numeric: tabular-nums; }
-.dl-set-sync { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+.dl-set-offset-val { font-size: 14px; color: var(--dl-ink); font-variant-numeric: tabular-nums; }
+.dl-set-sync { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; color: rgba(var(--dl-ink-rgb),0.85); line-height: 1.5; }
 .dl-set-dot { width: 8px; height: 8px; border-radius: 50%; background: #666; flex-shrink: 0; }
 .dl-set-dot.on { background: #4caf50; }
-.dl-set-keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; font-size: 14px; color: rgba(255,255,255,0.85); }
-.dl-set-keys kbd { font-family: inherit; font-size: 12px; min-width: 28px; text-align: center; background: #141414; border: 1px solid rgba(255,255,255,0.18); border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px; color: #fff; }
+.dl-set-keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; font-size: 14px; color: rgba(var(--dl-ink-rgb),0.85); }
+.dl-set-keys kbd { font-family: inherit; font-size: 12px; min-width: 28px; text-align: center; background: var(--dl-paper); border: 1px solid rgba(var(--dl-ink-rgb),0.18); border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px; color: var(--dl-ink); }
 /* Ohne Tastatur (Handy, Tablet) sind Tastenkürzel nutzlos */
 @media (hover: none) { .dl-set-keys-sec { display: none; } }
 
@@ -1707,9 +1780,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               <button class="metro-div-opt" data-div="eighth"    data-glyph="1/8"   role="option"><span class="opt-glyph">1/8</span>Eighth</button>
               <button class="metro-div-opt" data-div="sixteenth" data-glyph="1/16"  role="option"><span class="opt-glyph">1/16</span>Sixteenth</button>
               <button class="metro-div-opt" data-div="triplet"   data-glyph="3"     role="option"><span class="opt-glyph">3</span>Triplets</button>
-              <!-- Voice hat kein Notenwert-Kürzel; auf schmalen Displays zeigt
-                   der Auslöser deshalb das Wort selbst statt eines Zeichens. -->
-              <button class="metro-div-opt" data-div="voice"     data-glyph="Voice" role="option"><span class="opt-glyph"></span>Voice</button>
+              <!-- Zählstimme: eigener Schalter, zu jeder Unterteilung dazu (Erwin, 20.10.2026).
+                   Vorher eine eigene Option, die den Klick ersetzte. -->
+              <div class="metro-div-sep" role="separator"></div>
+              <button class="metro-div-opt metro-voice-opt" id="dgMetroVoice" role="menuitemcheckbox" aria-checked="false">
+                <span class="opt-glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>Counting voice<span class="metro-voice-box" aria-hidden="true"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -1818,6 +1894,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           </div>
         </section>
         <section class="dl-set-sec">
+          <div class="dl-set-h">Appearance</div>
+          <div class="dl-set-seg" id="dgThemeSeg" role="radiogroup" aria-label="Appearance">
+            <button type="button" role="radio" data-theme-opt="dark">Dark</button>
+            <button type="button" role="radio" data-theme-opt="light">Light</button>
+            <button type="button" role="radio" data-theme-opt="auto">Auto</button>
+          </div>
+          <p class="dl-set-p dl-set-hint">Auto follows your device's light or dark setting. Saved on this device.</p>
+        </section>
+        <section class="dl-set-sec">
           <div class="dl-set-h">Cursor timing</div>
           <p class="dl-set-p">If the moving highlight is ahead of or behind the sound — common with Bluetooth headphones — slide until both match. Saved on this device.</p>
           <div class="dl-set-offset">
@@ -1852,87 +1937,87 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         <!-- Staff 1: lines y=88,104,120,136,152 (staffTop=88, spacing=16)
              Staff 2: lines y=196,212,228,244,260 (staffTop=196)
              All stems go UP from the RIGHT EDGE of the notehead. -->
-        <svg viewBox="0 0 560 316" width="100%" style="display:block;">
+        <svg viewBox="0 0 560 316" width="100%" style="display:block;color:var(--dl-ink);">
 
           <!-- ═══ STAFF 1 ═══ -->
-          <line x1="20" y1="88"  x2="430" y2="88"  stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="104" x2="430" y2="104" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="120" x2="430" y2="120" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="136" x2="430" y2="136" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="152" x2="430" y2="152" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="88"  x2="430" y2="88"  stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="104" x2="430" y2="104" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="120" x2="430" y2="120" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="136" x2="430" y2="136" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="152" x2="430" y2="152" stroke="currentColor" stroke-width="1.2"/>
 
           <!-- 1. Crash — pos −1.5 → y=64, cx=58 — circledX, ledger @ pos−1 y=72 -->
           <!-- ledger line -->
-          <line x1="47" y1="72" x2="70" y2="72" stroke="white" stroke-width="1.3"/>
+          <line x1="47" y1="72" x2="70" y2="72" stroke="currentColor" stroke-width="1.3"/>
           <!-- circle head -->
-          <circle cx="58" cy="64" r="7.5" fill="none" stroke="white" stroke-width="1.8"/>
+          <circle cx="58" cy="64" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
           <!-- inner × -->
-          <line x1="52" y1="58" x2="64" y2="70" stroke="white" stroke-width="1.6"/>
-          <line x1="64" y1="58" x2="52" y2="70" stroke="white" stroke-width="1.6"/>
+          <line x1="52" y1="58" x2="64" y2="70" stroke="currentColor" stroke-width="1.6"/>
+          <line x1="64" y1="58" x2="52" y2="70" stroke="currentColor" stroke-width="1.6"/>
           <!-- stem UP from right edge (cx+7.5, cy) -->
-          <line x1="65.5" y1="64" x2="65.5" y2="26" stroke="white" stroke-width="1.4"/>
-          <text x="58" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Crash</text>
+          <line x1="65.5" y1="64" x2="65.5" y2="26" stroke="currentColor" stroke-width="1.4"/>
+          <text x="58" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Crash</text>
 
           <!-- 2. Hi-Hat — pos −0.5 → y=80, cx=140 — × head -->
           <!-- × lines: size 8 from center -->
-          <line x1="132" y1="72" x2="148" y2="88" stroke="white" stroke-width="2"/>
-          <line x1="148" y1="72" x2="132" y2="88" stroke="white" stroke-width="2"/>
+          <line x1="132" y1="72" x2="148" y2="88" stroke="currentColor" stroke-width="2"/>
+          <line x1="148" y1="72" x2="132" y2="88" stroke="currentColor" stroke-width="2"/>
           <!-- stem UP from right corner of × (cx+8, cy−8) going up -->
-          <line x1="148" y1="72" x2="148" y2="34" stroke="white" stroke-width="1.4"/>
-          <text x="140" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Hi-Hat</text>
+          <line x1="148" y1="72" x2="148" y2="34" stroke="currentColor" stroke-width="1.4"/>
+          <text x="140" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Hi-Hat</text>
 
           <!-- 3. Tom 1 — pos 0.5 → y=96, cx=225 — oval -->
-          <ellipse cx="225" cy="96" rx="8.5" ry="5.5" fill="white"/>
+          <ellipse cx="225" cy="96" rx="8.5" ry="5.5" fill="currentColor"/>
           <!-- stem UP from right edge (cx+8.5, cy) -->
-          <line x1="233.5" y1="96" x2="233.5" y2="58" stroke="white" stroke-width="1.4"/>
-          <text x="225" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 1</text>
+          <line x1="233.5" y1="96" x2="233.5" y2="58" stroke="currentColor" stroke-width="1.4"/>
+          <text x="225" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 1</text>
 
           <!-- 4. Tom 2 — pos 1.0 → y=104, cx=315 — oval (on line 2) -->
-          <ellipse cx="315" cy="104" rx="8.5" ry="5.5" fill="white"/>
+          <ellipse cx="315" cy="104" rx="8.5" ry="5.5" fill="currentColor"/>
           <!-- stem UP from right edge -->
-          <line x1="323.5" y1="104" x2="323.5" y2="66" stroke="white" stroke-width="1.4"/>
-          <text x="315" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 2</text>
+          <line x1="323.5" y1="104" x2="323.5" y2="66" stroke="currentColor" stroke-width="1.4"/>
+          <text x="315" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 2</text>
 
           <!-- 5. Snare — pos 1.5 → y=112, cx=400 — oval -->
-          <ellipse cx="400" cy="112" rx="8.5" ry="5.5" fill="white"/>
+          <ellipse cx="400" cy="112" rx="8.5" ry="5.5" fill="currentColor"/>
           <!-- stem UP from right edge -->
-          <line x1="408.5" y1="112" x2="408.5" y2="74" stroke="white" stroke-width="1.4"/>
-          <text x="400" y="14" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Snare</text>
+          <line x1="408.5" y1="112" x2="408.5" y2="74" stroke="currentColor" stroke-width="1.4"/>
+          <text x="400" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Snare</text>
 
           <!-- ═══ STAFF 2 ═══ (staffTop=196) -->
-          <line x1="20" y1="196" x2="500" y2="196" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="212" x2="500" y2="212" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="228" x2="500" y2="228" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="244" x2="500" y2="244" stroke="white" stroke-width="1.2"/>
-          <line x1="20" y1="260" x2="500" y2="260" stroke="white" stroke-width="1.2"/>
+          <line x1="20" y1="196" x2="500" y2="196" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="212" x2="500" y2="212" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="228" x2="500" y2="228" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="244" x2="500" y2="244" stroke="currentColor" stroke-width="1.2"/>
+          <line x1="20" y1="260" x2="500" y2="260" stroke="currentColor" stroke-width="1.2"/>
 
           <!-- 6. Tom 3 — pos 2.5 → y=236, cx=65 — oval (between lines 3–4) -->
-          <ellipse cx="65" cy="236" rx="8.5" ry="5.5" fill="white"/>
+          <ellipse cx="65" cy="236" rx="8.5" ry="5.5" fill="currentColor"/>
           <!-- stem UP from right edge -->
-          <line x1="73.5" y1="236" x2="73.5" y2="198" stroke="white" stroke-width="1.4"/>
-          <text x="65" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 3</text>
+          <line x1="73.5" y1="236" x2="73.5" y2="198" stroke="currentColor" stroke-width="1.4"/>
+          <text x="65" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 3</text>
 
           <!-- 7. Bass Drum — pos 3.5 → y=252, cx=190 — oval (between lines 4–5) -->
-          <ellipse cx="190" cy="252" rx="8.5" ry="5.5" fill="white"/>
+          <ellipse cx="190" cy="252" rx="8.5" ry="5.5" fill="currentColor"/>
           <!-- stem UP from right edge -->
-          <line x1="198.5" y1="252" x2="198.5" y2="214" stroke="white" stroke-width="1.4"/>
-          <text x="190" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Bass Drum</text>
+          <line x1="198.5" y1="252" x2="198.5" y2="214" stroke="currentColor" stroke-width="1.4"/>
+          <text x="190" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Bass Drum</text>
 
           <!-- 8. Bass Drum 2 — pos 4.0 → y=260, cx=330 — oval (on line 5) -->
-          <ellipse cx="330" cy="260" rx="8.5" ry="5.5" fill="white"/>
+          <ellipse cx="330" cy="260" rx="8.5" ry="5.5" fill="currentColor"/>
           <!-- stem UP from right edge -->
-          <line x1="338.5" y1="260" x2="338.5" y2="222" stroke="white" stroke-width="1.4"/>
-          <text x="330" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="11" font-family="DM Sans,system-ui,sans-serif">Bass Drum 2</text>
+          <line x1="338.5" y1="260" x2="338.5" y2="222" stroke="currentColor" stroke-width="1.4"/>
+          <text x="330" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Bass Drum 2</text>
 
           <!-- 9. Hi-Hat Pedal — pos 5.5 → y=284, cx=455 — × head, ledger @ pos5.0 y=276 -->
           <!-- ledger line -->
-          <line x1="444" y1="276" x2="467" y2="276" stroke="white" stroke-width="1.3"/>
+          <line x1="444" y1="276" x2="467" y2="276" stroke="currentColor" stroke-width="1.3"/>
           <!-- × head: size 8 -->
-          <line x1="447" y1="276" x2="463" y2="292" stroke="white" stroke-width="2"/>
-          <line x1="463" y1="276" x2="447" y2="292" stroke="white" stroke-width="2"/>
+          <line x1="447" y1="276" x2="463" y2="292" stroke="currentColor" stroke-width="2"/>
+          <line x1="463" y1="276" x2="447" y2="292" stroke="currentColor" stroke-width="2"/>
           <!-- stem UP from right corner of × (cx+8=463, cy−8=276) going up through staff -->
-          <line x1="463" y1="276" x2="463" y2="230" stroke="white" stroke-width="1.4"/>
-          <text x="455" y="307" text-anchor="middle" fill="rgba(255,255,255,0.55)" font-size="10" font-family="DM Sans,system-ui,sans-serif">Hi-Hat Pedal</text>
+          <line x1="463" y1="276" x2="463" y2="230" stroke="currentColor" stroke-width="1.4"/>
+          <text x="455" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="10" font-family="DM Sans,system-ui,sans-serif">Hi-Hat Pedal</text>
         </svg>
       </div>
     </div>
@@ -1952,7 +2037,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     <div class="dg-body">
 
     <div class="phase-row">
-      <span class="phase-badge" id="dgBadge" style="background:rgba(255,255,255,0.05);color:#888;">READY</span>
+      <span class="phase-badge" id="dgBadge" style="background:rgba(var(--dl-ink-rgb),0.05);color:#888;">READY</span>
       <div class="countdown" id="dgCountdown"></div>
     </div>
     <div class="phase-info" id="dgInfo"></div>
@@ -2113,7 +2198,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // METRONOME STATE
   // ============================================================
   var metronomeOn  = true;      // Default: Klick immer an
-  var metronomeDiv = 'quarter'; // 'quarter' | 'eighth' | 'sixteenth' | 'triplet' | 'voice'
+  var metronomeDiv = 'quarter'; // 'quarter' | 'eighth' | 'sixteenth' | 'triplet'
+  var metronomeVoice = false;   // Zählstimme „1 2 3 4" zusätzlich zur Unterteilung (20.10.2026)
 
   function updateMetroBtn() {
     var btn = document.getElementById('dgMetroBtn');
@@ -2127,7 +2213,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     // Aktive Option markieren und die Beschriftung des Auslösers nachziehen
     var active = null;
-    document.querySelectorAll('.metro-div-opt').forEach(function(o) {
+    document.querySelectorAll('.metro-div-opt[data-div]').forEach(function(o) {
       var isOn = o.getAttribute('data-div') === metronomeDiv;
       o.classList.toggle('active', isOn);
       o.setAttribute('aria-selected', isOn ? 'true' : 'false');
@@ -2137,8 +2223,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var glyph = document.getElementById('dgMetroDivGlyph');
       var text  = document.getElementById('dgMetroDivText');
       if (glyph) glyph.textContent = active.getAttribute('data-glyph');
-      if (text)  text.textContent  = active.textContent.replace(active.querySelector('.opt-glyph').textContent, '').trim();
+      if (text)  text.textContent  = active.textContent.replace(active.querySelector('.opt-glyph').textContent, '').trim() +
+                                     (metronomeVoice ? ' + Voice' : '');
     }
+    var vo = document.getElementById('dgMetroVoice');
+    if (vo) { vo.classList.toggle('active', metronomeVoice); vo.setAttribute('aria-checked', metronomeVoice ? 'true' : 'false'); }
+    var trg = document.getElementById('dgMetroDivBtn');
+    if (trg) trg.classList.toggle('voice', metronomeVoice);
   }
 
   function _closeMetroMenu() {
@@ -2706,7 +2797,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         html += '<div class="progress-seg" style="background:' + colorFull + '"></div>';
       } else if (i === filled && partialPct > 0) {
         html += '<div class="progress-seg" style="background:linear-gradient(to right,' +
-          colorPartial + ' ' + partialPct.toFixed(1) + '%,#2a2a2a ' + partialPct.toFixed(1) + '%)"></div>';
+          colorPartial + ' ' + partialPct.toFixed(1) + '%,var(--dl-line-2) ' + partialPct.toFixed(1) + '%)"></div>';
       } else {
         html += '<div class="progress-seg"></div>';
       }
@@ -2726,7 +2817,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var chSegs = document.getElementById('dgChapterSegs');
     if (chSegs) {
       chSegs.style.display = 'block';
-      chSegs.style.background = '#2a2a2a';
+      chSegs.style.background = 'var(--dl-line-2)';
       chSegs.style.borderRadius = '3px';
       chSegs.style.overflow = 'hidden';
       chSegs.innerHTML = '<div style="height:100%;width:' + info.chapterPct.toFixed(1) + '%;background:#C9A84C;border-radius:3px;transition:width 0.5s ease;"></div>';
@@ -15716,7 +15807,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261020-193322';
+  var DL_BUILD = '20261020-195442';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -16938,15 +17029,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     o.type = 'sine'; o.start(t); o.stop(t + 0.06);
   }
 
-  // Zählende Stimme via Web Speech API (best-effort)
+  // Zählende Stimme via Web Speech API (best-effort). Dieselbe natürliche
+  // Stimme wie die Ansage „Timing training" (_sayPickVoice), sonst Standard.
   function speakBeat(num, when) {
-    if (!aCtx) return;
+    if (!aCtx || typeof window.speechSynthesis === 'undefined') return;
     var delay = Math.max(0, (when - aCtx.currentTime) * 1000 - 40);
     setTimeout(function() {
-      var u = new SpeechSynthesisUtterance(String(num));
-      u.rate = 2.5; u.pitch = 1.1; u.volume = 1.0;
-      speechSynthesis.cancel();
-      speechSynthesis.speak(u);
+      if (!playing) return;
+      try {
+        var u = new SpeechSynthesisUtterance(String(num));
+        var v = (typeof _sayPickVoice === 'function') ? _sayPickVoice() : null;
+        if (v) { u.voice = v; u.lang = v.lang; }
+        u.rate = 2.5; u.pitch = 1.1; u.volume = 1.0;
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      } catch (e) {}
     }, delay);
   }
 
@@ -16959,10 +17056,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var accent    = (posInQ === 0 && beatInBar === 0);
     var H = 1.0, M = 0.5, L = 0.28;
 
-    if (metronomeDiv === 'voice') {
-      if (posInQ === 0) speakBeat(beatInBar + 1, when);
-      return;
-    }
+    // Zählstimme zählt die Zählzeiten, die Unterteilung klickt weiter
+    if (metronomeVoice && posInQ === 0) speakBeat(beatInBar + 1, when);
     if (metronomeDiv === 'quarter') {
       if (posInQ === 0) playCountClick(accent, H, when);
     } else if (metronomeDiv === 'eighth') {
@@ -17108,8 +17203,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     el.style.fontSize = (name && name.length > 34) ? 'clamp(14px, 2.2vw, 22px)' : '';
   }
 
+  // Notenfarben je Farbschema: Schrift/Linien, Freistell-Fläche (Hintergrund
+  // hinter Akzent- und Open-Zeichen), Zählzeiten, Beschriftung, aktive Note
+  var _NOTA_DARK  = { ink: '#ffffff', paper: '#141414', soft: 'rgba(255,255,255,0.6)',
+                      faint: 'rgba(255,255,255,0.35)', dim: 'rgba(255,255,255,0.2)', active: '#C9A84C' };
+  var _NOTA_LIGHT = { ink: '#1c1b18', paper: '#ffffff', soft: 'rgba(28,27,24,0.62)',
+                      faint: 'rgba(28,27,24,0.42)', dim: 'rgba(28,27,24,0.2)', active: '#b08a2e' };
+  function _notaColors() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? _NOTA_LIGHT : _NOTA_DARK;
+  }
+
   // `opt` (Song-Builder, 20.10.2026): { svg: Ziel-SVG statt #dgSvg, plain: einfache
-  // Taktstriche statt Wiederholungszeichen — ein Takt aus einem Song, keine Schleife }
+  // Taktstriche statt Wiederholungszeichen — ein Takt aus einem Song, keine Schleife,
+  // colors: festes Farbset statt Farbschema }
   function renderNot(curBeat, dimmed, opt) { dimmed = false;
     var svg  = (opt && opt.svg) || document.getElementById('dgSvg');
     var _plain = !!(opt && opt.plain);
@@ -17133,8 +17239,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var lbl   = lbl8;
     var sY   = 40, ls = 8;
     var op   = dimmed ? 0.2 : 1;
-    var W    = '#ffffff';
-    var A    = '#C9A84C';  // Drumlion Gold für aktive Note
+    // Farben aus dem Farbschema (20.10.2026); `opt.colors` erzwingt ein Set
+    // (Song-Builder und Video-Ansicht bleiben dunkel)
+    var _C   = (opt && opt.colors) || _notaColors();
+    var W    = _C.ink;
+    var A    = _C.active;  // Drumlion Gold für aktive Note
     var h    = '';
     var twoBar = !!(GROOVE.beats2 && GROOVE.beats2.length);
 
@@ -17182,7 +17291,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       // Bar label (GROOVE / FILL)
       if (labelText)
-        h += '<text x="'+(sX+bW/2)+'" y="-5" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="9" font-family="DM Sans,system-ui,sans-serif" letter-spacing="1">'+labelText+'</text>';
+        h += '<text x="'+(sX+bW/2)+'" y="-5" text-anchor="middle" fill="'+_C.faint+'" font-size="9" font-family="DM Sans,system-ui,sans-serif" letter-spacing="1">'+labelText+'</text>';
       // Beams: groups of 2 for 8-beat bars (eighth notes, 1 beam)
       //        groups of 4 for 16-beat bars (sixteenth notes, 2 beams)
       // Balken als <rect> statt <line>: Unterkante exakt bei sY-18, Hälse enden dort.
@@ -17480,7 +17589,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var globalBeat = activeBeatOffset + bi;
         var isA = (!dimmed && curBeat === globalBeat);
         var nc  = isA ? A : W;
-        var lc  = isA ? A : (dimmed ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)');
+        var lc  = isA ? A : (dimmed ? _C.dim : _C.soft);
         // `noActiveBox` (Video-Ansicht): dort markiert die Abspiellinie die Stelle
         if (isA && !GROOVE.noActiveBox) h += '<rect x="'+(x-14)+'" y="'+(sY-23)+'" width="28" height="'+(7*ls+16)+
                       '" rx="4" fill="rgba(201,168,76,0.15)" stroke="rgba(201,168,76,0.6)" stroke-width="0.8"/>';
@@ -17566,19 +17675,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             var ay = sY - 31; // über dem Balken (Balken bei sY-18)
             if (dm.articulation === 'o') {
               // Kreisrunder Hintergrund-Knockout (keine Ecken)
-              h += '<circle cx="'+ax+'" cy="'+ay+'" r="6.5" fill="#141414"/>';
+              h += '<circle cx="'+ax+'" cy="'+ay+'" r="6.5" fill="'+_C.paper+'"/>';
               h += '<circle cx="'+ax+'" cy="'+ay+'" r="4.5" fill="none" stroke="'+nc+
                    '" stroke-width="1.3" opacity="'+op+'"/>';
             } else if (dm.articulation === '+') {
               // Kreisrunder Hintergrund-Knockout (keine Ecken, konsistent mit o)
-              h += '<circle cx="'+ax+'" cy="'+ay+'" r="6.5" fill="#141414"/>';
+              h += '<circle cx="'+ax+'" cy="'+ay+'" r="6.5" fill="'+_C.paper+'"/>';
               h += '<line x1="'+(ax-4.5)+'" y1="'+ay+'" x2="'+(ax+4.5)+'" y2="'+ay+
                    '" stroke="'+nc+'" stroke-width="1.3" opacity="'+op+'"/>';
               h += '<line x1="'+ax+'" y1="'+(ay-4.5)+'" x2="'+ax+'" y2="'+(ay+4.5)+
                    '" stroke="'+nc+'" stroke-width="1.3" opacity="'+op+'"/>';
             } else if (dm.articulation === '>') {
               // Akzent-Chevron > (Spitze rechts)
-              h += '<circle cx="'+ax+'" cy="'+ay+'" r="7.5" fill="#141414"/>';
+              h += '<circle cx="'+ax+'" cy="'+ay+'" r="7.5" fill="'+_C.paper+'"/>';
               h += '<line x1="'+(ax-4.5)+'" y1="'+(ay-4)+'" x2="'+(ax+4.5)+'" y2="'+ay+
                    '" stroke="'+nc+'" stroke-width="1.3" opacity="'+op+'"/>';
               h += '<line x1="'+(ax-4.5)+'" y1="'+(ay+4)+'" x2="'+(ax+4.5)+'" y2="'+ay+
@@ -17648,7 +17757,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           // Bei Zweistimmigkeit liegen dort die Hälse und Balken der unteren Stimme
           var _stickY = hasV2 ? (SB + 24) : (sY + 4*ls + 18);
           var _stk  = String(stickings[bi]);
-          var _stAt = 'fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600"';
+          var _stAt = 'fill="'+(dimmed?_C.dim:W)+'" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600"';
           // Kleinbuchstaben vorn = Vorschläge (lR = Flam, rrL = Drag). Sie stehen als
           // kleinere Großbuchstaben links daneben, der Hauptschlag bleibt genau unter
           // seinem Notenkopf (Erwin, 16.09.2026).
@@ -17658,7 +17767,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" font-size="13" '+_stAt+'>'+_stG[2]+'</text>';
             h += '<text x="'+(x - _stMainW/2 - 1)+'" y="'+_stickY+'" text-anchor="end" font-size="9" '+_stAt+'>'+_stG[1].toUpperCase()+'</text>';
           } else {
-            h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" fill="rgba(255,255,255,'+(dimmed?0.2:1.0)+')" font-size="13" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600">'+_stk+'</text>';
+            h += '<text x="'+x+'" y="'+_stickY+'" text-anchor="middle" fill="'+(dimmed?_C.dim:W)+'" font-size="13" font-family="DM Sans,system-ui,sans-serif" font-style="italic" font-weight="600">'+_stk+'</text>';
           }
         }
         // Leerer Slot, der noch im Klang der davorstehenden längeren Note liegt →
@@ -17938,12 +18047,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     blocks.forEach(function(b, i) {
       var bg, bc, tc;
       if (i < bIdx) {
-        bg='rgba(201,168,76,0.2)'; bc='#C9A84C'; tc='#E8E4DB';
+        bg='rgba(201,168,76,0.2)'; bc='#C9A84C'; tc='var(--dl-ink)';
       } else if (i === bIdx && (phase==='playing' || phase==='countIn')) {
         bg = phase==='countIn' ? 'rgba(201,168,76,0.25)' : 'rgba(201,168,76,0.2)';
-        bc = '#C9A84C'; tc='#E8E4DB';
+        bc = '#C9A84C'; tc='var(--dl-ink)';
       } else {
-        bg='#161616'; bc='#2a2a2a'; tc='#aaa';
+        bg='var(--dl-raise)'; bc='var(--dl-line-2)'; tc='rgba(var(--dl-ink-rgb),0.62)';
       }
       h += '<div class="block-seg" style="flex:'+Math.round(b.dur)+';background:'+bg+';border-color:'+bc+';">';
       var dispBars = b.bars;
@@ -17951,7 +18060,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       h += '<span class="b-dur" style="color:'+tc+'">'+dispBars+' bars</span></div>';
       if (i < blocks.length-1 && pauses[i]) {
         var pa = (i===bIdx-1 && phase==='pause');
-        h += '<div class="pause-seg" style="color:'+(pa?'#C9A84C':'#666')+'">'+pauses[i]+'s</div>';
+        h += '<div class="pause-seg" style="color:'+(pa?'var(--dl-gold-ink)':'rgba(var(--dl-ink-rgb),0.45)')+'">'+pauses[i]+'s</div>';
       }
     });
     h += '</div>';
@@ -17964,12 +18073,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function setBadge(p) {
     var el = document.getElementById('dgBadge');
     var s = {
-      idle:    { bg:'rgba(255,255,255,0.05)', c:'#888',    t:'READY' },
-      countIn: { bg:'rgba(201,168,76,0.15)',  c:'#C9A84C', t:'COUNT IN' },
+      idle:    { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888',    t:'READY' },
+      countIn: { bg:'rgba(201,168,76,0.15)',  c:'var(--dl-gold-ink)', t:'COUNT IN' },
       playing: { bg:'rgba(44,90,163,0.2)',    c:'#5b8fd9', t:'BLOCK '+(bIdx+1)+'/'+blocks.length },
       pause:   { bg:'rgba(201,168,76,0.1)',   c:'#888',    t:'PAUSE' },
       done:    { bg:'rgba(76,175,80,0.15)',   c:'#66bb6a', t:'DONE!', html:'<span class="done-check">✔</span>DONE!' }
-    }[p] || { bg:'rgba(255,255,255,0.05)', c:'#888', t:'READY' };
+    }[p] || { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888', t:'READY' };
     el.style.background = s.bg; el.style.color = s.c;
     if (s.html) { el.innerHTML = s.html; el.classList.add('badge-done-anim'); }
     else { el.textContent = s.t; el.classList.remove('badge-done-anim'); }
@@ -18410,6 +18519,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setTimeout(function() { if (playing && phase === 'countIn') showCountIn(s.num); }, _showIn);
       if (s.click) playCountClick(s.accent, undefined, ciNextTime);
       if (s.num) playCountVoice(s.num, ciNextTime);
+      if (s.num && metronomeVoice) speakBeat(s.num, ciNextTime);   // Zählstimme zählt mit ein
     }
 
     // Lookahead-Scheduler für Count-In (eliminiert setInterval-Jitter)
@@ -18761,11 +18871,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!box) return;
     var tg = _feedbackTarget();
     var fin = !!tg && _feedbackStep(tg.ex, tg.entry, 'good') >= _exSteps(tg.ex);
+    // Führen „Too easy" und „Just right" auf dieselbe Stufe — z.B. eine Stufe
+    // vor dem Endtempo, wo der Sprung am Endtempo endet —, entfällt „Too easy"
+    // (Erwin, 20.10.2026)
+    var same = !!tg && _feedbackStep(tg.ex, tg.entry, 'easy') === _feedbackStep(tg.ex, tg.entry, 'good');
     box.classList.toggle('final', fin);
     box.querySelector('.dl-fbx-eyebrow').textContent = fin
       ? 'Goal tempo · ' + _exBpm(tg.ex, tg.entry.bpmStep || 0) + ' BPM' : 'Lesson complete';
     document.getElementById('dgFeedbackQ').textContent = fin ? 'Did you nail it?' : 'How did that feel?';
-    box.querySelector('[data-fb="easy"]').style.display = fin ? 'none' : '';
+    box.querySelector('[data-fb="easy"]').style.display = (fin || same) ? 'none' : '';
     box.querySelector('[data-fb="good"] .dl-fbx-lbl').textContent = fin ? 'Nailed it' : 'Just right';
     box.querySelector('[data-fb="hard"] .dl-fbx-lbl').textContent = fin ? 'Not yet' : 'Too hard';
     ['easy', 'good', 'hard'].forEach(function(v) {
@@ -18776,7 +18890,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (n >= _exSteps(tg.ex)) { sub.textContent = 'Exercise complete ✓'; return; }
       if (_basicDone(tg.ex, { bpmStep: n, adv: tg.entry.adv })) { sub.textContent = 'Basic complete ✓'; return; }
       var now = _exBpm(tg.ex, tg.entry.bpmStep || 0), nb = _exBpm(tg.ex, n);
-      sub.textContent = (nb === now) ? 'Stays at ' + nb + ' BPM' : 'Next time ' + nb + ' BPM';
+      sub.textContent = ((nb === now) ? 'Stays at ' + nb + ' BPM' : 'Next time ' + nb + ' BPM') +
+                        ((n === _exSteps(tg.ex) - 1 && nb !== now) ? ' · goal tempo' : '');
     });
   }
   function _showFeedback(on) {
@@ -19155,7 +19270,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var keep = GROOVE;
     GROOVE = _sbGroove(bar);
     if (paper) GROOVE.noActiveBox = true;   // Video-Ansicht
-    try { renderNot(cur == null ? -1 : cur, false, { svg: svg, plain: true }); }
+    try { renderNot(cur == null ? -1 : cur, false, { svg: svg, plain: true, colors: _NOTA_DARK }); }
     catch (e) { if (window.console) console.error('Song Builder', e); }
     finally { GROOVE = keep; }
     if ((paper && paper !== '#141414') || solid) {
@@ -21106,6 +21221,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       renderNot(-1, false);
       metronomeOn = true;      // Klick als Orientierung, gerade wenn es schnell wird
       metronomeDiv = 'quarter';
+      metronomeVoice = false;
       updateMetroBtn();
     }
     requestAnimationFrame(_rampTick);
@@ -21158,7 +21274,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
 
-    document.querySelectorAll('.metro-div-opt').forEach(function(opt) {
+    document.querySelectorAll('.metro-div-opt[data-div]').forEach(function(opt) {
       opt.addEventListener('click', function(e) {
         e.stopPropagation();
         metronomeDiv = opt.getAttribute('data-div');
@@ -21167,6 +21283,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         _closeMetroMenu();
         updateMetroBtn();
       });
+    });
+    // Zählstimme an/aus — Menü bleibt offen, man sieht den Haken
+    var voiceOpt = document.getElementById('dgMetroVoice');
+    if (voiceOpt) voiceOpt.addEventListener('click', function(e) {
+      e.stopPropagation();
+      metronomeVoice = !metronomeVoice;
+      if (metronomeVoice && !metronomeOn) metronomeOn = true;
+      updateMetroBtn();
     });
 
     // Schließen per Klick daneben, Escape oder Leertaste-Start
@@ -21440,6 +21564,44 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (nt) nt.innerHTML = _fmtNum(lessons) + ' lesson' + (lessons === 1 ? '' : 's') + ' completed<br>' +
                            'Counts only what you play: no count-ins, breaks or clicks.';
   }
+
+  // Farbschema (Erwin, 20.10.2026): Dark (Standard), Light, Auto = folgt dem
+  // Gerät. Pro Gerät gespeichert; das Skript im <head> setzt es schon vor dem
+  // ersten Bild, hier kommt der Schalter in den Einstellungen dazu.
+  var _THEME_KEY = 'drumlion_v1_theme';
+  var _themeMq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+  function _themePref() {
+    try { var t = localStorage.getItem(_THEME_KEY); return (t === 'light' || t === 'auto') ? t : 'dark'; }
+    catch (e) { return 'dark'; }
+  }
+  function _applyTheme() {
+    var pref = _themePref();
+    var light = pref === 'light' || (pref === 'auto' && !!(_themeMq && _themeMq.matches));
+    var was = document.documentElement.getAttribute('data-theme') === 'light';
+    if (light) document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+    Array.prototype.forEach.call(document.querySelectorAll('#dgThemeSeg [data-theme-opt]'), function(b) {
+      b.setAttribute('aria-checked', String(b.getAttribute('data-theme-opt') === pref));
+    });
+    // Die Notation ist ein SVG mit festen Farben — beim Wechsel neu zeichnen.
+    // Läuft die Übung, zeichnet sie der nächste Schlag ohnehin neu.
+    if (was !== light && !playing && GROOVE && GROOVE.beats) { try { renderNot(-1, false); } catch (e) {} }
+  }
+  (function() {
+    var seg = document.getElementById('dgThemeSeg');
+    if (seg) seg.addEventListener('click', function(e) {
+      var b = e.target.closest('[data-theme-opt]');
+      if (!b) return;
+      try { localStorage.setItem(_THEME_KEY, b.getAttribute('data-theme-opt')); } catch (er) {}
+      _applyTheme();
+    });
+    if (_themeMq) {
+      var onChange = function() { if (_themePref() === 'auto') _applyTheme(); };
+      if (_themeMq.addEventListener) _themeMq.addEventListener('change', onChange);
+      else if (_themeMq.addListener) _themeMq.addListener(onChange);
+    }
+    _applyTheme();
+  })();
 
   function _renderCursorOffset() {
     var r = document.getElementById('dgCursorOffset');
