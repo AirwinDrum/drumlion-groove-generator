@@ -1479,6 +1479,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   color: var(--sb-gold); pointer-events: none; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .sb-btn.tap { background: var(--sb-gold); border-color: var(--sb-gold); color: #141414; }
+/* Leiste „Recording": Aufnahme, Mitspielen, Mittippen (21.10.2026) */
+.sb-sync {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 9px 16px;
+  background: #121211; border-bottom: 1px solid var(--sb-line);
+}
+.sb-sync[hidden] { display: none; }
+.sb-sync-name {
+  max-width: 22em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13px; color: var(--sb-text); font-variant-numeric: tabular-nums;
+}
+.sb-sync .sb-nudge { padding: 4px 9px; }
+.sb-sync-hit { min-width: 110px; font-size: 15px; padding: 8px 16px; }
+.sb-sync-status { font-size: 12px; color: var(--sb-mute); font-variant-numeric: tabular-nums; }
+.sb-btn.on#sbAudioBtn { border-color: var(--sb-gold); color: var(--sb-gold); }
 .sb-bar::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   border: 1.5px solid transparent; transition: border-color 0.12s, background-color 0.12s;
@@ -15831,7 +15845,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261020-231821';
+  var DL_BUILD = '20261020-234317';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19159,8 +19173,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var _sbSel  = { a: 0, b: 0 };  // Auswahl: Anker a, Fokus b (der Takt im Raster)
   var _sbUndo = [], _sbRedo = [];
   var _sbPrefs = { w: 360, loop: false, click: false, countIn: true, counts: true,
-                   vidBg: 'dark', vidSound: 'drums', vidBars: 2, vidFrom: 'start', vidFmt: 'wide',
-                   vidLayout: 'band', vidPer: 4 };
+                   vidBg: 'dark', vidDrums: true, vidClick: false, vidSong: false, vidBars: 2, vidFrom: 'start', vidFmt: 'wide',
+                   vidLayout: 'band', vidPer: 4, songOn: true, drumsOn: false, syncOpen: false };
   var _sbRoot = null, _sbTiles = [], _sbCells = [], _sbStickEls = [], _sbCntEls = [];
   var _sbIsOpen = false, _sbP = null, _sbClip = null, _sbRepN = 3, _sbEdCur = -1;
   var _sbDirty = {}, _sbDirtyRaf = 0, _sbDrag = null, _sbSaveT = 0, _sbPrevOverflow = '';
@@ -19214,10 +19228,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         bar.stick[i] = (st === 'R' || st === 'L') ? st : '';
       }
       bar.label = String(b.label || '').slice(0, 40);
-      bar.bpm = (+b.bpm >= 30 && +b.bpm <= 300) ? Math.round(+b.bpm) : 0;
+      // zwei Nachkommastellen: beim Mittippen ergeben sich Tempi wie 92,37 — gerundet
+      // liefe das Notenband über einen langen Song von der Aufnahme weg
+      bar.bpm = (+b.bpm >= 30 && +b.bpm <= 300) ? Math.round(+b.bpm * 100) / 100 : 0;
       out.bars.push(bar);
     });
     if (!out.bars.length) out.bars.push(_sbEmptyBar(16));
+    // Mittippen: Startpunkt von Takt 1 in der Aufnahme (Sekunden)
+    if (s.sync && isFinite(+s.sync.offset)) out.sync = { offset: Math.round(+s.sync.offset * 1000) / 1000 };
     return out;
   }
   // Tempo eines Takts: der letzte Tempowechsel bis hierhin, sonst das Songtempo
@@ -19227,6 +19245,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return _sbSong.bpm;
   }
   function _sbBarSec(i) { return 240 / _sbBarBpm(i); }
+  // Tempowechsel in Partitur und PDF anzeigen? Beim Mittippen schwankt das Tempo
+  // von Takt zu Takt leicht — dann zählen nur deutliche Wechsel (ab 4 %).
+  function _sbTmShow(prev, bpm) {
+    if (!bpm) return false;
+    return Math.abs(bpm - prev) >= (_sbSong.sync ? Math.max(3, prev * 0.04) : 1.5);
+  }
   // Startzeit jedes Takts ab Takt `from` (Sekunden) und die Gesamtdauer
   function _sbTimes(from) {
     var bars = _sbSong.bars, t = 0, at = [], bpm = _sbBarBpm(from);
@@ -19254,6 +19278,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (p && typeof p === 'object') Object.keys(_sbPrefs).forEach(function(k) {
         if (typeof p[k] === typeof _sbPrefs[k]) _sbPrefs[k] = p[k];
       });
+      // bis 21.10.: eine Auswahl `vidSound` statt drei Schalter
+      if (p && p.vidSound && typeof p.vidDrums !== 'boolean') {
+        _sbPrefs.vidDrums = p.vidSound === 'drums'; _sbPrefs.vidClick = p.vidSound === 'click';
+      }
     } catch (e) {}
     _sbPrefs.w = Math.max(240, Math.min(720, +_sbPrefs.w || 360));
     _sbPrefs.vidBars = Math.max(1, Math.min(4, +_sbPrefs.vidBars || 2));
@@ -19261,7 +19289,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (['band', 'lines'].indexOf(_sbPrefs.vidLayout) === -1) _sbPrefs.vidLayout = 'band';
     _sbPrefs.vidPer = Math.max(1, Math.min(4, Math.round(+_sbPrefs.vidPer) || 4));
     if (['dark', 'green'].indexOf(_sbPrefs.vidBg) === -1) _sbPrefs.vidBg = 'dark';
-    if (['drums', 'click', 'silent'].indexOf(_sbPrefs.vidSound) === -1) _sbPrefs.vidSound = 'drums';
     if (['start', 'sel'].indexOf(_sbPrefs.vidFrom) === -1) _sbPrefs.vidFrom = 'start';
     try { _sbClip = JSON.parse(localStorage.getItem(SB_CLIP_KEY) || 'null'); } catch (e) { _sbClip = null; }
     if (!Array.isArray(_sbClip) || !_sbClip.length) _sbClip = null;
@@ -19361,7 +19388,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Jeder Abschnittsname beginnt eine neue Zeile mit Überschrift, wie in einem Chart.
   function _sbRenderScore() {
     var sc = document.getElementById('sbScore');
-    var top = sc.scrollTop, bars = _sbSong.bars, h = '', open = false;
+    var top = sc.scrollTop, bars = _sbSong.bars, h = '', open = false, eff = _sbSong.bpm;
     for (var i = 0; i < bars.length; i++) {
       var b = bars[i];
       if (i === 0 || b.label) {
@@ -19371,8 +19398,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         h += '<div class="sb-rows">';
         open = true;
       }
+      if (i > 0 && bars[i - 1].bpm) eff = bars[i - 1].bpm;
       h += '<div class="sb-bar" data-i="' + i + '"><span class="sb-n">' + (i + 1) + '</span>' +
-           (b.bpm ? '<span class="sb-tm">♩ = ' + b.bpm + '</span>' : '') +
+           (_sbTmShow(eff, b.bpm) ? '<span class="sb-tm">♩ = ' + Math.round(b.bpm) + '</span>' : '') +
            '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar ' + (i + 1) + '"></svg></div>';
     }
     if (open) h += '</div></div>';
@@ -19403,6 +19431,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbMarkSel();
     _sbRenderEditor();
     _sbScrollTo(i, false);
+    _sbSyncUi();
     // Schleife läuft? Dann gilt ab sofort die neue Auswahl
     if (_sbP && _sbP.loop) { var r = _sbRange(); _sbP.from = r[0]; _sbP.to = r[1]; }
   }
@@ -19465,7 +19494,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _inh = r[0] > 0 ? _sbBarBpm(r[0] - 1) : _sbSong.bpm;
     h += '<span class="sb-group" title="Tempo from this bar on. Empty keeps the tempo before.">' +
          '<span class="sb-lbl">Tempo</span>' +
-         '<input class="sb-num-in" id="sbBarBpm" type="number" min="30" max="300" step="1" placeholder="' + _inh +
+         '<input class="sb-num-in" id="sbBarBpm" type="number" min="30" max="300" step="any" placeholder="' + (Math.round(_inh * 10) / 10) +
          '" value="' + (_sbSong.bars[r[0]].bpm || '') + '" aria-label="Tempo from this bar">' +
          _sbBtnHtml('tapbar', 'Tap', 'Tap the beat to set the tempo from this bar') + '</span>';
     h += '<span class="sb-group"><span class="sb-lbl">Grid</span><span class="sb-seg" role="group" aria-label="Grid">';
@@ -19801,7 +19830,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   // Tempo ab dem ersten ausgewählten Takt setzen (leer = übernimmt das Tempo davor)
   function _sbSetBarBpm(v) {
-    var r = _sbRange(), b = _sbSong.bars[r[0]], n = Math.round(+v);
+    var r = _sbRange(), b = _sbSong.bars[r[0]], n = Math.round(+v * 100) / 100;
     var bpm = (n >= 30 && n <= 300) ? n : 0;
     if ((b.bpm || 0) === bpm) return;
     _sbStructural(function() { b.bpm = bpm; });
@@ -19909,6 +19938,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbUndo = []; _sbRedo = []; _sbSel = { a: 0, b: 0 };
     _sbSave();
     _sbRenderAll();
+    _sbAudioFor(s);
     document.getElementById('sbScore').scrollTop = 0;
   }
   function _sbSongAct(act) {
@@ -19925,8 +19955,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbSwitch(ds.id);
     } else if (act === 'delsong') {
       if (!confirm('Delete “' + _sbSong.title + '”? This cannot be undone.')) return;
-      var ix = _sbData.songs.indexOf(_sbSong);
+      var ix = _sbData.songs.indexOf(_sbSong), delId = _sbSong.id;
       _sbData.songs.splice(ix, 1);
+      _sbIdb('readwrite', function(st) { st.delete(delId); }).catch(function() {});
       if (!_sbData.songs.length) _sbData.songs.push(_sbNewSong());
       _sbSwitch(_sbData.songs[Math.max(0, ix - 1)].id);
       _sbSaveNow();
@@ -19998,7 +20029,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     playSound(k, t);
   }
-  // `opts` (Video-Ansicht): { video:true, from: Takt, sound: 'drums' | 'click' | 'silent' }
+  // `opts` (Video-Ansicht): { video:true, from: Takt, drums, click, song } — beliebig kombinierbar.
+  // Im Editor gelten die Schalter Click / Song / Drums.
   function _sbPlay(opts) {
     if (_sbP) { _sbStop(); return; }
     initA();
@@ -20006,16 +20038,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     opts = opts || {};
     var r = _sbRange(), video = !!opts.video, t0 = aCtx.currentTime + 0.12;
     var from = video ? Math.max(0, Math.min(_sbSong.bars.length - 1, opts.from || 0)) : r[0];
-    var sound = video ? (opts.sound || 'drums') : 'drums';
+    var withSong = !!_sbAudio.buf && (video ? !!opts.song : !!_sbPrefs.songOn);
     var P = _sbP = { from: from, to: r[1], loop: !video && !!_sbPrefs.loop, bar: from, slot: 0, t: t0, q: [],
                      curBar: -1, curSlot: -1, done: false, endT: 0, timer: 0, raf: 0,
-                     video: video, drums: sound === 'drums',
-                     click: video ? sound === 'click' : _sbPrefs.click,
+                     video: video, song: withSong,
+                     drums: video ? !!opts.drums : (!withSong || !!_sbPrefs.drumsOn),
+                     click: video ? !!opts.click : !!_sbPrefs.click,
                      t0: t0, qd: 60 / _sbBarBpm(from), startT: t0, prev: null };
-    if (_sbPrefs.countIn) {
-      if (sound !== 'silent') for (var c = 0; c < 4; c++) playCountClick(c === 0, 1.0, t0 + c * P.qd);
+    // Einzähler; mit Aufnahme im Editor ohne — dort führt der Song selbst hinein.
+    // In der Video-Ansicht läuft die Aufnahme während des Einzählers schon mit.
+    if (_sbPrefs.countIn && !(withSong && !video)) {
+      if ((P.drums || P.click) && !withSong) for (var c = 0; c < 4; c++) playCountClick(c === 0, 1.0, t0 + c * P.qd);
       P.t = P.startT = t0 + 4 * P.qd;
     }
+    if (withSong) _sbSongAt(t0, _sbBarPos(from) - (P.startT - t0));
     P.timer = setInterval(_sbPump, 25);
     _sbPump();
     P.raf = requestAnimationFrame(_sbTick);
@@ -20038,7 +20074,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         P.slot = 0;
         P.bar++;
         if (P.loop ? P.bar > P.to : P.bar >= _sbSong.bars.length) {
-          if (P.loop) P.bar = P.from;
+          if (P.loop) {
+            P.bar = P.from;
+            if (P.song) { _sbSongStop(P.t); _sbSongAt(P.t, _sbBarPos(P.from)); }   // Aufnahme springt mit
+          }
           else { P.done = true; P.endT = P.t; return; }
         }
       }
@@ -20074,6 +20113,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbP = null;
     clearInterval(P.timer);
     cancelAnimationFrame(P.raf);
+    _sbSongStop(0);
     if (P.video) { _sbVidStopped(P); return; }
     if (P.curBar >= 0 && _sbTiles[P.curBar]) { _sbTiles[P.curBar].classList.remove('play'); _sbDraw(P.curBar); }
     _sbEdCursor(-1);
@@ -20137,8 +20177,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-v="wide">16:9</button><button type="button" data-v="tall">9:16</button></span></label>' +
           '<label class="sb-group"><span class="sb-lbl">Background</span><span class="sb-seg" data-vopt="vidBg">' +
             '<button type="button" data-v="dark">Dark</button><button type="button" data-v="green">Green screen</button></span></label>' +
-          '<label class="sb-group"><span class="sb-lbl">Sound</span><span class="sb-seg" data-vopt="vidSound">' +
-            '<button type="button" data-v="drums">Drums</button><button type="button" data-v="click">Click</button><button type="button" data-v="silent">Silent</button></span></label>' +
+          '<span class="sb-group"><span class="sb-lbl">Sound</span>' +
+            '<button type="button" class="sb-btn" data-vtog="vidDrums">Drums</button>' +
+            '<button type="button" class="sb-btn" data-vtog="vidClick">Click</button>' +
+            '<button type="button" class="sb-btn" data-vtog="vidSong" title="The song recording (load it under Audio in the editor)">Song</button></span>' +
           '<label class="sb-group"><span class="sb-lbl">Layout</span><span class="sb-seg" data-vopt="vidLayout">' +
             '<button type="button" data-v="band">One line</button><button type="button" data-v="lines">Two lines</button></span></label>' +
           '<label class="sb-group sb-vid-opt-band"><span class="sb-lbl">Bars on screen</span>' +
@@ -20181,6 +20223,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbPrefs.vidPer = +this.value; _sbSavePrefs(); _sbVidLayout(); _sbVidUi();
     });
     v.querySelector('.sb-vid-panel').addEventListener('click', function(e) {
+      var tg = e.target.closest('[data-vtog]');
+      if (tg) { var key = tg.getAttribute('data-vtog'); _sbPrefs[key] = !_sbPrefs[key]; _sbSavePrefs(); _sbVidUi(); return; }
       var b = e.target.closest('[data-v]'), seg = b && b.closest('[data-vopt]');
       if (!seg) return;
       _sbPrefs[seg.getAttribute('data-vopt')] = b.getAttribute('data-v');
@@ -20208,6 +20252,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         b.setAttribute('aria-pressed', String(on));
       });
     });
+    Array.prototype.forEach.call(V.el.querySelectorAll('[data-vtog]'), function(b) {
+      var on = !!_sbPrefs[b.getAttribute('data-vtog')];
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    var sg = V.el.querySelector('[data-vtog="vidSong"]');
+    if (sg) sg.hidden = !_sbAudio.buf;
     var ci = document.getElementById('sbVidCountIn');
     ci.classList.toggle('on', !!_sbPrefs.countIn);
     ci.setAttribute('aria-pressed', String(!!_sbPrefs.countIn));
@@ -20368,7 +20419,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       s.classList.remove('in'); void s.offsetWidth; if (sec) s.classList.add('in');
     }
     document.getElementById('sbVidBar').textContent = 'Bar ' + (bi + 1) + ' / ' + bars.length;
-    document.getElementById('sbVidBpm').textContent = _sbBarBpm(bi) + ' BPM';
+    document.getElementById('sbVidBpm').textContent = Math.round(_sbBarBpm(bi)) + ' BPM';
   }
   function _sbVidOpen() {
     if (!_sbRoot) return;
@@ -20393,7 +20444,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbVidToggle() {
     if (_sbP) { _sbStop(); return; }
     _sbVidReset();
-    _sbPlay({ video: true, from: _sbVid.from, sound: _sbPrefs.vidSound });
+    _sbPlay({ video: true, from: _sbVid.from, drums: _sbPrefs.vidDrums, click: _sbPrefs.vidClick,
+              song: _sbPrefs.vidSong && !!_sbAudio.buf });
   }
   function _sbVidStarted(P) {
     _sbVid.el.classList.add('playing');
@@ -20449,6 +20501,202 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('sbVidEl').textContent = Math.floor(es / 60) + ':' + ('0' + es % 60).slice(-2);
   }
 
+  // ── Song-Aufnahme und Mittippen (21.10.2026) ─────────────────
+  // Eine Aufnahme des Songs (MP3, WAV, M4A …) bleibt nur in diesem Browser
+  // (IndexedDB, je Song) und wird nirgends hochgeladen. Mittippen: die Aufnahme
+  // läuft, auf jede Eins wird getippt (T oder Knopf). Jeder Tipp ist der genaue
+  // Anfang eines Takts — daraus das Tempo jedes Takts und der Startpunkt
+  // (`song.sync.offset` = Beginn von Takt 1 in der Aufnahme). Danach laufen
+  // Wiedergabe, Video-Ansicht und MP4-Export synchron zur Aufnahme.
+  var SB_AUDIO_DB = 'drumlion_builder_audio';
+  var _sbAudio = { id: null, name: '', buf: null }, _sbSongSrcs = [], _sbSyncRun = null, _sbSyncT = 0;
+
+  // Ein Zugriff auf den Audio-Speicher; `fn` bekommt den Object Store
+  function _sbIdb(mode, fn) {
+    return new Promise(function(res, rej) {
+      if (!window.indexedDB) { rej(new Error('No browser storage for audio')); return; }
+      var rq;
+      try { rq = indexedDB.open(SB_AUDIO_DB, 1); } catch (e) { rej(e); return; }
+      rq.onupgradeneeded = function() { rq.result.createObjectStore('audio'); };
+      rq.onerror = function() { rej(rq.error); };
+      rq.onsuccess = function() {
+        var db = rq.result, tx = db.transaction('audio', mode), out = fn(tx.objectStore('audio'));
+        tx.oncomplete = function() { db.close(); res(out && out.result); };
+        tx.onerror = function() { db.close(); rej(tx.error); };
+      };
+    });
+  }
+  function _sbDecode(ab) {
+    initA();
+    return new Promise(function(res, rej) {
+      var p = aCtx.decodeAudioData(ab, res, rej);   // Rückruf-Form: auch ältere Safaris
+      if (p && p.then) p.then(res, rej);
+    });
+  }
+  // Aufnahme des offenen Songs aus dem Speicher holen (beim Öffnen und Songwechsel)
+  function _sbAudioFor(song) {
+    var id = song.id;
+    _sbAudio = { id: id, name: '', buf: null };
+    _sbSyncUi();
+    _sbIdb('readonly', function(st) { return st.get(id); }).then(function(rec) {
+      if (!rec || !rec.data || !_sbSong || _sbSong.id !== id) return null;
+      _sbSyncUi('Loading ' + (rec.name || 'audio') + '…');
+      return _sbDecode(rec.data.slice(0)).then(function(buf) {
+        if (_sbSong && _sbSong.id === id) { _sbAudio = { id: id, name: rec.name || 'Audio', buf: buf }; _sbSyncUi(); }
+      });
+    }).catch(function() { _sbSyncUi(); });
+  }
+  function _sbAudioFile(file) {
+    if (!file || !_sbSong) return;
+    var id = _sbSong.id;
+    _sbSyncUi('Loading ' + file.name + '…');
+    var rd = new FileReader();
+    rd.onerror = function() { _sbSyncUi(); _devToast('This audio file could not be read'); };
+    rd.onload = function() {
+      var ab = rd.result;
+      _sbDecode(ab.slice(0)).then(function(buf) {
+        if (!_sbSong || _sbSong.id !== id) return;
+        _sbAudio = { id: id, name: file.name, buf: buf };
+        _sbSyncUi();
+        _devToast('Audio loaded: ' + file.name + ' (' + _sbMmSs(buf.duration) + '). It stays on this device.');
+        _sbIdb('readwrite', function(st) { st.put({ name: file.name, type: file.type, data: ab }, id); })
+          .catch(function() { _devToast('Audio works now, but could not be stored: load it again next time'); });
+      }, function() { _sbSyncUi(); _devToast('This audio format cannot be played here. Try MP3 or WAV.'); });
+    };
+    rd.readAsArrayBuffer(file);
+  }
+  function _sbAudioRemove() {
+    if (!_sbSong) return;
+    _sbStop();
+    var id = _sbSong.id;
+    _sbAudio = { id: id, name: '', buf: null };
+    _sbIdb('readwrite', function(st) { st.delete(id); }).catch(function() {});
+    _sbSyncUi();
+  }
+  // Zeitpunkt von Takt `bi` in der Aufnahme (Sekunden)
+  function _sbBarPos(bi) {
+    var tm = _sbTimes(0);
+    return (_sbSong.sync ? _sbSong.sync.offset : 0) + (bi < tm.at.length ? tm.at[bi] : tm.total);
+  }
+  // Aufnahme ab Position `pos` zur Audio-Zeit `when` starten
+  function _sbSongAt(when, pos) {
+    if (!_sbAudio.buf || !aCtx) return;
+    if (pos < 0) { when -= pos; pos = 0; }
+    var late = aCtx.currentTime - when;
+    if (late > 0) { pos += late; when = aCtx.currentTime; }
+    if (pos >= _sbAudio.buf.duration) return;
+    var src = aCtx.createBufferSource();
+    src.buffer = _sbAudio.buf;
+    src.connect(aCtx.destination);
+    src.start(when, pos);
+    _sbSongSrcs.push(src);
+  }
+  function _sbSongStop(at) {
+    _sbSongSrcs.forEach(function(s) { try { s.stop(at || 0); } catch (e) {} });
+    _sbSongSrcs = [];
+  }
+
+  // Mittippen ab dem ersten ausgewählten Takt. Von vorn spielt die Aufnahme ab
+  // ihrem Anfang, sonst 6 s vor dem Takt — so lässt sich ein Teil neu tippen,
+  // ohne den Rest zu verlieren.
+  function _sbSyncStart() {
+    if (!_sbAudio.buf) { _devToast('Load the song recording first'); return; }
+    _sbStop();
+    initA();
+    var N = _sbRange()[0];
+    var startPos = N === 0 ? 0 : Math.max(0, _sbBarPos(N) - 6);
+    _sbPush();   // das ganze Mittippen ist ein Undo-Schritt
+    var t0 = aCtx.currentTime + 0.15;
+    _sbSongAt(t0, startPos);
+    _sbSyncRun = { from: N, bar: N, t0: t0, startPos: startPos, last: null, dur: 0, n: 0 };
+    _sbSelect(N, false);
+    _sbSyncUi();
+  }
+  function _sbSyncTap(ts) {
+    var R = _sbSyncRun;
+    if (!R) return;
+    _sbTapFlash(document.getElementById('sbSyncHit'));
+    // Position in der Aufnahme, wie sie zu hören war (Ausgabelatenz abgezogen)
+    var lag = ts ? Math.max(0, (performance.now() - ts) / 1000) : 0;
+    var pos = R.startPos + (aCtx.currentTime - lag - _audioLatency() - R.t0);
+    if (pos < 0) return;
+    var bars = _sbSong.bars, MIN = 240 / 300, MAX = 240 / 30;
+    if (R.last === null) {
+      // Erster Tipp = Anfang von Takt `from`
+      if (R.from === 0) _sbSong.sync = { offset: Math.round(pos * 1000) / 1000 };
+      else {
+        var d0 = pos - _sbBarPos(R.from - 1);
+        if (d0 >= MIN && d0 <= MAX) bars[R.from - 1].bpm = Math.round(24000 / d0) / 100;
+        else _sbSong.sync = { offset: Math.round(((_sbSong.sync ? _sbSong.sync.offset : 0) + pos - _sbBarPos(R.from)) * 1000) / 1000 };
+      }
+      if (!_sbSong.sync) _sbSong.sync = { offset: 0 };
+      R.last = pos;
+    } else {
+      var d = pos - R.last;
+      if (d < MIN) return;   // Doppeltipp
+      // Eine Eins verpasst? Doppelt so lang wie der Takt davor → zwei Takte
+      var k = (R.dur && d > R.dur * 1.7 && d < R.dur * 2.4) ? 2 : 1;
+      if (d / k > MAX) { R.last = pos; return; }
+      for (var j = 0; j < k && R.bar < bars.length; j++) { bars[R.bar].bpm = Math.round(24000 * k / d) / 100; R.bar++; }
+      R.dur = d / k;
+      R.last = pos;
+    }
+    R.n++;
+    _sbSave();
+    if (R.bar >= bars.length) { _sbSyncStop(); return; }
+    _sbSel = { a: R.bar, b: R.bar };
+    _sbMarkSel();
+    _sbScrollTo(R.bar, true);
+    _sbSyncUi();
+    clearTimeout(_sbSyncT);
+    _sbSyncT = setTimeout(function() { if (_sbSyncRun) _sbRenderScore(); }, 600);
+  }
+  function _sbSyncStop() {
+    var R = _sbSyncRun;
+    if (!R) return;
+    _sbSyncRun = null;
+    clearTimeout(_sbSyncT);
+    _sbSongStop(0);
+    if (!R.n) _sbUndo.pop();   // nichts getippt: kein Undo-Schritt
+    _sbSave();
+    _sbRenderScore();
+    _sbRenderEditor();
+    _sbRenderMeta();
+    _sbSyncUi();
+    var done = R.bar - R.from;
+    _devToast(done > 0 ? 'Synced ' + done + (done === 1 ? ' bar' : ' bars') + ' to the recording' : 'Tap along stopped');
+  }
+  function _sbSyncNudge(v) {
+    if (!_sbSong) return;
+    var o = (_sbSong.sync ? _sbSong.sync.offset : 0) + v;
+    _sbSong.sync = { offset: Math.round(o * 1000) / 1000 };
+    _sbSave();
+    _sbSyncUi();
+  }
+  // Leiste „Song audio" nachziehen; `msg` statt Dateiname, z.B. beim Laden
+  function _sbSyncUi(msg) {
+    if (!_sbRoot) return;
+    var $ = function(id) { return document.getElementById(id); };
+    var has = !!_sbAudio.buf, R = _sbSyncRun, sync = _sbSong && _sbSong.sync;
+    var ab = $('sbAudioBtn');
+    if (ab) ab.classList.toggle('on', has);
+    var bar = $('sbSync');
+    if (!bar) return;
+    bar.hidden = !_sbPrefs.syncOpen && !R;
+    $('sbSyncName').textContent = msg || (has ? _sbAudio.name + ' · ' + _sbMmSs(_sbAudio.buf.duration) : 'No recording loaded');
+    ['sbSyncDel', 'sbSongOn', 'sbDrumsOn', 'sbSyncTap'].forEach(function(id) { $(id).disabled = !has; });
+    $('sbSongOn').classList.toggle('on', has && _sbPrefs.songOn);
+    $('sbDrumsOn').classList.toggle('on', _sbPrefs.drumsOn);
+    $('sbSyncOff').textContent = (sync ? sync.offset : 0).toFixed(2) + ' s';
+    $('sbSyncTap').textContent = R ? 'Stop tapping' : 'Tap along from bar ' + (_sbRange()[0] + 1);
+    $('sbSyncTap').classList.toggle('gold', !R);
+    $('sbSyncHit').hidden = !R;
+    $('sbSyncStatus').textContent = R
+      ? (R.last === null ? 'Tap T on the 1 of bar ' + (R.from + 1) + ' when it comes'
+                         : 'Tap T on every 1 · now bar ' + (R.bar + 1) + (R.dur ? ' · ' + Math.round(240 / R.dur) + ' BPM' : ''))
+      : (sync && has ? 'Synced: bar 1 starts at ' + sync.offset.toFixed(2) + ' s' : (has ? 'Tap along to sync the bars to the recording' : ''));
+  }
+
   // ── Noten als PDF (21.10.2026) ──────────────────────────────
   // Druckansicht in einem unsichtbaren iFrame: A4 hoch, weiß, die Noten als
   // Vektoren (inline SVG), vier Takte pro Zeile; Abschnitte beginnen eine neue
@@ -20474,7 +20722,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbPdfHtml(lionSrc) {
     var song = _sbSong, bars = song.bars, top = _sbTop(), tot = 98 - top, tm = _sbTimes(0);
     var sysTop = ((40 - top) / tot * 100).toFixed(3) + '%', sysH = (32 / tot * 100).toFixed(3) + '%';
-    var body = '', inRow = 0, open = false;
+    var body = '', inRow = 0, open = false, eff = song.bpm;
     // Eine Zeile schließen; kürzere Zeilen mit Platzhaltern auffüllen, damit
     // jeder Takt in derselben Größe gedruckt wird
     var closeRow = function() {
@@ -20493,7 +20741,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       var vw = 20 + _sbPdfBarW(b.n);
       body += '<div class="bar' + (i === bars.length - 1 ? ' last' : '') + '" style="flex:' + vw + ' 1 0;aspect-ratio:' + vw + ' / ' + tot + '">' +
-              (b.bpm && i > 0 ? '<span class="tm">♩ = ' + b.bpm + '</span>' : '') + _sbPdfBarSvg(b) + '</div>';
+              (i > 0 && _sbTmShow(eff, b.bpm) ? '<span class="tm">♩ = ' + Math.round(b.bpm) + '</span>' : '') + _sbPdfBarSvg(b) + '</div>';
+      if (b.bpm) eff = b.bpm;
       inRow++;
     }
     closeRow();
@@ -20619,7 +20868,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var d = _sbVidDims(), from = _sbVidFrom(), tm = _sbTimes(from), top = _sbTop();
     var qd = 60 / _sbBarBpm(from), lines = _sbPrefs.vidLayout === 'lines';
     var P = { w: d.w, h: d.h, tall: d.h > d.w, lines: lines, green: _sbPrefs.vidBg === 'green',
-              sound: _sbPrefs.vidSound, from: from, at: tm.at, songSec: tm.total, qd: qd,
+              drums: !!_sbPrefs.vidDrums, click: !!_sbPrefs.vidClick, song: !!(_sbPrefs.vidSong && _sbAudio.buf),
+              from: from, at: tm.at, songSec: tm.total, qd: qd,
               countIn: !!_sbPrefs.countIn, top: top, headX: d.w * SB_VID_HEAD };
     P.startT = SB_EXP_LEAD + (P.countIn ? 4 * qd : 0);
     P.total = P.startT + P.songSec + SB_EXP_TAIL;
@@ -20688,7 +20938,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // `shift`: so viel früher mischen, wie der Encoder vorne anfügt (AAC: 2112
   // Samples = 44 ms) — sonst läuft der Ton im fertigen Video hinter dem Bild her.
   function _sbExpAudio(P, shift) {
-    if (P.sound === 'silent') return Promise.resolve(null);
+    if (!(P.drums || P.click || P.song)) return Promise.resolve(null);
     var ctx = new OfflineAudioContext(2, Math.ceil(P.total * SB_EXP_SR), SB_EXP_SR), openG = null;
     shift = shift || 0;
     function vol(k) {
@@ -20716,14 +20966,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.start(t); o.stop(t + 0.06);
     }
-    if (P.countIn) for (var c = 0; c < 4; c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
+    if (P.countIn && (P.drums || P.click) && !P.song) for (var c = 0; c < 4; c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
+    // Aufnahme: läuft so, dass der Takt `from` genau bei P.startT einsetzt (davor die Aufnahme als Vorlauf)
+    if (P.song) {
+      var song = ctx.createBufferSource(), p0 = _sbBarPos(P.from) - P.startT + shift;
+      song.buffer = _sbAudio.buf; song.connect(ctx.destination);
+      if (p0 >= 0) song.start(0, p0); else song.start(-p0, 0);
+    }
     var bars = _sbSong.bars;
     for (var i = P.from; i < bars.length; i++) {
       var bar = bars[i], t0 = P.startT + P.at[i - P.from], sd = _sbBarSec(i) / bar.n, per = bar.n / 4;
       for (var s = 0; s < bar.n; s++) {
         var t = t0 + s * sd;
-        if (P.sound === 'drums') (bar.notes[s] || []).forEach(function(k) { hit(k, t); });
-        if (P.sound === 'click' && s % per === 0) click(s === 0, s === 0 ? 1.0 : 0.5, t);
+        if (P.drums) (bar.notes[s] || []).forEach(function(k) { hit(k, t); });
+        if (P.click && s % per === 0) click(s === 0, s === 0 ? 1.0 : 0.5, t);
       }
     }
     return ctx.startRendering();
@@ -20748,6 +21004,31 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return next();
   }
   function _sbWait(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+  // AAC-Konfiguration fürs MP4 (21.10.2026): Manche Browser liefern statt der
+  // kurzen AudioSpecificConfig (2–5 Bytes) das komplette ES_Descriptor/esds des
+  // Systems. mp4-muxer verschachtelt das dann doppelt — die Tonspur ist in keinem
+  // Player mehr lesbar (Erwins erster Export: stumm). Hier die eigentliche
+  // AudioSpecificConfig (Tag 0x05 mit AAC-Objekttyp) herausholen.
+  function _sbAsc(desc) {
+    if (!desc) return null;
+    var u = desc instanceof ArrayBuffer ? new Uint8Array(desc)
+          : new Uint8Array(desc.buffer, desc.byteOffset || 0, desc.byteLength);
+    var okType = function(b) { var t = b >> 3; return t >= 1 && t <= 6 || t === 29; };
+    if (u.length >= 2 && u.length <= 5 && okType(u[0])) return u;
+    for (var i = 0; i < u.length - 3; i++) {
+      if (u[i] !== 0x05) continue;
+      var j = i + 1, len = 0, k = 0, b;
+      do { b = u[j++]; len = (len << 7) | (b & 0x7f); k++; } while ((b & 0x80) && k < 4 && j < u.length);
+      if (len >= 2 && len <= 5 && j + len <= u.length && okType(u[j])) return u.slice(j, j + len);
+    }
+    return u;
+  }
+  function _sbAacMeta(meta, aCfg) {
+    if (!meta || !meta.decoderConfig || !aCfg || aCfg.mux !== 'aac') return meta;
+    var dc = meta.decoderConfig, asc = _sbAsc(dc.description);
+    return { decoderConfig: { codec: dc.codec || 'mp4a.40.2', sampleRate: dc.sampleRate || SB_EXP_SR,
+                              numberOfChannels: dc.numberOfChannels || 2, description: asc || dc.description } };
+  }
 
   // Ein Bild des Videos zeichnen. `S` hält, was über die Bilder hinweg
   // weiterläuft (Abschnitt, Zeile, Bildlauf), `ready` die geladenen Takt-Bilder.
@@ -20775,7 +21056,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var dw = ctx.measureText('DRUM').width;
     ctx.fillStyle = SB_GOLD; ctx.fillText('LION', hx + 60 + dw, hy + 24);
     spacing('0px'); ctx.textBaseline = 'alphabetic';
-    var metaBpm = _sbBarBpm(curBar) + ' BPM', metaBar = 'Bar ' + (curBar + 1) + ' / ' + bars.length;
+    var metaBpm = Math.round(_sbBarBpm(curBar)) + ' BPM', metaBar = 'Bar ' + (curBar + 1) + ' / ' + bars.length;
     ctx.font = '600 28px ' + FONT;
     var mw1 = ctx.measureText(metaBpm).width, mw2 = ctx.measureText(metaBar).width;
     var metaCol = P.green ? '#f2f2f2' : '#a39d90';
@@ -20947,7 +21228,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // Samples müssen dekodiert sein, bevor gemischt wird
       var tries = 0;
       function waitSamples() {
-        if (Object.keys(WAVS).length >= 20 || tries++ > 40) return Promise.resolve();
+        if (Object.keys(WAVS).length >= Object.keys(MP3_B64).length || tries++ > 80) return Promise.resolve();
         return _sbWait(75).then(waitSamples);
       }
       return waitSamples();
@@ -20968,7 +21249,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }, function() {}) : null;
     }).then(function() {
       check();
-      return (P.sound !== 'silent' && typeof window.AudioEncoder === 'function') ? _sbFirstSupported(AudioEncoder, [
+      return ((P.drums || P.click || P.song) && typeof window.AudioEncoder === 'function') ? _sbFirstSupported(AudioEncoder, [
         { cfg: { codec: 'mp4a.40.2', sampleRate: SB_EXP_SR, numberOfChannels: 2, bitrate: 192000 }, mux: 'aac' },
         { cfg: { codec: 'opus', sampleRate: SB_EXP_SR, numberOfChannels: 2, bitrate: 160000 }, mux: 'opus' }
       ]) : null;
@@ -20997,7 +21278,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
       if (!aCfg) return null;
       // Ton kodieren: in Häppchen von 0,1 s
-      var aenc = new AudioEncoder({ output: function(ch, meta) { muxer.addAudioChunk(ch, meta); },
+      var aenc = new AudioEncoder({ output: function(ch, meta) { muxer.addAudioChunk(ch, _sbAacMeta(meta, aCfg)); },
                                     error: function(e) { encErr = e; } });
       aenc.configure(aCfg.cfg);
       var L = audio.getChannelData(0), R = audio.getChannelData(1), N = 4800;
@@ -21064,8 +21345,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     }).then(function() {
       check();
-      _sbExpUi(true, 1, 'Saving…');
+      _sbExpUi(true, 1, 'Checking sound…');
       muxer.finalize();
+      // Gegenprobe: lässt sich die Tonspur der fertigen Datei wieder lesen?
+      return (aCfg ? _sbDecode(muxer.target.buffer.slice(0)).then(function() { return true; }, function() { return false; })
+                   : Promise.resolve(true));
+    }).then(function(soundOk) {
+      _sbExpUi(true, 1, 'Saving…');
       var blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
       var link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -21074,7 +21360,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(function() { URL.revokeObjectURL(link.href); }, 60000);
       _devToast('Video saved: ' + link.download +
-                ((aCfg || P.sound === 'silent') ? '' : ' (without sound: this browser cannot encode audio)'));
+                (!soundOk ? ' — but its sound track could not be read back. Please try Chrome.' :
+                 (aCfg || !(P.drums || P.click || P.song)) ? '' : ' (without sound: this browser cannot encode audio)'));
     }).catch(function(err) {
       if (err && err.message === 'cancelled') _devToast('Video export cancelled');
       else {
@@ -21099,8 +21386,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.documentElement.style.overflow = 'hidden';
     _sbRenderAll();
     try { initA(); } catch (e) {}
+    if (_sbAudio.id !== _sbSong.id) _sbAudioFor(_sbSong); else _sbSyncUi();
   }
   function _sbClose() {
+    if (_sbSyncRun) _sbSyncStop();
     if (_sbVid && _sbVid.open) _sbVidClose();
     _sbStop();
     _sbSaveNow();
@@ -21142,6 +21431,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<button type="button" class="sb-btn" id="sbCount" title="One bar count-in before playing">Count-in</button>' +
           '<button type="button" class="sb-btn" id="sbVideo" title="Full-screen scrolling score for recording videos">Video view</button>' +
           '<button type="button" class="sb-btn" id="sbPdf" title="Sheet music as PDF (A4) — choose Save as PDF in the print dialog">PDF</button>' +
+          '<button type="button" class="sb-btn" id="sbAudioBtn" title="Song recording: play along and tap the bars in sync">Audio</button>' +
         '</span>' +
         '<span class="sb-group">' +
           '<button type="button" class="sb-btn" id="sbCounts" title="Show the counting above the notes">1 e &amp; a</button>' +
@@ -21149,6 +21439,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<span class="sb-meta" id="sbMeta"></span>' +
         '</span>' +
         '<button type="button" class="sb-x" id="sbClose" aria-label="Close Song Builder" title="Close">×</button>' +
+      '</div>' +
+      // Leiste „Song audio": Aufnahme laden, mitspielen, Mittippen
+      '<div class="sb-sync" id="sbSync" hidden>' +
+        '<span class="sb-group"><span class="sb-lbl">Recording</span><span class="sb-sync-name" id="sbSyncName"></span>' +
+          '<button type="button" class="sb-btn" id="sbSyncLoad">Load audio…</button>' +
+          '<button type="button" class="sb-btn warn" id="sbSyncDel">Remove</button></span>' +
+        '<span class="sb-group">' +
+          '<button type="button" class="sb-btn" id="sbSongOn" title="Play the recording along with the notation">Song</button>' +
+          '<button type="button" class="sb-btn" id="sbDrumsOn" title="Also play the notated drums">Drums</button></span>' +
+        '<span class="sb-group" title="Where bar 1 starts in the recording. Nudge if the notes run early or late.">' +
+          '<span class="sb-lbl">Bar 1 at</span>' +
+          '<button type="button" class="sb-btn sb-nudge" data-nudge="-0.01" aria-label="10 ms earlier">−</button>' +
+          '<span class="sb-meta" id="sbSyncOff"></span>' +
+          '<button type="button" class="sb-btn sb-nudge" data-nudge="0.01" aria-label="10 ms later">+</button></span>' +
+        '<span class="sb-group">' +
+          '<button type="button" class="sb-btn gold" id="sbSyncTap"></button>' +
+          '<button type="button" class="sb-btn gold sb-sync-hit" id="sbSyncHit" hidden>TAP (T)</button></span>' +
+        '<span class="sb-sync-status" id="sbSyncStatus" aria-live="polite"></span>' +
+        '<input type="file" id="sbAudioFile" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac" hidden>' +
       '</div>' +
       '<div class="sb-score" id="sbScore"></div>' +
       '<div class="sb-ed" id="sbEd"></div>' +
@@ -21194,6 +21503,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbCount').addEventListener('click', function() { _sbTogglePref('countIn'); });
     $('sbVideo').addEventListener('click', _sbVidOpen);
     $('sbPdf').addEventListener('click', _sbPdf);
+    $('sbAudioBtn').addEventListener('click', function() { _sbPrefs.syncOpen = !_sbPrefs.syncOpen; _sbSavePrefs(); _sbSyncUi(); });
+    $('sbSyncLoad').addEventListener('click', function() { $('sbAudioFile').click(); });
+    $('sbAudioFile').addEventListener('change', function() { if (this.files && this.files[0]) _sbAudioFile(this.files[0]); this.value = ''; });
+    $('sbSyncDel').addEventListener('click', function() { if (confirm('Remove the recording from this song?')) _sbAudioRemove(); });
+    $('sbSongOn').addEventListener('click', function() { _sbPrefs.songOn = !_sbPrefs.songOn; _sbSavePrefs(); _sbSyncUi(); });
+    $('sbDrumsOn').addEventListener('click', function() { _sbPrefs.drumsOn = !_sbPrefs.drumsOn; _sbSavePrefs(); _sbSyncUi(); });
+    $('sbSyncTap').addEventListener('click', function() { if (_sbSyncRun) _sbSyncStop(); else _sbSyncStart(); });
+    $('sbSyncHit').addEventListener('pointerdown', function(e) { e.preventDefault(); _sbSyncTap(e.timeStamp); });
+    Array.prototype.forEach.call(r.querySelectorAll('[data-nudge]'), function(b) {
+      b.addEventListener('click', function() { _sbSyncNudge(+b.getAttribute('data-nudge')); });
+    });
     $('sbCounts').addEventListener('click', function() { _sbTogglePref('counts'); });
     $('sbZoom').addEventListener('input', function() {
       _sbPrefs.w = +this.value;
@@ -21253,6 +21573,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     e.stopPropagation();
     var mod = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase(), done = true;
+    if (_sbSyncRun) {   // Mittippen: T tippt, Leertaste oder Esc hören auf
+      if (k === 't' && !e.repeat) _sbSyncTap(e.timeStamp);
+      else if (e.code === 'Space' || e.key === 'Escape') _sbSyncStop();
+      e.preventDefault();
+      return;
+    }
     if (_sbExp) {   // Export läuft: Esc bricht ab, sonst nichts
       if (e.key === 'Escape') _sbExp.cancel = true;
       e.preventDefault();
@@ -21283,7 +21609,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else if (k === 'n') _sbAddBar();
     else if (k === 'l') _sbTogglePref('loop');
     else if (k === 'k') _sbTogglePref('click');
-    else if (k === 't') _sbTapSong(e.timeStamp);
+    else if (k === 't') { if (!e.repeat) _sbTapSong(e.timeStamp); }
     else if (e.key === 'Escape') {
       var m = document.getElementById('sbMenu');
       if (m && m.open) m.open = false; else if (_sbP) _sbStop();
