@@ -1282,6 +1282,158 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   .dl-stat-num  { font-size: clamp(22px, 3.4vw, 32px); }
   .dl-stat-note { margin-top: 10px; }
 }
+
+/* ── Song Builder (20.10.2026) — Premium „Eigene Übungen/Songs“, vorerst nur
+   Dev-Geräte. Notenpapier #141414 = Knockout-Farbe von renderNot. ── */
+#sbRoot {
+  --sb-ground: #0f0f0e; --sb-panel: #151514; --sb-paper: #141414;
+  --sb-line: #272623; --sb-line2: #3a3833; --sb-text: #E8E4DB;
+  --sb-mute: #8d877b; --sb-gold: #C9A84C; --sb-gold-dim: rgba(201,168,76,0.42);
+  position: fixed; inset: 0; z-index: 10000; display: none; flex-direction: column;
+  background: var(--sb-ground); color: var(--sb-text);
+  font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px;
+}
+#sbRoot.open { display: flex; }
+#sbRoot button, #sbRoot input, #sbRoot select { font-family: inherit; }
+#sbRoot :focus-visible { outline: 2px solid var(--sb-gold); outline-offset: 1px; }
+.sb-top {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  padding: 10px 16px; background: var(--sb-panel); border-bottom: 1px solid var(--sb-line);
+}
+.sb-group { display: flex; align-items: center; gap: 6px; }
+.sb-spacer { flex: 1 1 0; min-width: 0; }
+.sb-title {
+  min-width: 0; width: 15em; max-width: 100%; padding: 5px 8px; border-radius: 6px;
+  background: transparent; border: 1px solid transparent; color: var(--sb-text);
+  font-size: 18px; font-weight: 700; text-wrap: balance;
+}
+.sb-title:hover, .sb-title:focus { background: #1b1b1a; border-color: var(--sb-line2); outline: none; }
+.sb-btn {
+  background: #1d1d1b; border: 1px solid var(--sb-line2); color: var(--sb-text);
+  border-radius: 7px; font-size: 13px; font-weight: 500; padding: 6px 11px;
+  cursor: pointer; white-space: nowrap; line-height: 1.2;
+}
+.sb-btn:hover { border-color: #5a564d; }
+.sb-btn.on { border-color: var(--sb-gold); color: var(--sb-gold); }
+.sb-btn.gold { background: var(--sb-gold); border-color: var(--sb-gold); color: #141414; font-weight: 700; min-width: 84px; }
+.sb-btn.gold:hover { background: #d6b65a; }
+.sb-btn:disabled { opacity: 0.35; cursor: default; }
+.sb-btn.warn:hover { border-color: #b4573f; color: #e08a72; }
+.sb-num-in, .sb-txt, .sb-sel {
+  background: #1b1b1a; border: 1px solid var(--sb-line2); color: var(--sb-text);
+  border-radius: 7px; font-size: 13px; padding: 6px 7px;
+}
+.sb-num-in { width: 58px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sb-txt { width: 11em; }
+.sb-sel { max-width: 13em; }
+.sb-lbl { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sb-mute); }
+.sb-meta { font-size: 12px; color: var(--sb-mute); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sb-zoom { width: 90px; accent-color: var(--sb-gold); }
+.sb-x {
+  background: none; border: 0; color: var(--sb-mute); font-size: 24px; line-height: 1;
+  cursor: pointer; padding: 2px 6px; border-radius: 6px;
+}
+.sb-x:hover { color: var(--sb-text); }
+.sb-menu { position: relative; }
+.sb-menu > summary { list-style: none; }
+.sb-menu > summary::-webkit-details-marker { display: none; }
+.sb-menu-list {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 3; min-width: 190px;
+  display: flex; flex-direction: column; padding: 6px; gap: 2px;
+  background: #1d1d1b; border: 1px solid var(--sb-line2); border-radius: 9px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+}
+.sb-menu-list button {
+  background: none; border: 0; color: var(--sb-text); text-align: left;
+  padding: 7px 10px; border-radius: 6px; font-size: 13px; cursor: pointer;
+}
+.sb-menu-list button:hover { background: #2a2926; }
+.sb-menu-list .warn:hover { color: #e08a72; }
+.sb-score { flex: 1 1 auto; min-height: 120px; overflow: auto; padding: 16px 16px 28px; }
+.sb-sec + .sb-sec { margin-top: 18px; }
+.sb-sec-h {
+  display: inline-block; margin: 0 0 6px 2px; padding: 0; background: none; border: 0;
+  color: var(--sb-gold); font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; cursor: pointer;
+}
+.sb-rows {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--sb-w, 360px), 1fr));
+  background: var(--sb-paper); border-radius: 6px; overflow: hidden;
+}
+.sb-bar { position: relative; background: var(--sb-paper); cursor: pointer; }
+.sb-bar svg { display: block; width: 100%; height: auto; aspect-ratio: 500 / 108; }
+.sb-bar .sb-n {
+  position: absolute; left: 5px; top: 2px; font-size: 10px; font-weight: 600;
+  color: #5f5b52; pointer-events: none; font-variant-numeric: tabular-nums;
+}
+.sb-bar::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  border: 1.5px solid transparent; transition: border-color 0.12s, background-color 0.12s;
+}
+.sb-bar:hover::after { border-color: rgba(232,228,219,0.12); }
+.sb-bar.sel::after { border-color: var(--sb-gold-dim); background: rgba(201,168,76,0.05); }
+.sb-bar.focus::after { border-color: var(--sb-gold); }
+.sb-bar.play::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: var(--sb-gold); pointer-events: none;
+}
+.sb-empty-note { color: var(--sb-mute); padding: 6px 2px; }
+.sb-ed {
+  flex: 0 0 auto; max-height: 58vh; overflow: auto; padding: 10px 16px 14px;
+  background: var(--sb-panel); border-top: 1px solid var(--sb-line);
+}
+.sb-ed-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 10px; }
+.sb-ed-h { font-size: 15px; font-weight: 700; min-width: 5.5em; font-variant-numeric: tabular-nums; }
+.sb-seg { display: inline-flex; border: 1px solid var(--sb-line2); border-radius: 7px; overflow: hidden; }
+.sb-seg button {
+  background: #1b1b1a; border: 0; border-right: 1px solid var(--sb-line2);
+  color: #b3ada0; font-size: 12px; font-weight: 600; padding: 6px 9px; cursor: pointer;
+}
+.sb-seg button:last-child { border-right: 0; }
+.sb-seg button.on { background: var(--sb-gold); color: #141414; }
+.sb-rep { display: inline-flex; align-items: center; gap: 4px; }
+.sb-rep .sb-num-in { width: 46px; }
+.sb-grid-wrap { overflow-x: auto; }
+.sb-grid {
+  display: grid; grid-template-columns: 96px repeat(var(--sb-n), minmax(21px, 1fr));
+  user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.sb-rl {
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 10px;
+  height: 25px; font-size: 12px; color: #b3ada0; white-space: nowrap;
+}
+.sb-cnt {
+  height: 20px; text-align: center; font-size: 11px; font-weight: 600; color: #6d685e;
+  font-variant-numeric: tabular-nums;
+}
+.sb-cnt.b { color: var(--sb-text); }
+.sb-cnt.cur { color: var(--sb-gold); }
+.sb-c {
+  height: 25px; display: flex; align-items: center; justify-content: center;
+  background: #181817; border-left: 1px solid #222120; border-bottom: 1px solid #222120;
+  color: #141414; font-size: 13px; font-weight: 800; cursor: pointer; line-height: 1;
+}
+.sb-c.alt { background: #1d1d1b; }
+.sb-c.b { border-left-color: #4b473f; }
+.sb-c:hover { background: #2a2926; }
+.sb-c.f { background: var(--sb-gold); }
+.sb-c.f.g { background: var(--sb-gold-dim); }
+.sb-c.cur { box-shadow: inset 0 0 0 1px rgba(232,228,219,0.55); }
+.sb-c.st { color: var(--sb-text); font-style: italic; font-weight: 700; }
+.sb-c.st.f { background: #2c2a25; color: var(--sb-gold); }
+.sb-hint { margin-top: 8px; font-size: 12px; color: var(--sb-mute); }
+.sb-hint kbd {
+  font: inherit; font-size: 11px; padding: 0 4px; border: 1px solid var(--sb-line2);
+  border-radius: 4px; color: #b3ada0;
+}
+@media (max-width: 700px) {
+  .sb-top, .sb-score, .sb-ed { padding-left: 12px; padding-right: 12px; }
+  .sb-title { width: 100%; }
+  .sb-ed { max-height: 64vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-bar::after { transition: none; }
+}
 </style>
 </head>
 <body>
@@ -15360,7 +15512,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261002-181913';
+  var DL_BUILD = '20261020-184931';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -16751,8 +16903,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     el.style.fontSize = (name && name.length > 34) ? 'clamp(14px, 2.2vw, 22px)' : '';
   }
 
-  function renderNot(curBeat, dimmed) { dimmed = false;
-    var svg  = document.getElementById('dgSvg');
+  // `opt` (Song-Builder, 20.10.2026): { svg: Ziel-SVG statt #dgSvg, plain: einfache
+  // Taktstriche statt Wiederholungszeichen — ein Takt aus einem Song, keine Schleife }
+  function renderNot(curBeat, dimmed, opt) { dimmed = false;
+    var svg  = (opt && opt.svg) || document.getElementById('dgSvg');
+    var _plain = !!(opt && opt.plain);
     var lbl4  = ['1', '2', '3', '4'];
     var lbl8  = ['1', '&', '2', '&', '3', '&', '4', '&'];
     var lbl16 = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
@@ -16808,6 +16963,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         }
       }
       var fs = fillStart || 0;
+      // Song-Builder (`songBar`): ein ganz leerer Takt bekommt eine Ganztaktpause
+      // statt einzelner Pausen. Ohne das Flag ändert sich nichts.
+      var _sbEmpty = !!GROOVE.songBar && beatsArr.every(function(sl) { return !sl || !sl.length; });
+      if (_sbEmpty) {
+        h += '<rect x="'+(sX+bW/2-7)+'" y="'+(sY+ls)+'" width="14" height="'+(ls*0.55)+'" fill="'+W+'" opacity="'+op+'"/>';
+      }
       // Staff lines (skipped when caller draws them across full width)
       if (!skipStaff) {
         for (var i = 0; i < 5; i++)
@@ -17136,6 +17297,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                      : (GROOVE.cat === 'rudiments')
                        ? (sY - 38)
                        : (sY - 27);
+        // `hideCount` (Song-Builder): Zählzeiten über dem Takt ausblenden
+        if (!GROOVE.hideCount)
         h += '<text x="'+x+'" y="'+lblY+'" text-anchor="middle" fill="'+lc+
              '" font-size="11" font-family="DM Sans,system-ui,sans-serif" font-weight="'+(isA?700:400)+'">'+lbl[bi]+'</text>';
         // Half rest marker: {rest:'half'} in beats array
@@ -17296,24 +17459,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // dort gehört keine Pause hin. Prüft rückwärts bis zur letzten Note, also
         // auch über Gruppengrenzen hinweg (Viertel auf dem "und" z.B.).
         var coveredByQuarter = (bn.length === 0) && isCovered(bi);
-        // Eighth rest symbol — authentisches Bravura-Glyph
-        // Grooves mit `beamRests` (Shuffle Grooves, Erwin 21.09.2026) bekommen
-        // die Pause ebenfalls: ohne sie hinge der Balken 1–a über einer Lücke.
-        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.beamRests) &&
-            (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet') && bn.length === 0 && !coveredByQuarter) {
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
-          h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
-        }
         // Ganze Zählzeit leer → eine Viertelpause auf der Zählzeit statt vier
         // 16tel-Pausen (Nine Stroke Roll, Erwin 15.09.2026). Nur im 16tel- und
         // 16tel-Triolen-Raster; die Achtelpausen der Staves bleiben, wie sie sind.
+        // Song-Takte (`songBar`) bekommen sie auch im Achtel- und Triolenraster.
+        // Steht vor der Achtelpause, damit die bei einer Viertelpause entfällt.
         var _restGrp = nq / 4;
         var _restGst = Math.floor(bi / _restGrp) * _restGrp;
         var beatRest = false;
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
-            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') &&
+            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet' ||
+             (GROOVE.songBar && (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet' ||
+                                 GROOVE.noteValue === 'thirtysecond'))) &&
             _restGrp > 1 && _restGrp === Math.floor(_restGrp) && !hasV2) {
           beatRest = true;
           for (var _rk = _restGst; _rk < _restGst + _restGrp; _rk++) {
@@ -17321,18 +17478,43 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             if ((_ra && _ra.length) || isCovered(_rk)) { beatRest = false; break; }
           }
         }
-        if (beatRest && bi === _restGst) {
+        // Song-Takte im 16tel-Raster: zwei leere 16tel auf einer Achtelposition
+        // werden eine Achtelpause (1 = Pause hier, 2 = schon vom Vorgänger erfasst).
+        var _sbPair = 0;
+        if (GROOVE.songBar && nq === 16 && bn.length === 0 && !beatRest && !_sbEmpty) {
+          var _sbE = function(k) { var a = beatsArr[k]; return !(a && a.length); };
+          if (bi % 2 === 0 && !coveredByQuarter && _sbE(bi + 1)) _sbPair = 1;
+          else if (bi % 2 === 1 && _sbE(bi - 1) && !isCovered(bi - 1)) _sbPair = 2;
+        }
+        // Eighth rest symbol — authentisches Bravura-Glyph
+        // Grooves mit `beamRests` (Shuffle Grooves, Erwin 21.09.2026) bekommen
+        // die Pause ebenfalls: ohne sie hinge der Balken 1–a über einer Lücke.
+        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.beamRests) &&
+            (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet') && bn.length === 0 && !coveredByQuarter &&
+            !beatRest && !_sbEmpty) {
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
+        }
+        if (beatRest && bi === _restGst && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, nc, op);
+        }
+        if (_sbPair === 1) {
+          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
         // Sixteenth rest symbol — authentisches Bravura-Glyph
         // coveredByQuarter auch hier prüfen: eine Viertelnote deckt die
         // folgenden Slots ihrer Gruppe ab, dort gehört keine Pause hin.
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
             (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') &&
-            bn.length === 0 && !coveredByQuarter && !beatRest) {
+            bn.length === 0 && !coveredByQuarter && !beatRest && !_sbPair && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
@@ -17514,6 +17696,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var _vbH = _v2 ? (_sbY + (GROOVE.stickings ? 42 : 22) + 10) : 108;
       svg.setAttribute('viewBox', '0 -10 ' + _vbW + ' ' + _vbH);
 
+      if (_plain) {
+        // Song-Takt: schlichte Taktstriche links und rechts
+        h += '<line x1="'+(sX-10)+'" y1="'+sY+'" x2="'+(sX-10)+'" y2="'+(sY+4*ls)+'" stroke="'+W+'" stroke-width="1.2" opacity="'+op+'"/>';
+        h += '<line x1="'+(sX+bW+10)+'" y1="'+sY+'" x2="'+(sX+bW+10)+'" y2="'+(sY+4*ls)+'" stroke="'+W+'" stroke-width="1.2" opacity="'+op+'"/>';
+      } else {
       // Repeat sign left
       h += '<line x1="'+(sX-10)+'" y1="'+sY+'" x2="'+(sX-10)+'" y2="'+(sY+4*ls)+
            '" stroke="'+W+'" stroke-width="2.5" opacity="'+op+'"/>';
@@ -17529,6 +17716,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
            '" stroke="'+W+'" stroke-width="0.8" opacity="'+op+'"/>';
       h += '<circle cx="'+(sX+bW)+'" cy="'+(sY+1.3*ls)+'" r="2" fill="'+W+'" opacity="'+op+'"/>';
       h += '<circle cx="'+(sX+bW)+'" cy="'+(sY+2.7*ls)+'" r="2" fill="'+W+'" opacity="'+op+'"/>';
+      }
 
       drawBeatsInBar(GROOVE.beats, sX, bs, 0, null, GROOVE.showLabels, 0, GROOVE.stickings);
     }
@@ -18560,6 +18748,1029 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   })();
 
   // ============================================================
+  // SONG BUILDER (20.10.2026)
+  // Erwin: eigene Übungen bauen (Premium, nach dem Launch) und ganze Songs mit
+  // Hunderten Takten. Ein Song ist eine Folge von 4/4-Takten, jeder mit eigenem
+  // Raster (8 / 12 / 16 / 24 / 32). Gezeichnet wird jeder Takt mit renderNot
+  // (opt.svg + plain), gespielt mit playSound. Gespeichert im Browser
+  // (drumlion_builder_v1), dazu Export/Import als JSON-Datei. Vorerst nur auf
+  // Dev-Geräten (`_premium()`); geöffnet über den Dev-Panel-Tab oder ?builder=1.
+  // ============================================================
+  var SB_KEY      = 'drumlion_builder_v1';
+  var SB_PREF_KEY = 'drumlion_builder_prefs';
+  var SB_CLIP_KEY = 'drumlion_builder_clip';
+  var SB_MAX_BARS = 2000;
+  var SB_GRIDS      = [8, 12, 16, 24, 32];
+  var SB_GRID_NAME  = { 8:'8th notes', 12:'8th-note triplets', 16:'16th notes', 24:'16th-note triplets', 32:'32nd notes' };
+  var SB_GRID_SHORT = { 8:'8', 12:'8T', 16:'16', 24:'16T', 32:'32' };
+  var SB_NOTE_VALUE = { 8:'eighth', 12:'triplet', 16:'sixteenth', 24:'sixteenthTriplet', 32:'thirtysecond' };
+  // Zeilen von oben nach unten wie im Notensystem. `v` sind die Klänge einer
+  // Zeile; ein weiterer Klick schaltet weiter (Snare → Akzent → Ghost → Flam → Rim).
+  var SB_ROWS = [
+    { name:'Crash',       v:['crash1'] },
+    { name:'Crash 2',     v:['crash2'] },
+    { name:'China',       v:['china'] },
+    { name:'Ride',        v:['ride', 'rideBell'] },
+    { name:'Hi-Hat',      v:['hh', 'hhAccent', 'hhOpen'] },
+    { name:'Tom 1',       v:['tom1'] },
+    { name:'Tom 2',       v:['tom2'] },
+    { name:'Snare',       v:['snare', 'snareAccent', 'snareGhost', 'snareFlam', 'crossStick'] },
+    { name:'Floor Tom',   v:['tom3'] },
+    { name:'Kick',        v:['kick'] },
+    { name:'Hi-Hat Foot', v:['hhPedal'] },
+    { name:'Cowbell',     v:['cowbell'] }
+  ];
+  var SB_GLYPH = { hh:'×', hhAccent:'>', hhOpen:'o', hhPedal:'×', snareAccent:'>', snareGhost:'( )',
+                   snareFlam:'fl', crossStick:'×', rideBell:'▲' };
+  var SB_SOUND_NAME = { crash1:'Crash', crash2:'Crash 2', china:'China', ride:'Ride', rideBell:'Ride bell',
+                        hh:'Hi-hat closed', hhAccent:'Hi-hat accent', hhOpen:'Hi-hat open', tom1:'Tom 1',
+                        tom2:'Tom 2', snare:'Snare', snareAccent:'Snare accent', snareGhost:'Ghost note',
+                        snareFlam:'Flam', crossStick:'Cross stick', tom3:'Floor tom', kick:'Kick',
+                        hhPedal:'Hi-hat foot', cowbell:'Cowbell' };
+  var SB_ROW_OF = {};
+  SB_ROWS.forEach(function(r, ri) { r.v.forEach(function(k) { SB_ROW_OF[k] = ri; }); });
+
+  var _sbData = null;            // { songs:[…], cur:id }
+  var _sbSong = null;            // der offene Song (ein Objekt aus _sbData.songs)
+  var _sbSel  = { a: 0, b: 0 };  // Auswahl: Anker a, Fokus b (der Takt im Raster)
+  var _sbUndo = [], _sbRedo = [];
+  var _sbPrefs = { w: 360, loop: false, click: false, countIn: true, counts: true };
+  var _sbRoot = null, _sbTiles = [], _sbCells = [], _sbStickEls = [], _sbCntEls = [];
+  var _sbIsOpen = false, _sbP = null, _sbClip = null, _sbRepN = 3, _sbEdCur = -1;
+  var _sbDirty = {}, _sbDirtyRaf = 0, _sbDrag = null, _sbSaveT = 0, _sbPrevOverflow = '';
+
+  function _sbEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  function _sbId() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function _sbClone(o) { return JSON.parse(JSON.stringify(o)); }
+  function _sbBpmClamp(v) {
+    v = Math.round(+v);
+    if (!isFinite(v) || !v) return 100;
+    return Math.max(30, Math.min(300, v));
+  }
+  function _sbEmptyBar(n) {
+    var b = { n: n, notes: [], stick: [], label: '' };
+    for (var i = 0; i < n; i++) { b.notes.push([]); b.stick.push(''); }
+    return b;
+  }
+  function _sbNewSong(title) {
+    var s = { id: _sbId(), title: title || 'Untitled song', bpm: 100, bars: [] };
+    for (var i = 0; i < 4; i++) s.bars.push(_sbEmptyBar(16));
+    return s;
+  }
+  // Prüft und bereinigt einen Song (beim Laden und beim Import): unbekannte
+  // Klänge fallen weg, pro Zeile und Slot höchstens ein Klang.
+  function _sbNormSong(s) {
+    if (!s || typeof s !== 'object' || !Array.isArray(s.bars)) return null;
+    var out = { id: (typeof s.id === 'string' && s.id) ? s.id : _sbId(),
+                title: String(s.title || 'Untitled song').slice(0, 80),
+                bpm: _sbBpmClamp(s.bpm), bars: [] };
+    s.bars.slice(0, SB_MAX_BARS).forEach(function(b) {
+      if (!b || typeof b !== 'object') return;
+      var n = SB_GRIDS.indexOf(+b.n) !== -1 ? +b.n : 16;
+      var bar = _sbEmptyBar(n);
+      for (var i = 0; i < n; i++) {
+        var sl = (Array.isArray(b.notes) && Array.isArray(b.notes[i])) ? b.notes[i] : [];
+        var seen = {};
+        sl.forEach(function(k) {
+          var ri = SB_ROW_OF[k];
+          if (ri == null || seen[ri]) return;
+          seen[ri] = 1;
+          bar.notes[i].push(k);
+        });
+        var st = Array.isArray(b.stick) ? b.stick[i] : '';
+        bar.stick[i] = (st === 'R' || st === 'L') ? st : '';
+      }
+      bar.label = String(b.label || '').slice(0, 40);
+      out.bars.push(bar);
+    });
+    if (!out.bars.length) out.bars.push(_sbEmptyBar(16));
+    return out;
+  }
+  function _sbFind(id) {
+    for (var i = 0; i < _sbData.songs.length; i++) if (_sbData.songs[i].id === id) return _sbData.songs[i];
+    return null;
+  }
+  function _sbLoad() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(SB_KEY) || 'null'); } catch (e) {}
+    var songs = (d && Array.isArray(d.songs)) ? d.songs.map(_sbNormSong).filter(Boolean) : [];
+    if (!songs.length) songs.push(_sbNewSong('My first song'));
+    _sbData = { songs: songs, cur: d && d.cur };
+    _sbSong = _sbFind(_sbData.cur) || songs[0];
+    _sbData.cur = _sbSong.id;
+    try {
+      var p = JSON.parse(localStorage.getItem(SB_PREF_KEY) || 'null');
+      if (p && typeof p === 'object') Object.keys(_sbPrefs).forEach(function(k) {
+        if (typeof p[k] === typeof _sbPrefs[k]) _sbPrefs[k] = p[k];
+      });
+    } catch (e) {}
+    _sbPrefs.w = Math.max(240, Math.min(720, +_sbPrefs.w || 360));
+    try { _sbClip = JSON.parse(localStorage.getItem(SB_CLIP_KEY) || 'null'); } catch (e) { _sbClip = null; }
+    if (!Array.isArray(_sbClip) || !_sbClip.length) _sbClip = null;
+  }
+  function _sbSaveNow() {
+    clearTimeout(_sbSaveT); _sbSaveT = 0;
+    if (!_sbData) return;
+    try { localStorage.setItem(SB_KEY, JSON.stringify(_sbData)); }
+    catch (e) { _devToast('Not saved: browser storage is full. Export the song to a file.'); }
+  }
+  function _sbSave() { clearTimeout(_sbSaveT); _sbSaveT = setTimeout(_sbSaveNow, 400); }
+  function _sbSavePrefs() { try { localStorage.setItem(SB_PREF_KEY, JSON.stringify(_sbPrefs)); } catch (e) {} }
+
+  // ── Notenbild ───────────────────────────────────────────────
+  // Notenwerte aus dem Abstand zum nächsten Schlag derselben Zählzeit: allein
+  // auf der Zählzeit → Viertel; im 16tel-Raster auf einer Achtelposition mit
+  // Luft dahinter → Achtel. Sonst gilt der Rasterwert.
+  function _sbBeats(bar) {
+    var n = bar.n, per = n / 4, beats = [];
+    for (var i = 0; i < n; i++) {
+      beats.push((bar.notes[i] || []).map(function(k) {
+        var d = DRUM_MAP[k] || {};
+        return { inst: k, line: d.line, head: d.head };
+      }));
+    }
+    for (var g0 = 0; g0 < n; g0 += per) {
+      var on = [];
+      for (var j = g0; j < g0 + per; j++) if (beats[j].length) on.push(j);
+      for (var k = 0; k < on.length; k++) {
+        var i0 = on[k], d = (k + 1 < on.length ? on[k + 1] : g0 + per) - i0;
+        var q  = (i0 === g0 && d === per);
+        var e8 = !q && n === 16 && (i0 - g0) % 2 === 0 && d >= 2;
+        beats[i0].forEach(function(nn) { if (q) nn.quarter = true; else if (e8) nn.eighth = true; });
+      }
+    }
+    return beats;
+  }
+  function _sbGroove(bar) {
+    return {
+      name: '', cat: 'rudiments', songBar: true, beamRests: true, showLabels: false,
+      hideCount: !_sbPrefs.counts, noteValue: SB_NOTE_VALUE[bar.n],
+      beats: _sbBeats(bar),
+      stickings: bar.stick.some(Boolean) ? bar.stick.slice() : null
+    };
+  }
+  // Einen Takt in seine Kachel zeichnen; `cur` = Slot unter dem Wiedergabe-Cursor
+  function _sbDraw(i, cur) {
+    var el = _sbTiles[i], bar = _sbSong && _sbSong.bars[i];
+    if (!el || !bar) return;
+    var svg = el.lastChild, keep = GROOVE;
+    GROOVE = _sbGroove(bar);
+    try { renderNot(cur == null ? -1 : cur, false, { svg: svg, plain: true }); }
+    catch (e) { if (window.console) console.error('Song Builder', e); }
+    finally { GROOVE = keep; }
+    // Ränder abschneiden: die Notenlinien laufen über die Kacheln einer Reihe
+    // durch, jeder Takt trägt nur seinen rechten Taktstrich.
+    var top = _sbPrefs.counts ? -8 : 1;
+    svg.setAttribute('viewBox', '32.6 ' + top + ' 500 ' + (98 - top));
+    svg.style.aspectRatio = '500 / ' + (98 - top);
+  }
+  function _sbDirtyBar(i) {
+    _sbDirty[i] = 1;
+    if (_sbDirtyRaf) return;
+    _sbDirtyRaf = requestAnimationFrame(function() {
+      _sbDirtyRaf = 0;
+      var d = _sbDirty; _sbDirty = {};
+      Object.keys(d).forEach(function(k) {
+        var bi = +k;
+        _sbDraw(bi, (_sbP && _sbP.curBar === bi) ? _sbP.curSlot : null);
+      });
+    });
+  }
+
+  // ── Partitur ────────────────────────────────────────────────
+  // Jeder Abschnittsname beginnt eine neue Zeile mit Überschrift, wie in einem Chart.
+  function _sbRenderScore() {
+    var sc = document.getElementById('sbScore');
+    var top = sc.scrollTop, bars = _sbSong.bars, h = '', open = false;
+    for (var i = 0; i < bars.length; i++) {
+      var b = bars[i];
+      if (i === 0 || b.label) {
+        if (open) h += '</div></div>';
+        h += '<div class="sb-sec">';
+        if (b.label) h += '<button type="button" class="sb-sec-h" data-sec="' + i + '" title="Select this section">' + _sbEsc(b.label) + '</button>';
+        h += '<div class="sb-rows">';
+        open = true;
+      }
+      h += '<div class="sb-bar" data-i="' + i + '"><span class="sb-n">' + (i + 1) + '</span>' +
+           '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar ' + (i + 1) + '"></svg></div>';
+    }
+    if (open) h += '</div></div>';
+    sc.innerHTML = h;
+    sc.style.setProperty('--sb-w', _sbPrefs.w + 'px');
+    _sbTiles = Array.prototype.slice.call(sc.querySelectorAll('.sb-bar'));
+    for (var t = 0; t < _sbTiles.length; t++) _sbDraw(t, (_sbP && _sbP.curBar === t) ? _sbP.curSlot : null);
+    if (_sbP && _sbTiles[_sbP.curBar]) _sbTiles[_sbP.curBar].classList.add('play');
+    _sbMarkSel();
+    sc.scrollTop = top;
+  }
+  function _sbRange() { return [Math.min(_sbSel.a, _sbSel.b), Math.max(_sbSel.a, _sbSel.b)]; }
+  function _sbClampSel() {
+    var L = _sbSong.bars.length - 1;
+    _sbSel.a = Math.max(0, Math.min(L, _sbSel.a));
+    _sbSel.b = Math.max(0, Math.min(L, _sbSel.b));
+  }
+  function _sbMarkSel() {
+    var r = _sbRange();
+    _sbTiles.forEach(function(t, i) {
+      t.classList.toggle('sel', i >= r[0] && i <= r[1]);
+      t.classList.toggle('focus', i === _sbSel.b);
+    });
+  }
+  function _sbSelect(i, extend) {
+    i = Math.max(0, Math.min(_sbSong.bars.length - 1, i));
+    if (extend) _sbSel.b = i; else _sbSel = { a: i, b: i };
+    _sbMarkSel();
+    _sbRenderEditor();
+    _sbScrollTo(i, false);
+    // Schleife läuft? Dann gilt ab sofort die neue Auswahl
+    if (_sbP && _sbP.loop) { var r = _sbRange(); _sbP.from = r[0]; _sbP.to = r[1]; }
+  }
+  function _sbScrollTo(i, follow) {
+    var sc = document.getElementById('sbScore'), t = _sbTiles[i];
+    if (!sc || !t) return;
+    var sr = sc.getBoundingClientRect(), tr = t.getBoundingClientRect(), d = 0;
+    if (tr.top < sr.top + 8) d = tr.top - sr.top - (follow ? 40 : 14);
+    else if (tr.bottom > sr.bottom - 8) d = follow ? (tr.top - sr.top - 40) : (tr.bottom - sr.bottom + 14);
+    if (!d) return;
+    var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (follow && !calm && sc.scrollBy) sc.scrollBy({ top: d, behavior: 'smooth' });
+    else sc.scrollTop += d;
+  }
+
+  // ── Raster-Editor für den Fokus-Takt ────────────────────────
+  function _sbCounts(n) {
+    var per = n / 4;
+    var syl = { 2:['', '&'], 3:['', '&', 'a'], 4:['', 'e', '&', 'a'], 6:['', '', '', '&', '', ''],
+                8:['', '', 'e', '', '&', '', 'a', ''] }[per] || [];
+    var out = [];
+    for (var i = 0; i < n; i++) out.push(i % per === 0 ? String(i / per + 1) : (syl[i % per] || ''));
+    return out;
+  }
+  function _sbCellVal(bar, ri, s) {
+    var sl = bar.notes[s] || [];
+    for (var j = 0; j < sl.length; j++) if (SB_ROW_OF[sl[j]] === ri) return sl[j];
+    return null;
+  }
+  function _sbSetCell(bar, ri, s, k) {
+    var sl = (bar.notes[s] || []).filter(function(x) { return SB_ROW_OF[x] !== ri; });
+    if (k) sl.push(k);
+    sl.sort(function(x, y) { return SB_ROW_OF[x] - SB_ROW_OF[y]; });
+    bar.notes[s] = sl;
+  }
+  function _sbCellClass(bar, ri, s, per) {
+    var k = _sbCellVal(bar, ri, s);
+    return 'sb-c' + (s % per === 0 ? ' b' : '') + (Math.floor(s / per) % 2 ? ' alt' : '') +
+           (k ? ' f' : '') + (k === 'snareGhost' ? ' g' : '') + (s === _sbEdCur ? ' cur' : '');
+  }
+  function _sbStickClass(bar, s, per) {
+    return 'sb-c st' + (s % per === 0 ? ' b' : '') + (Math.floor(s / per) % 2 ? ' alt' : '') +
+           (bar.stick[s] ? ' f' : '') + (s === _sbEdCur ? ' cur' : '');
+  }
+  function _sbBtnHtml(act, label, title, disabled, extra) {
+    return '<button type="button" class="sb-btn' + (extra ? ' ' + extra : '') + '" data-act="' + act + '"' +
+           (title ? ' title="' + _sbEsc(title) + '"' : '') + (disabled ? ' disabled' : '') + '>' + label + '</button>';
+  }
+  function _sbRenderEditor() {
+    var ed = document.getElementById('sbEd');
+    if (!ed) return;
+    _sbClampSel();
+    var r = _sbRange(), bi = _sbSel.b, bar = _sbSong.bars[bi], n = bar.n, per = n / 4;
+    _sbEdCur = (_sbP && _sbP.curBar === bi) ? _sbP.curSlot : -1;
+    var h = '<div class="sb-ed-top">';
+    h += '<span class="sb-ed-h">' + (r[1] > r[0] ? 'Bars ' + (r[0] + 1) + '–' + (r[1] + 1) : 'Bar ' + (bi + 1)) + '</span>';
+    h += '<label class="sb-group"><span class="sb-lbl">Section</span>' +
+         '<input class="sb-txt" id="sbLabel" maxlength="40" placeholder="e.g. Verse" value="' + _sbEsc(_sbSong.bars[r[0]].label) + '"></label>';
+    h += '<span class="sb-group"><span class="sb-lbl">Grid</span><span class="sb-seg" role="group" aria-label="Grid">';
+    SB_GRIDS.forEach(function(g) {
+      h += '<button type="button" data-grid="' + g + '" class="' + (g === n ? 'on' : '') + '" title="' + SB_GRID_NAME[g] +
+           '" aria-pressed="' + (g === n) + '">' + SB_GRID_SHORT[g] + '</button>';
+    });
+    h += '</span></span><span class="sb-spacer"></span>';
+    h += '<span class="sb-group">' +
+         _sbBtnHtml('add', '+ Bar', 'Add an empty bar after the selection (N)') +
+         _sbBtnHtml('dup', 'Duplicate', 'Duplicate the selection (⌘D)') +
+         _sbBtnHtml('copy', 'Copy', 'Copy the selection (⌘C)') +
+         _sbBtnHtml('paste', 'Paste', 'Insert the copied bars after the selection (⌘V)', !_sbClip) +
+         '</span><span class="sb-group sb-rep">' +
+         _sbBtnHtml('rep', 'Repeat', 'Add copies of the selection after it') +
+         '<span class="sb-lbl">×</span><input class="sb-num-in" id="sbRepN" type="number" min="1" max="64" value="' + _sbRepN + '" aria-label="Number of copies">' +
+         '</span><span class="sb-group">' +
+         _sbBtnHtml('clear', 'Clear', 'Remove all notes from the selection') +
+         _sbBtnHtml('del', 'Delete', 'Delete the selected bars (⌫)', false, 'warn') +
+         '</span><span class="sb-group">' +
+         _sbBtnHtml('undo', 'Undo', 'Undo (⌘Z)', !_sbUndo.length) +
+         _sbBtnHtml('redo', 'Redo', 'Redo (⇧⌘Z)', !_sbRedo.length) +
+         '</span></div>';
+    var cnt = _sbCounts(n);
+    h += '<div class="sb-grid-wrap"><div class="sb-grid" id="sbGrid" style="--sb-n:' + n + '">';
+    h += '<div class="sb-rl"></div>';
+    for (var s = 0; s < n; s++) h += '<div class="sb-cnt' + (s % per === 0 ? ' b' : '') + (s === _sbEdCur ? ' cur' : '') + '">' + cnt[s] + '</div>';
+    SB_ROWS.forEach(function(row, ri) {
+      h += '<div class="sb-rl">' + row.name + '</div>';
+      for (var s2 = 0; s2 < n; s2++) {
+        var k = _sbCellVal(bar, ri, s2);
+        h += '<div class="' + _sbCellClass(bar, ri, s2, per) + '" data-r="' + ri + '" data-s="' + s2 + '"' +
+             (k ? ' title="' + SB_SOUND_NAME[k] + '"' : '') + '>' + (k ? (SB_GLYPH[k] || '●') : '') + '</div>';
+      }
+    });
+    h += '<div class="sb-rl">Sticking</div>';
+    for (var s3 = 0; s3 < n; s3++) {
+      h += '<div class="' + _sbStickClass(bar, s3, per) + '" data-st="' + s3 + '">' + bar.stick[s3] + '</div>';
+    }
+    h += '</div></div>';
+    h += '<div class="sb-hint">Click a cell to add a note, click again for the next sound (accent, ghost, open …), ' +
+         'right-click or <kbd>⌥</kbd>-click removes, drag paints or erases. ' +
+         '<kbd>Space</kbd> play · <kbd>←</kbd><kbd>→</kbd> bars, <kbd>⇧</kbd> selects · <kbd>N</kbd> new bar · ' +
+         '<kbd>⌘D</kbd> duplicate · <kbd>⌘Z</kbd> undo</div>';
+    ed.innerHTML = h;
+    var grid = document.getElementById('sbGrid');
+    _sbCells = SB_ROWS.map(function() { return []; });
+    Array.prototype.forEach.call(grid.querySelectorAll('.sb-c[data-r]'), function(c) {
+      _sbCells[+c.getAttribute('data-r')][+c.getAttribute('data-s')] = c;
+    });
+    _sbStickEls = Array.prototype.slice.call(grid.querySelectorAll('.sb-c[data-st]'));
+    _sbCntEls = Array.prototype.slice.call(grid.querySelectorAll('.sb-cnt'));
+  }
+  // Spalte unter dem Wiedergabe-Cursor im Raster markieren
+  function _sbEdCursor(s) {
+    if (s === _sbEdCur) return;
+    var mark = function(col, on) {
+      if (col < 0) return;
+      _sbCells.forEach(function(row) { if (row[col]) row[col].classList.toggle('cur', on); });
+      if (_sbStickEls[col]) _sbStickEls[col].classList.toggle('cur', on);
+      if (_sbCntEls[col]) _sbCntEls[col].classList.toggle('cur', on);
+    };
+    mark(_sbEdCur, false);
+    _sbEdCur = s;
+    mark(s, true);
+  }
+  function _sbCellChanged(bi, ri, s) {
+    if (bi === _sbSel.b) {
+      var c = _sbCells[ri] && _sbCells[ri][s], bar = _sbSong.bars[bi];
+      if (c) {
+        var k = _sbCellVal(bar, ri, s);
+        c.className = _sbCellClass(bar, ri, s, bar.n / 4);
+        c.textContent = k ? (SB_GLYPH[k] || '●') : '';
+        if (k) c.title = SB_SOUND_NAME[k]; else c.removeAttribute('title');
+      }
+    }
+    _sbDirtyBar(bi);
+  }
+  function _sbStickChanged(bi, s) {
+    var bar = _sbSong.bars[bi], c = _sbStickEls[s];
+    if (c && bi === _sbSel.b) { c.className = _sbStickClass(bar, s, bar.n / 4); c.textContent = bar.stick[s]; }
+    _sbDirtyBar(bi);
+  }
+  function _sbEditDone() { _sbSave(); _sbRenderMeta(); }
+  function _sbAudition(k) {
+    if (_sbP) return;   // während der Wiedergabe hört man den Takt ohnehin
+    try { initA(); if (aCtx) _sbHit(k, aCtx.currentTime); } catch (e) {}
+  }
+
+  // Klicken, Ziehen, Rechtsklick im Raster. Ein Ziehen ist ein Undo-Schritt.
+  function _sbGridDown(e) {
+    var c = e.target.closest && e.target.closest('.sb-grid .sb-c');
+    if (!c || e.button !== 0 || e.ctrlKey) return;   // Rechts- und Ctrl-Klick: contextmenu
+    e.preventDefault();
+    try { initA(); } catch (er) {}
+    var bi = _sbSel.b, bar = _sbSong.bars[bi];
+    if (c.hasAttribute('data-st')) {
+      var s0 = +c.getAttribute('data-st');
+      _sbPush();
+      bar.stick[s0] = e.altKey ? '' : (bar.stick[s0] === '' ? 'R' : (bar.stick[s0] === 'R' ? 'L' : ''));
+      _sbStickChanged(bi, s0);
+      _sbEditDone();
+      return;
+    }
+    var ri = +c.getAttribute('data-r'), s = +c.getAttribute('data-s');
+    var cur = _sbCellVal(bar, ri, s);
+    if (e.altKey) {
+      if (!cur) return;
+      _sbPush(); _sbSetCell(bar, ri, s, null); _sbCellChanged(bi, ri, s); _sbEditDone();
+      return;
+    }
+    _sbPush();
+    _sbDrag = { bi: bi, ri: ri, s: s, last: s, mode: cur ? 'pending' : 'paint' };
+    if (!cur) {
+      _sbSetCell(bar, ri, s, SB_ROWS[ri].v[0]);
+      _sbAudition(SB_ROWS[ri].v[0]);
+      _sbCellChanged(bi, ri, s);
+    }
+  }
+  function _sbGridMove(e) {
+    var D = _sbDrag;
+    if (!D) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var c = el && el.closest && el.closest('.sb-grid .sb-c[data-r]');
+    if (!c || +c.getAttribute('data-r') !== D.ri) return;
+    var s = +c.getAttribute('data-s');
+    if (s === D.last) return;
+    var bar = _sbSong.bars[D.bi], k0 = SB_ROWS[D.ri].v[0];
+    if (D.mode === 'pending') {   // Ziehen von einer vollen Zelle aus löscht
+      D.mode = 'erase';
+      _sbSetCell(bar, D.ri, D.s, null);
+      _sbCellChanged(D.bi, D.ri, D.s);
+    }
+    var step = s > D.last ? 1 : -1;
+    for (var x = D.last + step; ; x += step) {
+      var has = _sbCellVal(bar, D.ri, x);
+      if (D.mode === 'paint' && !has) { _sbSetCell(bar, D.ri, x, k0); _sbCellChanged(D.bi, D.ri, x); }
+      else if (D.mode === 'erase' && has) { _sbSetCell(bar, D.ri, x, null); _sbCellChanged(D.bi, D.ri, x); }
+      if (x === s) break;
+    }
+    D.last = s;
+  }
+  function _sbGridUp() {
+    var D = _sbDrag;
+    if (!D) return;
+    _sbDrag = null;
+    if (D.mode === 'pending') {   // Klick auf volle Zelle: nächster Klang, nach dem letzten leer
+      var bar = _sbSong.bars[D.bi], v = SB_ROWS[D.ri].v;
+      var ix = v.indexOf(_sbCellVal(bar, D.ri, D.s));
+      var nx = (ix + 1 < v.length) ? v[ix + 1] : null;
+      _sbSetCell(bar, D.ri, D.s, nx);
+      if (nx) _sbAudition(nx);
+      _sbCellChanged(D.bi, D.ri, D.s);
+    }
+    _sbEditDone();
+  }
+  function _sbGridCtx(e) {
+    var c = e.target.closest && e.target.closest('.sb-grid .sb-c');
+    if (!c) return;
+    e.preventDefault();
+    var bi = _sbSel.b, bar = _sbSong.bars[bi];
+    if (c.hasAttribute('data-st')) {
+      var s0 = +c.getAttribute('data-st');
+      if (!bar.stick[s0]) return;
+      _sbPush(); bar.stick[s0] = ''; _sbStickChanged(bi, s0); _sbEditDone();
+      return;
+    }
+    var ri = +c.getAttribute('data-r'), s = +c.getAttribute('data-s');
+    if (!_sbCellVal(bar, ri, s)) return;
+    _sbPush(); _sbSetCell(bar, ri, s, null); _sbCellChanged(bi, ri, s); _sbEditDone();
+  }
+
+  // ── Bearbeiten: Takte, Undo ─────────────────────────────────
+  // Ein Undo-Schritt merkt sich Song und Auswahl
+  function _sbSnap() { return JSON.stringify({ song: _sbSong, sel: _sbSel }); }
+  function _sbPush() {
+    _sbUndo.push(_sbSnap());
+    if (_sbUndo.length > 200) _sbUndo.shift();
+    _sbRedo = [];
+    _sbUndoUi();
+  }
+  function _sbUndoUi() {
+    if (!_sbRoot) return;
+    var u = _sbRoot.querySelector('[data-act="undo"]'), rd = _sbRoot.querySelector('[data-act="redo"]');
+    if (u) u.disabled = !_sbUndo.length;
+    if (rd) rd.disabled = !_sbRedo.length;
+  }
+  // Takte einfügen, löschen, umbauen: danach alles neu zeichnen
+  function _sbStructural(fn) {
+    _sbPush();
+    fn();
+    _sbClampSel();
+    _sbSave();
+    _sbRenderScore();
+    _sbRenderEditor();
+    _sbRenderMeta();
+    _sbScrollTo(_sbSel.b, false);
+  }
+  function _sbApplySnap(json) {
+    var snap = JSON.parse(json), s = _sbNormSong(snap.song);
+    s.id = _sbSong.id; s.title = _sbSong.title; s.bpm = _sbSong.bpm;   // Name und Tempo bleiben
+    _sbData.songs[_sbData.songs.indexOf(_sbSong)] = s;
+    _sbSong = s;
+    if (snap.sel) _sbSel = { a: +snap.sel.a || 0, b: +snap.sel.b || 0 };
+    _sbClampSel();
+    _sbSave();
+    _sbRenderScore();
+    _sbRenderEditor();
+    _sbRenderMeta();
+  }
+  function _sbUndoDo() {
+    if (!_sbUndo.length) return;
+    _sbRedo.push(_sbSnap());
+    _sbApplySnap(_sbUndo.pop());
+  }
+  function _sbRedoDo() {
+    if (!_sbRedo.length) return;
+    _sbUndo.push(_sbSnap());
+    _sbApplySnap(_sbRedo.pop());
+  }
+  function _sbInsert(at, bars) {
+    Array.prototype.splice.apply(_sbSong.bars, [at, 0].concat(bars));
+  }
+  function _sbRoom(add) {
+    if (_sbSong.bars.length + add <= SB_MAX_BARS) return true;
+    _devToast('A song can have up to ' + SB_MAX_BARS + ' bars');
+    return false;
+  }
+  // Kopien beim Duplizieren und Wiederholen gehören zum selben Abschnitt
+  function _sbNoLabels(bars) { bars.forEach(function(b) { b.label = ''; }); return bars; }
+  function _sbAddBar() {
+    if (!_sbRoom(1)) return;
+    var r = _sbRange(), n = _sbSong.bars[_sbSel.b].n;
+    _sbStructural(function() {
+      _sbInsert(r[1] + 1, [_sbEmptyBar(n)]);
+      _sbSel = { a: r[1] + 1, b: r[1] + 1 };
+    });
+  }
+  function _sbDup() {
+    var r = _sbRange(), cp = _sbNoLabels(_sbClone(_sbSong.bars.slice(r[0], r[1] + 1)));
+    if (!_sbRoom(cp.length)) return;
+    _sbStructural(function() {
+      _sbInsert(r[1] + 1, cp);
+      _sbSel = { a: r[1] + 1, b: r[1] + cp.length };
+    });
+  }
+  function _sbRepeat() {
+    var inp = document.getElementById('sbRepN');
+    var times = Math.max(1, Math.min(64, Math.round(+(inp ? inp.value : _sbRepN)) || 1));
+    _sbRepN = times;
+    var r = _sbRange(), src = _sbSong.bars.slice(r[0], r[1] + 1), add = [];
+    if (!_sbRoom(src.length * times)) return;
+    for (var t = 0; t < times; t++) add = add.concat(_sbNoLabels(_sbClone(src)));
+    _sbStructural(function() {
+      _sbInsert(r[1] + 1, add);
+      var end = r[1] + add.length;
+      _sbSel = { a: end, b: end };
+    });
+    _devToast('Added ' + add.length + (add.length === 1 ? ' bar' : ' bars'));
+  }
+  function _sbCopy() {
+    var r = _sbRange();
+    _sbClip = _sbClone(_sbSong.bars.slice(r[0], r[1] + 1));
+    try { localStorage.setItem(SB_CLIP_KEY, JSON.stringify(_sbClip)); } catch (e) {}
+    var p = _sbRoot && _sbRoot.querySelector('[data-act="paste"]');
+    if (p) p.disabled = false;
+    _devToast('Copied ' + _sbClip.length + (_sbClip.length === 1 ? ' bar' : ' bars'));
+  }
+  function _sbPaste() {
+    if (!_sbClip) { _devToast('Copy some bars first'); return; }
+    var cp = _sbNormSong({ bars: _sbClone(_sbClip) }).bars, r = _sbRange();
+    if (!_sbRoom(cp.length)) return;
+    _sbStructural(function() {
+      _sbInsert(r[1] + 1, cp);
+      _sbSel = { a: r[1] + 1, b: r[1] + cp.length };
+    });
+  }
+  function _sbDelete() {
+    var r = _sbRange(), bars = _sbSong.bars;
+    _sbStructural(function() {
+      // Geht der Abschnitt hinter der Auswahl weiter, wandert sein Name mit
+      var lab = '';
+      for (var i = r[1]; i >= r[0]; i--) if (bars[i].label) { lab = bars[i].label; break; }
+      if (lab && r[1] + 1 < bars.length && !bars[r[1] + 1].label) bars[r[1] + 1].label = lab;
+      bars.splice(r[0], r[1] - r[0] + 1);
+      if (!bars.length) bars.push(_sbEmptyBar(16));
+      var at = Math.min(r[0], bars.length - 1);
+      _sbSel = { a: at, b: at };
+    });
+  }
+  function _sbClear() {
+    var r = _sbRange();
+    _sbStructural(function() {
+      for (var i = r[0]; i <= r[1]; i++) {
+        var b = _sbSong.bars[i];
+        b.notes = b.notes.map(function() { return []; });
+        b.stick = b.stick.map(function() { return ''; });
+      }
+    });
+  }
+  // Raster der ausgewählten Takte umstellen. Noten, die im neuen Raster keinen
+  // Platz haben, fallen weg (Undo holt sie zurück).
+  function _sbSetGrid(g) {
+    var r = _sbRange(), lost = 0;
+    _sbStructural(function() {
+      for (var i = r[0]; i <= r[1]; i++) {
+        var b = _sbSong.bars[i];
+        if (b.n === g) continue;
+        var nb = _sbEmptyBar(g);
+        nb.label = b.label;
+        for (var s = 0; s < b.n; s++) {
+          var pos = s * g / b.n;
+          if (pos === Math.floor(pos)) { nb.notes[pos] = b.notes[s].slice(); nb.stick[pos] = b.stick[s]; }
+          else lost += b.notes[s].length;
+        }
+        _sbSong.bars[i] = nb;
+      }
+    });
+    if (lost) _devToast(lost + (lost === 1 ? ' note does' : ' notes do') + ' not fit the new grid. Undo brings them back.');
+  }
+  function _sbSetLabel(v) {
+    v = String(v || '').trim().slice(0, 40);
+    var r = _sbRange();
+    if (_sbSong.bars[r[0]].label === v) return;
+    _sbStructural(function() { _sbSong.bars[r[0]].label = v; });
+  }
+  function _sbSelectSection(i) {
+    var bars = _sbSong.bars, end = i;
+    while (end + 1 < bars.length && !bars[end + 1].label) end++;
+    _sbSel = { a: i, b: end };
+    _sbMarkSel();
+    _sbRenderEditor();
+  }
+
+  // ── Kopfzeile, Songs ────────────────────────────────────────
+  function _sbRenderMeta() {
+    var m = document.getElementById('sbMeta');
+    if (!m) return;
+    var n = _sbSong.bars.length, sec = Math.round(n * 240 / _sbSong.bpm);
+    m.textContent = n + (n === 1 ? ' bar · ' : ' bars · ') + Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2);
+    _sbUndoUi();
+  }
+  function _sbToggleUi() {
+    [['sbLoop', 'loop'], ['sbClick', 'click'], ['sbCount', 'countIn'], ['sbCounts', 'counts']].forEach(function(p) {
+      var b = document.getElementById(p[0]);
+      if (!b) return;
+      b.classList.toggle('on', !!_sbPrefs[p[1]]);
+      b.setAttribute('aria-pressed', String(!!_sbPrefs[p[1]]));
+    });
+    var pl = document.getElementById('sbPlay');
+    if (pl) pl.textContent = _sbP ? '■ Stop' : '▶ Play';
+  }
+  function _sbRenderTop() {
+    var sel = document.getElementById('sbSongSel');
+    sel.innerHTML = _sbData.songs.map(function(s) {
+      return '<option value="' + _sbEsc(s.id) + '"' + (s === _sbSong ? ' selected' : '') + '>' + _sbEsc(s.title || 'Untitled song') + '</option>';
+    }).join('');
+    var ti = document.getElementById('sbTitle');
+    if (document.activeElement !== ti) ti.value = _sbSong.title;
+    var bp = document.getElementById('sbBpm');
+    if (document.activeElement !== bp) bp.value = _sbSong.bpm;
+    document.getElementById('sbZoom').value = _sbPrefs.w;
+    _sbToggleUi();
+    _sbRenderMeta();
+  }
+  function _sbRenderAll() { _sbRenderTop(); _sbRenderScore(); _sbRenderEditor(); }
+  function _sbTogglePref(p) {
+    _sbPrefs[p] = !_sbPrefs[p];
+    _sbSavePrefs();
+    _sbToggleUi();
+    if (p === 'counts') _sbRenderScore();
+    if (p === 'loop' && _sbP) {   // gilt sofort, auch mitten in der Wiedergabe
+      var r = _sbRange();
+      _sbP.loop = _sbPrefs.loop; _sbP.from = r[0]; _sbP.to = r[1];
+    }
+  }
+  function _sbSwitch(id) {
+    var s = _sbFind(id);
+    if (!s) return;
+    _sbStop();
+    _sbSong = s; _sbData.cur = s.id;
+    _sbUndo = []; _sbRedo = []; _sbSel = { a: 0, b: 0 };
+    _sbSave();
+    _sbRenderAll();
+    document.getElementById('sbScore').scrollTop = 0;
+  }
+  function _sbSongAct(act) {
+    if (act === 'new') {
+      var ns = _sbNewSong();
+      _sbData.songs.push(ns);
+      _sbSwitch(ns.id);
+      var ti = document.getElementById('sbTitle');
+      ti.focus(); ti.select();
+    } else if (act === 'dupsong') {
+      var ds = _sbClone(_sbSong);
+      ds.id = _sbId(); ds.title = (ds.title + ' (copy)').slice(0, 80);
+      _sbData.songs.push(ds);
+      _sbSwitch(ds.id);
+    } else if (act === 'delsong') {
+      if (!confirm('Delete “' + _sbSong.title + '”? This cannot be undone.')) return;
+      var ix = _sbData.songs.indexOf(_sbSong);
+      _sbData.songs.splice(ix, 1);
+      if (!_sbData.songs.length) _sbData.songs.push(_sbNewSong());
+      _sbSwitch(_sbData.songs[Math.max(0, ix - 1)].id);
+      _sbSaveNow();
+    } else if (act === 'export') {
+      var data = JSON.stringify({ format: 'drumlion-song', version: 1, song: _sbSong });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      a.download = ((_sbSong.title || 'song').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'song') + '.drumlion-song.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function() { URL.revokeObjectURL(a.href); }, 4000);
+    } else if (act === 'import') {
+      document.getElementById('sbFile').click();
+    } else if (act === 'excode') {
+      _sbExerciseCode();
+    }
+  }
+  function _sbImportFile(file) {
+    var fr = new FileReader();
+    fr.onload = function() {
+      var d = null;
+      try { d = JSON.parse(fr.result); } catch (e) {}
+      var list = !d ? [] : (d.song ? [d.song] : (Array.isArray(d.songs) ? d.songs : [d]));
+      var added = list.map(_sbNormSong).filter(Boolean);
+      if (!added.length) { _devToast('This file is not a Drumlion song'); return; }
+      added.forEach(function(s) { s.id = _sbId(); _sbData.songs.push(s); });
+      _sbSwitch(added[0].id);
+      _sbSaveNow();
+      _devToast(added.length === 1 ? 'Imported “' + added[0].title + '”' : 'Imported ' + added.length + ' songs');
+    };
+    fr.readAsText(file);
+  }
+  // Ausgewählte Takte (höchstens zwei) als Übungs-Code für EXERCISES kopieren
+  function _sbExerciseCode() {
+    var r = _sbRange();
+    var fmt = function(bar) {
+      return '[\n' + _sbBeats(bar).map(function(sl) {
+        return '  [' + sl.map(function(nn) {
+          return "{ inst:'" + nn.inst + "', line:" + nn.line + ", head:'" + nn.head + "'" +
+                 (nn.quarter ? ', quarter:true' : '') + (nn.eighth ? ', eighth:true' : '') + ' }';
+        }).join(', ') + ']';
+      }).join(',\n') + '\n]';
+    };
+    var stk = function(bar) { return "[" + bar.stick.map(function(x) { return "'" + x + "'"; }).join(',') + "]"; };
+    var b1 = _sbSong.bars[r[0]], out = ['beats: ' + fmt(b1)];
+    if (b1.stick.some(Boolean)) out.push('stickings: ' + stk(b1));
+    if (r[1] > r[0]) {
+      var b2 = _sbSong.bars[r[0] + 1];
+      out.push('beats2: ' + fmt(b2));
+      if (b2.stick.some(Boolean)) out.push('stickings2: ' + stk(b2));
+    }
+    var txt = out.join(',\n') + ',';
+    var ok = function() { _devToast(r[1] > r[0] ? 'Copied bars ' + (r[0] + 1) + '–' + (r[0] + 2) + ' as exercise code' : 'Copied bar ' + (r[0] + 1) + ' as exercise code'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function() { prompt('Copy the exercise code:', txt); });
+    else prompt('Copy the exercise code:', txt);
+  }
+
+  // ── Wiedergabe ──────────────────────────────────────────────
+  // Eigener Vorausplaner wie im Player: Schläge 0,18 s im Voraus an die
+  // Audio-Uhr, der Cursor folgt per requestAnimationFrame (mit Ausgabelatenz).
+  function _sbHit(k, t) {
+    // Offene Hi-Hat klingt bis zum nächsten Hi-Hat- oder Fußschlag
+    if (_hhOpenGain && (k === 'hh' || k === 'hhAccent' || k === 'hhPedal' || k === 'hhOpen')) {
+      try { _hhOpenGain.gain.setValueAtTime(0.001, Math.max(t || 0, aCtx.currentTime)); } catch (e) {}
+      _hhOpenGain = null;
+    }
+    playSound(k, t);
+  }
+  function _sbPlay() {
+    if (_sbP) { _sbStop(); return; }
+    initA();
+    if (!aCtx) return;
+    var r = _sbRange(), loop = !!_sbPrefs.loop, t0 = aCtx.currentTime + 0.12;
+    var P = _sbP = { from: r[0], to: r[1], loop: loop, bar: r[0], slot: 0, t: t0, q: [],
+                     curBar: -1, curSlot: -1, done: false, endT: 0, timer: 0, raf: 0 };
+    if (_sbPrefs.countIn) {
+      var qd = 60 / _sbSong.bpm;
+      for (var c = 0; c < 4; c++) playCountClick(c === 0, 1.0, t0 + c * qd);
+      P.t = t0 + 4 * qd;
+    }
+    P.timer = setInterval(_sbPump, 25);
+    _sbPump();
+    P.raf = requestAnimationFrame(_sbTick);
+    _sbToggleUi();
+  }
+  function _sbPump() {
+    var P = _sbP;
+    if (!P || P.done) return;
+    var ahead = aCtx.currentTime + 0.18, guard = 0;
+    while (P.t < ahead && guard++ < 256) {
+      var bar = _sbSong.bars[P.bar];
+      if (!bar) { P.done = true; P.endT = P.t; return; }
+      if (P.slot >= bar.n) P.slot = 0;   // Raster während der Wiedergabe verkleinert
+      var n = bar.n, per = n / 4, t = P.t;
+      (bar.notes[P.slot] || []).forEach(function(k) { _sbHit(k, t); });
+      if (_sbPrefs.click && P.slot % per === 0) playCountClick(P.slot === 0, P.slot === 0 ? 1.0 : 0.5, t);
+      P.q.push({ t: t, bar: P.bar, slot: P.slot });
+      P.t += 240 / _sbSong.bpm / n;
+      if (++P.slot >= n) {
+        P.slot = 0;
+        P.bar++;
+        if (P.loop ? P.bar > P.to : P.bar >= _sbSong.bars.length) {
+          if (P.loop) P.bar = P.from;
+          else { P.done = true; P.endT = P.t; return; }
+        }
+      }
+    }
+  }
+  function _sbTick() {
+    var P = _sbP;
+    if (!P) return;
+    var now = aCtx.currentTime - _audioLatency(), hit = null;
+    while (P.q.length && P.q[0].t <= now) hit = P.q.shift();
+    if (hit) _sbShowCursor(hit.bar, hit.slot);
+    if (P.done && !P.q.length && now >= P.endT) { _sbStop(); return; }
+    P.raf = requestAnimationFrame(_sbTick);
+  }
+  function _sbShowCursor(bi, s) {
+    var P = _sbP;
+    if (P.curBar !== bi) {
+      var old = P.curBar;
+      P.curBar = bi;
+      if (old >= 0 && _sbTiles[old]) { _sbTiles[old].classList.remove('play'); _sbDraw(old); }
+      if (_sbTiles[bi]) { _sbTiles[bi].classList.add('play'); _sbScrollTo(bi, true); }
+    }
+    P.curSlot = s;
+    _sbDraw(bi, s);
+    _sbEdCursor(bi === _sbSel.b ? s : -1);
+  }
+  function _sbStop() {
+    var P = _sbP;
+    if (!P) return;
+    _sbP = null;
+    clearInterval(P.timer);
+    cancelAnimationFrame(P.raf);
+    if (P.curBar >= 0 && _sbTiles[P.curBar]) { _sbTiles[P.curBar].classList.remove('play'); _sbDraw(P.curBar); }
+    _sbEdCursor(-1);
+    _sbToggleUi();
+  }
+
+  // ── Öffnen, Schließen, Bedienung ────────────────────────────
+  function _sbOpen() {
+    if (!_premium()) return;
+    if (playing) stopExercise();
+    if (!_sbData) _sbLoad();
+    if (!_sbRoot) _sbBuild();
+    _sbIsOpen = true;
+    _sbRoot.classList.add('open');
+    _sbPrevOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    _sbRenderAll();
+    try { initA(); } catch (e) {}
+  }
+  function _sbClose() {
+    _sbStop();
+    _sbSaveNow();
+    _sbIsOpen = false;
+    if (_sbRoot) _sbRoot.classList.remove('open');
+    document.documentElement.style.overflow = _sbPrevOverflow;
+  }
+  function _sbBuild() {
+    var r = document.createElement('div');
+    r.id = 'sbRoot';
+    r.setAttribute('role', 'dialog');
+    r.setAttribute('aria-modal', 'true');
+    r.setAttribute('aria-label', 'Song Builder');
+    r.innerHTML =
+      '<div class="sb-top">' +
+        '<input class="sb-title" id="sbTitle" maxlength="80" aria-label="Song title" spellcheck="false">' +
+        '<span class="sb-group">' +
+          '<select class="sb-sel" id="sbSongSel" aria-label="Open a song"></select>' +
+          '<details class="sb-menu" id="sbMenu"><summary class="sb-btn">Song ▾</summary><div class="sb-menu-list">' +
+            '<button type="button" data-song="new">New song</button>' +
+            '<button type="button" data-song="dupsong">Duplicate song</button>' +
+            '<button type="button" data-song="import">Import from file…</button>' +
+            '<button type="button" data-song="export">Export to file</button>' +
+            '<button type="button" data-song="excode">Copy selected bars as exercise code</button>' +
+            '<button type="button" data-song="delsong" class="warn">Delete song…</button>' +
+          '</div></details>' +
+        '</span>' +
+        '<span class="sb-spacer"></span>' +
+        '<span class="sb-group">' +
+          '<button type="button" class="sb-btn gold" id="sbPlay" title="Play from the selected bar (Space)">▶ Play</button>' +
+          '<input class="sb-num-in" id="sbBpm" type="number" min="30" max="300" step="1" aria-label="Tempo in BPM">' +
+          '<span class="sb-lbl">BPM</span>' +
+        '</span>' +
+        '<span class="sb-group">' +
+          '<button type="button" class="sb-btn" id="sbLoop" title="Loop the selected bars (L)">Loop</button>' +
+          '<button type="button" class="sb-btn" id="sbClick" title="Metronome click (K)">Click</button>' +
+          '<button type="button" class="sb-btn" id="sbCount" title="One bar count-in before playing">Count-in</button>' +
+        '</span>' +
+        '<span class="sb-group">' +
+          '<button type="button" class="sb-btn" id="sbCounts" title="Show the counting above the notes">1 e &amp; a</button>' +
+          '<input type="range" class="sb-zoom" id="sbZoom" min="240" max="720" step="20" aria-label="Bar size" title="Bar size">' +
+          '<span class="sb-meta" id="sbMeta"></span>' +
+        '</span>' +
+        '<button type="button" class="sb-x" id="sbClose" aria-label="Close Song Builder" title="Close">×</button>' +
+      '</div>' +
+      '<div class="sb-score" id="sbScore"></div>' +
+      '<div class="sb-ed" id="sbEd"></div>' +
+      '<input type="file" id="sbFile" accept=".json,application/json" hidden>';
+    document.body.appendChild(r);
+    _sbRoot = r;
+
+    var $ = function(id) { return document.getElementById(id); };
+    var menu = $('sbMenu');
+    $('sbTitle').addEventListener('input', function() {
+      _sbSong.title = this.value.slice(0, 80);
+      var o = $('sbSongSel').querySelector('option[value="' + _sbSong.id + '"]');
+      if (o) o.textContent = _sbSong.title || 'Untitled song';
+      _sbSave();
+    });
+    $('sbSongSel').addEventListener('change', function() { _sbSwitch(this.value); });
+    menu.addEventListener('click', function(e) {
+      var b = e.target.closest('[data-song]');
+      if (!b) return;
+      menu.open = false;
+      _sbSongAct(b.getAttribute('data-song'));
+    });
+    r.addEventListener('click', function(e) { if (menu.open && !e.target.closest('#sbMenu')) menu.open = false; });
+    $('sbFile').addEventListener('change', function() {
+      if (this.files && this.files[0]) _sbImportFile(this.files[0]);
+      this.value = '';
+    });
+    $('sbPlay').addEventListener('click', _sbPlay);
+    var bpmIn = $('sbBpm');
+    bpmIn.addEventListener('input', function() {
+      var v = Math.round(+this.value);
+      if (v >= 30 && v <= 300) { _sbSong.bpm = v; _sbSave(); _sbRenderMeta(); }
+    });
+    bpmIn.addEventListener('change', function() {
+      _sbSong.bpm = _sbBpmClamp(this.value);
+      this.value = _sbSong.bpm;
+      _sbSave(); _sbRenderMeta();
+    });
+    $('sbLoop').addEventListener('click', function() { _sbTogglePref('loop'); });
+    $('sbClick').addEventListener('click', function() { _sbTogglePref('click'); });
+    $('sbCount').addEventListener('click', function() { _sbTogglePref('countIn'); });
+    $('sbCounts').addEventListener('click', function() { _sbTogglePref('counts'); });
+    $('sbZoom').addEventListener('input', function() {
+      _sbPrefs.w = +this.value;
+      $('sbScore').style.setProperty('--sb-w', _sbPrefs.w + 'px');
+      _sbSavePrefs();
+    });
+    $('sbClose').addEventListener('click', _sbClose);
+
+    $('sbScore').addEventListener('click', function(e) {
+      var sh = e.target.closest('.sb-sec-h');
+      if (sh) { _sbSelectSection(+sh.getAttribute('data-sec')); return; }
+      var t = e.target.closest('.sb-bar');
+      if (t) _sbSelect(+t.getAttribute('data-i'), e.shiftKey);
+    });
+
+    var ed = $('sbEd');
+    ed.addEventListener('click', function(e) {
+      var g = e.target.closest('[data-grid]');
+      if (g) { _sbSetGrid(+g.getAttribute('data-grid')); return; }
+      var b = e.target.closest('[data-act]');
+      if (!b || b.disabled) return;
+      var act = b.getAttribute('data-act');
+      if (act === 'add') _sbAddBar();
+      else if (act === 'dup') _sbDup();
+      else if (act === 'copy') _sbCopy();
+      else if (act === 'paste') _sbPaste();
+      else if (act === 'rep') _sbRepeat();
+      else if (act === 'clear') _sbClear();
+      else if (act === 'del') _sbDelete();
+      else if (act === 'undo') _sbUndoDo();
+      else if (act === 'redo') _sbRedoDo();
+    });
+    ed.addEventListener('change', function(e) {
+      if (e.target.id === 'sbLabel') _sbSetLabel(e.target.value);
+      else if (e.target.id === 'sbRepN') _sbRepN = Math.max(1, Math.min(64, Math.round(+e.target.value) || 1));
+    });
+    ed.addEventListener('pointerdown', _sbGridDown);
+    ed.addEventListener('contextmenu', _sbGridCtx);
+    window.addEventListener('pointermove', _sbGridMove);
+    window.addEventListener('pointerup', _sbGridUp);
+    window.addEventListener('pointercancel', _sbGridUp);
+  }
+
+  // Tasten im Builder: vor allen anderen abfangen, damit Leertaste, D, Pfeile
+  // usw. nicht den Player dahinter steuern. Eingabefelder behalten ihre Tasten.
+  window.addEventListener('keydown', function(e) {
+    if (!_sbIsOpen) return;
+    var tg = e.target, tag = tg && tg.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+      if (e.key === 'Escape' || (e.key === 'Enter' && tag === 'INPUT')) tg.blur();
+      return;
+    }
+    e.stopPropagation();
+    var mod = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase(), done = true;
+    if (e.code === 'Space') _sbPlay();
+    else if (e.key === 'ArrowLeft')  _sbSelect(_sbSel.b - 1, e.shiftKey);
+    else if (e.key === 'ArrowRight') _sbSelect(_sbSel.b + 1, e.shiftKey);
+    else if (e.key === 'Home') _sbSelect(0, e.shiftKey);
+    else if (e.key === 'End')  _sbSelect(_sbSong.bars.length - 1, e.shiftKey);
+    else if (mod && k === 'z') { if (e.shiftKey) _sbRedoDo(); else _sbUndoDo(); }
+    else if (mod && k === 'y') _sbRedoDo();
+    else if (mod && k === 'c') _sbCopy();
+    else if (mod && k === 'v') _sbPaste();
+    else if (mod && k === 'd') _sbDup();
+    else if (mod && k === 'a') { _sbSel = { a: 0, b: _sbSong.bars.length - 1 }; _sbMarkSel(); _sbRenderEditor(); }
+    else if (mod && k === 's') { _sbSaveNow(); _devToast('Saved in this browser'); }
+    else if (mod) done = false;   // übrige Kürzel gehören dem Browser
+    else if (e.key === 'Delete' || e.key === 'Backspace') _sbDelete();
+    else if (k === 'n') _sbAddBar();
+    else if (k === 'l') _sbTogglePref('loop');
+    else if (k === 'k') _sbTogglePref('click');
+    else if (e.key === 'Escape') {
+      var m = document.getElementById('sbMenu');
+      if (m && m.open) m.open = false; else if (_sbP) _sbStop();
+    }
+    else done = false;
+    if (done) e.preventDefault();
+  }, true);
+  // Leertaste auf einem Knopf soll nicht zusätzlich den Knopf auslösen
+  window.addEventListener('keyup', function(e) {
+    if (_sbIsOpen && e.code === 'Space' && e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'SUMMARY')) e.preventDefault();
+  }, true);
+  window.addEventListener('pagehide', function() { if (_sbData) _sbSaveNow(); });
+  try {
+    if (_premium() && new URLSearchParams(window.location.search).get('builder') === '1') setTimeout(_sbOpen, 0);
+  } catch (e) {}
+
+  // ============================================================
   // LEERTASTE
   // ============================================================
   document.addEventListener('keydown', function(e) {
@@ -18739,6 +19950,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
            + '<button id="devTabPicker" style="' + (activeTab==='picker' ? tabActiveS : tabStyle) + '">Exercise Picker</button>'
            + '<button id="devTabMap"    style="' + (activeTab==='map'    ? tabActiveS : tabStyle) + '">Course Map</button>'
            + '<button id="devTabRanges" style="' + (activeTab==='ranges' ? tabActiveS : tabStyle) + '">Ranges</button>'
+           + '<button id="devTabBuilder" style="' + tabStyle + 'color:#C9A84C;">Song Builder</button>'
            + '</div>'
            + '<span style="font-size:12px;color:#555;padding-bottom:6px;">Press D to close</span>'
            + '</div>'
@@ -19108,6 +20320,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       document.getElementById('devTabPicker').onclick = function(){ showTab('picker'); };
       document.getElementById('devTabMap').onclick    = function(){ showTab('map'); };
       document.getElementById('devTabRanges').onclick = function(){ showTab('ranges'); };
+      document.getElementById('devTabBuilder').onclick = function(){ panel.style.display = 'none'; _sbOpen(); };
       if (tab === 'ranges') _rangeBind();
 
       panel.onclick = function(e) {
