@@ -15831,7 +15831,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261020-230924';
+  var DL_BUILD = '20261020-231821';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18020,6 +18020,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // Quintolen (20) und Septolen (28) endeten weit vor dem rechten Rand, das
       // Notenbild saß nach links verschoben (Erwin, 16.09.2026).
       var bs = (_nb < 32) ? 480 / Math.max(4, _nb) : (_nb <= 32 ? 16 : 13);
+      // `opt.barW` (Noten-PDF): engere Taktbreite — gedruckt sitzen vier Takte
+      // in einer Zeile, mit 480 Einheiten pro Takt würde das System winzig
+      if (opt && opt.barW) bs = opt.barW / Math.max(4, _nb);
       var bW = bs * _nb;
       var sX = 42;
       // Breite wächst mit dem Raster (48er passt nicht mehr in 560),
@@ -19940,6 +19943,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       document.getElementById('sbFile').click();
     } else if (act === 'excode') {
       _sbExerciseCode();
+    } else if (act === 'pdf') {
+      _sbPdf();
     }
   }
   function _sbImportFile(file) {
@@ -20442,6 +20447,133 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('sbVidFill').style.transform = 'scaleX(' + (el / total).toFixed(4) + ')';
     var es = Math.floor(el);
     document.getElementById('sbVidEl').textContent = Math.floor(es / 60) + ':' + ('0' + es % 60).slice(-2);
+  }
+
+  // ── Noten als PDF (21.10.2026) ──────────────────────────────
+  // Druckansicht in einem unsichtbaren iFrame: A4 hoch, weiß, die Noten als
+  // Vektoren (inline SVG), vier Takte pro Zeile; Abschnitte beginnen eine neue
+  // Zeile, Tempowechsel stehen über dem Takt. „Als PDF sichern" im Druckdialog
+  // ergibt eine gestochen scharfe PDF-Datei — ohne zusätzliche Bibliothek.
+  var SB_PDF_PER = 4;
+  var _NOTA_PRINT = { ink: '#000000', paper: '#ffffff', soft: '#555555', faint: '#777777', dim: '#999999', active: '#000000' };
+  // Text als CSS-Zeichenkette (für `content:` im <style>; `<` maskiert, sonst beendet „</style>" den Block)
+  function _sbCssStr(v) { return '"' + String(v).replace(/[\\"]/g, '\\$&').replace(/[\n\r]/g, ' ').replace(/</g, '\\3C ') + '"'; }
+  // Gedruckte Taktbreite je Raster: so eng wie lesbar (Notenköpfe sind 10 breit)
+  function _sbPdfBarW(n) { return n <= 16 ? 240 : (n <= 24 ? 300 : 384); }
+  function _sbPdfBarSvg(bar) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'), keep = GROOVE;
+    var bw = _sbPdfBarW(bar.n);
+    GROOVE = _sbGroove(bar);
+    GROOVE.noActiveBox = true;
+    try { renderNot(-1, false, { svg: svg, plain: true, colors: _NOTA_PRINT, barW: bw }); }
+    finally { GROOVE = keep; }
+    var top = _sbTop();
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="32.6 ' + top + ' ' + (20 + bw) + ' ' + (98 - top) +
+           '" preserveAspectRatio="xMidYMid meet">' + svg.innerHTML + '</svg>';
+  }
+  function _sbPdfHtml(lionSrc) {
+    var song = _sbSong, bars = song.bars, top = _sbTop(), tot = 98 - top, tm = _sbTimes(0);
+    var sysTop = ((40 - top) / tot * 100).toFixed(3) + '%', sysH = (32 / tot * 100).toFixed(3) + '%';
+    var body = '', inRow = 0, open = false;
+    // Eine Zeile schließen; kürzere Zeilen mit Platzhaltern auffüllen, damit
+    // jeder Takt in derselben Größe gedruckt wird
+    var closeRow = function() {
+      if (!open) return;
+      for (var k = inRow; k < SB_PDF_PER; k++) body += '<div class="pad" style="flex:260 1 0"></div>';
+      body += '</div>';
+      open = false;
+    };
+    for (var i = 0; i < bars.length; i++) {
+      var b = bars[i];
+      if (b.label) { closeRow(); body += '<h2>' + _sbEsc(b.label) + '</h2>'; }
+      if (!open || inRow === SB_PDF_PER) {
+        closeRow();
+        body += '<div class="row"><span class="num">' + (i + 1) + '</span>';
+        open = true; inRow = 0;
+      }
+      var vw = 20 + _sbPdfBarW(b.n);
+      body += '<div class="bar' + (i === bars.length - 1 ? ' last' : '') + '" style="flex:' + vw + ' 1 0;aspect-ratio:' + vw + ' / ' + tot + '">' +
+              (b.bpm && i > 0 ? '<span class="tm">♩ = ' + b.bpm + '</span>' : '') + _sbPdfBarSvg(b) + '</div>';
+      inRow++;
+    }
+    closeRow();
+    var fontCss = (document.getElementById('dlFontFace') || {}).outerHTML || '';
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>' + _sbEsc(song.title || 'Song') + '</title>' +
+      fontCss +
+      '<style>' +
+      // Fußzeile auf jeder Seite (Seitenrand-Boxen, Chrome/Edge); Safari zeigt sie am Ende
+      '@page { size: A4 portrait; margin: 14mm 13mm 18mm;' +
+      ' @bottom-left { content: ' + _sbCssStr(song.title || '') + '; font: 7.5pt "DM Sans", sans-serif; color: #777; }' +
+      ' @bottom-right { content: "Notation by Drumlion · drumlion.com"; font: 7.5pt "DM Sans", sans-serif; color: #777; } }' +
+      '* { box-sizing: border-box; }' +
+      'html, body { margin: 0; background: #fff; color: #000; font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }' +
+      '.head { display: flex; align-items: center; gap: 8px; font-size: 10pt; font-weight: 800; letter-spacing: 0.2em; }' +
+      '.head img { width: 22px; height: auto; }' +
+      '.head em { font-style: normal; color: #8a6a1c; }' +
+      'h1 { margin: 5mm 0 1.5mm; font-size: 24pt; font-weight: 800; line-height: 1.1; }' +
+      '.meta { font-size: 10.5pt; color: #444; margin-bottom: 7mm; font-variant-numeric: tabular-nums; }' +
+      'h2 { margin: 5mm 0 1.5mm; font-size: 9.5pt; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #8a6a1c; break-after: avoid; }' +
+      '.row { position: relative; display: flex; align-items: flex-start; margin: 4.5mm 0 3mm; break-inside: avoid; }' +
+      '.row::before { content: ""; position: absolute; left: 0; top: ' + sysTop + '; height: ' + sysH + '; width: 1px; background: #000; }' +
+      '.num { position: absolute; left: 0; top: -3.9mm; font-size: 7pt; color: #666; font-variant-numeric: tabular-nums; }' +
+      '.bar { position: relative; min-width: 0; }' +
+      '.bar svg { display: block; width: 100%; height: 100%; }' +
+      '.bar .tm { position: absolute; left: 4mm; top: -4.3mm; font-size: 7.5pt; font-weight: 700; white-space: nowrap; }' +
+      // Schlussstrich: dünn + dick am Ende des letzten Takts
+      '.bar.last::after { content: ""; position: absolute; right: 0; top: ' + sysTop + '; height: ' + sysH + '; width: 3.5px; background: #000; box-shadow: -4.5px 0 0 -1.6px #000; }' +
+      '.foot { margin-top: 8mm; padding-top: 2mm; border-top: 0.5pt solid #bbb; font-size: 7.5pt; color: #777; display: flex; justify-content: space-between; break-inside: avoid; }' +
+      '</style></head><body>' +
+      '<div class="head">' + (lionSrc ? '<img src="' + lionSrc + '" alt="">' : '') + '<span>DRUM<em>LION</em></span></div>' +
+      '<h1>' + _sbEsc(song.title || 'Untitled song') + '</h1>' +
+      '<div class="meta">♩ = ' + song.bpm + ' · ' + bars.length + (bars.length === 1 ? ' bar' : ' bars') + ' · ' + _sbMmSs(Math.round(tm.total)) + '</div>' +
+      body +
+      '<div class="foot"><span>' + _sbEsc(song.title || '') + '</span><span>Notation by Drumlion · drumlion.com</span></div>' +
+      '</body></html>';
+  }
+  // Löwe in Schwarz für den Druck — Hintergrundfarben druckt der Browser oft
+  // nicht, ein Bild schon
+  function _sbLionBlack() {
+    var tmp = document.createElement('div');
+    tmp.className = 'sb-vid';
+    (_sbRoot || document.body).appendChild(tmp);
+    var m = getComputedStyle(tmp).getPropertyValue('--sb-lion').match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
+    tmp.remove();
+    if (!m) return Promise.resolve(null);
+    return _sbLoadImg(m[1]).then(function(img) {
+      var c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      var g = c.getContext('2d');
+      g.drawImage(img, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#000';
+      g.fillRect(0, 0, c.width, c.height);
+      return c.toDataURL('image/png');
+    }, function() { return null; });
+  }
+  function _sbPdf() {
+    if (!_sbSong) return;
+    _sbStop();
+    _sbLionBlack().then(function(lion) {
+      var fr = document.createElement('iframe');
+      fr.setAttribute('aria-hidden', 'true');
+      fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+      document.body.appendChild(fr);
+      var w = fr.contentWindow, doc = w.document;
+      doc.open(); doc.write(_sbPdfHtml(lion)); doc.close();
+      var done = false;
+      var cleanup = function() { if (fr.parentNode) fr.remove(); };
+      var go = function() {
+        if (done) return;
+        done = true;
+        // Erst nach dem Druckdialog entfernen; Safari kehrt sofort aus print() zurück
+        try { w.addEventListener('afterprint', function() { setTimeout(cleanup, 500); }); } catch (e) {}
+        setTimeout(cleanup, 120000);
+        try { w.focus(); w.print(); } catch (e) { cleanup(); _devToast('Printing is blocked here. Open the builder directly in the browser.'); }
+      };
+      // Erst drucken, wenn Schrift und Logo geladen sind
+      var ready = (doc.fonts && doc.fonts.ready) ? doc.fonts.ready : Promise.resolve();
+      ready.then(function() { setTimeout(go, 150); }, go);
+      setTimeout(go, 2500);
+      _devToast('Choose “Save as PDF” in the print dialog');
+    });
   }
 
   // ── Video-Export als MP4 (21.10.2026) ───────────────────────
@@ -20992,6 +21124,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-song="dupsong">Duplicate song</button>' +
             '<button type="button" data-song="import">Import from file…</button>' +
             '<button type="button" data-song="export">Export to file</button>' +
+            '<button type="button" data-song="pdf">Sheet music as PDF…</button>' +
             '<button type="button" data-song="excode">Copy selected bars as exercise code</button>' +
             '<button type="button" data-song="delsong" class="warn">Delete song…</button>' +
           '</div></details>' +
@@ -21008,6 +21141,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<button type="button" class="sb-btn" id="sbClick" title="Metronome click (K)">Click</button>' +
           '<button type="button" class="sb-btn" id="sbCount" title="One bar count-in before playing">Count-in</button>' +
           '<button type="button" class="sb-btn" id="sbVideo" title="Full-screen scrolling score for recording videos">Video view</button>' +
+          '<button type="button" class="sb-btn" id="sbPdf" title="Sheet music as PDF (A4) — choose Save as PDF in the print dialog">PDF</button>' +
         '</span>' +
         '<span class="sb-group">' +
           '<button type="button" class="sb-btn" id="sbCounts" title="Show the counting above the notes">1 e &amp; a</button>' +
@@ -21059,6 +21193,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbClick').addEventListener('click', function() { _sbTogglePref('click'); });
     $('sbCount').addEventListener('click', function() { _sbTogglePref('countIn'); });
     $('sbVideo').addEventListener('click', _sbVidOpen);
+    $('sbPdf').addEventListener('click', _sbPdf);
     $('sbCounts').addEventListener('click', function() { _sbTogglePref('counts'); });
     $('sbZoom').addEventListener('input', function() {
       _sbPrefs.w = +this.value;
