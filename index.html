@@ -1473,6 +1473,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   position: absolute; left: 5px; top: 2px; font-size: 10px; font-weight: 600;
   color: #5f5b52; pointer-events: none; font-variant-numeric: tabular-nums;
 }
+/* Tempowechsel ab diesem Takt — unten links, dort ist der Takt immer frei */
+.sb-bar .sb-tm {
+  position: absolute; left: 5px; bottom: 2px; font-size: 10px; font-weight: 700;
+  color: var(--sb-gold); pointer-events: none; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.sb-btn.tap { background: var(--sb-gold); border-color: var(--sb-gold); color: #141414; }
 .sb-bar::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   border: 1.5px solid transparent; transition: border-color 0.12s, background-color 0.12s;
@@ -1608,6 +1614,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   background: linear-gradient(90deg, transparent, var(--sb-paper) 34px);
 }
 .sb-vid-wm .sb-vid-lion { width: 34px; height: 34px; color: var(--sb-gold); }
+/* Fortschritt des Video-Exports */
+.sb-exp {
+  position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center;
+  background: rgba(8,8,8,0.72);
+}
+.sb-exp[hidden] { display: none; }
+.sb-exp-card {
+  width: min(420px, calc(100vw - 32px)); padding: 22px 24px; border-radius: 14px; text-align: center;
+  background: var(--sb-panel); border: 1px solid var(--sb-line2); box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  display: flex; flex-direction: column; gap: 14px; align-items: center;
+}
+.sb-exp-t { font-size: 17px; font-weight: 700; color: var(--sb-text); }
+.sb-exp-bar { width: 100%; height: 6px; border-radius: 3px; background: #2a2926; overflow: hidden; }
+.sb-exp-bar i {
+  display: block; height: 100%; background: var(--sb-gold); transform: scaleX(0); transform-origin: left center;
+  transition: transform 0.15s linear;
+}
+.sb-exp-s { font-size: 13px; color: var(--sb-mute); font-variant-numeric: tabular-nums; min-height: 1.2em; }
 /* Zweizeilig: zwei Notenzeilen untereinander, am Zeilenende rückt die Seite hoch */
 .sb-vid-page {
   display: none; position: absolute; top: 0; bottom: 0;
@@ -15807,7 +15831,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261020-203240';
+  var DL_BUILD = '20261020-230924';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19150,8 +19174,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!isFinite(v) || !v) return 100;
     return Math.max(30, Math.min(300, v));
   }
+  // `bpm` am Takt (21.10.2026): Tempowechsel ab diesem Takt, 0 = übernimmt das
+  // Tempo davor (am Anfang das Songtempo). So lassen sich Songs mit
+  // schwankendem Tempo abbilden.
   function _sbEmptyBar(n) {
-    var b = { n: n, notes: [], stick: [], label: '' };
+    var b = { n: n, notes: [], stick: [], label: '', bpm: 0 };
     for (var i = 0; i < n; i++) { b.notes.push([]); b.stick.push(''); }
     return b;
   }
@@ -19184,10 +19211,28 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         bar.stick[i] = (st === 'R' || st === 'L') ? st : '';
       }
       bar.label = String(b.label || '').slice(0, 40);
+      bar.bpm = (+b.bpm >= 30 && +b.bpm <= 300) ? Math.round(+b.bpm) : 0;
       out.bars.push(bar);
     });
     if (!out.bars.length) out.bars.push(_sbEmptyBar(16));
     return out;
+  }
+  // Tempo eines Takts: der letzte Tempowechsel bis hierhin, sonst das Songtempo
+  function _sbBarBpm(i) {
+    var bars = _sbSong.bars;
+    for (var k = Math.min(i, bars.length - 1); k >= 0; k--) if (bars[k].bpm) return bars[k].bpm;
+    return _sbSong.bpm;
+  }
+  function _sbBarSec(i) { return 240 / _sbBarBpm(i); }
+  // Startzeit jedes Takts ab Takt `from` (Sekunden) und die Gesamtdauer
+  function _sbTimes(from) {
+    var bars = _sbSong.bars, t = 0, at = [], bpm = _sbBarBpm(from);
+    for (var i = from; i < bars.length; i++) {
+      if (bars[i].bpm) bpm = bars[i].bpm;
+      at.push(t);
+      t += 240 / bpm;
+    }
+    return { at: at, total: t };
   }
   function _sbFind(id) {
     for (var i = 0; i < _sbData.songs.length; i++) if (_sbData.songs[i].id === id) return _sbData.songs[i];
@@ -19324,6 +19369,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         open = true;
       }
       h += '<div class="sb-bar" data-i="' + i + '"><span class="sb-n">' + (i + 1) + '</span>' +
+           (b.bpm ? '<span class="sb-tm">♩ = ' + b.bpm + '</span>' : '') +
            '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar ' + (i + 1) + '"></svg></div>';
     }
     if (open) h += '</div></div>';
@@ -19412,6 +19458,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     h += '<span class="sb-ed-h">' + (r[1] > r[0] ? 'Bars ' + (r[0] + 1) + '–' + (r[1] + 1) : 'Bar ' + (bi + 1)) + '</span>';
     h += '<label class="sb-group"><span class="sb-lbl">Section</span>' +
          '<input class="sb-txt" id="sbLabel" maxlength="40" placeholder="e.g. Verse" value="' + _sbEsc(_sbSong.bars[r[0]].label) + '"></label>';
+    // Tempo ab diesem Takt; leer = übernimmt das Tempo davor (Platzhalter zeigt es)
+    var _inh = r[0] > 0 ? _sbBarBpm(r[0] - 1) : _sbSong.bpm;
+    h += '<span class="sb-group" title="Tempo from this bar on. Empty keeps the tempo before.">' +
+         '<span class="sb-lbl">Tempo</span>' +
+         '<input class="sb-num-in" id="sbBarBpm" type="number" min="30" max="300" step="1" placeholder="' + _inh +
+         '" value="' + (_sbSong.bars[r[0]].bpm || '') + '" aria-label="Tempo from this bar">' +
+         _sbBtnHtml('tapbar', 'Tap', 'Tap the beat to set the tempo from this bar') + '</span>';
     h += '<span class="sb-group"><span class="sb-lbl">Grid</span><span class="sb-seg" role="group" aria-label="Grid">';
     SB_GRIDS.forEach(function(g) {
       h += '<button type="button" data-grid="' + g + '" class="' + (g === n ? 'on' : '') + '" title="' + SB_GRID_NAME[g] +
@@ -19694,6 +19747,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var lab = '';
       for (var i = r[1]; i >= r[0]; i--) if (bars[i].label) { lab = bars[i].label; break; }
       if (lab && r[1] + 1 < bars.length && !bars[r[1] + 1].label) bars[r[1] + 1].label = lab;
+      // Ebenso ein Tempowechsel: das Tempo nach der Auswahl bleibt, wie es war
+      if (r[1] + 1 < bars.length && !bars[r[1] + 1].bpm) {
+        var tNext = _sbBarBpm(r[1]);                               // Tempo des Folgetakts bisher
+        var tPrev = r[0] > 0 ? _sbBarBpm(r[0] - 1) : _sbSong.bpm;  // … und ohne die gelöschten Takte
+        if (tNext !== tPrev) bars[r[1] + 1].bpm = tNext;
+      }
       bars.splice(r[0], r[1] - r[0] + 1);
       if (!bars.length) bars.push(_sbEmptyBar(16));
       var at = Math.min(r[0], bars.length - 1);
@@ -19720,6 +19779,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (b.n === g) continue;
         var nb = _sbEmptyBar(g);
         nb.label = b.label;
+        nb.bpm = b.bpm;
         for (var s = 0; s < b.n; s++) {
           var pos = s * g / b.n;
           if (pos === Math.floor(pos)) { nb.notes[pos] = b.notes[s].slice(); nb.stick[pos] = b.stick[s]; }
@@ -19736,6 +19796,58 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_sbSong.bars[r[0]].label === v) return;
     _sbStructural(function() { _sbSong.bars[r[0]].label = v; });
   }
+  // Tempo ab dem ersten ausgewählten Takt setzen (leer = übernimmt das Tempo davor)
+  function _sbSetBarBpm(v) {
+    var r = _sbRange(), b = _sbSong.bars[r[0]], n = Math.round(+v);
+    var bpm = (n >= 30 && n <= 300) ? n : 0;
+    if ((b.bpm || 0) === bpm) return;
+    _sbStructural(function() { b.bpm = bpm; });
+  }
+  // Tempo tippen (21.10.2026): Mittel über die Abstände der letzten Tipps (bis
+  // zu 8), nach 2 s Pause beginnt eine neue Folge. `ts` ist der Zeitstempel des
+  // Ereignisses — so misst es auch genau, wenn die Seite kurz beschäftigt ist.
+  var _sbTaps = [], _sbTapBarT = 0;
+  function _sbTapBpm(ts) {
+    var t = ts || performance.now();
+    if (_sbTaps.length && t - _sbTaps[_sbTaps.length - 1] > 2000) _sbTaps = [];
+    _sbTaps.push(t);
+    if (_sbTaps.length > 9) _sbTaps.shift();
+    if (_sbTaps.length < 3) return 0;
+    var avg = (_sbTaps[_sbTaps.length - 1] - _sbTaps[0]) / (_sbTaps.length - 1);
+    return Math.max(30, Math.min(300, Math.round(60000 / avg)));
+  }
+  function _sbTapFlash(el) {
+    if (!el) return;
+    el.classList.add('tap');
+    setTimeout(function() { el.classList.remove('tap'); }, 90);
+  }
+  // Songtempo (Knopf oben, Taste T)
+  function _sbTapSong(ts) {
+    _sbTapFlash(document.getElementById('sbTap'));
+    var bpm = _sbTapBpm(ts);
+    if (!bpm) return;
+    _sbSong.bpm = bpm;
+    var inp = document.getElementById('sbBpm');
+    if (inp) inp.value = bpm;
+    _sbSave();
+    _sbRenderMeta();
+  }
+  // Tempo ab dem ausgewählten Takt (Knopf im Editor). Eine Tipp-Folge ist ein
+  // Undo-Schritt; die Partitur zeichnet erst nach dem letzten Tipp neu.
+  function _sbTapBar(ts, btn) {
+    _sbTapFlash(btn);
+    var bpm = _sbTapBpm(ts);
+    if (!bpm) return;
+    var b = _sbSong.bars[_sbRange()[0]];
+    if (_sbTaps.length === 3) _sbPush();
+    b.bpm = bpm;
+    var inp = document.getElementById('sbBarBpm');
+    if (inp) inp.value = bpm;
+    _sbSave();
+    _sbRenderMeta();
+    clearTimeout(_sbTapBarT);
+    _sbTapBarT = setTimeout(_sbRenderScore, 900);
+  }
   function _sbSelectSection(i) {
     var bars = _sbSong.bars, end = i;
     while (end + 1 < bars.length && !bars[end + 1].label) end++;
@@ -19748,7 +19860,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbRenderMeta() {
     var m = document.getElementById('sbMeta');
     if (!m) return;
-    var n = _sbSong.bars.length, sec = Math.round(n * 240 / _sbSong.bpm);
+    var n = _sbSong.bars.length, sec = Math.round(_sbTimes(0).total);
     m.textContent = n + (n === 1 ? ' bar · ' : ' bars · ') + Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2);
     _sbUndoUi();
   }
@@ -19894,7 +20006,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                      curBar: -1, curSlot: -1, done: false, endT: 0, timer: 0, raf: 0,
                      video: video, drums: sound === 'drums',
                      click: video ? sound === 'click' : _sbPrefs.click,
-                     t0: t0, qd: 60 / _sbSong.bpm, startT: t0, prev: null };
+                     t0: t0, qd: 60 / _sbBarBpm(from), startT: t0, prev: null };
     if (_sbPrefs.countIn) {
       if (sound !== 'silent') for (var c = 0; c < 4; c++) playCountClick(c === 0, 1.0, t0 + c * P.qd);
       P.t = P.startT = t0 + 4 * P.qd;
@@ -19916,7 +20028,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (P.drums) (bar.notes[P.slot] || []).forEach(function(k) { _sbHit(k, t); });
       if (P.click && P.slot % per === 0) playCountClick(P.slot === 0, P.slot === 0 ? 1.0 : 0.5, t);
       P.q.push({ t: t, bar: P.bar, slot: P.slot, beat: P.slot % per === 0 });
-      P.t += 240 / _sbSong.bpm / n;
+      P.t += _sbBarSec(P.bar) / n;
       if (++P.slot >= n) {
         P.slot = 0;
         P.bar++;
@@ -20030,13 +20142,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<input type="range" class="sb-zoom" id="sbVidPer" min="1" max="4" step="1"><span class="sb-meta" id="sbVidPerV"></span></label>' +
           '<span class="sb-group">' +
             '<button type="button" class="sb-btn" id="sbVidCountIn">Count-in</button>' +
+            '<button type="button" class="sb-btn gold" id="sbVidExport" title="Render the video with sound as an MP4 file">Export MP4</button>' +
             '<button type="button" class="sb-btn" id="sbVidFull">Fullscreen</button>' +
             '<button type="button" class="sb-btn" id="sbVidClose">Back to editor</button>' +
           '</span>' +
         '</div>' +
-        '<p class="sb-vid-tip">Record this window with OBS or QuickTime. With <b>Green screen</b> you can key the notes over your drum video. ' +
+        '<p class="sb-vid-tip"><b>Export MP4</b> renders exactly this view with sound into a video file (1080p, 60 fps). ' +
+        'With <b>Green screen</b> you can key the notes over your drum video. ' +
         '<kbd>Space</kbd> start / stop · <kbd>F</kbd> fullscreen · <kbd>Esc</kbd> back</p>' +
-      '</div>';
+      '</div>' +
+      // Fortschritt des Video-Exports
+      '<div class="sb-exp" id="sbExp" hidden><div class="sb-exp-card" role="dialog" aria-label="Exporting video">' +
+        '<div class="sb-exp-t">Exporting video</div>' +
+        '<div class="sb-exp-bar"><i id="sbExpFill"></i></div>' +
+        '<div class="sb-exp-s" id="sbExpTxt">Preparing…</div>' +
+        '<button type="button" class="sb-btn" id="sbExpCancel">Cancel</button>' +
+      '</div></div>';
     _sbRoot.appendChild(v);
     var $ = function(id) { return document.getElementById(id); };
     _sbVid = { el: v, stage: $('sbVidStage'), mid: $('sbVidMid'), lane: $('sbVidLane'), strip: $('sbVidStrip'), line: $('sbVidLine'),
@@ -20045,6 +20166,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbVidGo').addEventListener('click', _sbVidToggle);
     $('sbVidClose').addEventListener('click', _sbVidClose);
     $('sbVidFull').addEventListener('click', _sbVidFullscreen);
+    $('sbVidExport').addEventListener('click', _sbExport);
+    $('sbExpCancel').addEventListener('click', function() { if (_sbExp) _sbExp.cancel = true; });
     $('sbVidCountIn').addEventListener('click', function() { _sbTogglePref('countIn'); _sbVidUi(); });
     $('sbVidSize').addEventListener('input', function() {
       _sbPrefs.vidBars = +this.value; _sbSavePrefs(); _sbVidLayout(); _sbVidUi();
@@ -20148,12 +20271,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbVidInfo(from, 0);
     document.getElementById('sbVidCount').textContent = '';
     document.getElementById('sbVidFill').style.transform = 'scaleX(0)';
-    var marks = '', n = _sbSong.bars.length, span = n - from;
+    // Abschnittsmarken nach Zeit, nicht nach Taktzahl — Tempowechsel verschieben sie
+    var marks = '', n = _sbSong.bars.length, tm = _sbTimes(from);
     for (var i = from + 1; i < n; i++) {
-      if (_sbSong.bars[i].label) marks += '<i style="left:' + ((i - from) / span * 100).toFixed(3) + '%"></i>';
+      if (_sbSong.bars[i].label) marks += '<i style="left:' + (tm.at[i - from] / tm.total * 100).toFixed(3) + '%"></i>';
     }
     document.getElementById('sbVidMarks').innerHTML = marks;
-    var tot = Math.round(span * 240 / _sbSong.bpm);
+    V.total = tm.total;
+    var tot = Math.round(tm.total);
     document.getElementById('sbVidTot').textContent = Math.floor(tot / 60) + ':' + ('0' + tot % 60).slice(-2);
     document.getElementById('sbVidEl').textContent = '0:00';
   }
@@ -20238,7 +20363,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       s.classList.remove('in'); void s.offsetWidth; if (sec) s.classList.add('in');
     }
     document.getElementById('sbVidBar').textContent = 'Bar ' + (bi + 1) + ' / ' + bars.length;
-    document.getElementById('sbVidBpm').textContent = _sbSong.bpm + ' BPM';
+    document.getElementById('sbVidBpm').textContent = _sbBarBpm(bi) + ' BPM';
   }
   function _sbVidOpen() {
     if (!_sbRoot) return;
@@ -20291,7 +20416,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       else {   // letzter Slot: bis zum Taktende weiterlaufen
         var g = _sbGeom(_sbSong.bars[a.bar] ? _sbSong.bars[a.bar].n : 16);
         var xe = (a.bar + 1) * V.W + (58 - 32.6) / g.vbW * V.W;
-        x = xa + (xe - xa) * Math.max(0, Math.min(1, (now - a.t) / (240 / _sbSong.bpm / (_sbSong.bars[a.bar] ? _sbSong.bars[a.bar].n : 16))));
+        x = xa + (xe - xa) * Math.max(0, Math.min(1, (now - a.t) / (_sbBarSec(a.bar) / (_sbSong.bars[a.bar] ? _sbSong.bars[a.bar].n : 16))));
       }
       if (a.bar !== V.curBar || a.slot !== V.curSlot) {
         var old = V.curBar;
@@ -20312,11 +20437,522 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var txt = c >= 1 && c <= 4 ? String(c) : '';
       if (cnt.textContent !== txt) { cnt.textContent = txt; cnt.classList.remove('pop'); void cnt.offsetWidth; if (txt) cnt.classList.add('pop'); }
     } else if (cnt.textContent) cnt.textContent = '';
-    var total = (_sbSong.bars.length - P.from) * 240 / _sbSong.bpm;
+    var total = V.total || _sbTimes(P.from).total;
     var el = Math.max(0, Math.min(total, now - P.startT));
     document.getElementById('sbVidFill').style.transform = 'scaleX(' + (el / total).toFixed(4) + ')';
     var es = Math.floor(el);
     document.getElementById('sbVidEl').textContent = Math.floor(es / 60) + ':' + ('0' + es % 60).slice(-2);
+  }
+
+  // ── Video-Export als MP4 (21.10.2026) ───────────────────────
+  // Rendert die Video-Ansicht Bild für Bild in ein Canvas — schneller als
+  // Echtzeit und unabhängig vom Bildschirm — und kodiert mit WebCodecs:
+  // H.264-Video, AAC-Ton (sonst Opus). Den Ton mischt ein OfflineAudioContext
+  // aus denselben Samples wie der Player. Verpackt wird mit mp4-muxer
+  // (vendor/mp4-muxer.js, MIT), geladen erst beim ersten Export.
+  // Zeitachse: kurzer Vorlauf, Einzähler, Takte mit Tempowechseln, Nachlauf.
+  // Das Layout zeichnet die CSS-Video-Ansicht nach (gleiche Maße in Bühnenpixeln).
+  var SB_EXP_FPS = 60, SB_EXP_LEAD = 0.6, SB_EXP_TAIL = 1.5, SB_EXP_SR = 48000;
+  var SB_GOLD = '#C9A84C';
+  var _sbExp = null;   // laufender Export { cancel }
+
+  function _sbExpSupported() {
+    return typeof window.VideoEncoder === 'function' && typeof window.VideoFrame === 'function' &&
+           typeof window.OfflineAudioContext === 'function';
+  }
+  function _sbLoadMuxer() {
+    if (window.Mp4Muxer) return Promise.resolve();
+    return new Promise(function(res, rej) {
+      var s = document.createElement('script');
+      s.src = 'vendor/mp4-muxer.js';
+      s.onload = function() { if (window.Mp4Muxer) res(); else rej(new Error('Video muxer missing')); };
+      s.onerror = function() { rej(new Error('Video muxer could not be loaded')); };
+      document.head.appendChild(s);
+    });
+  }
+  function _sbLoadImg(src) {
+    return new Promise(function(res, rej) {
+      var img = new Image();
+      img.onload = function() { res(img); };
+      img.onerror = function() { rej(new Error('Image could not be drawn')); };
+      img.src = src;
+    });
+  }
+  function _sbMmSs(sec) {
+    var s = Math.max(0, Math.floor(sec));
+    return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2);
+  }
+  // Zeitachse und Maße — dieselben Einstellungen wie die Video-Ansicht
+  function _sbExpPlan() {
+    var d = _sbVidDims(), from = _sbVidFrom(), tm = _sbTimes(from), top = _sbTop();
+    var qd = 60 / _sbBarBpm(from), lines = _sbPrefs.vidLayout === 'lines';
+    var P = { w: d.w, h: d.h, tall: d.h > d.w, lines: lines, green: _sbPrefs.vidBg === 'green',
+              sound: _sbPrefs.vidSound, from: from, at: tm.at, songSec: tm.total, qd: qd,
+              countIn: !!_sbPrefs.countIn, top: top, headX: d.w * SB_VID_HEAD };
+    P.startT = SB_EXP_LEAD + (P.countIn ? 4 * qd : 0);
+    P.total = P.startT + P.songSec + SB_EXP_TAIL;
+    if (lines) {
+      P.M = P.tall ? 60 : 96;
+      P.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
+      P.W = Math.floor((P.w - 2 * P.M) / P.P);
+      P.H = Math.round(P.W * (98 - top) / 500);
+      P.G = Math.round(P.H * 0.28);
+      P.midH = 2 * P.H + P.G;
+    } else {
+      P.M = 0;
+      P.W = Math.round(P.w / (_sbPrefs.vidBars || 2));
+      P.H = Math.round(P.W * (98 - top) / 500);
+      P.midH = P.H;
+    }
+    P.midTop = Math.round((P.tall ? 0.47 : 0.5) * P.h - P.midH / 2);
+    P.paper = P.green ? '#00b140' : '#121211';
+    P.bg = P.green ? '#00b140' : '#0b0b0a';
+    return P;
+  }
+  // Takt und Slot zur Zeit t: null vor dem ersten Takt, { end } danach
+  function _sbExpAt(P, t) {
+    var rel = t - P.startT;
+    if (rel < 0) return null;
+    if (rel >= P.songSec) return { end: true };
+    var lo = 0, hi = P.at.length - 1;
+    while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (P.at[mid] <= rel) lo = mid; else hi = mid - 1; }
+    var bi = P.from + lo, n = _sbSong.bars[bi].n, sd = _sbBarSec(bi) / n, within = rel - P.at[lo];
+    var s = Math.min(n - 1, Math.floor(within / sd));
+    return { bar: bi, slot: s, frac: (within - s * sd) / sd, sd: sd };
+  }
+  // x-Position eines Slots im Band (wie _sbVidX, mit den Export-Maßen)
+  function _sbExpX(P, bi, slot) {
+    var b = _sbSong.bars[bi], g = _sbGeom(b ? b.n : 16);
+    return bi * P.W + (58 + slot * g.bs - 32.6) / g.vbW * P.W;
+  }
+  function _sbExpPos(P, a) {
+    if (!a) return _sbExpX(P, P.from, 0);
+    if (a.end) return _sbExpX(P, _sbSong.bars.length, 0);
+    var b = _sbSong.bars[a.bar];
+    var xa = _sbExpX(P, a.bar, a.slot);
+    var xb = (a.slot + 1 < b.n) ? _sbExpX(P, a.bar, a.slot + 1) : _sbExpX(P, a.bar + 1, 0);
+    return xa + (xb - xa) * a.frac;
+  }
+  // Ein Takt als Bild: normal (mit Linien) oder als goldene Notenebene ohne
+  // Linien — die wird an der gerade klingenden Note darübergelegt.
+  function _sbExpBarSrc(P, bi, gold) {
+    var bar = _sbSong.bars[bi], svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    var C = gold ? { ink: SB_GOLD, paper: P.paper, soft: SB_GOLD, faint: SB_GOLD, dim: SB_GOLD, active: SB_GOLD }
+                 : { ink: '#ffffff', paper: P.paper, soft: P.green ? '#dcdcdc' : 'rgba(255,255,255,0.6)',
+                     faint: P.green ? '#dcdcdc' : 'rgba(255,255,255,0.35)', dim: 'rgba(255,255,255,0.2)', active: SB_GOLD };
+    var keep = GROOVE;
+    GROOVE = _sbGroove(bar);
+    GROOVE.noActiveBox = true;
+    try { renderNot(-1, false, { svg: svg, plain: true, colors: C, noStaff: gold }); }
+    finally { GROOVE = keep; }
+    var g = _sbGeom(bar.n);
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + P.W + '" height="' + P.H + '" viewBox="32.6 ' + P.top + ' ' +
+      g.vbW + ' ' + (98 - P.top) + '" preserveAspectRatio="none">' + svg.innerHTML + '</svg>');
+  }
+
+  // Ton: OfflineAudioContext mit denselben Samples, Lautstärken, Trim- und
+  // Flam-Werten wie playSound; offene Hi-Hat schließt beim nächsten Hi-Hat-Schlag.
+  // `shift`: so viel früher mischen, wie der Encoder vorne anfügt (AAC: 2112
+  // Samples = 44 ms) — sonst läuft der Ton im fertigen Video hinter dem Bild her.
+  function _sbExpAudio(P, shift) {
+    if (P.sound === 'silent') return Promise.resolve(null);
+    var ctx = new OfflineAudioContext(2, Math.ceil(P.total * SB_EXP_SR), SB_EXP_SR), openG = null;
+    shift = shift || 0;
+    function vol(k) {
+      return (k === 'crash1' || k === 'crash2') ? 0.38 : k === 'ride' ? 0.70 : k === 'hhOpen' ? 0.48 :
+             k === 'hh' ? 0.225 : (k === 'hhPedal' || k === 'hhAccent') ? 0.56 : 1.0;
+    }
+    function hit(k, t) {
+      t = Math.max(0, t - shift);
+      if (openG && (k === 'hh' || k === 'hhAccent' || k === 'hhPedal' || k === 'hhOpen')) {
+        openG.gain.setValueAtTime(0.001, t); openG = null;
+      }
+      var buf = WAVS[k];
+      if (!buf) return;
+      var src = ctx.createBufferSource(), g = ctx.createGain();
+      src.buffer = buf; g.gain.value = vol(k);
+      src.connect(g); g.connect(ctx.destination);
+      src.start(Math.max(0, t - (WAV_ANCHOR[k] || 0)), WAV_TRIM[k] || 0);
+      if (k === 'hhOpen') openG = g;
+    }
+    function click(accent, v, t) {
+      t = Math.max(0, t - shift);
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = accent ? 1500 : 1100;
+      g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      o.start(t); o.stop(t + 0.06);
+    }
+    if (P.countIn) for (var c = 0; c < 4; c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
+    var bars = _sbSong.bars;
+    for (var i = P.from; i < bars.length; i++) {
+      var bar = bars[i], t0 = P.startT + P.at[i - P.from], sd = _sbBarSec(i) / bar.n, per = bar.n / 4;
+      for (var s = 0; s < bar.n; s++) {
+        var t = t0 + s * sd;
+        if (P.sound === 'drums') (bar.notes[s] || []).forEach(function(k) { hit(k, t); });
+        if (P.sound === 'click' && s % per === 0) click(s === 0, s === 0 ? 1.0 : 0.5, t);
+      }
+    }
+    return ctx.startRendering();
+  }
+
+  function _sbExpUi(on, frac, txt) {
+    var box = document.getElementById('sbExp');
+    if (!box) return;
+    box.hidden = !on;
+    if (frac != null) document.getElementById('sbExpFill').style.transform = 'scaleX(' + Math.max(0, Math.min(1, frac)).toFixed(4) + ')';
+    if (txt != null) document.getElementById('sbExpTxt').textContent = txt;
+  }
+
+  // Erste unterstützte Encoder-Einstellung (nacheinander geprüft)
+  function _sbFirstSupported(Enc, cfgs) {
+    var i = 0;
+    function next() {
+      if (i >= cfgs.length) return Promise.resolve(null);
+      var c = cfgs[i++];
+      return Enc.isConfigSupported(c.cfg || c).then(function(r) { return r && r.supported ? c : next(); }, next);
+    }
+    return next();
+  }
+  function _sbWait(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+  // Ein Bild des Videos zeichnen. `S` hält, was über die Bilder hinweg
+  // weiterläuft (Abschnitt, Zeile, Bildlauf), `ready` die geladenen Takt-Bilder.
+  function _sbExpDraw(ctx, P, f, fps, S, ready, lionW, lionG) {
+    var bars = _sbSong.bars, t = f / fps, a = _sbExpAt(P, t), x = _sbExpPos(P, a);
+    var curBar = a && !a.end ? a.bar : (a && a.end ? bars.length - 1 : P.from);
+    var FONT = '"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+    var ease = function(p) { p = Math.max(0, Math.min(1, p)); return 1 - Math.pow(1 - p, 3); };
+    var spacing = function(v) { try { ctx.letterSpacing = v; } catch (e) {} };
+    var title = _sbSong.title || 'Untitled song';
+
+    // ── Hintergrund
+    ctx.fillStyle = P.bg; ctx.fillRect(0, 0, P.w, P.h);
+    if (!P.green) {
+      var rg = ctx.createRadialGradient(P.w * 0.3, P.h * 0.5, 0, P.w * 0.3, P.h * 0.5, P.w * 0.49);
+      rg.addColorStop(0, 'rgba(201,168,76,0.07)'); rg.addColorStop(1, 'rgba(201,168,76,0)');
+      ctx.fillStyle = rg; ctx.fillRect(0, 0, P.w, P.h);
+    }
+    // ── Kopf: Löwe + DRUMLION, Titel, BPM und Takt
+    var hx = P.tall ? 72 : 96, hy = P.tall ? 150 : 64;
+    if (lionW) ctx.drawImage(lionW, hx, hy, 46, 46 * lionW.height / lionW.width);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.font = '800 26px ' + FONT; spacing('5.7px');
+    ctx.fillStyle = '#ffffff'; ctx.fillText('DRUM', hx + 60, hy + 24);
+    var dw = ctx.measureText('DRUM').width;
+    ctx.fillStyle = SB_GOLD; ctx.fillText('LION', hx + 60 + dw, hy + 24);
+    spacing('0px'); ctx.textBaseline = 'alphabetic';
+    var metaBpm = _sbBarBpm(curBar) + ' BPM', metaBar = 'Bar ' + (curBar + 1) + ' / ' + bars.length;
+    ctx.font = '600 28px ' + FONT;
+    var mw1 = ctx.measureText(metaBpm).width, mw2 = ctx.measureText(metaBar).width;
+    var metaCol = P.green ? '#f2f2f2' : '#a39d90';
+    if (P.tall) {
+      ctx.font = '800 76px ' + FONT; ctx.fillStyle = '#E8E4DB';
+      var words = title.split(/\s+/), lines = [''], maxW = P.w - 144;
+      words.forEach(function(wd) {
+        var cur = lines[lines.length - 1], tryL = cur ? cur + ' ' + wd : wd;
+        if (!cur || ctx.measureText(tryL).width <= maxW) lines[lines.length - 1] = tryL;
+        else if (lines.length < 2) lines.push(wd);
+        else lines[1] += ' ' + wd;
+      });
+      lines.forEach(function(ln, li) { ctx.fillText(ln, hx, hy + 122 + li * 80, maxW); });
+      var ty = hy + 122 + (lines.length - 1) * 80;
+      ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol;
+      ctx.fillText(metaBpm, hx, ty + 58);
+      ctx.fillText(metaBar, hx + mw1 + 36, ty + 58);
+    } else {
+      ctx.font = '800 68px ' + FONT; ctx.fillStyle = '#E8E4DB';
+      ctx.fillText(title, hx, hy + 114, P.w - 2 * hx - mw1 - mw2 - 76);
+      ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol; ctx.textAlign = 'right';
+      ctx.fillText(metaBar, P.w - hx, hy + 108);
+      ctx.fillText(metaBpm, P.w - hx - mw2 - 36, hy + 108);
+      ctx.textAlign = 'left';
+    }
+    // ── Abschnitt (blendet beim Wechsel ein)
+    var sec = '';
+    for (var si = Math.min(curBar, bars.length - 1); si >= 0; si--) if (bars[si].label) { sec = bars[si].label; break; }
+    if (sec !== S.sec) { S.sec = sec; S.secT = (f === 0) ? -1 : t; }
+    if (sec) {
+      var sp = S.secT < 0 ? 1 : ease((t - S.secT) / 0.5);
+      ctx.globalAlpha = sp;
+      ctx.font = '800 34px ' + FONT; ctx.fillStyle = SB_GOLD; spacing('8px');
+      ctx.fillText(sec.toUpperCase(), P.lines ? P.M : P.headX - 2, P.midTop - 40 + 14 * (1 - sp));
+      spacing('0px'); ctx.globalAlpha = 1;
+    }
+    // ── Noten
+    // Goldene Note unter der Linie: die goldene Ebene nur im Streifen des Slots
+    var slotHi = function(tileX, tileY, bi, slot) {
+      var gimg = ready[bi + 'g'];
+      if (!gimg) return;
+      var g = _sbGeom(bars[bi].n), sx = (58 + slot * g.bs - 32.6) / g.vbW * P.W, sw = g.bs / g.vbW * P.W;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(tileX + sx - sw / 2, tileY, sw, P.H); ctx.clip();
+      if (!P.green) { ctx.shadowColor = 'rgba(201,168,76,0.75)'; ctx.shadowBlur = 14; }
+      ctx.drawImage(gimg, tileX, tileY, P.W, P.H);
+      ctx.restore();
+    };
+    // Abspiellinie pulsiert auf jeder Zählzeit
+    var pulse = 0;
+    if (a && !a.end) {
+      var per = bars[a.bar].n / 4, since = ((a.slot % per) + a.frac) * a.sd;
+      pulse = Math.max(0, 1 - since / 0.22);
+    }
+    var glow = function() {
+      if (P.green) return;
+      ctx.shadowColor = 'rgba(201,168,76,' + (0.55 + 0.35 * pulse).toFixed(3) + ')';
+      ctx.shadowBlur = 14 + 20 * pulse;
+    };
+    if (!P.lines) {
+      var ly = P.midTop, off0 = P.headX - x;
+      ctx.fillStyle = P.paper; ctx.fillRect(0, ly, P.w, P.H);
+      if (!P.green) { ctx.fillStyle = 'rgba(201,168,76,0.22)'; ctx.fillRect(0, ly - 1, P.w, 1); ctx.fillRect(0, ly + P.H, P.w, 1); }
+      var b0 = Math.max(0, Math.floor((x - P.headX) / P.W) - 1), b1 = Math.min(bars.length - 1, Math.floor((x - P.headX + P.w) / P.W) + 1);
+      for (var bb = b0; bb <= b1; bb++) { var im = ready[bb + 'n']; if (im) ctx.drawImage(im, off0 + bb * P.W, ly, P.W, P.H); }
+      if (a && !a.end) slotHi(off0 + a.bar * P.W, ly, a.bar, a.slot);
+      if (!P.green) {   // Ränder weich ausblenden wie in der Ansicht
+        var fw = P.w * 0.07, gl = ctx.createLinearGradient(0, 0, fw, 0);
+        gl.addColorStop(0, P.bg); gl.addColorStop(1, 'rgba(11,11,10,0)');
+        ctx.fillStyle = gl; ctx.fillRect(0, ly - 2, fw, P.H + 4);
+        var gr = ctx.createLinearGradient(P.w - fw, 0, P.w, 0);
+        gr.addColorStop(0, 'rgba(11,11,10,0)'); gr.addColorStop(1, P.bg);
+        ctx.fillStyle = gr; ctx.fillRect(P.w - fw, ly - 2, fw, P.H + 4);
+      }
+      ctx.save(); glow(); ctx.fillStyle = SB_GOLD; ctx.fillRect(P.headX - 1.5, ly - 26, 3, P.H + 52); ctx.restore();
+    } else {
+      var rowW = P.P * P.W, step = P.H + P.G, lastRow = Math.floor((bars.length - 1) / P.P);
+      var row = Math.max(0, Math.min(lastRow, Math.floor(x / rowW + 1e-6)));
+      if (row !== S.row) { S.scrollFrom = S.row < 0 ? row * step : S.scroll; S.row = row; S.rowT = t; }
+      S.scroll = S.scrollFrom + (row * step - S.scrollFrom) * ease((t - S.rowT) / 0.55);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(P.M, P.midTop, P.w - 2 * P.M, P.midH); ctx.clip();
+      var sysTop = (40 - P.top) / (98 - P.top) * P.H, sysH = 32 / (98 - P.top) * P.H;
+      for (var k = Math.max(0, row - 1); k <= Math.min(lastRow, row + 2); k++) {
+        var ry = P.midTop + k * step - S.scroll;
+        if (ry > P.midTop + P.midH || ry + P.H < P.midTop) continue;
+        ctx.fillStyle = P.paper; ctx.fillRect(P.M, ry, rowW, P.H);
+        if (!P.green) { ctx.fillStyle = 'rgba(201,168,76,0.18)'; ctx.fillRect(P.M, ry - 1, rowW, 1); ctx.fillRect(P.M, ry + P.H, rowW, 1); }
+        for (var j = 0; j < P.P; j++) { var im2 = ready[(k * P.P + j) + 'n']; if (im2) ctx.drawImage(im2, P.M + j * P.W, ry, P.W, P.H); }
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(P.M, ry + sysTop, 2, sysH);
+      }
+      if (a && !a.end) slotHi(P.M + (a.bar % P.P) * P.W, P.midTop + Math.floor(a.bar / P.P) * step - S.scroll, a.bar, a.slot);
+      ctx.save(); glow(); ctx.fillStyle = SB_GOLD;
+      ctx.fillRect(P.M + Math.max(0, x - row * rowW) - 1.5, P.midTop + row * step - S.scroll, 3, P.H);
+      ctx.restore();
+      ctx.restore();
+    }
+    // ── Wasserzeichen unten rechts im Notenband
+    ctx.font = '700 22px ' + FONT;
+    var wmText = 'drumlion.com', wmW = 48 + 34 + 10 + ctx.measureText(wmText).width + 22, wmH = 54;
+    var wmX = (P.lines ? P.w - P.M : P.w) - wmW, wmY = P.midTop + P.midH - wmH;
+    if (P.green) { ctx.fillStyle = '#00b140'; ctx.fillRect(wmX, wmY, wmW, wmH); }
+    else {
+      var wg = ctx.createLinearGradient(wmX, 0, wmX + 34, 0);
+      wg.addColorStop(0, 'rgba(18,18,17,0)'); wg.addColorStop(1, P.paper);
+      ctx.fillStyle = wg; ctx.fillRect(wmX, wmY, 34, wmH);
+      ctx.fillStyle = P.paper; ctx.fillRect(wmX + 34, wmY, wmW - 34, wmH);
+    }
+    if (lionG) ctx.drawImage(lionG, wmX + 48, wmY + 10, 34, 34 * lionG.height / lionG.width);
+    ctx.fillStyle = '#e8e4db'; ctx.textBaseline = 'middle';
+    ctx.fillText(wmText, wmX + 92, wmY + wmH / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+    // ── Einzähler
+    if (P.countIn && t >= SB_EXP_LEAD && t < P.startT) {
+      var cn = Math.min(4, Math.floor((t - SB_EXP_LEAD) / P.qd) + 1);
+      var cp = ease((t - SB_EXP_LEAD - (cn - 1) * P.qd) / 0.45), sc = 1.35 - 0.35 * cp;
+      ctx.save();
+      ctx.globalAlpha = 0.2 + 0.8 * cp;
+      ctx.translate(P.w / 2, P.midTop + P.midH + 124);
+      ctx.scale(sc, sc);
+      ctx.font = '800 150px ' + FONT; ctx.fillStyle = SB_GOLD; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(cn), 0, 0);
+      ctx.restore();
+    }
+    // ── Fortschritt
+    var fx = P.tall ? 72 : 96, fb = P.h - (P.tall ? 300 : 70), fwid = P.w - 2 * fx, py = fb - 49;
+    var el = Math.max(0, Math.min(P.songSec, t - P.startT));
+    ctx.fillStyle = P.green ? '#10331e' : 'rgba(255,255,255,0.12)'; ctx.fillRect(fx, py, fwid, 6);
+    ctx.fillStyle = SB_GOLD; ctx.fillRect(fx, py, fwid * (P.songSec ? el / P.songSec : 0), 6);
+    ctx.fillStyle = P.green ? '#f2f2f2' : 'rgba(232,228,219,0.55)';
+    for (var mi = P.from + 1; mi < bars.length; mi++) {
+      if (bars[mi].label) ctx.fillRect(fx + fwid * P.at[mi - P.from] / P.songSec - 1, py - 5, 2, 16);
+    }
+    ctx.font = '600 24px ' + FONT; ctx.fillStyle = P.green ? '#f2f2f2' : '#8d877b';
+    ctx.textAlign = 'left'; ctx.fillText(_sbMmSs(el), fx, fb - 6);
+    ctx.textAlign = 'right'; ctx.fillText(_sbMmSs(Math.round(P.songSec)), fx + fwid, fb - 6);
+    ctx.textAlign = 'left';
+  }
+
+  // Welche Takt-Bilder ein Bild braucht: [Takt, gold?]
+  function _sbExpNeeds(P, f, fps) {
+    var bars = _sbSong.bars, t = f / fps, a = _sbExpAt(P, t), x = _sbExpPos(P, a), out = [];
+    if (P.lines) {
+      var rowW = P.P * P.W, lastRow = Math.floor((bars.length - 1) / P.P);
+      var row = Math.max(0, Math.min(lastRow, Math.floor(x / rowW + 1e-6)));
+      for (var k = Math.max(0, row - 1); k <= Math.min(lastRow, row + 2); k++)
+        for (var j = 0; j < P.P; j++) out.push([k * P.P + j, false]);
+    } else {
+      var b0 = Math.max(0, Math.floor((x - P.headX) / P.W) - 1), b1 = Math.floor((x - P.headX + P.w) / P.W) + 1;
+      for (var b = b0; b <= b1; b++) out.push([b, false]);
+    }
+    if (a && !a.end) { out.push([a.bar, true]); out.push([a.bar + 1, true]); }
+    return out.filter(function(it) { return it[0] >= 0 && it[0] < bars.length; });
+  }
+
+  function _sbExport() {
+    if (_sbExp || !_sbVid) return;
+    if (!_sbExpSupported()) { _devToast('Video export needs a current Chrome, Edge or Safari'); return; }
+    _sbStop();
+    var job = _sbExp = { cancel: false };
+    var P = _sbExpPlan(), fps = SB_EXP_FPS, nFrames = Math.ceil(P.total * fps);
+    var bars = _sbSong.bars, title = _sbSong.title || 'Untitled song';
+    var lionW = null, lionG = null, audio = null, aCfg = null, vCfg = null, muxer = null, encErr = null;
+    var check = function() { if (job.cancel) throw new Error('cancelled'); if (encErr) throw encErr; };
+    _sbExpUi(true, 0, 'Preparing…');
+    try { initA(); } catch (e) {}
+
+    _sbLoadMuxer().then(function() {
+      // Samples müssen dekodiert sein, bevor gemischt wird
+      var tries = 0;
+      function waitSamples() {
+        if (Object.keys(WAVS).length >= 20 || tries++ > 40) return Promise.resolve();
+        return _sbWait(75).then(waitSamples);
+      }
+      return waitSamples();
+    }).then(function() {
+      if (!document.fonts || !document.fonts.load) return null;
+      return Promise.all(['800 68px', '800 34px', '600 28px', '700 22px', '800 150px'].map(function(fnt) {
+        return document.fonts.load(fnt + ' "DM Sans"').catch(function() {});
+      }));
+    }).then(function() {
+      // Löwe weiß (Kopf) und gold (Wasserzeichen)
+      var m = getComputedStyle(_sbVid.el).getPropertyValue('--sb-lion').match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
+      return m ? _sbLoadImg(m[1]).then(function(img) {
+        lionW = img;
+        lionG = document.createElement('canvas'); lionG.width = img.width; lionG.height = img.height;
+        var lg = lionG.getContext('2d');
+        lg.drawImage(img, 0, 0); lg.globalCompositeOperation = 'source-in'; lg.fillStyle = SB_GOLD;
+        lg.fillRect(0, 0, lionG.width, lionG.height);
+      }, function() {}) : null;
+    }).then(function() {
+      check();
+      return (P.sound !== 'silent' && typeof window.AudioEncoder === 'function') ? _sbFirstSupported(AudioEncoder, [
+        { cfg: { codec: 'mp4a.40.2', sampleRate: SB_EXP_SR, numberOfChannels: 2, bitrate: 192000 }, mux: 'aac' },
+        { cfg: { codec: 'opus', sampleRate: SB_EXP_SR, numberOfChannels: 2, bitrate: 160000 }, mux: 'opus' }
+      ]) : null;
+    }).then(function(a) {
+      check();
+      aCfg = a;
+      _sbExpUi(true, 0, 'Mixing sound…');
+      return aCfg ? _sbExpAudio(P, aCfg.mux === 'aac' ? 2112 / SB_EXP_SR : 0) : null;
+    }).then(function(buf) {
+      check();
+      audio = buf;
+      if (!audio) aCfg = null;
+      return _sbFirstSupported(VideoEncoder, ['avc1.64002A', 'avc1.4D402A', 'avc1.42002A', 'avc1.640033'].map(function(c) {
+        return { codec: c, width: P.w, height: P.h, bitrate: 12000000, framerate: fps };
+      }));
+    }).then(function(v) {
+      check();
+      if (!v) throw new Error('This browser cannot encode H.264 video');
+      vCfg = v;
+      muxer = new Mp4Muxer.Muxer({
+        target: new Mp4Muxer.ArrayBufferTarget(),
+        video: { codec: 'avc', width: P.w, height: P.h, frameRate: fps },
+        audio: aCfg ? { codec: aCfg.mux, numberOfChannels: 2, sampleRate: SB_EXP_SR } : undefined,
+        fastStart: 'in-memory',
+        firstTimestampBehavior: 'offset'
+      });
+      if (!aCfg) return null;
+      // Ton kodieren: in Häppchen von 0,1 s
+      var aenc = new AudioEncoder({ output: function(ch, meta) { muxer.addAudioChunk(ch, meta); },
+                                    error: function(e) { encErr = e; } });
+      aenc.configure(aCfg.cfg);
+      var L = audio.getChannelData(0), R = audio.getChannelData(1), N = 4800;
+      for (var off = 0; off < audio.length; off += N) {
+        var n = Math.min(N, audio.length - off), data = new Float32Array(n * 2);
+        data.set(L.subarray(off, off + n), 0); data.set(R.subarray(off, off + n), n);
+        var ad = new AudioData({ format: 'f32-planar', sampleRate: SB_EXP_SR, numberOfFrames: n,
+                                 numberOfChannels: 2, timestamp: Math.round(off / SB_EXP_SR * 1e6), data: data });
+        aenc.encode(ad); ad.close();
+      }
+      return aenc.flush().then(function() { aenc.close(); });
+    }).then(function() {
+      check();
+      // Bilder rendern und kodieren — in Portionen, damit die Seite bedienbar bleibt
+      var venc = new VideoEncoder({ output: function(ch, meta) { muxer.addVideoChunk(ch, meta); },
+                                    error: function(e) { encErr = e; } });
+      venc.configure(vCfg);
+      var cv = document.createElement('canvas');
+      cv.width = P.w; cv.height = P.h;
+      var ctx = cv.getContext('2d', { alpha: false });
+      var imgs = {}, ready = {}, S = { sec: null, secT: 0, row: -1, rowT: 0, scroll: 0, scrollFrom: 0 }, f = 0;
+      function load(it) {
+        var k = it[0] + (it[1] ? 'g' : 'n');
+        if (ready[k]) return null;
+        if (!imgs[k]) imgs[k] = _sbLoadImg(_sbExpBarSrc(P, it[0], it[1])).then(function(im) { ready[k] = im; return im; });
+        return imgs[k];
+      }
+      function prune(lo, hi) {
+        Object.keys(ready).forEach(function(k) {
+          var b = parseInt(k, 10);
+          if (b < lo || b > hi) { delete ready[k]; delete imgs[k]; }
+        });
+      }
+      return new Promise(function(resolve, reject) {
+        function run() {
+          try {
+            var burst = 0;
+            while (f < nFrames) {
+              check();
+              var missing = _sbExpNeeds(P, f, fps).map(load).filter(Boolean);
+              // vorausladen: die nächsten Takte, solange gerechnet wird
+              _sbExpNeeds(P, Math.min(nFrames - 1, f + fps), fps).forEach(load);
+              if (missing.length) { Promise.all(missing).then(run, reject); return; }
+              _sbExpDraw(ctx, P, f, fps, S, ready, lionW, lionG);
+              var vf = new VideoFrame(cv, { timestamp: Math.round(f * 1e6 / fps), duration: Math.round(1e6 / fps) });
+              venc.encode(vf, { keyFrame: f % (fps * 2) === 0 });
+              vf.close();
+              f++;
+              if (f % 120 === 0) {
+                var a = _sbExpAt(P, f / fps), cb = a && !a.end ? a.bar : P.from;
+                prune(cb - (P.lines ? 2 * P.P + 2 : 6), cb + (P.lines ? 4 * P.P + 8 : 14));
+              }
+              if (venc.encodeQueueSize > 6 || ++burst >= 12) {
+                _sbExpUi(true, f / nFrames, 'Rendering ' + Math.round(f / nFrames * 100) + ' % · ' +
+                         _sbMmSs(f / fps) + ' of ' + _sbMmSs(P.total));
+                setTimeout(run, venc.encodeQueueSize > 6 ? 4 : 0);
+                return;
+              }
+            }
+            venc.flush().then(function() { venc.close(); resolve(); }, reject);
+          } catch (e) { reject(e); }
+        }
+        run();
+      });
+    }).then(function() {
+      check();
+      _sbExpUi(true, 1, 'Saving…');
+      muxer.finalize();
+      var blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = ((title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-')) || 'song') +
+                      (P.tall ? '-9x16' : '') + (P.green ? '-greenscreen' : '') + '.mp4';
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function() { URL.revokeObjectURL(link.href); }, 60000);
+      _devToast('Video saved: ' + link.download +
+                ((aCfg || P.sound === 'silent') ? '' : ' (without sound: this browser cannot encode audio)'));
+    }).catch(function(err) {
+      if (err && err.message === 'cancelled') _devToast('Video export cancelled');
+      else {
+        if (window.console) console.error('Video export', err);
+        _devToast('Video export failed: ' + ((err && err.message) || err));
+      }
+    }).then(function() {
+      _sbExp = null;
+      _sbExpUi(false);
+    });
   }
 
   // ── Öffnen, Schließen, Bedienung ────────────────────────────
@@ -20365,6 +21001,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<button type="button" class="sb-btn gold" id="sbPlay" title="Play from the selected bar (Space)">▶ Play</button>' +
           '<input class="sb-num-in" id="sbBpm" type="number" min="30" max="300" step="1" aria-label="Tempo in BPM">' +
           '<span class="sb-lbl">BPM</span>' +
+          '<button type="button" class="sb-btn" id="sbTap" title="Tap the beat to find the song tempo (T)">Tap</button>' +
         '</span>' +
         '<span class="sb-group">' +
           '<button type="button" class="sb-btn" id="sbLoop" title="Loop the selected bars (L)">Loop</button>' +
@@ -20414,8 +21051,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     bpmIn.addEventListener('change', function() {
       _sbSong.bpm = _sbBpmClamp(this.value);
       this.value = _sbSong.bpm;
-      _sbSave(); _sbRenderMeta();
+      _sbSave(); _sbRenderMeta(); _sbRenderEditor();
     });
+    // Tippen auf pointerdown statt click: kürzerer Weg, genauere Abstände
+    $('sbTap').addEventListener('pointerdown', function(e) { e.preventDefault(); _sbTapSong(e.timeStamp); });
     $('sbLoop').addEventListener('click', function() { _sbTogglePref('loop'); });
     $('sbClick').addEventListener('click', function() { _sbTogglePref('click'); });
     $('sbCount').addEventListener('click', function() { _sbTogglePref('countIn'); });
@@ -20452,8 +21091,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       else if (act === 'undo') _sbUndoDo();
       else if (act === 'redo') _sbRedoDo();
     });
+    ed.addEventListener('pointerdown', function(e) {
+      var tb = e.target.closest && e.target.closest('[data-act="tapbar"]');
+      if (tb) { e.preventDefault(); _sbTapBar(e.timeStamp, tb); }
+    });
     ed.addEventListener('change', function(e) {
       if (e.target.id === 'sbLabel') _sbSetLabel(e.target.value);
+      else if (e.target.id === 'sbBarBpm') _sbSetBarBpm(e.target.value);
       else if (e.target.id === 'sbRepN') _sbRepN = Math.max(1, Math.min(64, Math.round(+e.target.value) || 1));
     });
     ed.addEventListener('pointerdown', _sbGridDown);
@@ -20474,6 +21118,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     e.stopPropagation();
     var mod = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase(), done = true;
+    if (_sbExp) {   // Export läuft: Esc bricht ab, sonst nichts
+      if (e.key === 'Escape') _sbExp.cancel = true;
+      e.preventDefault();
+      return;
+    }
     if (_sbVid && _sbVid.open) {   // Video-Ansicht: nur Start/Stop, Vollbild, zurück
       if (e.code === 'Space') _sbVidToggle();
       else if (e.key === 'Escape') { if (_sbP) _sbStop(); else _sbVidClose(); }
@@ -20499,6 +21148,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else if (k === 'n') _sbAddBar();
     else if (k === 'l') _sbTogglePref('loop');
     else if (k === 'k') _sbTogglePref('click');
+    else if (k === 't') _sbTapSong(e.timeStamp);
     else if (e.key === 'Escape') {
       var m = document.getElementById('sbMenu');
       if (m && m.open) m.open = false; else if (_sbP) _sbStop();
