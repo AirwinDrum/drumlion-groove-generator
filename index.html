@@ -1479,6 +1479,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   color: var(--sb-gold); pointer-events: none; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .sb-btn.tap { background: var(--sb-gold); border-color: var(--sb-gold); color: #141414; }
+/* Speicheranzeige oben: wo liegt der Song? */
+.sb-save { font-size: 12px; color: var(--sb-mute); white-space: nowrap; }
+.sb-save.warn { color: #d9a46a; }
+.sb-save .sb-btn { padding: 4px 9px; font-size: 12px; }
+.sb-linkbtn {
+  background: none; border: 0; padding: 0; color: var(--sb-gold); font: inherit; text-decoration: underline;
+  text-underline-offset: 2px; cursor: pointer;
+}
 /* Leiste „Recording": Aufnahme, Mitspielen, Mittippen (21.10.2026) */
 .sb-sync {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 9px 16px;
@@ -15845,7 +15853,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261020-234317';
+  var DL_BUILD = '20261021-110141';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19236,6 +19244,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!out.bars.length) out.bars.push(_sbEmptyBar(16));
     // Mittippen: Startpunkt von Takt 1 in der Aufnahme (Sekunden)
     if (s.sync && isFinite(+s.sync.offset)) out.sync = { offset: Math.round(+s.sync.offset * 1000) / 1000 };
+    if (+s.updated > 0) out.updated = +s.updated;   // für den Abgleich mit dem Ordner
     return out;
   }
   // Tempo eines Takts: der letzte Tempowechsel bis hierhin, sonst das Songtempo
@@ -19298,8 +19307,248 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_sbData) return;
     try { localStorage.setItem(SB_KEY, JSON.stringify(_sbData)); }
     catch (e) { _devToast('Not saved: browser storage is full. Export the song to a file.'); }
+    _sbFolderFlush();
   }
-  function _sbSave() { clearTimeout(_sbSaveT); _sbSaveT = setTimeout(_sbSaveNow, 400); }
+  // Jede Änderung stempelt den offenen Song (`updated`) — danach entscheidet der
+  // Abgleich mit dem Ordner, welche Fassung neuer ist
+  function _sbSave() {
+    if (_sbSong) { _sbSong.updated = Date.now(); _sbChanged[_sbSong.id] = 1; }
+    clearTimeout(_sbSaveT); _sbSaveT = setTimeout(_sbSaveNow, 400);
+  }
+
+  // ── Dauerhaft speichern: Browser + Ordner (21.10.2026) ──────
+  // Erwins Songs waren weg: das Browserfenster in der Claude-App behält keine
+  // Daten, und auch sonst liegt localStorage nur in einem Browser auf einem
+  // Gerät. Deshalb (1) den Browser bitten, die Daten nie selbst aufzuräumen,
+  // (2) jeden Song zusätzlich als Datei in einen Ordner auf dem Mac schreiben
+  // (File System Access API, Chrome/Edge). Liegt der Ordner in iCloud oder
+  // Dropbox, sind die Songs auf allen Geräten. Beim Verbinden und Öffnen werden
+  // Ordner und Browser abgeglichen — die neuere Fassung eines Songs gewinnt.
+  // Aufnahmen landen als `….audio.<endung>` daneben.
+  var _sbDir = null, _sbDirOk = false, _sbDirErr = false, _sbChanged = {}, _sbNames = {};
+  var _sbDirQ = Promise.resolve(), _sbPersisted = false;
+  function _sbPersist() {
+    try {
+      if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().then(function(ok) { _sbPersisted = !!ok; _sbSaveUi(); }, function() {});
+      }
+    } catch (e) {}
+  }
+  function _sbSlug(t) {
+    return (String(t || 'song').toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'song').slice(0, 48);
+  }
+  function _sbFileBase(song) { return _sbSlug(song.title) + '--' + song.id; }
+  // Unberührter Startsong eines leeren Browsers — kommt nicht in den Ordner und
+  // weicht, sobald Songs aus dem Ordner da sind
+  function _sbPristine(s) {
+    return s.title === 'My first song' && !s.sync && s.bars.length === 4 && s.bars.every(function(b) {
+      return !b.label && !b.bpm && b.notes.every(function(sl) { return !sl.length; });
+    });
+  }
+  var SB_SONG_EXT = '.drumlion-song.json';
+  // Ordner wählen (oder neu wählen) und sofort abgleichen
+  function _sbFolderLink() {
+    if (!window.showDirectoryPicker) { _devToast('Saving to a folder works in Chrome and Edge'); return; }
+    window.showDirectoryPicker({ id: 'drumlion-songs', mode: 'readwrite' }).then(function(dir) {
+      _sbDir = dir; _sbDirOk = true; _sbDirErr = false; _sbNames = {};
+      _sbIdb('readwrite', function(st) { st.put(dir, '__folder__'); }).catch(function() {});
+      return _sbFolderSync(true).then(function() {
+        _devToast('Songs are now also saved in the folder “' + dir.name + '”');
+      });
+    }).catch(function(e) {
+      if (!e || e.name !== 'AbortError') _devToast('This folder could not be opened');
+    });
+  }
+  function _sbFolderUnlink() {
+    _sbDir = null; _sbDirOk = false; _sbDirErr = false; _sbNames = {};
+    _sbIdb('readwrite', function(st) { st.delete('__folder__'); }).catch(function() {});
+    _sbSaveUi();
+  }
+  // Beim Öffnen des Builders: gespeicherten Ordner wieder anbinden. Ohne
+  // Berührung darf Chrome die Erlaubnis nicht neu erteilen — dann erscheint
+  // oben „Reconnect folder“.
+  function _sbFolderRestore() {
+    if (_sbDir || !window.showDirectoryPicker) { _sbSaveUi(); return; }
+    _sbIdb('readonly', function(st) { return st.get('__folder__'); }).then(function(dir) {
+      if (!dir || !dir.queryPermission) return;
+      _sbDir = dir;
+      return dir.queryPermission({ mode: 'readwrite' }).then(function(p) {
+        _sbDirOk = (p === 'granted');
+        _sbSaveUi();
+        if (_sbDirOk) return _sbFolderSync(false);
+      });
+    }).catch(function() { _sbSaveUi(); });
+  }
+  function _sbFolderReconnect() {
+    if (!_sbDir) { _sbFolderLink(); return; }
+    _sbDir.requestPermission({ mode: 'readwrite' }).then(function(p) {
+      _sbDirOk = (p === 'granted');
+      _sbSaveUi();
+      if (_sbDirOk) _sbFolderSync(true);
+    }, function() { _sbFolderLink(); });
+  }
+  // Ordnerinhalt lesen: Songs (Dateiname → Song) und Aufnahmen (Song-ID → Datei)
+  function _sbFolderRead() {
+    var songs = {}, audio = {}, it = _sbDir.values();
+    function step() {
+      return it.next().then(function(r) {
+        if (r.done) return { songs: songs, audio: audio };
+        var h = r.value;
+        if (h.kind !== 'file') return step();
+        var am = h.name.match(/--(s[a-z0-9]+)\.audio\.[a-z0-9]+$/i);
+        if (am) { (audio[am[1]] = audio[am[1]] || []).push(h); return step(); }
+        if (h.name.slice(-SB_SONG_EXT.length) !== SB_SONG_EXT) return step();
+        return h.getFile().then(function(f) { return f.text(); }).then(function(txt) {
+          var d = JSON.parse(txt), s = _sbNormSong(d && d.song ? d.song : d);
+          if (s) songs[s.id] = { song: s, file: h.name };
+        }).catch(function() {}).then(step);
+      });
+    }
+    return step();
+  }
+  // Abgleich: neuere Fassung gewinnt; fehlende Songs kommen dazu; danach schreiben
+  function _sbFolderSync(writeAll) {
+    if (!_sbDir || !_sbDirOk) return Promise.resolve();
+    return _sbFolderRead().then(function(found) {
+      var changed = false;
+      Object.keys(found.songs).forEach(function(id) {
+        var f = found.songs[id].song, local = _sbFind(id);
+        _sbNames[id] = found.songs[id].file;
+        if (!local) { _sbData.songs.push(f); changed = true; }
+        else if ((f.updated || 0) > (local.updated || 0)) {
+          _sbData.songs[_sbData.songs.indexOf(local)] = f;
+          if (local === _sbSong) { _sbStop(); _sbSong = f; }
+          changed = true;
+        }
+      });
+      // Aufnahmen aus dem Ordner übernehmen, die dieser Browser noch nicht hat
+      var takeAudio = Object.keys(found.audio).map(function(id) {
+        return _sbIdb('readonly', function(st) { return st.getKey(id); }).then(function(k) {
+          if (k !== undefined || !_sbFind(id)) return;
+          var ah = found.audio[id][0];
+          return ah.getFile().then(function(file) { return file.arrayBuffer(); }).then(function(ab) {
+            return _sbIdb('readwrite', function(st) { st.put({ name: ah.name, data: ab }, id); });
+          });
+        }).catch(function() {});
+      });
+      if (changed && Object.keys(found.songs).length) {
+        var keep = _sbData.songs.filter(function(s) { return found.songs[s.id] || !_sbPristine(s); });
+        if (keep.length && keep.length !== _sbData.songs.length) {
+          _sbData.songs = keep;
+          if (keep.indexOf(_sbSong) === -1) { _sbStop(); _sbSong = keep[0]; _sbData.cur = _sbSong.id; _sbSel = { a: 0, b: 0 }; }
+        }
+      }
+      if (writeAll) _sbData.songs.forEach(function(s) { if (!_sbPristine(s)) _sbChanged[s.id] = 1; });
+      if (changed) {
+        try { localStorage.setItem(SB_KEY, JSON.stringify(_sbData)); } catch (e) {}
+        if (_sbIsOpen) { _sbRenderAll(); }
+      }
+      return Promise.all(takeAudio).then(function() {
+        if (_sbSong && _sbIsOpen && !_sbAudio.buf) _sbAudioFor(_sbSong);
+        if (writeAll) _sbData.songs.forEach(function(s) { _sbFolderAudio(s.id); });
+        return _sbFolderFlush();
+      });
+    }).catch(function() { _sbDirErr = true; _sbSaveUi(); });
+  }
+  // Geänderte Songs in den Ordner schreiben (nacheinander, nie zwei Schreibvorgänge zugleich)
+  function _sbFolderFlush() {
+    if (!_sbDir || !_sbDirOk) { _sbSaveUi(); return _sbDirQ; }
+    var ids = Object.keys(_sbChanged);
+    _sbChanged = {};
+    ids.forEach(function(id) {
+      _sbDirQ = _sbDirQ.then(function() {
+        var s = _sbFind(id);
+        if (!s || !_sbDir) return;
+        var name = _sbFileBase(s) + SB_SONG_EXT, old = _sbNames[id], data = JSON.stringify({ format: 'drumlion-song', version: 1, song: s }, null, 1);
+        return _sbDir.getFileHandle(name, { create: true }).then(function(fh) { return fh.createWritable(); })
+          .then(function(w) { return w.write(data).then(function() { return w.close(); }); })
+          .then(function() {
+            _sbNames[id] = name; _sbDirErr = false;
+            // Titel geändert: alte Datei (und Aufnahme) umbenennen
+            if (old && old !== name) {
+              // Aufnahme danach umbenennen — nicht hier abwarten: sie reiht sich selbst in
+              // die Warteschlange ein, auf die dieser Schritt sonst warten würde
+              return _sbDir.removeEntry(old).catch(function() {}).then(function() { _sbFolderAudio(id, true); });
+            }
+          });
+      }).catch(function(e) {
+        _sbDirErr = true;
+        if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) _sbDirOk = false;
+      }).then(_sbSaveUi);
+    });
+    _sbSaveUi();
+    return _sbDirQ;
+  }
+  // Aufnahme eines Songs als Datei neben den Song legen (nur wenn sie dort noch fehlt)
+  function _sbFolderAudio(id, force) {
+    if (!_sbDir || !_sbDirOk) return Promise.resolve();
+    var s = _sbFind(id);
+    if (!s) return Promise.resolve();
+    return _sbIdb('readonly', function(st) { return st.get(id); }).then(function(rec) {
+      if (!rec || !rec.data) return;
+      var ext = ((rec.name || '').match(/\.([a-z0-9]{2,4})$/i) || [0, 'mp3'])[1].toLowerCase();
+      var name = _sbFileBase(s) + '.audio.' + ext;
+      var write = function() {
+        return _sbDir.getFileHandle(name, { create: true }).then(function(fh) { return fh.createWritable(); })
+          .then(function(w) { return w.write(rec.data).then(function() { return w.close(); }); });
+      };
+      _sbDirQ = _sbDirQ.then(function() {
+        return _sbDir.getFileHandle(name).then(function() { return force ? write() : null; }, write);
+      }).then(function() {
+        if (!force) return;
+        // alte Aufnahme-Dateien dieses Songs mit anderem Namen aufräumen
+        return _sbFolderRead().then(function(found) {
+          return (found.audio[id] || []).reduce(function(pr, h) {
+            return h.name === name ? pr : pr.then(function() { return _sbDir.removeEntry(h.name).catch(function() {}); });
+          }, Promise.resolve());
+        });
+      }).catch(function() {});
+      return _sbDirQ;
+    }).catch(function() {});
+  }
+  // Gelöschter Song: Dateien in den Unterordner „Deleted“ verschieben, nicht wegwerfen
+  function _sbFolderTrash(id, base) {
+    if (!_sbDir || !_sbDirOk) return;
+    _sbDirQ = _sbDirQ.then(function() {
+      return _sbDir.getDirectoryHandle('Deleted', { create: true }).then(function(trash) {
+        return _sbFolderRead().then(function(found) {
+          var files = [];
+          if (found.songs[id]) files.push(found.songs[id].file);
+          (found.audio[id] || []).forEach(function(h) { files.push(h.name); });
+          return files.reduce(function(p, name) {
+            return p.then(function() {
+              return _sbDir.getFileHandle(name).then(function(fh) { return fh.getFile(); }).then(function(file) {
+                return trash.getFileHandle(name, { create: true }).then(function(th) { return th.createWritable(); })
+                  .then(function(w) { return w.write(file).then(function() { return w.close(); }); })
+                  .then(function() { return _sbDir.removeEntry(name); });
+              });
+            });
+          }, Promise.resolve());
+        });
+      });
+    }).catch(function() {});
+    delete _sbNames[id];
+  }
+  // Anzeige oben: wo der Song liegt
+  function _sbSaveUi() {
+    var el = document.getElementById('sbSaveSt');
+    if (!el) return;
+    var h, cls = '';
+    if (_sbDir && _sbDirOk && !_sbDirErr) h = '✓ Saved · folder “' + _sbEsc(_sbDir.name) + '”';
+    else if (_sbDir && !_sbDirOk) { h = '<button type="button" class="sb-btn warn" data-save="reconnect">Reconnect folder</button>'; cls = 'warn'; }
+    else if (_sbDir && _sbDirErr) { h = 'Folder not reachable · <button type="button" class="sb-linkbtn" data-save="reconnect">retry</button>'; cls = 'warn'; }
+    else {
+      h = 'Saved in this browser only' + (window.showDirectoryPicker ? ' · <button type="button" class="sb-linkbtn" data-save="link">Save to a folder…</button>' : '');
+      cls = 'warn';
+    }
+    el.innerHTML = h;
+    el.className = 'sb-save ' + cls;
+    var mi = document.querySelector('#sbMenu [data-song="folder"]');
+    if (mi) mi.textContent = _sbDir ? 'Choose another song folder…' : 'Save songs to a folder…';
+    var mu = document.querySelector('#sbMenu [data-song="unfolder"]');
+    if (mu) mu.hidden = !_sbDir;
+  }
   function _sbSavePrefs() { try { localStorage.setItem(SB_PREF_KEY, JSON.stringify(_sbPrefs)); } catch (e) {} }
 
   // ── Notenbild ───────────────────────────────────────────────
@@ -19958,6 +20207,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var ix = _sbData.songs.indexOf(_sbSong), delId = _sbSong.id;
       _sbData.songs.splice(ix, 1);
       _sbIdb('readwrite', function(st) { st.delete(delId); }).catch(function() {});
+      _sbFolderTrash(delId);
       if (!_sbData.songs.length) _sbData.songs.push(_sbNewSong());
       _sbSwitch(_sbData.songs[Math.max(0, ix - 1)].id);
       _sbSaveNow();
@@ -19974,6 +20224,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       document.getElementById('sbFile').click();
     } else if (act === 'excode') {
       _sbExerciseCode();
+    } else if (act === 'folder') {
+      _sbFolderLink();
+    } else if (act === 'unfolder') {
+      _sbFolderUnlink();
     } else if (act === 'pdf') {
       _sbPdf();
     }
@@ -20560,6 +20814,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         _sbSyncUi();
         _devToast('Audio loaded: ' + file.name + ' (' + _sbMmSs(buf.duration) + '). It stays on this device.');
         _sbIdb('readwrite', function(st) { st.put({ name: file.name, type: file.type, data: ab }, id); })
+          .then(function() { _sbFolderAudio(id, true); })
           .catch(function() { _devToast('Audio works now, but could not be stored: load it again next time'); });
       }, function() { _sbSyncUi(); _devToast('This audio format cannot be played here. Try MP3 or WAV.'); });
     };
@@ -21387,6 +21642,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbRenderAll();
     try { initA(); } catch (e) {}
     if (_sbAudio.id !== _sbSong.id) _sbAudioFor(_sbSong); else _sbSyncUi();
+    _sbPersist();          // Browser soll die Songs nie selbst aufräumen
+    _sbFolderRestore();    // Song-Ordner wieder anbinden und abgleichen
   }
   function _sbClose() {
     if (_sbSyncRun) _sbSyncStop();
@@ -21415,6 +21672,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-song="export">Export to file</button>' +
             '<button type="button" data-song="pdf">Sheet music as PDF…</button>' +
             '<button type="button" data-song="excode">Copy selected bars as exercise code</button>' +
+            '<button type="button" data-song="folder">Save songs to a folder…</button>' +
+            '<button type="button" data-song="unfolder" hidden>Stop saving to the folder</button>' +
             '<button type="button" data-song="delsong" class="warn">Delete song…</button>' +
           '</div></details>' +
         '</span>' +
@@ -21437,6 +21696,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<button type="button" class="sb-btn" id="sbCounts" title="Show the counting above the notes">1 e &amp; a</button>' +
           '<input type="range" class="sb-zoom" id="sbZoom" min="240" max="720" step="20" aria-label="Bar size" title="Bar size">' +
           '<span class="sb-meta" id="sbMeta"></span>' +
+          '<span class="sb-save" id="sbSaveSt" aria-live="polite"></span>' +
         '</span>' +
         '<button type="button" class="sb-x" id="sbClose" aria-label="Close Song Builder" title="Close">×</button>' +
       '</div>' +
@@ -21503,6 +21763,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbCount').addEventListener('click', function() { _sbTogglePref('countIn'); });
     $('sbVideo').addEventListener('click', _sbVidOpen);
     $('sbPdf').addEventListener('click', _sbPdf);
+    $('sbSaveSt').addEventListener('click', function(e) {
+      var b = e.target.closest('[data-save]');
+      if (!b) return;
+      if (b.getAttribute('data-save') === 'link') _sbFolderLink(); else _sbFolderReconnect();
+    });
     $('sbAudioBtn').addEventListener('click', function() { _sbPrefs.syncOpen = !_sbPrefs.syncOpen; _sbSavePrefs(); _sbSyncUi(); });
     $('sbSyncLoad').addEventListener('click', function() { $('sbAudioFile').click(); });
     $('sbAudioFile').addEventListener('change', function() { if (this.files && this.files[0]) _sbAudioFile(this.files[0]); this.value = ''; });
