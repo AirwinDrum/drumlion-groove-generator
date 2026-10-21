@@ -672,7 +672,7 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
 .dl-pill:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
 .dl-pill.on { background: #C9A84C; color: #111; border-color: #C9A84C; }
 /* „My Exercises" in der Kopfzeile */
-#dgMineBtn { display: none; }
+#dgMineBtn, #dgSongsBtn { display: none; }
 .dl-mine-list { display: flex; flex-direction: column; gap: 6px; }
 .dl-mine-item { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--dl-paper); border: 1px solid rgba(var(--dl-ink-rgb),0.08);
   border-radius: 10px; padding: 10px 12px; cursor: pointer; text-align: left; color: var(--dl-ink); font: inherit; }
@@ -1733,6 +1733,138 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   .sb-vid-sec.in, .sb-vid-count.pop, .sb-vid-head-line.beat { animation: none; }
   .sb-vid-sec.in { opacity: 1; }
 }
+/* ── Song-Player für Mitglieder (21.10.2026) — folgt dem Farbschema (--dl-*) ── */
+.sp {
+  position: fixed; inset: 0; z-index: 10002; display: none;
+  background: var(--dl-page); color: var(--dl-ink); font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.sp.open { display: block; }
+.sp button { font-family: inherit; }
+.sp :focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
+.sp-lib, .sp-play { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.sp-lib[hidden], .sp-play[hidden] { display: none; }
+.sp-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px clamp(14px, 3vw, 28px); border-bottom: 1px solid var(--dl-line-3);
+}
+.sp-h { margin: 0; font-size: clamp(18px, 2.6vw, 24px); font-weight: 800; color: var(--dl-gold-ink); line-height: 1.15; }
+.sp-lib .sp-head .sp-h { flex: 1; }
+.sp-tt { flex: 1; min-width: 0; }
+.sp-tt .sp-h { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-meta { margin-top: 2px; font-size: 13px; color: rgba(var(--dl-ink-rgb), 0.6); font-variant-numeric: tabular-nums; }
+.sp-x {
+  background: none; border: 0; color: rgba(var(--dl-ink-rgb), 0.5); font-size: 26px; line-height: 1;
+  cursor: pointer; padding: 2px 8px; border-radius: 8px;
+}
+.sp-x:hover { color: var(--dl-ink); }
+.sp-back {
+  flex: none; background: none; border: 1px solid var(--dl-line); color: var(--dl-ink); border-radius: 9px;
+  padding: 7px 12px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.sp-back:hover { border-color: #C9A84C; }
+.sp-list {
+  flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px;
+  width: 100%; max-width: 760px; margin: 0 auto; padding: 16px clamp(14px, 3vw, 28px);
+}
+.sp-item {
+  display: grid; grid-template-columns: 1fr auto; column-gap: 12px; width: 100%; text-align: left;
+  padding: 14px 16px; border-radius: 12px; border: 1px solid var(--dl-line); background: var(--dl-raise);
+  color: var(--dl-ink); cursor: pointer;
+}
+.sp-item:hover { border-color: #C9A84C; }
+.sp-item-t { font-size: 17px; font-weight: 700; }
+.sp-item-m { grid-column: 1; font-size: 13px; color: rgba(var(--dl-ink-rgb), 0.6); font-variant-numeric: tabular-nums; }
+.sp-item-go { grid-column: 2; grid-row: 1 / 3; align-self: center; font-size: 24px; color: var(--dl-gold-ink); }
+.sp-note { margin-top: 30px; text-align: center; color: rgba(var(--dl-ink-rgb), 0.6); }
+.sp-secs {
+  display: flex; gap: 8px; overflow-x: auto; padding: 10px clamp(14px, 3vw, 28px);
+  border-bottom: 1px solid var(--dl-line-3);
+}
+.sp-secs[hidden] { display: none; }
+.sp-chip {
+  flex: none; border: 1px solid var(--dl-line); background: var(--dl-raise); color: var(--dl-ink);
+  border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.08em;
+  text-transform: uppercase; cursor: pointer;
+}
+.sp-chip:hover { border-color: #C9A84C; }
+.sp-chip.on { background: #C9A84C; border-color: #C9A84C; color: #0a0a0a; }
+.sp-score { flex: 1; overflow: auto; padding: 14px clamp(14px, 3vw, 28px) 24px; }
+.sp-sec + .sp-sec { margin-top: 16px; }
+.sp-sec-h {
+  margin: 0 0 6px 2px; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--dl-gold-ink);
+}
+.sp-rows {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  background: var(--dl-paper); border: 1px solid var(--dl-line-3); border-radius: 8px; overflow: hidden;
+}
+.sp-tile { position: relative; cursor: pointer; background: var(--dl-paper); }
+.sp-tile svg { display: block; width: 100%; height: auto; aspect-ratio: 500 / 106; }
+.sp-n {
+  position: absolute; left: 5px; top: 2px; font-size: 10px; font-weight: 600;
+  color: rgba(var(--dl-ink-rgb), 0.4); pointer-events: none; font-variant-numeric: tabular-nums;
+}
+.sp-tile::after { content: ''; position: absolute; inset: 0; pointer-events: none; border: 1.5px solid transparent; }
+.sp-tile:hover::after { border-color: rgba(var(--dl-ink-rgb), 0.12); }
+.sp-tile.sel::after { border-color: rgba(201,168,76,0.6); background: rgba(201,168,76,0.07); }
+.sp-tile.cur::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: #C9A84C; pointer-events: none;
+}
+.sp-bar {
+  border-top: 1px solid var(--dl-line-3); background: var(--dl-panel);
+  padding: 10px clamp(14px, 3vw, 28px) calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.sp-prog {
+  position: relative; height: 8px; margin: 6px 0 12px; border-radius: 4px; cursor: pointer; touch-action: none;
+  background: rgba(var(--dl-ink-rgb), 0.12);
+}
+.sp-prog:focus-visible { outline-offset: 4px; }
+.sp-fill {
+  position: absolute; inset: 0; border-radius: 4px; background: #C9A84C;
+  transform: scaleX(0); transform-origin: left center;
+}
+.sp-loopband { position: absolute; top: -4px; bottom: -4px; border-radius: 3px; background: rgba(201,168,76,0.28); }
+.sp-loopband[hidden] { display: none; }
+#spMarks i {
+  position: absolute; top: -4px; width: 2px; height: 16px; margin-left: -1px; border-radius: 1px;
+  background: rgba(var(--dl-ink-rgb), 0.45);
+}
+.sp-ctrl { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; }
+.sp-grp { display: flex; align-items: center; gap: 8px; }
+.sp-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 38px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid var(--dl-line); background: var(--dl-raise); color: var(--dl-ink);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.sp-btn:hover { border-color: rgba(201,168,76,0.7); }
+.sp-btn, .sp-seg button { white-space: nowrap; }
+.sp-btn:disabled { opacity: 0.35; cursor: default; }
+.sp-btn svg { width: 18px; height: 18px; }
+.sp-go { width: 54px; height: 54px; padding: 0; border-radius: 50%; background: #C9A84C; border-color: #C9A84C; color: #0a0a0a; }
+.sp-go:hover { background: #d4b85a; }
+.sp-go svg { width: 24px; height: 24px; }
+.sp-go:disabled { opacity: 0.5; cursor: progress; }
+.sp-go .i-pause { display: none; }
+.sp-go.on .i-play { display: none; }
+.sp-go.on .i-pause { display: block; }
+.sp-tog.on { border-color: #C9A84C; color: var(--dl-gold-ink); background: rgba(201,168,76,0.12); }
+.sp-time { min-width: 96px; font-size: 14px; color: rgba(var(--dl-ink-rgb), 0.7); font-variant-numeric: tabular-nums; }
+.sp-speed { display: inline-flex; align-items: center; gap: 6px; }
+.sp-rate { min-width: 54px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sp-seg { display: inline-flex; border: 1px solid var(--dl-line); border-radius: 10px; overflow: hidden; }
+.sp-seg[hidden] { display: none; }
+.sp-seg button {
+  height: 38px; padding: 0 12px; border: 0; border-right: 1px solid var(--dl-line);
+  background: var(--dl-raise); color: var(--dl-ink); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.sp-seg button:last-child { border-right: 0; }
+.sp-seg button.on { background: #C9A84C; color: #0a0a0a; }
+@media (max-width: 640px) {
+  .sp-ctrl { justify-content: center; gap: 10px 12px; }
+  .sp-time { min-width: 0; }
+  .sp-btn, .sp-seg button { padding: 0 10px; font-size: 13px; }
+  .sp-head { gap: 8px; }
+}
 @media (max-width: 700px) {
   .sb-top, .sb-score, .sb-ed { padding-left: 12px; padding-right: 12px; }
   .sb-title { width: 100%; }
@@ -1847,6 +1979,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <span class="notation-info-bar" id="dgInfoBar"></span>
         </span>
         <div class="ni-tools">
+          <!-- Songs (21.10.2026) — vorerst nur auf Dev-Geräten, bis die ersten Songs da sind -->
+          <button class="legend-btn" id="dgSongsBtn" type="button" title="Songs" aria-label="Songs">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+            </svg>
+          </button>
           <!-- Eigene Liste: Favoriten (später auch selbst gebaute Übungen) -->
           <button class="legend-btn" id="dgMineBtn" type="button" title="My exercises" aria-label="My exercises">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
@@ -15853,7 +15991,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261021-110141';
+  var DL_BUILD = '20261021-111149';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20228,6 +20366,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbFolderLink();
     } else if (act === 'unfolder') {
       _sbFolderUnlink();
+    } else if (act === 'preview') {
+      _spPreviewBuilder();
     } else if (act === 'pdf') {
       _sbPdf();
     }
@@ -21671,6 +21811,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-song="import">Import from file…</button>' +
             '<button type="button" data-song="export">Export to file</button>' +
             '<button type="button" data-song="pdf">Sheet music as PDF…</button>' +
+            '<button type="button" data-song="preview">Preview in the song player</button>' +
             '<button type="button" data-song="excode">Copy selected bars as exercise code</button>' +
             '<button type="button" data-song="folder">Save songs to a folder…</button>' +
             '<button type="button" data-song="unfolder" hidden>Stop saving to the folder</button>' +
@@ -21830,7 +21971,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Tasten im Builder: vor allen anderen abfangen, damit Leertaste, D, Pfeile
   // usw. nicht den Player dahinter steuern. Eingabefelder behalten ihre Tasten.
   window.addEventListener('keydown', function(e) {
-    if (!_sbIsOpen) return;
+    if (!_sbIsOpen || _spIsOpen) return;
     var tg = e.target, tag = tg && tg.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
       if (e.key === 'Escape' || (e.key === 'Enter' && tag === 'INPUT')) tg.blur();
@@ -21889,6 +22030,519 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   window.addEventListener('pagehide', function() { if (_sbData) _sbSaveNow(); });
   try {
     if (_premium() && new URLSearchParams(window.location.search).get('builder') === '1') setTimeout(_sbOpen, 0);
+  } catch (e) {}
+
+  // ============================================================
+  // SONG-PLAYER FÜR MITGLIEDER (21.10.2026)
+  // Die Songs-Säule: Erwins selbst erzeugte Songs mit mitlaufenden Noten.
+  // Die Aufnahme führt (ein <audio>-Element — nur so lässt sich das Tempo
+  // ohne Tonhöhenänderung senken, `preservesPitch`), Noten und Klick folgen
+  // ihrer Position; Zuordnung Aufnahme ↔ Takt aus dem Mittippen (`sync.offset`
+  // + Tempo je Takt). Zwei Spuren laufen parallel (mit / ohne Schlagzeug) und
+  // werden nur stumm geschaltet — so ist das Umschalten nahtlos.
+  // Quellen: Bibliothek `songs/catalog.json` (+ je Song eine Datei) oder die
+  // Vorschau aus dem Song Builder (Song + lokale Aufnahme).
+  // Vorerst nur auf Dev-Geräten sichtbar, bis die ersten Songs bereitstehen.
+  // ============================================================
+  var SP_RATES = [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1, 1.05, 1.1];
+  var _sp = null, _spRoot = null, _spIsOpen = false;
+  var _spPrefs = { rate: 1, track: 'full', click: false, countIn: true };
+  try {
+    var _spP = JSON.parse(localStorage.getItem('drumlion_songplayer_prefs') || 'null');
+    if (_spP && typeof _spP === 'object') Object.keys(_spPrefs).forEach(function(k) {
+      if (typeof _spP[k] === typeof _spPrefs[k]) _spPrefs[k] = _spP[k];
+    });
+  } catch (e) {}
+  if (SP_RATES.indexOf(_spPrefs.rate) === -1) _spPrefs.rate = 1;
+  function _spSavePrefs() { try { localStorage.setItem('drumlion_songplayer_prefs', JSON.stringify(_spPrefs)); } catch (e) {} }
+
+  // Zeitachse eines Songs: Beginn und Dauer jedes Takts in der Aufnahme
+  function _spMap(S) {
+    var off = S.sync ? S.sync.offset : 0, t = off, bpm = S.bpm, at = [], dur = [];
+    S.bars.forEach(function(b) {
+      if (b.bpm) bpm = b.bpm;
+      at.push(t); dur.push(240 / bpm);
+      t += 240 / bpm;
+    });
+    return { at: at, dur: dur, end: t, start: off };
+  }
+  // Takt zur Position in der Aufnahme (−1 = vor dem ersten Takt)
+  function _spBarAt(pos) {
+    var at = _sp.map.at, lo = 0, hi = at.length - 1;
+    if (pos < at[0]) return -1;
+    while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (at[mid] <= pos) lo = mid; else hi = mid - 1; }
+    return lo;
+  }
+
+  function _spBuild() {
+    var r = document.createElement('div');
+    r.id = 'spRoot';
+    r.className = 'sp';
+    r.setAttribute('role', 'dialog');
+    r.setAttribute('aria-modal', 'true');
+    r.setAttribute('aria-label', 'Songs');
+    r.innerHTML =
+      '<section class="sp-lib" id="spLib">' +
+        '<header class="sp-head"><h2 class="sp-h">Songs</h2><button type="button" class="sp-x" data-sp="close" aria-label="Close">×</button></header>' +
+        '<div class="sp-list" id="spList"></div>' +
+      '</section>' +
+      '<section class="sp-play" id="spPlay" hidden>' +
+        '<header class="sp-head">' +
+          '<button type="button" class="sp-back" id="spBack">‹ Songs</button>' +
+          '<div class="sp-tt"><h2 class="sp-h" id="spTitle"></h2><div class="sp-meta" id="spMeta"></div></div>' +
+          '<button type="button" class="sp-x" data-sp="close" aria-label="Close">×</button>' +
+        '</header>' +
+        '<nav class="sp-secs" id="spSecs" aria-label="Sections"></nav>' +
+        '<div class="sp-score" id="spScore"></div>' +
+        '<footer class="sp-bar">' +
+          '<div class="sp-prog" id="spProg" role="slider" aria-label="Position" tabindex="0">' +
+            '<div class="sp-loopband" id="spLoopBand"></div><div class="sp-fill" id="spFill"></div><div id="spMarks"></div>' +
+          '</div>' +
+          '<div class="sp-ctrl">' +
+            '<span class="sp-grp">' +
+              '<button type="button" class="sp-btn" id="spRew" title="Back to the start (Home)" aria-label="Back to the start">' +
+                '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M19 5l-10 7 10 7z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>' +
+              '<button type="button" class="sp-btn sp-go" id="spGo" aria-label="Play">' +
+                '<svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>' +
+                '<svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor"/></svg></button>' +
+              '<span class="sp-time" id="spTime">0:00</span>' +
+            '</span>' +
+            '<span class="sp-grp">' +
+              '<button type="button" class="sp-btn sp-tog" id="spLoop" title="Repeat the selected bars or section (L)">Loop</button>' +
+              '<span class="sp-speed" title="Tempo without changing the pitch">' +
+                '<button type="button" class="sp-btn" id="spSlower" aria-label="Slower">−</button>' +
+                '<span class="sp-rate" id="spRate">100 %</span>' +
+                '<button type="button" class="sp-btn" id="spFaster" aria-label="Faster">+</button>' +
+              '</span>' +
+            '</span>' +
+            '<span class="sp-grp">' +
+              '<span class="sp-seg" id="spTrack" role="group" aria-label="Track">' +
+                '<button type="button" data-track="full" title="The recording with drums">Drums</button><button type="button" data-track="drumless" title="The recording without drums — you play the drums">No drums</button></span>' +
+              '<button type="button" class="sp-btn sp-tog" id="spClick" title="Metronome click (K)">Click</button>' +
+              '<button type="button" class="sp-btn sp-tog" id="spCount" title="One bar count-in before playing">Count-in</button>' +
+            '</span>' +
+          '</div>' +
+        '</footer>' +
+      '</section>';
+    document.body.appendChild(r);
+    _spRoot = r;
+    var $ = function(id) { return document.getElementById(id); };
+    r.addEventListener('click', function(e) {
+      if (e.target.closest('[data-sp="close"]')) { _spClose(); return; }
+      var it = e.target.closest('[data-song-file]');
+      if (it) { _spOpenFromCatalog(it.getAttribute('data-song-file')); return; }
+      var tr = e.target.closest('[data-track]');
+      if (tr) { _spPrefs.track = tr.getAttribute('data-track'); _spSavePrefs(); _spApplyTrack(); _spUi(); return; }
+      var sc = e.target.closest('[data-sec]');
+      if (sc) { _spSelectSection(+sc.getAttribute('data-sec')); return; }
+      var bar = e.target.closest('.sp-tile');
+      if (bar) _spSelect(+bar.getAttribute('data-i'), e.shiftKey);
+    });
+    // Vorschau aus dem Builder: zurück zum Builder statt in die Bibliothek
+    $('spBack').addEventListener('click', function() { _spStop(); if (_sp && _sp.src.preview) _spClose(); else _spShowLib(); });
+    $('spGo').addEventListener('click', _spToggle);
+    $('spRew').addEventListener('click', function() { _spSeekBar(_sp.sel ? _sp.sel.a : 0); });
+    $('spLoop').addEventListener('click', function() { _sp.loop = !_sp.loop; _spUi(); });
+    $('spSlower').addEventListener('click', function() { _spRate(-1); });
+    $('spFaster').addEventListener('click', function() { _spRate(1); });
+    $('spClick').addEventListener('click', function() { _spPrefs.click = !_spPrefs.click; _spSavePrefs(); _spUi(); });
+    $('spCount').addEventListener('click', function() { _spPrefs.countIn = !_spPrefs.countIn; _spSavePrefs(); _spUi(); });
+    // Springen über den Fortschrittsbalken (Klick oder Ziehen)
+    var prog = $('spProg'), dragging = false;
+    var seekAt = function(e) {
+      if (!_sp) return;
+      var rc = prog.getBoundingClientRect(), f = Math.max(0, Math.min(1, (e.clientX - rc.left) / rc.width));
+      _spSeekPos(_sp.map.start + f * (_sp.map.end - _sp.map.start));
+    };
+    prog.addEventListener('pointerdown', function(e) { dragging = true; prog.setPointerCapture && prog.setPointerCapture(e.pointerId); seekAt(e); });
+    prog.addEventListener('pointermove', function(e) { if (dragging) seekAt(e); });
+    prog.addEventListener('pointerup', function() { dragging = false; });
+    prog.addEventListener('keydown', function(e) {
+      if (!_sp) return;
+      if (e.key === 'ArrowRight') { _spSeekPos(_spPos() + 5); e.preventDefault(); }
+      if (e.key === 'ArrowLeft')  { _spSeekPos(_spPos() - 5); e.preventDefault(); }
+    });
+  }
+
+  // ── Bibliothek ──────────────────────────────────────────────
+  function _spOpenLib() {
+    if (!_spRoot) _spBuild();
+    _spShow();
+    _spShowLib();
+  }
+  function _spShowLib() {
+    document.getElementById('spLib').hidden = false;
+    document.getElementById('spPlay').hidden = true;
+    var list = document.getElementById('spList');
+    list.innerHTML = '<p class="sp-note">Loading songs…</p>';
+    fetch('songs/catalog.json?t=' + Date.now()).then(function(r) { if (!r.ok) throw new Error('none'); return r.json(); })
+      .then(function(cat) {
+        var songs = (cat && Array.isArray(cat.songs)) ? cat.songs : [];
+        if (!songs.length) throw new Error('none');
+        list.innerHTML = songs.map(function(s) {
+          return '<button type="button" class="sp-item" data-song-file="' + _sbEsc(s.file) + '">' +
+                 '<span class="sp-item-t">' + _sbEsc(s.title) + '</span>' +
+                 '<span class="sp-item-m">' + [s.level ? 'Level ' + s.level : '', s.bpm ? Math.round(s.bpm) + ' BPM' : '',
+                   s.sec ? _sbMmSs(s.sec) : ''].filter(Boolean).join(' · ') + '</span>' +
+                 '<span class="sp-item-go" aria-hidden="true">›</span></button>';
+        }).join('');
+      })
+      .catch(function() {
+        list.innerHTML = '<p class="sp-note">No songs yet. New songs are coming soon.</p>';
+      });
+  }
+  function _spOpenFromCatalog(file) {
+    fetch(file + (file.indexOf('?') < 0 ? '?t=' : '&t=') + Date.now()).then(function(r) { return r.json(); }).then(function(d) {
+      var song = _sbNormSong(d.song || d), meta = d.meta || {}, base = file.replace(/[^\/]*$/, '');
+      if (!song) throw new Error('bad');
+      var abs = function(u) { return !u ? null : (/^(https?:|blob:|data:)/.test(u) ? u : base + u); };
+      _spOpenSong(song, { title: meta.title || song.title, full: abs(meta.audio && meta.audio.full),
+                          drumless: abs(meta.audio && meta.audio.drumless), level: meta.level });
+    }).catch(function() { _devToast('This song could not be loaded'); });
+  }
+
+  // ── Spieler ─────────────────────────────────────────────────
+  // Song öffnen. `src`: { title, full, drumless, level } — URLs der Aufnahmen
+  function _spOpenSong(song, src) {
+    if (!_spRoot) _spBuild();
+    _spStop();
+    if (_sp && _sp.els) _sp.els.forEach(function(a) { a.pause(); a.removeAttribute('src'); try { a.load(); } catch (e) {} });
+    if (_sp && _sp.urls) _sp.urls.forEach(function(u) { URL.revokeObjectURL(u); });
+    var els = [];
+    ['full', 'drumless'].forEach(function(k) {
+      if (!src[k]) return;
+      var a = new Audio();
+      a.preload = 'auto';
+      a.preservesPitch = true; a.mozPreservesPitch = true; a.webkitPreservesPitch = true;
+      a._track = k;
+      a._url = src[k];
+      els.push(a);
+    });
+    _sp = { song: song, src: src, map: _spMap(song), els: els, master: els[0] || null, playing: false,
+            sel: null, loop: false, curBar: -1, curSlot: -1, raf: 0, clickPos: -1, countUntil: -1, syncT: 0,
+            loading: els.length > 0, urls: [] };
+    var S = _sp;
+    if (S.master) S.master.addEventListener('ended', function() { if (_sp === S && S.playing) { _spStop(); _spSeekBar(0); } });
+    // Spuren einmal ganz laden (als Blob): Springen ist dann immer sofort und
+    // genau — auch bei Servern ohne Teilabruf —, und beide Spuren starten gleichzeitig
+    Promise.all(els.map(function(a) {
+      if (/^(blob:|data:)/.test(a._url)) { a.src = a._url; return null; }
+      return fetch(a._url).then(function(r) { if (!r.ok) throw new Error('audio'); return r.blob(); }).then(function(b) {
+        var u = URL.createObjectURL(b);
+        S.urls.push(u);
+        a.src = u;
+      });
+    })).then(function() {
+      if (_sp !== S) return;
+      S.loading = false;
+      _spApplyTrack();
+      _spSeekPos(S.map.start);
+      _spUi();
+    }, function() {
+      if (_sp !== S) return;
+      S.loading = false; S.els = []; S.master = null;
+      _spUi();
+      _devToast('The recording of this song could not be loaded');
+    });
+    _spShow();
+    document.getElementById('spLib').hidden = true;
+    document.getElementById('spPlay').hidden = false;
+    document.getElementById('spTitle').textContent = src.title || song.title || 'Song';
+    document.getElementById('spBack').textContent = src.preview ? '‹ Builder' : '‹ Songs';
+    if (src.own) _sp.urls.push(src.own);   // Blob-URL der Vorschau beim Schließen freigeben
+    _spRenderScore();
+    _spApplyTrack();
+    _spUi();
+    _spProgress(_sp.map.start);
+    if (!els.length) _devToast('This song has no recording yet');
+  }
+  function _spShow() {
+    _spIsOpen = true;
+    _spRoot.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    if (typeof playing !== 'undefined' && playing) stopExercise();
+    if (_sbP) _sbStop();
+  }
+  function _spClose() {
+    _spStop();
+    if (_sp && _sp.els) _sp.els.forEach(function(a) { a.pause(); });
+    if (_sp && _sp.urls) { _sp.urls.forEach(function(u) { URL.revokeObjectURL(u); }); _sp.urls = []; _sp.els = []; _sp.master = null; _sp = null; }
+    _spIsOpen = false;
+    if (_spRoot) _spRoot.classList.remove('open');
+    document.documentElement.style.overflow = _sbIsOpen ? 'hidden' : '';
+  }
+
+  function _spGroove(bar) {
+    return { name: '', cat: 'rudiments', songBar: true, beamRests: true, showLabels: false, hideCount: false,
+             noteValue: SB_NOTE_VALUE[bar.n], beats: _sbBeats(bar),
+             stickings: bar.stick.some(Boolean) ? bar.stick.slice() : null };
+  }
+  // Takt in seine Kachel zeichnen — in den Farben des Farbschemas (hell/dunkel)
+  function _spDraw(i, cur) {
+    var el = _sp.tiles[i], bar = _sp.song.bars[i];
+    if (!el || !bar) return;
+    var svg = el.lastChild, keep = GROOVE;
+    GROOVE = _spGroove(bar);
+    try { renderNot(cur == null ? -1 : cur, false, { svg: svg, plain: true }); }
+    catch (e) {}
+    finally { GROOVE = keep; }
+    var g = _sbGeom(bar.n);
+    svg.setAttribute('viewBox', '32.6 -8 ' + g.vbW + ' 106');
+    svg.setAttribute('preserveAspectRatio', 'none');
+  }
+  function _spRenderScore() {
+    var S = _sp.song, bars = S.bars, h = '', open = false, secs = [];
+    for (var i = 0; i < bars.length; i++) {
+      var b = bars[i];
+      if (i === 0 || b.label) {
+        if (open) h += '</div></div>';
+        h += '<div class="sp-sec">' + (b.label ? '<h3 class="sp-sec-h">' + _sbEsc(b.label) + '</h3>' : '') + '<div class="sp-rows">';
+        open = true;
+        if (b.label) secs.push({ i: i, label: b.label });
+      }
+      h += '<div class="sp-tile" data-i="' + i + '"><span class="sp-n">' + (i + 1) + '</span>' +
+           '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar ' + (i + 1) + '"></svg></div>';
+    }
+    if (open) h += '</div></div>';
+    var sc = document.getElementById('spScore');
+    sc.innerHTML = h;
+    sc.scrollTop = 0;
+    _sp.tiles = Array.prototype.slice.call(sc.querySelectorAll('.sp-tile'));
+    _sp.tiles.forEach(function(t, k) { _spDraw(k); });
+    _sp.secs = secs;
+    document.getElementById('spSecs').innerHTML = secs.map(function(s) {
+      return '<button type="button" class="sp-chip" data-sec="' + s.i + '">' + _sbEsc(s.label) + '</button>';
+    }).join('');
+    document.getElementById('spSecs').hidden = !secs.length;
+    // Abschnittsmarken auf dem Fortschrittsbalken
+    var span = _sp.map.end - _sp.map.start;
+    document.getElementById('spMarks').innerHTML = secs.filter(function(s) { return s.i > 0; }).map(function(s) {
+      return '<i style="left:' + ((_sp.map.at[s.i] - _sp.map.start) / span * 100).toFixed(3) + '%"></i>';
+    }).join('');
+    var bpm0 = Math.round(S.bars[0] && S.bars[0].bpm ? S.bars[0].bpm : S.bpm);
+    document.getElementById('spMeta').textContent = [_sp.src.level ? 'Level ' + _sp.src.level : '', bpm0 + ' BPM',
+      bars.length + ' bars', _sbMmSs(Math.round(span))].filter(Boolean).join(' · ');
+  }
+  function _spMarkSel() {
+    var s = _sp.sel;
+    _sp.tiles.forEach(function(t, i) { t.classList.toggle('sel', !!s && i >= s.a && i <= s.b); });
+    Array.prototype.forEach.call(document.querySelectorAll('#spSecs .sp-chip'), function(c) {
+      var i = +c.getAttribute('data-sec'), end = _spSecEnd(i);
+      c.classList.toggle('on', !!s && s.a === i && s.b === end);
+    });
+    var band = document.getElementById('spLoopBand'), span = _sp.map.end - _sp.map.start;
+    if (s && _sp.loop) {
+      var a = (_sp.map.at[s.a] - _sp.map.start) / span, b = (_sp.map.at[s.b] + _sp.map.dur[s.b] - _sp.map.start) / span;
+      band.style.left = (a * 100) + '%'; band.style.width = ((b - a) * 100) + '%'; band.hidden = false;
+    } else band.hidden = true;
+  }
+  function _spSecEnd(i) {
+    var bars = _sp.song.bars, e = i;
+    while (e + 1 < bars.length && !bars[e + 1].label) e++;
+    return e;
+  }
+  // Takt antippen: Auswahl (mit Umschalt erweitern) und dorthin springen
+  function _spSelect(i, extend) {
+    if (extend && _sp.sel) _sp.sel = { a: Math.min(_sp.sel.a, i), b: Math.max(_sp.sel.b, i) };
+    else _sp.sel = { a: i, b: i };
+    _spMarkSel();
+    if (!extend) _spSeekBar(i);
+  }
+  function _spSelectSection(i) {
+    _sp.sel = { a: i, b: _spSecEnd(i) };
+    _spMarkSel();
+    _spSeekBar(i);
+  }
+
+  // ── Wiedergabe ──────────────────────────────────────────────
+  function _spPos() { return _sp && _sp.master ? _sp.master.currentTime : 0; }
+  function _spApplyTrack() {
+    if (!_sp) return;
+    var hasDl = _sp.els.length > 1, want = hasDl ? _spPrefs.track : 'full';
+    _sp.els.forEach(function(a) { a.muted = (a._track !== want); a.playbackRate = _spPrefs.rate; });
+    document.getElementById('spTrack').hidden = !hasDl;
+  }
+  function _spRate(dir) {
+    var i = SP_RATES.indexOf(_spPrefs.rate);
+    i = Math.max(0, Math.min(SP_RATES.length - 1, (i < 0 ? 10 : i) + dir));
+    _spPrefs.rate = SP_RATES[i];
+    _spSavePrefs();
+    if (_sp) _sp.els.forEach(function(a) { a.playbackRate = _spPrefs.rate; });
+    if (_sp) _sp.clickPos = _spPos();
+    _spUi();
+  }
+  function _spSeekPos(pos) {
+    if (!_sp || !_sp.master) return;
+    pos = Math.max(0, Math.min(_sp.master.duration || _sp.map.end, pos));
+    _sp.els.forEach(function(a) { try { a.currentTime = pos; } catch (e) {} });
+    _sp.clickPos = pos - 1e-3;
+    _sp.countUntil = -1;
+    _spCursor(pos, true);
+  }
+  function _spSeekBar(i) {
+    if (!_sp) return;
+    _spSeekPos(_sp.map.at[Math.max(0, Math.min(_sp.song.bars.length - 1, i))]);
+  }
+  function _spToggle() { if (!_sp) return; if (_sp.playing) _spStop(); else _spPlay(); }
+  function _spPlay() {
+    if (!_sp || _sp.loading) return;
+    if (!_sp.master) { _devToast('This song has no recording yet'); return; }
+    initA();
+    var pos = _spPos(), bi = _spBarAt(pos);
+    var startBar = (_sp.sel && (bi < _sp.sel.a || bi > _sp.sel.b)) ? _sp.sel.a : Math.max(0, bi);
+    // Am Taktanfang (oder neu gestartet): ein Takt Vorlauf aus dem Song, auf Wunsch mit Einzähler
+    var atBarStart = Math.abs(pos - _sp.map.at[startBar]) < 0.05 || (_sp.sel && (bi < _sp.sel.a || bi > _sp.sel.b));
+    if (atBarStart) {
+      var pre = _sp.map.at[startBar] - _sp.map.dur[startBar];
+      pos = Math.max(0, pre);
+      _sp.countUntil = _spPrefs.countIn ? _sp.map.at[startBar] : -1;
+    } else _sp.countUntil = -1;
+    _sp.els.forEach(function(a) {
+      try { a.currentTime = pos; } catch (e) {}
+      a.playbackRate = _spPrefs.rate;
+      a.preservesPitch = true; a.webkitPreservesPitch = true;
+    });
+    _sp.clickPos = pos - 1e-3;
+    _sp.playing = true;
+    var ps = _sp.els.map(function(a) { var p = a.play(); return p && p.catch ? p.catch(function() {}) : null; });
+    _sp.raf = requestAnimationFrame(_spTick);
+    _sp.syncT = setInterval(_spSyncTracks, 400);
+    _spUi();
+    return ps;
+  }
+  function _spStop() {
+    if (!_sp) return;
+    _sp.playing = false;
+    if (_sp.els) _sp.els.forEach(function(a) { a.pause(); });
+    cancelAnimationFrame(_sp.raf);
+    clearInterval(_sp.syncT);
+    _sp.countUntil = -1;
+    if (_spRoot) _spUi();
+  }
+  // Zweite Spur an die erste binden — zwei Medienelemente laufen sonst auseinander
+  function _spSyncTracks() {
+    if (!_sp || _sp.els.length < 2 || !_sp.playing) return;
+    var m = _sp.master.currentTime;
+    _sp.els.forEach(function(a) {
+      if (a !== _sp.master && Math.abs(a.currentTime - m) > 0.045) { try { a.currentTime = m; } catch (e) {} }
+    });
+  }
+  // Klick (und Einzähler) — geplant auf der Audio-Uhr, aus der Position der Aufnahme
+  function _spClicks(pos) {
+    if (!aCtx) return;
+    var wantAll = _spPrefs.click, horizon = 0.16 * _spPrefs.rate, map = _sp.map;
+    if (!wantAll && !(_sp.countUntil > pos)) return;
+    var bi = _spBarAt(pos), first = Math.max(-1, bi);
+    for (var k = first; k <= first + 1; k++) {
+      var start = k < 0 ? map.at[0] - map.dur[0] : map.at[k], dur = k < 0 ? map.dur[0] : map.dur[k];
+      if (k >= map.at.length) break;
+      for (var q = 0; q < 4; q++) {
+        var qp = start + q * dur / 4;
+        if (qp <= _sp.clickPos || qp < pos - 0.02 || qp > pos + horizon) continue;
+        if (!wantAll && !(qp < _sp.countUntil - 1e-3)) continue;
+        playCountClick(q === 0, q === 0 ? 1.0 : 0.55, aCtx.currentTime + Math.max(0, qp - pos) / _spPrefs.rate);
+        _sp.clickPos = qp;
+      }
+    }
+  }
+  function _spTick() {
+    if (!_sp || !_sp.playing) return;
+    var pos = _spPos();
+    // Schleife: am Ende der Auswahl zurück an ihren Anfang
+    if (_sp.loop && _sp.sel) {
+      var end = _sp.map.at[_sp.sel.b] + _sp.map.dur[_sp.sel.b];
+      if (pos >= end - 0.01) { _spSeekPos(_sp.map.at[_sp.sel.a]); pos = _spPos(); }
+    }
+    _spClicks(pos);
+    // Sichtbare Stelle: um die Ausgabelatenz zurück (in Aufnahme-Zeit)
+    _spCursor(pos - _audioLatency() * _spPrefs.rate, false);
+    _sp.raf = requestAnimationFrame(_spTick);
+  }
+  function _spCursor(pos, jump) {
+    var bi = _spBarAt(pos), slot = -1;
+    if (bi >= 0) {
+      var b = _sp.song.bars[bi], f = (pos - _sp.map.at[bi]) / _sp.map.dur[bi];
+      if (f >= 1) { bi = -1; } else slot = Math.max(0, Math.min(b.n - 1, Math.floor(f * b.n)));
+    }
+    if (bi !== _sp.curBar) {
+      var old = _sp.curBar;
+      _sp.curBar = bi; _sp.curSlot = -1;
+      if (old >= 0 && _sp.tiles[old]) { _sp.tiles[old].classList.remove('cur'); _spDraw(old); }
+      if (bi >= 0 && _sp.tiles[bi]) { _sp.tiles[bi].classList.add('cur'); _spScrollTo(bi, !jump); }
+    }
+    if (bi >= 0 && slot !== _sp.curSlot) { _sp.curSlot = slot; _spDraw(bi, _sp.playing ? slot : null); }
+    _spProgress(pos);
+  }
+  function _spScrollTo(i, smooth) {
+    var sc = document.getElementById('spScore'), t = _sp.tiles[i];
+    if (!sc || !t) return;
+    var sr = sc.getBoundingClientRect(), tr = t.getBoundingClientRect();
+    if (tr.top >= sr.top + 8 && tr.bottom <= sr.bottom - 8) return;
+    var d = tr.top - sr.top - Math.min(60, sr.height * 0.15);
+    var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (smooth && !calm && sc.scrollBy) sc.scrollBy({ top: d, behavior: 'smooth' }); else sc.scrollTop += d;
+  }
+  function _spProgress(pos) {
+    var span = _sp.map.end - _sp.map.start, f = span > 0 ? (pos - _sp.map.start) / span : 0;
+    document.getElementById('spFill').style.transform = 'scaleX(' + Math.max(0, Math.min(1, f)).toFixed(4) + ')';
+    document.getElementById('spTime').textContent = _sbMmSs(Math.max(0, pos - _sp.map.start)) + ' / ' + _sbMmSs(Math.round(span));
+  }
+  function _spUi() {
+    if (!_sp || !_spRoot) return;
+    var $ = function(id) { return document.getElementById(id); };
+    $('spGo').classList.toggle('on', _sp.playing);
+    $('spGo').disabled = !!_sp.loading;
+    $('spGo').title = _sp.loading ? 'Loading the song…' : '';
+    $('spGo').setAttribute('aria-label', _sp.playing ? 'Pause' : 'Play');
+    $('spLoop').classList.toggle('on', _sp.loop);
+    $('spClick').classList.toggle('on', _spPrefs.click);
+    $('spCount').classList.toggle('on', _spPrefs.countIn);
+    $('spRate').textContent = Math.round(_spPrefs.rate * 100) + ' %';
+    $('spSlower').disabled = _spPrefs.rate <= SP_RATES[0];
+    $('spFaster').disabled = _spPrefs.rate >= SP_RATES[SP_RATES.length - 1];
+    Array.prototype.forEach.call(document.querySelectorAll('#spTrack [data-track]'), function(b) {
+      var on = b.getAttribute('data-track') === _spPrefs.track;
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+    });
+    [$('spLoop'), $('spClick'), $('spCount')].forEach(function(b) { b.setAttribute('aria-pressed', String(b.classList.contains('on'))); });
+    _spMarkSel();
+  }
+
+  // Vorschau aus dem Song Builder: der offene Song mit seiner lokalen Aufnahme
+  function _spPreviewBuilder() {
+    if (!_sbSong) return;
+    var song = _sbNormSong(JSON.parse(JSON.stringify(_sbSong)));
+    _sbIdb('readonly', function(st) { return st.get(_sbSong.id); }).then(function(rec) {
+      var url = rec && rec.data ? URL.createObjectURL(new Blob([rec.data], { type: rec.type || 'audio/mpeg' })) : null;
+      _spOpenSong(song, { title: song.title, full: url, drumless: null, preview: true, own: url });
+    }, function() { _spOpenSong(song, { title: song.title, full: null, drumless: null, preview: true }); });
+  }
+
+  // Tasten: vor dem Player und dem Builder abfangen
+  window.addEventListener('keydown', function(e) {
+    if (!_spIsOpen) return;
+    var tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    e.stopImmediatePropagation();
+    var k = (e.key || '').toLowerCase(), done = true, inPlayer = _sp && !document.getElementById('spPlay').hidden;
+    if (e.key === 'Escape') { if (inPlayer && !_sp.src.preview) { _spStop(); _spShowLib(); } else _spClose(); }
+    else if (!inPlayer) done = false;
+    else if (e.code === 'Space') _spToggle();
+    else if (e.key === 'Home') _spSeekBar(_sp.sel ? _sp.sel.a : 0);
+    else if (e.key === 'ArrowRight') _spSelect(Math.min(_sp.song.bars.length - 1, Math.max(0, _spBarAt(_spPos())) + 1), false);
+    else if (e.key === 'ArrowLeft') _spSelect(Math.max(0, _spBarAt(_spPos()) - 1), false);
+    else if (k === 'l') { _sp.loop = !_sp.loop; _spUi(); }
+    else if (k === 'k') { _spPrefs.click = !_spPrefs.click; _spSavePrefs(); _spUi(); }
+    else if (k === '-' || k === '_') _spRate(-1);
+    else if (k === '+' || k === '=') _spRate(1);
+    else done = false;
+    if (done) e.preventDefault();
+  }, true);
+  window.addEventListener('keyup', function(e) {
+    if (_spIsOpen && e.code === 'Space' && e.target && e.target.tagName === 'BUTTON') e.preventDefault();
+  }, true);
+  try {
+    if (_devMode && new URLSearchParams(window.location.search).get('songs') === '1') setTimeout(_spOpenLib, 0);
   } catch (e) {}
 
   // ============================================================
@@ -22966,6 +23620,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Die Notation ist ein SVG mit festen Farben — beim Wechsel neu zeichnen.
     // Läuft die Übung, zeichnet sie der nächste Schlag ohnehin neu.
     if (was !== light && !playing && GROOVE && GROOVE.beats) { try { renderNot(-1, false); } catch (e) {} }
+    // Song-Player: Noten in den neuen Farben neu zeichnen (z.B. „Auto“ am Abend)
+    if (was !== light && typeof _spIsOpen !== 'undefined' && _spIsOpen && _sp && _sp.tiles) {
+      _sp.tiles.forEach(function(t, i) { _spDraw(i, (i === _sp.curBar && _sp.playing) ? _sp.curSlot : null); });
+    }
   }
   (function() {
     var seg = document.getElementById('dgThemeSeg');
@@ -23082,6 +23740,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var show = _premium() && typeof GROOVE !== 'undefined' && GROOVE && !_rampMode;
     b.style.display = show ? 'inline-flex' : 'none';
     m.style.display = (_premium() && !_rampMode) ? 'flex' : 'none';
+    var sg = document.getElementById('dgSongsBtn');
+    if (sg) sg.style.display = (_devMode && !_rampMode) ? 'flex' : 'none';
     var on = !!(show && _favs().indexOf(GROOVE.id) > -1);
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -23127,6 +23787,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     h += '</section>';
     body.innerHTML = h;
   }
+  document.getElementById('dgSongsBtn').addEventListener('click', function() { _spOpenLib(); });
   document.getElementById('dgMineBtn').addEventListener('click', function() {
     _renderMine();
     mineOverlay.classList.add('open');
