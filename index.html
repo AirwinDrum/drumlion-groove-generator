@@ -15991,7 +15991,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261021-114908';
+  var DL_BUILD = '20261021-144346';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -16972,6 +16972,41 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (aCtx.state === 'suspended') aCtx.resume();
     loadWavs();
+    _volHint();
+  }
+
+  // Sicherheits-Begrenzer (21.10.2026, neues Produkthaftungsgesetz ab 09.12.2026):
+  // jeder Klang läuft über einen Limiter knapp unter Vollaussteuerung. Normale
+  // Pegel bleiben unberührt; stapeln sich Klänge oder spielt ein Fehler etwas
+  // doppelt, springt trotzdem nichts über die Obergrenze — Schutz fürs Gehör,
+  // gerade mit Kopfhörern.
+  function _limiter(ctx) {
+    var lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20;
+    lim.attack.value = 0.001; lim.release.value = 0.15;
+    lim.connect(ctx.destination);
+    return lim;
+  }
+  var _aOutNode = null;
+  function _aOut() {
+    if (!_aOutNode || _aOutNode.context !== aCtx) _aOutNode = _limiter(aCtx);
+    return _aOutNode;
+  }
+  // Einmaliger Hinweis beim ersten Ton
+  function _volHint() {
+    try {
+      if (localStorage.getItem('drumlion_v1_volhint')) return;
+      localStorage.setItem('drumlion_v1_volhint', '1');
+    } catch (e) { return; }
+    var t = document.createElement('div');
+    t.setAttribute('role', 'status');
+    t.textContent = 'Start at a low volume, especially with headphones. Take breaks, and stop if anything hurts.';
+    t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100000;max-width:min(92vw,520px);'
+      + 'background:#1a1a1a;border:1px solid #C9A84C;color:#E8E4DB;border-radius:14px;padding:10px 18px;text-align:center;'
+      + 'font:500 14px/1.45 \'DM Sans\',system-ui,sans-serif;transition:opacity .4s;';
+    document.body.appendChild(t);
+    setTimeout(function(){ t.style.opacity = '0'; }, 6500);
+    setTimeout(function(){ t.remove(); }, 7000);
   }
 
   // WAV-Dateien direkt eingebettet als Base64
@@ -17091,7 +17126,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     var src = aCtx.createBufferSource(), g = aCtx.createGain();
     src.buffer = buf; g.gain.value = vol !== undefined ? vol : 1.0;
-    src.connect(g); g.connect(aCtx.destination);
+    src.connect(g); g.connect(_aOut());
     startTrimmed(src, t, key); return true;
   }
 
@@ -17125,7 +17160,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (!WAVS[g1]) return;
         var s2 = aCtx.createBufferSource(), gg = aCtx.createGain();
         s2.buffer = WAVS[g1]; gg.gain.value = 0.55;
-        s2.connect(gg); gg.connect(aCtx.destination);
+        s2.connect(gg); gg.connect(_aOut());
         startTrimmed(s2, Math.max(aCtx.currentTime, t - off), g1);
       });
       playSound(main, t);
@@ -17137,7 +17172,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (WAVS['hhOpen']) {
         var src = aCtx.createBufferSource(), g = aCtx.createGain();
         src.buffer = WAVS['hhOpen']; g.gain.value = vol;
-        src.connect(g); g.connect(aCtx.destination);
+        src.connect(g); g.connect(_aOut());
         startTrimmed(src, t, 'hhOpen'); _hhOpenGain = g;
       }
       return;
@@ -17162,7 +17197,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Fallback synth for kick/snare/hh if buffer not loaded
     if (key === 'kick' || key === 'kick2') {
       var o = aCtx.createOscillator(), g = aCtx.createGain();
-      o.connect(g); g.connect(aCtx.destination);
+      o.connect(g); g.connect(_aOut());
       o.frequency.setValueAtTime(160, t);
       o.frequency.exponentialRampToValueAtTime(40, t + 0.12);
       g.gain.setValueAtTime(0.8, t);
@@ -17176,7 +17211,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var gn = aCtx.createGain();
       gn.gain.setValueAtTime(0.6, t);
       gn.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-      n.connect(gn); gn.connect(aCtx.destination); n.start(t);
+      n.connect(gn); gn.connect(_aOut()); n.start(t);
     } else if (key === 'hh' || key === 'hhOpen' || key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') {
       var sz = aCtx.sampleRate * 0.05, buf = aCtx.createBuffer(1, sz, aCtx.sampleRate);
       var d = buf.getChannelData(0);
@@ -17186,7 +17221,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       g.gain.setValueAtTime(0.25, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
       var hp = aCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
-      n.connect(hp); hp.connect(g); g.connect(aCtx.destination); n.start(t);
+      n.connect(hp); hp.connect(g); g.connect(_aOut()); n.start(t);
     }
   }
 
@@ -17206,7 +17241,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     t += CLICK_OFFSET; // Kompensation für MP3-Encoder-Delay
     var o = aCtx.createOscillator(), g = aCtx.createGain();
-    o.connect(g); g.connect(aCtx.destination);
+    o.connect(g); g.connect(_aOut());
     o.frequency.value = accent ? 1500 : 1100;
     g.gain.setValueAtTime(vol !== undefined ? vol : 0.46, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
@@ -18316,7 +18351,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     t += CLICK_OFFSET; // gleiche Kompensation wie Click
     var freq = COUNT_FREQS[num] || 660;
     var o = aCtx.createOscillator(), g = aCtx.createGain();
-    o.connect(g); g.connect(aCtx.destination);
+    o.connect(g); g.connect(_aOut());
     o.type = 'triangle'; // weicher als Sinus, trotzdem klar
     o.frequency.value = freq;
     g.gain.setValueAtTime(0.22, t);
@@ -18958,7 +18993,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       (function(t) {
         var o = aCtx.createOscillator();
         var g = aCtx.createGain();
-        o.connect(g); g.connect(aCtx.destination);
+        o.connect(g); g.connect(_aOut());
         o.type = 'sine';
         o.frequency.value = 1800 + i * 200;
         g.gain.setValueAtTime(0.0, t);
@@ -18977,7 +19012,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var steps = [523.25, 659.25, 783.99, 1046.50];
     steps.forEach(function(freq, i) {
       var o = aCtx.createOscillator(), g = aCtx.createGain();
-      o.connect(g); g.connect(aCtx.destination);
+      o.connect(g); g.connect(_aOut());
       o.type = 'sine'; o.frequency.value = freq;
       var t = now + i * 0.13;
       g.gain.setValueAtTime(0, t);
@@ -18988,7 +19023,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Abschließender weicher Akkord
     [523.25, 659.25, 783.99].forEach(function(freq) {
       var o = aCtx.createOscillator(), g = aCtx.createGain();
-      o.connect(g); g.connect(aCtx.destination);
+      o.connect(g); g.connect(_aOut());
       o.type = 'sine'; o.frequency.value = freq;
       var t = now + 0.55;
       g.gain.setValueAtTime(0, t);
@@ -21024,7 +21059,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (pos >= _sbAudio.buf.duration) return;
     var src = aCtx.createBufferSource();
     src.buffer = _sbAudio.buf;
-    src.connect(aCtx.destination);
+    src.connect(_aOut());
     src.start(when, pos);
     _sbSongSrcs.push(src);
   }
@@ -21377,6 +21412,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbExpAudio(P, shift) {
     if (!(P.drums || P.click || P.song)) return Promise.resolve(null);
     var ctx = new OfflineAudioContext(2, Math.ceil(P.total * SB_EXP_SR), SB_EXP_SR), openG = null;
+    var out = _limiter(ctx);   // derselbe Sicherheits-Begrenzer wie bei der Wiedergabe
     shift = shift || 0;
     function vol(k) {
       return (k === 'crash1' || k === 'crash2') ? 0.38 : k === 'ride' ? 0.70 : k === 'hhOpen' ? 0.48 :
@@ -21391,14 +21427,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!buf) return;
       var src = ctx.createBufferSource(), g = ctx.createGain();
       src.buffer = buf; g.gain.value = vol(k);
-      src.connect(g); g.connect(ctx.destination);
+      src.connect(g); g.connect(out);
       src.start(Math.max(0, t - (WAV_ANCHOR[k] || 0)), WAV_TRIM[k] || 0);
       if (k === 'hhOpen') openG = g;
     }
     function click(accent, v, t) {
       t = Math.max(0, t - shift);
       var o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
+      o.connect(g); g.connect(out);
       o.type = 'sine'; o.frequency.value = accent ? 1500 : 1100;
       g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.start(t); o.stop(t + 0.06);
@@ -21407,7 +21443,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Aufnahme: läuft so, dass der Takt `from` genau bei P.startT einsetzt (davor die Aufnahme als Vorlauf)
     if (P.song) {
       var song = ctx.createBufferSource(), p0 = _sbBarPos(P.from) - P.startT + shift;
-      song.buffer = _sbAudio.buf; song.connect(ctx.destination);
+      song.buffer = _sbAudio.buf; song.connect(out);
       if (p0 >= 0) song.start(0, p0); else song.start(-p0, 0);
     }
     var bars = _sbSong.bars;
