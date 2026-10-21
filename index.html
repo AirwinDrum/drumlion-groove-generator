@@ -15991,7 +15991,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261021-111149';
+  var DL_BUILD = '20261021-114908';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19487,7 +19487,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var SB_SONG_EXT = '.drumlion-song.json';
   // Ordner wählen (oder neu wählen) und sofort abgleichen
   function _sbFolderLink() {
-    if (!window.showDirectoryPicker) { _devToast('Saving to a folder works in Chrome and Edge'); return; }
+    if (!window.showDirectoryPicker) { _sbBackup(); return; }
     window.showDirectoryPicker({ id: 'drumlion-songs', mode: 'readwrite' }).then(function(dir) {
       _sbDir = dir; _sbDirOk = true; _sbDirErr = false; _sbNames = {};
       _sbIdb('readwrite', function(st) { st.put(dir, '__folder__'); }).catch(function() {});
@@ -19677,17 +19677,41 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else if (_sbDir && !_sbDirOk) { h = '<button type="button" class="sb-btn warn" data-save="reconnect">Reconnect folder</button>'; cls = 'warn'; }
     else if (_sbDir && _sbDirErr) { h = 'Folder not reachable · <button type="button" class="sb-linkbtn" data-save="reconnect">retry</button>'; cls = 'warn'; }
     else {
-      h = 'Saved in this browser only' + (window.showDirectoryPicker ? ' · <button type="button" class="sb-linkbtn" data-save="link">Save to a folder…</button>' : '');
+      h = 'Saved in this browser only · ' + (window.showDirectoryPicker
+        ? '<button type="button" class="sb-linkbtn" data-save="link">Save to a folder…</button>'
+        : '<button type="button" class="sb-linkbtn" data-save="backup">Back up to a file</button>');
       cls = 'warn';
     }
     el.innerHTML = h;
     el.className = 'sb-save ' + cls;
     var mi = document.querySelector('#sbMenu [data-song="folder"]');
-    if (mi) mi.textContent = _sbDir ? 'Choose another song folder…' : 'Save songs to a folder…';
+    if (mi) mi.textContent = !window.showDirectoryPicker ? 'Back up all songs to a file'
+                           : (_sbDir ? 'Choose another song folder…' : 'Save songs to a folder…');
     var mu = document.querySelector('#sbMenu [data-song="unfolder"]');
     if (mu) mu.hidden = !_sbDir;
   }
   function _sbSavePrefs() { try { localStorage.setItem(SB_PREF_KEY, JSON.stringify(_sbPrefs)); } catch (e) {} }
+  function _sbDownload(name, text) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() { URL.revokeObjectURL(a.href); }, 4000);
+  }
+  // Safari kann nicht in einen Ordner schreiben (keine File System Access API) —
+  // dort sichert der Ordner-Knopf alle Songs in eine Datei in „Downloads“.
+  // Aufnahmen bleiben im Browser; „Import from file…“ spielt die Sicherung zurück.
+  function _sbBackup() {
+    var songs = _sbData.songs.filter(function(s) { return !_sbPristine(s); });
+    if (!songs.length) { _devToast('Nothing to back up yet'); return; }
+    var d = new Date(), pad = function(n) { return (n < 10 ? '0' : '') + n; };
+    _sbDownload('drumlion-songs-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.json',
+                JSON.stringify({ format: 'drumlion-songs', version: 1, songs: songs }));
+    _devToast((songs.length === 1 ? '1 song' : songs.length + ' songs') +
+              ' saved to your Downloads folder. To restore: Song ▾ → Import from file…');
+  }
 
   // ── Notenbild ───────────────────────────────────────────────
   // Notenwerte aus dem Abstand zum nächsten Schlag derselben Zählzeit: allein
@@ -20350,14 +20374,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbSwitch(_sbData.songs[Math.max(0, ix - 1)].id);
       _sbSaveNow();
     } else if (act === 'export') {
-      var data = JSON.stringify({ format: 'drumlion-song', version: 1, song: _sbSong });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-      a.download = ((_sbSong.title || 'song').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'song') + '.drumlion-song.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function() { URL.revokeObjectURL(a.href); }, 4000);
+      _sbDownload(((_sbSong.title || 'song').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') || 'song') + '.drumlion-song.json',
+                  JSON.stringify({ format: 'drumlion-song', version: 1, song: _sbSong }));
     } else if (act === 'import') {
       document.getElementById('sbFile').click();
     } else if (act === 'excode') {
@@ -20372,20 +20390,44 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbPdf();
     }
   }
-  function _sbImportFile(file) {
-    var fr = new FileReader();
-    fr.onload = function() {
-      var d = null;
-      try { d = JSON.parse(fr.result); } catch (e) {}
-      var list = !d ? [] : (d.song ? [d.song] : (Array.isArray(d.songs) ? d.songs : [d]));
-      var added = list.map(_sbNormSong).filter(Boolean);
-      if (!added.length) { _devToast('This file is not a Drumlion song'); return; }
-      added.forEach(function(s) { s.id = _sbId(); _sbData.songs.push(s); });
-      _sbSwitch(added[0].id);
+  // Import einer oder mehrerer Dateien: einzelne Songs, eine Sicherung oder die
+  // Dateien aus dem Song-Ordner. Ein Song, den es hier schon gibt (gleiche ID),
+  // wird nur ersetzt, wenn die Datei neuer ist — eine Sicherung lässt sich so
+  // beliebig oft zurückspielen, ohne Doppel.
+  function _sbImportFiles(files) {
+    Promise.all(files.map(function(file) {
+      return new Promise(function(res) {
+        var fr = new FileReader();
+        fr.onload = function() { var d = null; try { d = JSON.parse(fr.result); } catch (e) {} res(d); };
+        fr.onerror = function() { res(null); };
+        fr.readAsText(file);
+      });
+    })).then(function(all) {
+      var got = [], same = 0, ids = {};
+      all.forEach(function(d) {
+        var list = !d ? [] : (d.song ? [d.song] : (Array.isArray(d.songs) ? d.songs : [d]));
+        list.map(_sbNormSong).filter(Boolean).forEach(function(s) {
+          var have = _sbFind(s.id);
+          if (!have) _sbData.songs.push(s);
+          else if ((s.updated || 0) > (have.updated || 0)) {
+            _sbData.songs[_sbData.songs.indexOf(have)] = s;
+            if (have === _sbSong) { _sbStop(); _sbSong = s; }
+          } else { same++; return; }
+          _sbChanged[s.id] = 1; ids[s.id] = 1;
+          got.push(s);
+        });
+      });
+      if (!got.length) {
+        _devToast(same ? 'Already up to date: nothing newer in this file' : 'This file is not a Drumlion song');
+        return;
+      }
+      // unberührten Startsong verdrängen, wie beim Abgleich mit dem Ordner
+      _sbData.songs = _sbData.songs.filter(function(s) { return ids[s.id] || !_sbPristine(s); });
+      _sbSwitch(got[0].id);
       _sbSaveNow();
-      _devToast(added.length === 1 ? 'Imported “' + added[0].title + '”' : 'Imported ' + added.length + ' songs');
-    };
-    fr.readAsText(file);
+      _devToast((got.length === 1 ? 'Imported “' + got[0].title + '”' : 'Imported ' + got.length + ' songs') +
+                (same ? ' · ' + same + ' already up to date' : ''));
+    });
   }
   // Ausgewählte Takte (höchstens zwei) als Übungs-Code für EXERCISES kopieren
   function _sbExerciseCode() {
@@ -21862,7 +21904,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       '</div>' +
       '<div class="sb-score" id="sbScore"></div>' +
       '<div class="sb-ed" id="sbEd"></div>' +
-      '<input type="file" id="sbFile" accept=".json,application/json" hidden>';
+      '<input type="file" id="sbFile" accept=".json,application/json" multiple hidden>';
     document.body.appendChild(r);
     _sbRoot = r;
 
@@ -21883,7 +21925,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     r.addEventListener('click', function(e) { if (menu.open && !e.target.closest('#sbMenu')) menu.open = false; });
     $('sbFile').addEventListener('change', function() {
-      if (this.files && this.files[0]) _sbImportFile(this.files[0]);
+      if (this.files && this.files.length) _sbImportFiles([].slice.call(this.files));
       this.value = '';
     });
     $('sbPlay').addEventListener('click', _sbPlay);
@@ -21907,7 +21949,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbSaveSt').addEventListener('click', function(e) {
       var b = e.target.closest('[data-save]');
       if (!b) return;
-      if (b.getAttribute('data-save') === 'link') _sbFolderLink(); else _sbFolderReconnect();
+      var act = b.getAttribute('data-save');
+      if (act === 'link') _sbFolderLink(); else if (act === 'backup') _sbBackup(); else _sbFolderReconnect();
     });
     $('sbAudioBtn').addEventListener('click', function() { _sbPrefs.syncOpen = !_sbPrefs.syncOpen; _sbSavePrefs(); _sbSyncUi(); });
     $('sbSyncLoad').addEventListener('click', function() { $('sbAudioFile').click(); });
