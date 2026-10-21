@@ -985,6 +985,32 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   transition: color 0.15s;
 }
 .legend-close:hover { color: var(--dl-ink); }
+/* Drum Key (21.10.2026): Gruppen aus Mini-Notensystemen, die ohne Lücke
+   aneinanderstoßen und so wie ein durchgehendes System wirken */
+.dk-modal { width: min(640px, 94vw); max-height: 92vh; overflow-y: auto; }
+.dk-modal h3 { margin-bottom: 4px; }
+.dk-hint { text-align: center; font-size: 13px; color: rgba(var(--dl-ink-rgb),0.55); margin: 0 0 6px; }
+.dk-group-h {
+  margin: 16px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--dl-gold-ink);
+}
+.dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 0; }
+@media (max-width: 480px) { .dk-grid { grid-template-columns: repeat(3, 1fr); } }
+.dk-item {
+  appearance: none; background: none; border: 0; margin: 0; padding: 0 0 10px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; color: var(--dl-ink); font: inherit;
+  border-radius: 8px;
+}
+.dk-item svg { display: block; width: 100%; height: auto; overflow: visible; transition: color 0.15s; }
+.dk-item .dk-name {
+  margin-top: 2px; font-size: 12px; line-height: 1.25; text-align: center;
+  color: rgba(var(--dl-ink-rgb),0.72); padding: 0 2px;
+}
+.dk-item:hover svg { color: var(--dl-gold-ink); }
+.dk-item.on svg { color: #C9A84C; }
+.dk-item:focus-visible { outline: 2px solid #C9A84C; outline-offset: -2px; }
+.dk-foot { margin: 14px 0 0; font-size: 12.5px; line-height: 1.55; color: rgba(var(--dl-ink-rgb),0.6); }
+.dk-foot b { color: var(--dl-ink); font-weight: 600; }
 .legend-table { width: 100%; border-collapse: collapse; }
 .legend-table tr td {
   padding: 7px 6px; font-size: 14px; color: var(--dl-ink);
@@ -2115,94 +2141,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     <!-- Drum Legend Modal -->
     <div class="legend-overlay" id="dgLegendOverlay">
-      <div class="legend-modal">
-        <button class="legend-close" id="dgLegendClose">×</button>
-        <h3 style="margin-bottom:14px;">🥁 Drum Key</h3>
-        <!-- Staff 1: lines y=88,104,120,136,152 (staffTop=88, spacing=16)
-             Staff 2: lines y=196,212,228,244,260 (staffTop=196)
-             All stems go UP from the RIGHT EDGE of the notehead. -->
-        <svg viewBox="0 0 560 316" width="100%" style="display:block;color:var(--dl-ink);">
-
-          <!-- ═══ STAFF 1 ═══ -->
-          <line x1="20" y1="88"  x2="430" y2="88"  stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="104" x2="430" y2="104" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="120" x2="430" y2="120" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="136" x2="430" y2="136" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="152" x2="430" y2="152" stroke="currentColor" stroke-width="1.2"/>
-
-          <!-- 1. Crash — pos −1.5 → y=64, cx=58 — circledX, ledger @ pos−1 y=72 -->
-          <!-- ledger line -->
-          <line x1="47" y1="72" x2="70" y2="72" stroke="currentColor" stroke-width="1.3"/>
-          <!-- circle head -->
-          <circle cx="58" cy="64" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <!-- inner × -->
-          <line x1="52" y1="58" x2="64" y2="70" stroke="currentColor" stroke-width="1.6"/>
-          <line x1="64" y1="58" x2="52" y2="70" stroke="currentColor" stroke-width="1.6"/>
-          <!-- stem UP from right edge (cx+7.5, cy) -->
-          <line x1="65.5" y1="64" x2="65.5" y2="26" stroke="currentColor" stroke-width="1.4"/>
-          <text x="58" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Crash</text>
-
-          <!-- 2. Hi-Hat — pos −0.5 → y=80, cx=140 — × head -->
-          <!-- × lines: size 8 from center -->
-          <line x1="132" y1="72" x2="148" y2="88" stroke="currentColor" stroke-width="2"/>
-          <line x1="148" y1="72" x2="132" y2="88" stroke="currentColor" stroke-width="2"/>
-          <!-- stem UP from right corner of × (cx+8, cy−8) going up -->
-          <line x1="148" y1="72" x2="148" y2="34" stroke="currentColor" stroke-width="1.4"/>
-          <text x="140" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Hi-Hat</text>
-
-          <!-- 3. Tom 1 — pos 0.5 → y=96, cx=225 — oval -->
-          <ellipse cx="225" cy="96" rx="8.5" ry="5.5" fill="currentColor"/>
-          <!-- stem UP from right edge (cx+8.5, cy) -->
-          <line x1="233.5" y1="96" x2="233.5" y2="58" stroke="currentColor" stroke-width="1.4"/>
-          <text x="225" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 1</text>
-
-          <!-- 4. Tom 2 — pos 1.0 → y=104, cx=315 — oval (on line 2) -->
-          <ellipse cx="315" cy="104" rx="8.5" ry="5.5" fill="currentColor"/>
-          <!-- stem UP from right edge -->
-          <line x1="323.5" y1="104" x2="323.5" y2="66" stroke="currentColor" stroke-width="1.4"/>
-          <text x="315" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 2</text>
-
-          <!-- 5. Snare — pos 1.5 → y=112, cx=400 — oval -->
-          <ellipse cx="400" cy="112" rx="8.5" ry="5.5" fill="currentColor"/>
-          <!-- stem UP from right edge -->
-          <line x1="408.5" y1="112" x2="408.5" y2="74" stroke="currentColor" stroke-width="1.4"/>
-          <text x="400" y="14" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Snare</text>
-
-          <!-- ═══ STAFF 2 ═══ (staffTop=196) -->
-          <line x1="20" y1="196" x2="500" y2="196" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="212" x2="500" y2="212" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="228" x2="500" y2="228" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="244" x2="500" y2="244" stroke="currentColor" stroke-width="1.2"/>
-          <line x1="20" y1="260" x2="500" y2="260" stroke="currentColor" stroke-width="1.2"/>
-
-          <!-- 6. Tom 3 — pos 2.5 → y=236, cx=65 — oval (between lines 3–4) -->
-          <ellipse cx="65" cy="236" rx="8.5" ry="5.5" fill="currentColor"/>
-          <!-- stem UP from right edge -->
-          <line x1="73.5" y1="236" x2="73.5" y2="198" stroke="currentColor" stroke-width="1.4"/>
-          <text x="65" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Tom 3</text>
-
-          <!-- 7. Bass Drum — pos 3.5 → y=252, cx=190 — oval (between lines 4–5) -->
-          <ellipse cx="190" cy="252" rx="8.5" ry="5.5" fill="currentColor"/>
-          <!-- stem UP from right edge -->
-          <line x1="198.5" y1="252" x2="198.5" y2="214" stroke="currentColor" stroke-width="1.4"/>
-          <text x="190" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Bass Drum</text>
-
-          <!-- 8. Bass Drum 2 — pos 4.0 → y=260, cx=330 — oval (on line 5) -->
-          <ellipse cx="330" cy="260" rx="8.5" ry="5.5" fill="currentColor"/>
-          <!-- stem UP from right edge -->
-          <line x1="338.5" y1="260" x2="338.5" y2="222" stroke="currentColor" stroke-width="1.4"/>
-          <text x="330" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="11" font-family="DM Sans,system-ui,sans-serif">Bass Drum 2</text>
-
-          <!-- 9. Hi-Hat Pedal — pos 5.5 → y=284, cx=455 — × head, ledger @ pos5.0 y=276 -->
-          <!-- ledger line -->
-          <line x1="444" y1="276" x2="467" y2="276" stroke="currentColor" stroke-width="1.3"/>
-          <!-- × head: size 8 -->
-          <line x1="447" y1="276" x2="463" y2="292" stroke="currentColor" stroke-width="2"/>
-          <line x1="463" y1="276" x2="447" y2="292" stroke="currentColor" stroke-width="2"/>
-          <!-- stem UP from right corner of × (cx+8=463, cy−8=276) going up through staff -->
-          <line x1="463" y1="276" x2="463" y2="230" stroke="currentColor" stroke-width="1.4"/>
-          <text x="455" y="307" text-anchor="middle" fill="currentColor" fill-opacity="0.55" font-size="10" font-family="DM Sans,system-ui,sans-serif">Hi-Hat Pedal</text>
-        </svg>
+      <div class="legend-modal dk-modal" role="dialog" aria-modal="true" aria-labelledby="dgLegendTitle">
+        <button class="legend-close" id="dgLegendClose" aria-label="Close">×</button>
+        <h3 id="dgLegendTitle">Drum Key</h3>
+        <p class="dk-hint">Tap a note to hear it.</p>
+        <!-- Inhalt baut _buildDrumKey() beim Öffnen: dieselben Notenköpfe und
+             Positionen (DRUM_MAP) wie in den Übungen, in den Farben des Schemas -->
+        <div id="dgLegendBody"></div>
       </div>
     </div>
 
@@ -15991,7 +15936,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261021-144346';
+  var DL_BUILD = '20261021-160301';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -23534,7 +23479,86 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var legendBtn = document.getElementById('dgLegendBtn');
   var legendOverlay = document.getElementById('dgLegendOverlay');
   var legendClose = document.getElementById('dgLegendClose');
+  // Drum Key (21.10.2026): Notenköpfe, Positionen und Zeichen wie in den
+  // Übungen (DRUM_MAP + drawNoteHead), je Instrument ein Mini-System. Die
+  // Systeme stoßen im Raster ohne Lücke aneinander — eine durchgehende Zeile.
+  var DRUM_KEY = [
+    { h: 'Cymbals', items: [['crash1', 'Crash'], ['crash2', 'Crash 2'], ['china', 'China'], ['ride', 'Ride'],
+      ['rideBell', 'Ride bell'], ['hh', 'Hi-hat'], ['hhOpen', 'Hi-hat open'], ['hhPedal', 'Hi-hat foot'], ['cowbell', 'Cowbell']] },
+    { h: 'Drums', items: [['tom1', 'Tom 1'], ['tom2', 'Tom 2'], ['snare', 'Snare'], ['tom3', 'Floor tom'],
+      ['kick', 'Bass drum'], ['kick2', 'Bass drum 2']] },
+    { h: 'Techniques', items: [['snareAccent', 'Accent'], ['ghost', 'Ghost note'], ['snareFlam', 'Flam'],
+      ['snareDrag', 'Drag'], ['crossStick', 'Cross stick'], ['hhAccent', 'Hi-hat accent']] }
+  ];
+  // Klang beim Antippen, wo der Schlüssel kein eigenes Sample hat
+  var DRUM_KEY_SOUND = { ghost: 'snareGhost' };
+  function _drumKeySvg(k) {
+    var d = DRUM_MAP[k], sY = 40, ls = 8, x = 30, c = 'currentColor', h = '', i;
+    var y = sY + d.line * ls;
+    for (i = 0; i < 5; i++) {
+      h += '<line x1="0" y1="' + (sY + i * ls) + '" x2="64" y2="' + (sY + i * ls) +
+           '" stroke="' + c + '" stroke-width="0.8" opacity="0.45"/>';
+    }
+    h += drawLedgerLines(d.line, x, c, 1);
+    h += drawNoteHead({ head: d.head }, x, y, c, 1);
+    h += '<line x1="' + (x + 5) + '" y1="' + y + '" x2="' + (x + 5) + '" y2="' + (sY - 18) +
+         '" stroke="' + c + '" stroke-width="1.2"/>';
+    // Zeichen über dem Hals — wie renderNot, nur ohne Balken darunter
+    var ax = x + 5, ay = sY - 26;
+    if (d.articulation === 'o') {
+      h += '<circle cx="' + ax + '" cy="' + ay + '" r="4.5" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
+    } else if (d.articulation === '>') {
+      h += '<path d="M' + (ax - 4.5) + ' ' + (ay - 4) + ' L' + (ax + 4.5) + ' ' + ay + ' L' + (ax - 4.5) + ' ' + (ay + 4) +
+           '" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
+    }
+    // Vorschlagnoten: Flam eine (durchgestrichen), Drag zwei mit Doppelbalken
+    var cnt = d.grace ? d.grace : (d.flam ? 1 : 0), gx0 = x - (cnt === 2 ? 17 : 11), gsp = 6;
+    for (i = 0; i < cnt; i++) {
+      var gx = gx0 + i * gsp;
+      h += '<ellipse cx="' + gx + '" cy="' + y + '" rx="3.2" ry="2.3" fill="' + c + '" transform="rotate(-20 ' + gx + ' ' + y + ')"/>';
+      h += '<line x1="' + (gx + 3) + '" y1="' + y + '" x2="' + (gx + 3) + '" y2="' + (y - 13) + '" stroke="' + c + '" stroke-width="1"/>';
+      if (cnt === 1) {
+        var fx = gx + 3, ft = y - 13;
+        h += '<path d="M' + fx + ' ' + ft + ' C' + (fx + 0.6) + ' ' + (ft + 3.6) + ' ' + (fx + 5.2) + ' ' + (ft + 4.6) + ' ' + (fx + 4.2) + ' ' + (ft + 9.5) +
+             '" fill="none" stroke="' + c + '" stroke-width="1.1" stroke-linecap="round"/>';
+        h += '<line x1="' + (gx - 1.5) + '" y1="' + (y - 4.5) + '" x2="' + (gx + 7.5) + '" y2="' + (y - 11) + '" stroke="' + c + '" stroke-width="0.9"/>';
+      }
+    }
+    if (cnt === 2) {
+      h += '<line x1="' + (gx0 + 3) + '" y1="' + (y - 13) + '" x2="' + (gx0 + gsp + 3) + '" y2="' + (y - 13) + '" stroke="' + c + '" stroke-width="1.5"/>';
+      h += '<line x1="' + (gx0 + 3) + '" y1="' + (y - 10) + '" x2="' + (gx0 + gsp + 3) + '" y2="' + (y - 10) + '" stroke="' + c + '" stroke-width="1.5"/>';
+    }
+    return '<svg viewBox="0 0 64 88" aria-hidden="true">' + h + '</svg>';
+  }
+  function _buildDrumKey() {
+    var body = document.getElementById('dgLegendBody');
+    if (!body || body.firstChild) return;
+    var h = '';
+    DRUM_KEY.forEach(function(g) {
+      h += '<div class="dk-group-h">' + g.h + '</div><div class="dk-grid">';
+      g.items.forEach(function(it) {
+        if (!DRUM_MAP[it[0]]) return;
+        h += '<button type="button" class="dk-item" data-dk="' + it[0] + '" aria-label="Play ' + it[1] + '">' +
+             _drumKeySvg(it[0]) + '<span class="dk-name">' + it[1] + '</span></button>';
+      });
+      h += '</div>';
+    });
+    h += '<p class="dk-foot"><b>R</b> / <b>L</b> under the notes: right / left hand. ' +
+         'Numbers above the staff: the count (1 e &amp; a).</p>';
+    body.innerHTML = h;
+    body.addEventListener('click', function(e) {
+      var b = e.target.closest('[data-dk]');
+      if (!b) return;
+      var k = b.getAttribute('data-dk');
+      initA();
+      playSound(DRUM_KEY_SOUND[k] || k);
+      b.classList.add('on');
+      setTimeout(function() { b.classList.remove('on'); }, 350);
+    });
+  }
   legendBtn.addEventListener('click', function() {
+    _buildDrumKey();
+    initA();   // Samples schon beim Öffnen dekodieren — der erste Tipp klingt dann sofort
     legendOverlay.classList.add('open');
   });
   legendClose.addEventListener('click', function() {
