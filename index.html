@@ -1166,6 +1166,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .dl-set-seg button[aria-checked="true"] { background: #C9A84C; color: #0a0a0a; }
 .dl-set-seg button:focus-visible { outline: 2px solid #C9A84C; outline-offset: -2px; }
 .dl-set-hint { margin: 10px 0 0; font-size: 13px; color: rgba(var(--dl-ink-rgb),0.6); }
+/* Sprachwahl (23.10.2026): Auswahlliste im Stil der Segment-Knöpfe */
+.dl-set-selw { position: relative; display: inline-block; }
+.dl-set-selw::after {
+  content: ""; position: absolute; right: 14px; top: 50%; width: 7px; height: 7px; margin-top: -5px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg); color: rgba(var(--dl-ink-rgb),0.6); pointer-events: none;
+}
+.dl-set-sel {
+  -webkit-appearance: none; appearance: none; min-width: 200px;
+  background: var(--dl-raise); color: var(--dl-ink); border: 1px solid var(--dl-line); border-radius: 10px;
+  font: inherit; font-size: 14px; font-weight: 600; padding: 9px 40px 9px 14px; cursor: pointer;
+}
+.dl-set-sel:hover { background: var(--dl-raise-h); }
+.dl-set-sel:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; }
 .dl-set-offset { display: flex; align-items: center; gap: 10px; }
 .dl-set-offset input[type=range] { flex: 1; min-width: 0; accent-color: #C9A84C; }
 .dl-set-offset-end { font-size: 12px; color: rgba(var(--dl-ink-rgb),0.55); }
@@ -2137,6 +2151,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           </div>
           <p class="dl-set-p dl-set-hint">Auto follows your device's light or dark setting. Saved on this device.</p>
         </section>
+        <section class="dl-set-sec" id="dgLangSec">
+          <div class="dl-set-h">Language</div>
+          <span class="dl-set-selw"><select class="dl-set-sel" id="dgLangSel" aria-label="Language">
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+            <option value="fr">Français</option>
+          </select></span>
+        </section>
         <section class="dl-set-sec">
           <div class="dl-set-h">Cursor timing</div>
           <p class="dl-set-p">If the moving highlight is ahead of or behind the sound — common with Bluetooth headphones — slide until both match. Saved on this device.</p>
@@ -2268,6 +2292,296 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 (function(){
 
   // ============================================================
+  // SPRACHE (Erwin, 23.10.2026)
+  // ============================================================
+  // Englisch ist die Quelle. Die anderen Sprachen stehen in I18N_ROWS, eine
+  // Zeile pro Text, der englische Text ist der Schlüssel; was fehlt, bleibt
+  // Englisch. Gewählt wird über ?lang= (die Lektionsseite reicht die Sprache
+  // der Website durch), sonst über die eigene Wahl in den Einstellungen
+  // (`dl_lang`, pro Gerät), sonst Englisch. DL_LANG_AUTO würde zusätzlich die
+  // Browsersprache nehmen — aus, solange die Website ihre Erkennung auch aus hat.
+  // Drum-Begriffe, Instrumente und Übungsnamen bleiben in jeder Sprache Englisch.
+  var DL_LANGS = ['en', 'de', 'es', 'pt', 'fr'];
+  var DL_LANG_AUTO = false;
+  // Sprachwahl in den Einstellungen: erst sichtbar, wenn Erwin die Texte
+  // freigegeben hat (wie der Schalter auf der Website). Im Dev-Modus immer da.
+  var DL_LANG_SWITCH = false;
+  var DL_LANG = (function() {
+    var l = '';
+    try { l = (new URLSearchParams(location.search).get('lang') || '').toLowerCase(); } catch(e) {}
+    if (DL_LANGS.indexOf(l) > -1) { try { localStorage.setItem('dl_lang', l); } catch(e) {} return l; }
+    try { l = localStorage.getItem('dl_lang') || ''; } catch(e) {}
+    if (DL_LANGS.indexOf(l) > -1) return l;
+    if (DL_LANG_AUTO) {
+      l = String(navigator.language || '').slice(0, 2).toLowerCase();
+      if (DL_LANGS.indexOf(l) > -1) return l;
+    }
+    return 'en';
+  })();
+  document.documentElement.lang = DL_LANG;
+  // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
+  // {name}, {bpm}, {n} … werden von _t() eingesetzt.
+  var I18N_ROWS = [
+    // Kopfzeile, Metronom
+    ["Metronome: ON", "Metronom: an", "Metrónomo: encendido", "Metrônomo: ligado", "Métronome : activé"],
+    ["Metronome: OFF", "Metronom: aus", "Metrónomo: apagado", "Metrônomo: desligado", "Métronome : coupé"],
+    ["Click subdivision", "Click-Unterteilung", "Subdivisión del click", "Subdivisão do click", "Subdivision du click"],
+    ["Quarter", "Viertel", "Negras", "Semínimas", "Noires"],
+    ["Eighth", "Achtel", "Corcheas", "Colcheias", "Croches"],
+    ["Sixteenth", "Sechzehntel", "Semicorcheas", "Semicolcheias", "Doubles croches"],
+    ["Triplets", "Triolen", "Tresillos", "Tercinas", "Triolets"],
+    ["Counting voice", "Zählstimme", "Voz que cuenta", "Voz de contagem", "Voix qui compte"],
+    ["Voice", "Stimme", "voz", "voz", "voix"],
+    ["Songs", "Songs", "Canciones", "Músicas", "Morceaux"],
+    ["My Exercises", "Meine Übungen", "Mis ejercicios", "Meus exercícios", "Mes exercices"],
+    ["My exercises", "Meine Übungen", "Mis ejercicios", "Meus exercícios", "Mes exercices"],
+    ["Your Stats", "Deine Statistik", "Tus estadísticas", "Suas estatísticas", "Tes stats"],
+    ["Your stats", "Deine Statistik", "Tus estadísticas", "Suas estatísticas", "Tes stats"],
+    ["Settings", "Einstellungen", "Ajustes", "Configurações", "Réglages"],
+    ["Close", "Schließen", "Cerrar", "Fechar", "Fermer"],
+    ["Free", "Frei", "Libre", "Livre", "Libre"],
+    ["First time", "Erstes Mal", "Primera vez", "Primeira vez", "Première fois"],
+    ["Rep {n}", "Runde {n}", "Rep. {n}", "Rep. {n}", "Rép. {n}"],
+    ["Goal tempo", "Zieltempo", "Tempo objetivo", "Andamento final", "Tempo cible"],
+    ["{n} Blocks", "{n} Blöcke", "{n} bloques", "{n} blocos", "{n} blocs"],
+
+    // Status, Steuerung
+    ["READY", "BEREIT", "LISTO", "PRONTO", "PRÊT"],
+    ["COUNT IN", "EINZÄHLER", "CUENTA", "CONTAGEM", "DÉCOMPTE"],
+    ["PAUSE", "PAUSE", "PAUSA", "PAUSA", "PAUSE"],
+    ["DONE!", "FERTIG!", "¡HECHO!", "FEITO!", "FINI !"],
+    ["Bar {a}/{b}", "Takt {a}/{b}", "Compás {a}/{b}", "Compasso {a}/{b}", "Mesure {a}/{b}"],
+    ["BLOCK {a}/{b}", "BLOCK {a}/{b}", "BLOQUE {a}/{b}", "BLOCO {a}/{b}", "BLOC {a}/{b}"],
+    ["{n} bars", "{n} Takte", "{n} compases", "{n} compassos", "{n} mesures"],
+    ["Start", "Start", "Empezar", "Começar", "Démarrer"],
+    ["Stop", "Stopp", "Parar", "Parar", "Stop"],
+    ["Again", "Nochmal", "Otra vez", "De novo", "Encore"],
+    ["Done → Next", "Fertig → Weiter", "Hecho → Seguir", "Feito → Próxima", "Fini → Suivant"],
+    ["Try again", "Nochmal versuchen", "Intentar otra vez", "Tentar de novo", "Réessayer"],
+    ["← Prev", "← Zurück", "← Anterior", "← Anterior", "← Précédent"],
+    ["Next →", "Weiter →", "Siguiente →", "Próxima →", "Suivant →"],
+    ["Skip →", "Überspringen →", "Saltar →", "Pular →", "Passer →"],
+    ["Get ready…", "Mach dich bereit…", "Prepárate…", "Prepare-se…", "Prépare-toi…"],
+    ["Great job!", "Stark!", "¡Buen trabajo!", "Muito bem!", "Bien joué !"],
+    ["Next: {bpm} BPM", "Als Nächstes: {bpm} BPM", "Siguiente: {bpm} BPM", "Próximo: {bpm} BPM", "Ensuite : {bpm} BPM"],
+    ["Total:", "Gesamt:", "Total:", "Total:", "Total :"],
+    ["✔ Completed", "✔ Geschafft", "✔ Completado", "✔ Concluído", "✔ Terminé"],
+    ["Start at a low volume, especially with headphones. Take breaks, and stop if anything hurts.",
+     "Fang leise an, vor allem mit Kopfhörern. Mach Pausen und hör auf, wenn etwas wehtut.",
+     "Empieza con el volumen bajo, sobre todo con auriculares. Haz pausas y para si algo te duele.",
+     "Comece com o volume baixo, principalmente com fones. Faça pausas e pare se algo doer.",
+     "Commence à faible volume, surtout avec un casque. Fais des pauses et arrête si quelque chose fait mal."],
+
+    // Timing-Training
+    ["CLICK ONLY", "NUR CLICK", "SOLO CLICK", "SÓ O CLICK", "CLICK SEUL"],
+    ["CLICK ONLY NEXT BAR", "NÄCHSTER TAKT NUR CLICK", "PRÓXIMO COMPÁS: SOLO CLICK", "PRÓXIMO COMPASSO: SÓ O CLICK", "MESURE SUIVANTE : CLICK SEUL"],
+    ["keep playing · 2 bars", "weiterspielen · 2 Takte", "sigue tocando · 2 compases", "continue tocando · 2 compassos", "continue à jouer · 2 mesures"],
+    ["keep playing · bar {n} of 2", "weiterspielen · Takt {n} von 2", "sigue tocando · compás {n} de 2", "continue tocando · compasso {n} de 2", "continue à jouer · mesure {n} sur 2"],
+    ["get ready", "mach dich bereit", "prepárate", "prepare-se", "prépare-toi"],
+    ["Click only", "Nur Click", "Solo click", "Só o click", "Click seul"],
+
+    // Kursfortschritt
+    ["Level", "Level", "Nivel", "Nível", "Niveau"],
+    ["Chapter", "Kapitel", "Capítulo", "Capítulo", "Chapitre"],
+    ["Lesson", "Lektion", "Lección", "Aula", "Leçon"],
+    ["🎯 Level complete!", "🎯 Level geschafft!", "🎯 ¡Nivel completado!", "🎯 Nível concluído!", "🎯 Niveau terminé !"],
+    ["⭐ Chapter complete!", "⭐ Kapitel geschafft!", "⭐ ¡Capítulo completado!", "⭐ Capítulo concluído!", "⭐ Chapitre terminé !"],
+
+    // Rückmeldung nach der Lektion
+    ["Lesson complete", "Lektion geschafft", "Lección completada", "Aula concluída", "Leçon terminée"],
+    ["How did that feel?", "Wie lief’s?", "¿Qué tal te fue?", "Como foi?", "C’était comment ?"],
+    ["Did you nail it?", "Sitzt es?", "¿Lo clavaste?", "Mandou bem?", "Tu l’as maîtrisé ?"],
+    ["Too easy", "Zu leicht", "Muy fácil", "Fácil demais", "Trop facile"],
+    ["Just right", "Genau richtig", "En su punto", "Na medida", "Pile ce qu’il faut"],
+    ["Too hard", "Zu schwer", "Muy difícil", "Difícil demais", "Trop dur"],
+    ["Nailed it", "Sitzt!", "¡Lo clavé!", "Mandei bem", "Maîtrisé"],
+    ["Not yet", "Noch nicht", "Todavía no", "Ainda não", "Pas encore"],
+    ["Play again", "Nochmal spielen", "Tocar otra vez", "Tocar de novo", "Rejouer"],
+    ["Exercise complete ✓", "Übung geschafft ✓", "Ejercicio completado ✓", "Exercício concluído ✓", "Exercice terminé ✓"],
+    ["Basic complete ✓", "Basic geschafft ✓", "Basic completado ✓", "Basic concluído ✓", "Basic terminé ✓"],
+    ["Stays at {bpm} BPM", "Bleibt bei {bpm} BPM", "Se queda en {bpm} BPM", "Fica em {bpm} BPM", "Reste à {bpm} BPM"],
+    ["Next time {bpm} BPM", "Nächstes Mal {bpm} BPM", "La próxima vez {bpm} BPM", "Na próxima vez {bpm} BPM", "La prochaine fois {bpm} BPM"],
+    ["goal tempo", "Zieltempo", "tempo objetivo", "andamento final", "tempo cible"],
+
+    // Feiern
+    ["Keep going!", "Weiter geht’s!", "¡Sigue así!", "Bora continuar!", "On continue !"],
+    ["10 Minutes Today!", "Heute schon 10 Minuten!", "¡10 minutos hoy!", "10 minutos hoje!", "10 minutes aujourd’hui !"],
+    ["20 Minutes Today!", "Heute schon 20 Minuten!", "¡20 minutos hoy!", "20 minutos hoje!", "20 minutes aujourd’hui !"],
+    ["30 Minutes Today!", "Heute schon 30 Minuten!", "¡30 minutos hoy!", "30 minutos hoje!", "30 minutes aujourd’hui !"],
+    ["Great start — keep the momentum going!", "Starker Start – bleib dran!", "¡Buen comienzo! No pierdas el ritmo.", "Ótimo começo! Mantenha o ritmo.", "Super début, garde le rythme !"],
+    ["You crushed your daily goal!", "Tagesziel geknackt!", "¡Superaste tu meta del día!", "Meta do dia batida!", "Objectif du jour explosé !"],
+    ["Absolutely on fire. Legendary session!", "Du bist on fire. Legendäre Session!", "Estás que ardes. ¡Sesión legendaria!", "Você está pegando fogo. Sessão lendária!", "Tu es en feu. Session légendaire !"],
+    ["Exercise complete!", "Übung geschafft!", "¡Ejercicio completado!", "Exercício concluído!", "Exercice terminé !"],
+    ["{name} — goal tempo of {bpm} BPM reached.", "{name} – Zieltempo von {bpm} BPM erreicht.", "{name}: alcanzaste el tempo objetivo de {bpm} BPM.", "{name}: andamento final de {bpm} BPM alcançado.", "{name} : tempo cible de {bpm} BPM atteint."],
+    ["This exercise is finished for good. On to new ones!", "Diese Übung hast du endgültig durch. Auf zu neuen!", "Este ejercicio está terminado para siempre. ¡A por nuevos!", "Este exercício está concluído de vez. Bora para os próximos!", "Cet exercice est terminé pour de bon. Place aux nouveaux !"],
+    ["Basic complete!", "Basic geschafft!", "¡Basic completado!", "Basic concluído!", "Basic terminé !"],
+    ["{name} — {bpm} BPM reached.", "{name} – {bpm} BPM erreicht.", "{name}: {bpm} BPM alcanzados.", "{name}: {bpm} BPM alcançados.", "{name} : {bpm} BPM atteints."],
+    ["It comes back in Advanced, right where you left off. On to new ones!", "Im Advanced-Teil kommt sie wieder – genau da, wo du aufgehört hast. Auf zu neuen!", "Vuelve en Advanced, justo donde lo dejaste. ¡A por nuevos!", "Ele volta no Advanced, exatamente de onde você parou. Bora para os próximos!", "Il revient dans Advanced, exactement là où tu t’es arrêté. Place aux nouveaux !"],
+
+    // Fortschritt speichern (Sync)
+    ["Progress not saved", "Fortschritt nicht gespeichert", "Progreso sin guardar", "Progresso não salvo", "Progression non enregistrée"],
+    ["Turn on sync", "Sync einschalten", "Activar sincronización", "Ativar sincronização", "Activer la synchro"],
+    ["☁️ Save your progress", "☁️ Fortschritt sichern", "☁️ Guarda tu progreso", "☁️ Salve seu progresso", "☁️ Sauvegarde ta progression"],
+    ["Enter your Drumlion email. Your progress syncs automatically across all your devices.",
+     "Gib deine Drumlion-E-Mail ein. Dein Fortschritt ist dann automatisch auf all deinen Geräten.",
+     "Escribe tu email de Drumlion. Tu progreso se sincroniza solo en todos tus dispositivos.",
+     "Digite seu e-mail do Drumlion. Seu progresso é sincronizado sozinho em todos os seus dispositivos.",
+     "Entre ton e-mail Drumlion. Ta progression se synchronise toute seule sur tous tes appareils."],
+    ["Your email stays on this device. Only a code derived from it is saved.",
+     "Deine E-Mail bleibt auf diesem Gerät. Gespeichert wird nur ein Code, der daraus berechnet wird.",
+     "Tu email se queda en este dispositivo. Solo se guarda un código derivado de él.",
+     "Seu e-mail fica neste dispositivo. Só é salvo um código gerado a partir dele.",
+     "Ton e-mail reste sur cet appareil. Seul un code calculé à partir de lui est enregistré."],
+    ["Save progress", "Fortschritt sichern", "Guardar progreso", "Salvar progresso", "Sauvegarder"],
+    ["Later", "Später", "Más tarde", "Depois", "Plus tard"],
+    ["you@email.com", "du@beispiel.de", "tu@email.com", "voce@email.com", "toi@email.com"],
+    ["Please enter a valid email address.", "Bitte gib eine gültige E-Mail-Adresse ein.", "Escribe un email válido.", "Digite um e-mail válido.", "Entre une adresse e-mail valide."],
+    ["Sync is not available here.", "Sync ist hier nicht verfügbar.", "La sincronización no está disponible aquí.", "A sincronização não está disponível aqui.", "La synchro n’est pas disponible ici."],
+    ["Newer progress found…", "Neuerer Fortschritt gefunden…", "Hay un progreso más reciente…", "Progresso mais recente encontrado…", "Progression plus récente trouvée…"],
+    ["Saving…", "Wird gespeichert…", "Guardando…", "Salvando…", "Enregistrement…"],
+    ["Saved ✓", "Gespeichert ✓", "Guardado ✓", "Salvo ✓", "Enregistré ✓"],
+    ["Sync failed", "Sync fehlgeschlagen", "Error al sincronizar", "Falha na sincronização", "Échec de la synchro"],
+    ["Offline", "Offline", "Sin conexión", "Offline", "Hors ligne"],
+    ["Loading progress…", "Fortschritt wird geladen…", "Cargando progreso…", "Carregando progresso…", "Chargement de la progression…"],
+    ["New profile created ✓", "Neues Profil angelegt ✓", "Perfil nuevo creado ✓", "Novo perfil criado ✓", "Nouveau profil créé ✓"],
+    ["Progress reset ✓", "Fortschritt zurückgesetzt ✓", "Progreso restablecido ✓", "Progresso redefinido ✓", "Progression réinitialisée ✓"],
+    ["Progress loaded ✓", "Fortschritt geladen ✓", "Progreso cargado ✓", "Progresso carregado ✓", "Progression chargée ✓"],
+    ["Up to date ✓", "Auf dem neuesten Stand ✓", "Al día ✓", "Atualizado ✓", "À jour ✓"],
+
+    // Statistik
+    ["No record yet", "Noch kein Rekord", "Aún sin récord", "Ainda sem recorde", "Pas encore de record"],
+    ["This week", "Diese Woche", "Esta semana", "Esta semana", "Cette semaine"],
+    ["Time played", "Gespielte Zeit", "Tiempo tocado", "Tempo tocado", "Temps de jeu"],
+    ["Strokes played", "Gespielte Schläge", "Golpes tocados", "Batidas tocadas", "Coups joués"],
+    ["Best week", "Beste Woche", "Mejor semana", "Melhor semana", "Meilleure semaine"],
+    ["Exercises completed", "Übungen geschafft", "Ejercicios completados", "Exercícios concluídos", "Exercices terminés"],
+    ["1 lesson completed", "1 Lektion geschafft", "1 lección completada", "1 aula concluída", "1 leçon terminée"],
+    ["{n} lessons completed", "{n} Lektionen geschafft", "{n} lecciones completadas", "{n} aulas concluídas", "{n} leçons terminées"],
+    ["Counts only what you play: no count-ins, breaks or clicks.",
+     "Zählt nur, was du wirklich spielst: keine Einzähler, Pausen oder Clicks.",
+     "Solo cuenta lo que tocas: sin cuentas previas, pausas ni clicks.",
+     "Conta só o que você toca: sem contagens, pausas ou clicks.",
+     "Ne compte que ce que tu joues : pas de décomptes, de pauses ni de clicks."],
+    ["of", "von", "de", "de", "sur"],
+
+    // Einstellungen
+    ["Language", "Sprache", "Idioma", "Idioma", "Langue"],
+    ["Membership", "Mitgliedschaft", "Membresía", "Assinatura", "Abonnement"],
+    ["Manage your subscription or cancel your membership.", "Hier verwaltest oder kündigst du deine Mitgliedschaft.", "Gestiona tu suscripción o cancela tu membresía.", "Gerencie ou cancele sua assinatura.", "Gère ou résilie ton abonnement."],
+    ["Manage membership", "Mitgliedschaft verwalten", "Gestionar membresía", "Gerenciar assinatura", "Gérer l’abonnement"],
+    ["Account", "Konto", "Cuenta", "Conta", "Compte"],
+    ["Account settings ↗", "Kontoeinstellungen ↗", "Ajustes de la cuenta ↗", "Configurações da conta ↗", "Paramètres du compte ↗"],
+    ["Change password ↗", "Passwort ändern ↗", "Cambiar contraseña ↗", "Alterar senha ↗", "Changer le mot de passe ↗"],
+    ["Appearance", "Darstellung", "Apariencia", "Aparência", "Apparence"],
+    ["Dark", "Dunkel", "Oscuro", "Escuro", "Sombre"],
+    ["Light", "Hell", "Claro", "Claro", "Clair"],
+    ["Auto follows your device's light or dark setting. Saved on this device.",
+     "Auto richtet sich nach dem Hell- oder Dunkelmodus deines Geräts. Wird auf diesem Gerät gespeichert.",
+     "Auto sigue el modo claro u oscuro de tu dispositivo. Se guarda en este dispositivo.",
+     "Auto segue o modo claro ou escuro do seu dispositivo. Fica salvo neste dispositivo.",
+     "Auto suit le mode clair ou sombre de ton appareil. Enregistré sur cet appareil."],
+    ["Cursor timing", "Cursor-Timing", "Sincronía del cursor", "Sincronia do cursor", "Calage du curseur"],
+    ["If the moving highlight is ahead of or behind the sound — common with Bluetooth headphones — slide until both match. Saved on this device.",
+     "Läuft die Markierung dem Sound voraus oder hinterher (passiert oft mit Bluetooth-Kopfhörern), schieb den Regler, bis beides passt. Wird auf diesem Gerät gespeichert.",
+     "Si el resaltado va por delante o por detrás del sonido (pasa mucho con auriculares Bluetooth), mueve el control hasta que coincidan. Se guarda en este dispositivo.",
+     "Se o destaque estiver adiantado ou atrasado em relação ao som (comum com fones Bluetooth), ajuste até os dois baterem. Fica salvo neste dispositivo.",
+     "Si la surbrillance est en avance ou en retard sur le son (fréquent avec un casque Bluetooth), règle le curseur jusqu’à ce que les deux coïncident. Enregistré sur cet appareil."],
+    ["Earlier", "Früher", "Antes", "Antes", "Plus tôt"],
+    ["Reset", "Zurücksetzen", "Restablecer", "Redefinir", "Réinitialiser"],
+    ["Progress sync", "Fortschritt synchronisieren", "Sincronización del progreso", "Sincronização do progresso", "Synchro de la progression"],
+    ["On. Your progress and stats are saved and shared across your devices.",
+     "An. Dein Fortschritt und deine Statistik werden gespeichert und sind auf all deinen Geräten gleich.",
+     "Activada. Tu progreso y tus estadísticas se guardan y se comparten entre tus dispositivos.",
+     "Ligada. Seu progresso e suas estatísticas ficam salvos e iguais em todos os seus dispositivos.",
+     "Activée. Ta progression et tes stats sont enregistrées et partagées entre tes appareils."],
+    ["Off. Progress is only saved in this browser.", "Aus. Der Fortschritt wird nur in diesem Browser gespeichert.", "Desactivada. El progreso solo se guarda en este navegador.", "Desligada. O progresso só fica salvo neste navegador.", "Désactivée. La progression n’est enregistrée que dans ce navigateur."],
+    ["Keyboard", "Tastatur", "Teclado", "Teclado", "Clavier"],
+    ["Space", "Leertaste", "Espacio", "Espaço", "Espace"],
+    ["Start / Stop", "Start / Stopp", "Empezar / parar", "Começar / parar", "Démarrer / arrêter"],
+    ["Click on / off", "Click an / aus", "Activar / quitar el click", "Ligar / desligar o click", "Activer / couper le click"],
+
+    // Favoriten, Boost, freies Üben
+    ["Favorite", "Favorit", "Favorito", "Favorito", "Favori"],
+    ["Add to favorites", "Zu Favoriten", "Añadir a favoritos", "Adicionar aos favoritos", "Ajouter aux favoris"],
+    ["In My Exercises (tap to remove)", "In Meine Übungen (antippen zum Entfernen)", "En Mis ejercicios (toca para quitar)", "Em Meus exercícios (toque para remover)", "Dans Mes exercices (touche pour retirer)"],
+    ["Save to My Exercises", "In Meine Übungen speichern", "Guardar en Mis ejercicios", "Salvar em Meus exercícios", "Enregistrer dans Mes exercices"],
+    ["Removed from favorites", "Aus den Favoriten entfernt", "Quitado de favoritos", "Removido dos favoritos", "Retiré des favoris"],
+    ["★ Added to My Exercises", "★ In Meine Übungen gespeichert", "★ Guardado en Mis ejercicios", "★ Salvo em Meus exercícios", "★ Ajouté à Mes exercices"],
+    ["Favorites", "Favoriten", "Favoritos", "Favoritos", "Favoris"],
+    ["No favorites yet. Tap the star during an exercise to save it here.",
+     "Noch keine Favoriten. Tipp während einer Übung auf den Stern, dann landet sie hier.",
+     "Aún no tienes favoritos. Toca la estrella durante un ejercicio para guardarlo aquí.",
+     "Ainda sem favoritos. Toque na estrela durante um exercício para salvá-lo aqui.",
+     "Pas encore de favoris. Touche l’étoile pendant un exercice pour l’enregistrer ici."],
+    ["Practice →", "Üben →", "Practicar →", "Praticar →", "S’entraîner →"],
+    ["Boosted", "Geboostet", "Con boost", "Com boost", "Boosté"],
+    ["Boost on: comes up 3× as often (tap to turn off)", "Boost an: kommt 3× so oft dran (antippen zum Ausschalten)", "Boost activado: sale 3 veces más (toca para quitarlo)", "Boost ligado: aparece 3× mais (toque para desligar)", "Boost activé : revient 3× plus souvent (touche pour désactiver)"],
+    ["Boost: this exercise comes up 3× as often", "Boost: Diese Übung kommt 3× so oft dran", "Boost: este ejercicio sale 3 veces más", "Boost: este exercício aparece 3× mais", "Boost : cet exercice revient 3× plus souvent"],
+    ["Boost off", "Boost aus", "Boost desactivado", "Boost desligado", "Boost désactivé"],
+    ["You can boost up to {n} exercises per category", "Du kannst bis zu {n} Übungen pro Kategorie boosten", "Puedes dar boost a hasta {n} ejercicios por categoría", "Você pode dar boost em até {n} exercícios por categoria", "Tu peux booster jusqu’à {n} exercices par catégorie"],
+    ["⚡ Boost on — comes up 3× as often", "⚡ Boost an – kommt 3× so oft dran", "⚡ Boost activado: sale 3 veces más", "⚡ Boost ligado: aparece 3× mais", "⚡ Boost activé : revient 3× plus souvent"],
+    ["Free practice", "Freies Üben", "Práctica libre", "Prática livre", "Pratique libre"],
+    ["Free practice — your course stays where it is", "Freies Üben – dein Kurs bleibt, wo er ist", "Práctica libre: tu curso se queda donde está", "Prática livre: seu curso fica onde está", "Pratique libre : ton cours reste où il en est"],
+    ["Back to course", "Zurück zum Kurs", "Volver al curso", "Voltar ao curso", "Retour au cours"],
+    ["5 BPM slower", "5 BPM langsamer", "5 BPM más lento", "5 BPM mais lento", "5 BPM plus lent"],
+    ["5 BPM faster", "5 BPM schneller", "5 BPM más rápido", "5 BPM mais rápido", "5 BPM plus rapide"],
+
+    // Speed-Test (Einstufung)
+    ["Play along as long as you can", "Spiel mit, so lange du kannst", "Toca encima todo lo que puedas", "Toque junto o máximo que conseguir", "Joue aussi longtemps que tu peux"],
+    ["Test finished.", "Test beendet.", "Prueba terminada.", "Teste concluído.", "Test terminé."],
+    ["Remember the BPM where you dropped out — then enter it below.", "Merk dir das Tempo, bei dem du rausgeflogen bist, und trag es unten ein.", "Recuerda el BPM en el que te perdiste y escríbelo abajo.", "Lembre o BPM em que você se perdeu e digite abaixo.", "Retiens le BPM où tu as décroché, puis entre-le ci-dessous."],
+    ["Where did you drop out?", "Wo bist du rausgeflogen?", "¿Dónde te perdiste?", "Onde você se perdeu?", "Où as-tu décroché ?"],
+    ["{name} — where did you drop out?", "{name} – wo bist du rausgeflogen?", "{name}: ¿dónde te perdiste?", "{name}: onde você se perdeu?", "{name} : où as-tu décroché ?"],
+    ["Enter the BPM at which you could no longer play along cleanly — whether because of speed or because the coordination fell apart. Be honest, it only helps you.",
+     "Trag das Tempo ein, ab dem du nicht mehr sauber mitkamst – egal ob wegen der Geschwindigkeit oder weil die Koordination auseinanderfiel. Sei ehrlich, das hilft nur dir.",
+     "Escribe el BPM en el que ya no podías tocar limpio, ya sea por la velocidad o porque se te desarmó la coordinación. Sé sincero: solo te ayuda a ti.",
+     "Digite o BPM em que você não conseguia mais tocar limpo, seja pela velocidade ou porque a coordenação desmontou. Seja sincero: isso só ajuda você.",
+     "Entre le BPM à partir duquel tu ne suivais plus proprement, que ce soit à cause de la vitesse ou parce que la coordination lâchait. Sois honnête, ça ne sert qu’à toi."],
+    ["e.g. 95", "z. B. 95", "p. ej. 95", "ex.: 95", "ex. : 95"],
+    ["Save result", "Ergebnis speichern", "Guardar resultado", "Salvar resultado", "Enregistrer le résultat"],
+    ["I made it to the end (200)", "Ich hab’s bis zum Ende geschafft (200)", "Llegué hasta el final (200)", "Cheguei até o fim (200)", "Je suis allé jusqu’au bout (200)"],
+    ["Please enter a number.", "Bitte gib eine Zahl ein.", "Escribe un número.", "Digite um número.", "Entre un nombre."],
+    ["Enter a value between {a} and {b}.", "Gib einen Wert zwischen {a} und {b} ein.", "Escribe un valor entre {a} y {b}.", "Digite um valor entre {a} e {b}.", "Entre une valeur entre {a} et {b}."],
+    ["Saved: {bpm} BPM", "Gespeichert: {bpm} BPM", "Guardado: {bpm} BPM", "Salvo: {bpm} BPM", "Enregistré : {bpm} BPM"],
+    ["Reset the course? All progress will be deleted.", "Kurs zurücksetzen? Dein ganzer Fortschritt wird gelöscht.", "¿Reiniciar el curso? Se borrará todo el progreso.", "Reiniciar o curso? Todo o progresso será apagado.", "Réinitialiser le cours ? Toute la progression sera supprimée."]
+  ];
+
+  var I18N = {};
+  (function() {
+    var col = DL_LANGS.indexOf(DL_LANG);
+    if (col < 1) return;
+    I18N_ROWS.forEach(function(r) { if (r[col]) I18N[r[0]] = r[col]; });
+  })();
+  // Übersetzen; {name}, {bpm} … aus `v` einsetzen
+  function _t(s, v) {
+    var r = Object.prototype.hasOwnProperty.call(I18N, s) ? I18N[s] : s;
+    if (v) r = r.replace(/\{(\w+)\}/g, function(m, k) { return (v[k] != null) ? v[k] : m; });
+    return r;
+  }
+  // Feste Texte im HTML: Textknoten und title/aria-label/placeholder, die
+  // genau einem Schlüssel entsprechen. Noten (SVG) bleiben unberührt.
+  function _i18nDom(root) {
+    if (DL_LANG === 'en' || !root) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), n, k, el;
+    while ((n = w.nextNode())) {
+      el = n.parentNode;
+      if (!el || /^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(el.nodeName) || (el.closest && el.closest('svg'))) continue;
+      k = n.nodeValue.replace(/\s+/g, ' ').trim();
+      if (k && Object.prototype.hasOwnProperty.call(I18N, k)) n.nodeValue = n.nodeValue.replace(/\S[\s\S]*\S|\S/, I18N[k]);
+    }
+    var els = root.querySelectorAll('[title],[aria-label],[placeholder]');
+    for (var i = 0; i < els.length; i++) {
+      ['title', 'aria-label', 'placeholder'].forEach(function(a) {
+        var v = els[i].getAttribute(a);
+        if (v && Object.prototype.hasOwnProperty.call(I18N, v)) els[i].setAttribute(a, I18N[v]);
+      });
+    }
+  }
+  _i18nDom(document.body);
+  // Was hinter diesem Skript im HTML steht (Feier-Karte), kommt erst danach
+  document.addEventListener('DOMContentLoaded', function() { _i18nDom(document.body); });
+
+  // ============================================================
   // DRUM KEY — alle Positionen gem. Drumkey von Erwin Eitsen
   // SVG-Koordinaten: Linie 0 = oben, Linie 4 = unten
   // Halbe Zahlen = Zwischenräume, ganze Zahlen = Linien
@@ -2349,7 +2663,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var btn = document.getElementById('dgMetroBtn');
     if (!btn) return;
     btn.classList.toggle('active', metronomeOn);
-    btn.title = metronomeOn ? 'Metronome: ON' : 'Metronome: OFF';
+    btn.title = _t(metronomeOn ? 'Metronome: ON' : 'Metronome: OFF');
     btn.setAttribute('aria-pressed', metronomeOn ? 'true' : 'false');
 
     var cluster = document.getElementById('dgMetroCluster');
@@ -2368,7 +2682,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var text  = document.getElementById('dgMetroDivText');
       if (glyph) glyph.textContent = active.getAttribute('data-glyph');
       if (text)  text.textContent  = active.textContent.replace(active.querySelector('.opt-glyph').textContent, '').trim() +
-                                     (metronomeVoice ? ' + Voice' : '');
+                                     (metronomeVoice ? ' + ' + _t('Voice') : '');
     }
     var vo = document.getElementById('dgMetroVoice');
     if (vo) { vo.classList.toggle('active', metronomeVoice); vo.setAttribute('aria-checked', metronomeVoice ? 'true' : 'false'); }
@@ -2610,7 +2924,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var mon = new Date(jan4);
     mon.setUTCDate(jan4.getUTCDate() - (jan4.getUTCDay() || 7) + 1 + (+m[2] - 1) * 7);
     var sun = new Date(mon); sun.setUTCDate(mon.getUTCDate() + 6);
-    var f = function(x, o) { return x.toLocaleDateString('en-US', Object.assign({ timeZone: 'UTC' }, o)); };
+    var loc = { de: 'de-DE', es: 'es-ES', pt: 'pt-BR', fr: 'fr-FR' }[DL_LANG];
+    var f = function(x, o) { return x.toLocaleDateString(loc || 'en-US', Object.assign({ timeZone: 'UTC' }, o)); };
+    // Andere Sprachen: Tag vor Monat, beide Enden ausgeschrieben („13. Okt. – 19. Okt.")
+    if (loc) return f(mon, { day: 'numeric', month: 'short' }) + ' – ' + f(sun, { day: 'numeric', month: 'short' });
     return mon.getUTCMonth() === sun.getUTCMonth()
       ? f(mon, { month: 'short', day: 'numeric' }) + '–' + sun.getUTCDate()
       : f(mon, { month: 'short', day: 'numeric' }) + ' – ' + f(sun, { month: 'short', day: 'numeric' });
@@ -2955,7 +3272,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Titelzeile
     var el = document.getElementById('dgLvlText');
     if (el) el.innerHTML =
-      '<strong>Level ' + info.level + '</strong> · Chapter ' + info.chapter + ' · Lesson ' + info.lessons;
+      '<strong>' + _t('Level') + ' ' + info.level + '</strong> · ' + _t('Chapter') + ' ' + info.chapter + ' · ' + _t('Lesson') + ' ' + info.lessons;
 
     // CHAPTER bar: normaler Progressbar (chapterPct%)
     var chSegs = document.getElementById('dgChapterSegs');
@@ -3027,7 +3344,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (i) sub.appendChild(document.createElement('br'));
       sub.appendChild(document.createTextNode(line));
     });
-    document.getElementById('dgCelebDismiss').textContent = cfg.button || 'Keep going!';
+    document.getElementById('dgCelebDismiss').textContent = cfg.button || _t('Keep going!');
 
     // spawn confetti — nur bei den Tageszielen; abgeschlossene Übungen bekommen
     // den animierten Haken (`confetti: false`, Erwin 20.10.2026)
@@ -3070,9 +3387,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function _showDailyCelebration(milestone) {
     var configs = {
-      10: { emoji: '⭐', title: '10 Minutes Today!', sub: 'Great start — keep the momentum going!' },
-      20: { emoji: '🔥', title: '20 Minutes Today!', sub: 'You crushed your daily goal!' },
-      30: { emoji: '🏆', title: '30 Minutes Today!', sub: 'Absolutely on fire. Legendary session!' }
+      10: { emoji: '⭐', title: _t('10 Minutes Today!'), sub: _t('Great start — keep the momentum going!') },
+      20: { emoji: '🔥', title: _t('20 Minutes Today!'), sub: _t('You crushed your daily goal!') },
+      30: { emoji: '🏆', title: _t('30 Minutes Today!'), sub: _t('Absolutely on fire. Legendary session!') }
     };
     _celebrate(configs[milestone] || configs[20]);
   }
@@ -3097,10 +3414,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _celebrate({
       iconHtml: _CHECK_ICON,
       confetti: false,
-      title: 'Exercise complete!',
-      lines: [ex.name + ' — goal tempo of ' + goal + ' BPM reached.',
-              'This exercise is finished for good. On to new ones!'],
-      button: 'Keep going!',
+      title: _t('Exercise complete!'),
+      lines: [_t('{name} — goal tempo of {bpm} BPM reached.', { name: ex.name, bpm: goal }),
+              _t('This exercise is finished for good. On to new ones!')],
+      button: _t('Keep going!'),
       autoMs: 0
     });
   }
@@ -3109,10 +3426,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _celebrate({
       iconHtml: _CHECK_ICON,
       confetti: false,
-      title: 'Basic complete!',
-      lines: [d.ex.name + ' — ' + d.bpm + ' BPM reached.',
-              'It comes back in Advanced, right where you left off. On to new ones!'],
-      button: 'Keep going!',
+      title: _t('Basic complete!'),
+      lines: [_t('{name} — {bpm} BPM reached.', { name: d.ex.name, bpm: d.bpm }),
+              _t('It comes back in Advanced, right where you left off. On to new ones!')],
+      button: _t('Keep going!'),
       autoMs: 0
     });
   }
@@ -16396,7 +16713,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261023-155325';
+  var DL_BUILD = '20261023-161627';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -16544,7 +16861,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!bar) return;
     bar.classList.remove('hidden');
     dot.className = 'sync-bar-dot ' + (state === 'ok' ? 'ok' : state === 'err' ? 'err' : state === 'spin' ? 'spin' : '');
-    txt.textContent = msg;
+    txt.textContent = _t(msg);
     if (link) link.style.display = (state === 'none') ? 'inline' : 'none';
     if (state === 'ok') { setTimeout(function(){ bar.classList.add('hidden'); }, 3000); }
   }
@@ -17101,7 +17418,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var next = document.getElementById('dgNavNext');
     if (prev) { prev.disabled = (_navPos <= 0); }
     if (next) {
-      next.textContent = (_navPos < _navHistory.length - 1) ? 'Next →' : 'Skip →';
+      next.textContent = _t((_navPos < _navHistory.length - 1) ? 'Next →' : 'Skip →');
     }
   }
 
@@ -17160,7 +17477,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _setGroove(lesson.ex, lesson.bpm);
     // Always reset ctrl to Start button (e.g. after "Mark as Completed" transition)
     if (!autoStart) {
-      document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+      document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Start') + '</button>';
       document.getElementById('dgStart2').addEventListener('click', startExercise);
     }
     _pushHistory(lesson);
@@ -17405,7 +17722,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     } catch (e) { return; }
     var t = document.createElement('div');
     t.setAttribute('role', 'status');
-    t.textContent = 'Start at a low volume, especially with headphones. Take breaks, and stop if anything hurts.';
+    t.textContent = _t('Start at a low volume, especially with headphones. Take breaks, and stop if anything hurts.');
     t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100000;max-width:min(92vw,520px);'
       + 'background:#1a1a1a;border:1px solid #C9A84C;color:#E8E4DB;border-radius:14px;padding:10px 18px;text-align:center;'
       + 'font:500 14px/1.45 \'DM Sans\',system-ui,sans-serif;transition:opacity .4s;';
@@ -18754,7 +19071,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       h += '<div class="block-seg" style="flex:'+Math.round(b.dur)+';background:'+bg+';border-color:'+bc+';">';
       var dispBars = b.bars;
       h += '<span class="b-bpm" style="color:'+tc+'">'+b.bpm+' BPM</span>';
-      h += '<span class="b-dur" style="color:'+tc+'">'+dispBars+' bars</span></div>';
+      h += '<span class="b-dur" style="color:'+tc+'">'+_t('{n} bars', { n: dispBars })+'</span></div>';
       if (i < blocks.length-1 && pauses[i]) {
         var pa = (i===bIdx-1 && phase==='pause');
         h += '<div class="pause-seg" style="color:'+(pa?'var(--dl-gold-ink)':'rgba(var(--dl-ink-rgb),0.45)')+'">'+pauses[i]+'s</div>';
@@ -18770,13 +19087,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function setBadge(p) {
     var el = document.getElementById('dgBadge');
     var s = {
-      idle:    { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888',    t:'READY' },
-      countIn: { bg:'rgba(201,168,76,0.15)',  c:'var(--dl-gold-ink)', t:'COUNT IN' },
+      idle:    { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888',    t:_t('READY') },
+      countIn: { bg:'rgba(201,168,76,0.15)',  c:'var(--dl-gold-ink)', t:_t('COUNT IN') },
       playing: { bg:'rgba(44,90,163,0.2)',    c:'#5b8fd9',
-                 t: _oneBlock() ? 'Bar 1/' + blocks[0].bars : 'BLOCK '+(bIdx+1)+'/'+blocks.length },
-      pause:   { bg:'rgba(201,168,76,0.1)',   c:'#888',    t:'PAUSE' },
-      done:    { bg:'rgba(76,175,80,0.15)',   c:'#66bb6a', t:'DONE!', html:'<span class="done-check">✔</span>DONE!' }
-    }[p] || { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888', t:'READY' };
+                 t: _oneBlock() ? _t('Bar {a}/{b}', { a: 1, b: blocks[0].bars }) : _t('BLOCK {a}/{b}', { a: bIdx+1, b: blocks.length }) },
+      pause:   { bg:'rgba(201,168,76,0.1)',   c:'#888',    t:_t('PAUSE') },
+      done:    { bg:'rgba(76,175,80,0.15)',   c:'#66bb6a', t:_t('DONE!'), html:'<span class="done-check">✔</span>' + _t('DONE!') }
+    }[p] || { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888', t:_t('READY') };
     el.style.background = s.bg; el.style.color = s.c;
     if (s.html) { el.innerHTML = s.html; el.classList.add('badge-done-anim'); }
     else { el.textContent = s.t; el.classList.remove('badge-done-anim'); }
@@ -18784,7 +19101,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function setInfo(txt, cls) {
     var el = document.getElementById('dgInfo');
-    el.textContent = txt;
+    el.textContent = _t(txt);
     el.className = 'phase-info' + (cls ? ' ' + cls : '');
   }
 
@@ -18809,7 +19126,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Vor dem Start: wie lang die Lektion ist, z.B. „12 bars · 48s"
   function _planInfo() {
     var b = blocks[0];
-    setInfo(b.bars + ' bars · ' + _secTxt(b.dur), 'plan');
+    setInfo(_t('{n} bars', { n: b.bars }) + ' · ' + _secTxt(b.dur), 'plan');
   }
   // Takt im Badge, nur solange gespielt wird
   function _setBarBadge(txt) {
@@ -18863,16 +19180,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _curLesson = (typeof _peekLesson === 'function') ? _peekLesson() : null;
     var _repStr = '';
     if (_freeMode) {
-      _repStr = 'Free';
+      _repStr = _t('Free');
       var _fbpm = document.getElementById('dgFreeBpm');
       if (_fbpm) _fbpm.textContent = tBpm + ' BPM';
     } else if (_curLesson) {
       var _step = _curLesson.entry.bpmStep || 0;
-      _repStr = _step === 0 ? '<span class="ni-ft">First time </span>🎯' : 'Rep '+_step;
+      _repStr = _step === 0 ? '<span class="ni-ft">' + _t('First time') + ' </span>🎯' : _t('Rep {n}', { n: _step });
       // Letzte Stufe = Zieltempo der Übung — auch oben sichtbar, nicht erst im
       // Abschluss-Popup (Erwin, 22.10.2026)
       if (_step >= _exSteps(_curLesson.ex) - 1) {
-        _repStr = '<span class="ni-repn">' + _repStr + '<span class="ni-gsep"> · </span></span><span class="ni-goal">Goal tempo</span>';
+        _repStr = '<span class="ni-repn">' + _repStr + '<span class="ni-gsep"> · </span></span><span class="ni-goal">' + _t('Goal tempo') + '</span>';
       }
     }
     // Die Taktart steht in einem eigenen Element, damit sie auf schmalen
@@ -18884,7 +19201,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _syncOneBlock();
     document.getElementById('dgInfoRight').innerHTML = _oneBlock()
       ? (_repStr ? '<span class="ni-rep">' + _repStr + '</span>' : '')
-      : '<span>' + blocks.length + ' Blocks</span>' +
+      : '<span>' + _t('{n} Blocks', { n: blocks.length }) + '</span>' +
         (_repStr ? '<span class="ni-sep">  ·  </span><span class="ni-rep">' + _repStr + '</span>' : '');
     // Die Taktzeile darunter gehört zur laufenden Lektion — beim Tempowechsel
     // ist keine im Gange.
@@ -18925,7 +19242,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     el.style.display = 'inline';
     totalInt = setInterval(function() {
       var e = (Date.now()-totalStart)/1000;
-      el.textContent = 'Total: ' + _mmss(e) + (totalPlanSec ? ' / ' + _mmss(totalPlanSec) : '') + ' · ';
+      el.textContent = _t('Total:') + ' ' + _mmss(e) + (totalPlanSec ? ' / ' + _mmss(totalPlanSec) : '') + ' · ';
     }, 500);
   }
   function stopTotal() {
@@ -19141,7 +19458,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Erneut versuchen ermöglichen
     var ctrl = document.getElementById('dgCtrl');
     if (ctrl) {
-      ctrl.innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Try again</button>';
+      ctrl.innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Try again') + '</button>';
       document.getElementById('dgStart2').addEventListener('click', function() {
         if (box) box.classList.add('hidden');
         if (hint) hint.style.display = '';
@@ -19158,9 +19475,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var ask = document.getElementById('rampAsk');
     if (!ask) return;
     var t = document.getElementById('rampAskTitle');
-    if (t) t.textContent = (_rampMode === 'single')
-      ? 'Single Stroke — where did you drop out?'
-      : 'Basic Groove — where did you drop out?';
+    if (t) t.textContent = _t('{name} — where did you drop out?', { name: (_rampMode === 'single') ? 'Single Stroke' : 'Basic Groove' });
     document.getElementById('rampAskErr').textContent = '';
     ask.classList.remove('hidden');
     var inp = document.getElementById('rampAskInput');
@@ -19182,7 +19497,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     } catch(e) {}
     _rampAskClose();
     var hint = document.getElementById('rampHint');
-    if (hint) { hint.style.display = ''; hint.textContent = 'Saved: ' + bpm + ' BPM'; }
+    if (hint) { hint.style.display = ''; hint.textContent = _t('Saved: {bpm} BPM', { bpm: bpm }); }
     var box = document.getElementById('rampDoneBox');
     if (box) box.classList.add('hidden');
   }
@@ -19199,7 +19514,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
     _syncOneBlock(); _progSet(0); _progDur = 0;
     _noteShow(null);   // Notenname vom Antippen ausblenden
-    document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ Stop</button>';
+    document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ ' + _t('Stop') + '</button>';
     document.getElementById('dgStop').addEventListener('click', stopExercise);
     renderBlocksBar(); renderNot(-1, false); startTotal(); startCountIn();
   }
@@ -19348,12 +19663,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!isTimingBlock) return null;
       if (!grooveOn(br)) {
         var bar0 = br * barsPerPhrase;
-        return { s: 'now', m: 'CLICK ONLY',
-                 u: (barsPerPhrase === 2) ? 'keep playing · 2 bars'
-                                          : 'keep playing · bar ' + (((bar0 - TIMING_START_BAR) % 2) + 1) + ' of 2' };
+        return { s: 'now', m: _t('CLICK ONLY'),
+                 u: (barsPerPhrase === 2) ? _t('keep playing · 2 bars')
+                                          : _t('keep playing · bar {n} of 2', { n: ((bar0 - TIMING_START_BAR) % 2) + 1 }) };
       }
       if (!grooveOn(br + 1)) {
-        return { s: 'warn', m: 'CLICK ONLY NEXT BAR', u: 'get ready' };
+        return { s: 'warn', m: _t('CLICK ONLY NEXT BAR'), u: _t('get ready') };
       }
       return null;
     }
@@ -19368,19 +19683,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       } else {
         realBar = br + 1;
       }
-      var rightStr = 'Bar ' + realBar + '/' + totalRealBars;
+      var rightStr = _t('Bar {a}/{b}', { a: realBar, b: totalRealBars });
       if (isTimingBlock) {
         // ebenfalls in echten Takten, sonst stimmt die Zeile bei zweitaktigen
         // Übungen nicht mit dem Hinweis überein (18.09.2026)
         if (br * barsPerPhrase < TIMING_START_BAR) rightStr += ' · Groove';
-        else rightStr += (grooveOn(br) ? ' · Groove 🥁' : ' · Click only 🎵');
+        else rightStr += (grooveOn(br) ? ' · Groove 🥁' : ' · ' + _t('Click only') + ' 🎵');
       }
       document.getElementById('dgInfoLeft').innerHTML = cb.bpm + ' BPM' + (GROOVE.cat === 'notes' ? '<span class="ni-meter">4/4</span>' : '');
       // Block + Rep stehen oben rechts stehen und bleiben — der Takt läuft in
       // der Zeile darunter (Erwin, 18.09.2026).
       var _ib = document.getElementById('dgInfoBar');
       if (_ib) _ib.textContent = rightStr;
-      _barTxt = 'Bar ' + realBar + '/' + totalRealBars;
+      _barTxt = rightStr.split(' · ')[0];
       return '';
     }
     var _barTxt = '';
@@ -19510,7 +19825,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     phase='pause';
     _visReset(); // Rest-Events des Blocks verwerfen
     var pd = pauses[bIdx] || 10;
-    setBadge('pause'); setInfo('Next: '+blocks[bIdx+1].bpm+' BPM');
+    setBadge('pause'); setInfo(_t('Next: {bpm} BPM', { bpm: blocks[bIdx+1].bpm }));
     renderNot(-1, false); bIdx++; renderBlocksBar();
     var left = pd; setCountdown(left);
     if (intId) clearInterval(intId);
@@ -19638,21 +19953,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var same = !!tg && _feedbackStep(tg.ex, tg.entry, 'easy') === _feedbackStep(tg.ex, tg.entry, 'good');
     box.classList.toggle('final', fin);
     box.querySelector('.dl-fbx-eyebrow').textContent = fin
-      ? 'Goal tempo · ' + _exBpm(tg.ex, tg.entry.bpmStep || 0) + ' BPM' : 'Lesson complete';
-    document.getElementById('dgFeedbackQ').textContent = fin ? 'Did you nail it?' : 'How did that feel?';
+      ? _t('Goal tempo') + ' · ' + _exBpm(tg.ex, tg.entry.bpmStep || 0) + ' BPM' : _t('Lesson complete');
+    document.getElementById('dgFeedbackQ').textContent = _t(fin ? 'Did you nail it?' : 'How did that feel?');
     box.querySelector('[data-fb="easy"]').style.display = (fin || same) ? 'none' : '';
-    box.querySelector('[data-fb="good"] .dl-fbx-lbl').textContent = fin ? 'Nailed it' : 'Just right';
-    box.querySelector('[data-fb="hard"] .dl-fbx-lbl').textContent = fin ? 'Not yet' : 'Too hard';
+    box.querySelector('[data-fb="good"] .dl-fbx-lbl').textContent = _t(fin ? 'Nailed it' : 'Just right');
+    box.querySelector('[data-fb="hard"] .dl-fbx-lbl').textContent = _t(fin ? 'Not yet' : 'Too hard');
     ['easy', 'good', 'hard'].forEach(function(v) {
       var sub = box.querySelector('[data-sub="' + v + '"]');
       if (!sub) return;
       if (!tg) { sub.textContent = ''; return; }
       var n = _feedbackStep(tg.ex, tg.entry, v);
-      if (n >= _exSteps(tg.ex)) { sub.textContent = 'Exercise complete ✓'; return; }
-      if (_basicDone(tg.ex, { bpmStep: n, adv: tg.entry.adv })) { sub.textContent = 'Basic complete ✓'; return; }
+      if (n >= _exSteps(tg.ex)) { sub.textContent = _t('Exercise complete ✓'); return; }
+      if (_basicDone(tg.ex, { bpmStep: n, adv: tg.entry.adv })) { sub.textContent = _t('Basic complete ✓'); return; }
       var now = _exBpm(tg.ex, tg.entry.bpmStep || 0), nb = _exBpm(tg.ex, n);
-      sub.textContent = ((nb === now) ? 'Stays at ' + nb + ' BPM' : 'Next time ' + nb + ' BPM') +
-                        ((n === _exSteps(tg.ex) - 1 && nb !== now) ? ' · goal tempo' : '');
+      sub.textContent = _t((nb === now) ? 'Stays at {bpm} BPM' : 'Next time {bpm} BPM', { bpm: nb }) +
+                        ((n === _exSteps(tg.ex) - 1 && nb !== now) ? ' · ' + _t('goal tempo') : '');
     });
   }
   function _showFeedback(on) {
@@ -19727,8 +20042,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
     document.getElementById('dgTotal').style.display='inline';
     document.getElementById('dgCtrl').innerHTML =
-      '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>Again</button>'+
-      '<button class="btn-go" id="dgNextLesson">Done → Next</button>';
+      '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>' + _t('Again') + '</button>'+
+      '<button class="btn-go" id="dgNextLesson">' + _t('Done → Next') + '</button>';
     document.getElementById('dgAgain').addEventListener('click', startExercise);
     document.getElementById('dgNextLesson').addEventListener('click', _doneNext);
     _doneNextArmed = true;
@@ -19745,7 +20060,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _visReset();
     if (intId) clearInterval(intId);
     stopTotal(); hideCountIn(); phase='idle';
-    document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+    document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Start') + '</button>';
     document.getElementById('dgStart2').addEventListener('click', startExercise);
     renderNot(-1, false); updateBpm();
   }
@@ -23205,7 +23520,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     // ── Reset-Handler ────────────────────────────────────────
     function devReset() {
-      if (confirm('Reset the course? All progress will be deleted.')) {
+      if (confirm(_t('Reset the course? All progress will be deleted.'))) {
         // Der Fortschritt steckt in drei Werten: Kurs-State plus die beiden
         // Zähler, aus denen Level, Chapter und die Balken kommen. Nur den
         // Kurs-State zu löschen lässt die Zahlen stehen.
@@ -23722,7 +24037,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (!ex) return;
         if (playing) stopExercise();
         _setGroove(ex, bpm || ex.minBPM);
-        document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+        document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Start') + '</button>';
         document.getElementById('dgStart2').addEventListener('click', startExercise);
         updateBpm();
         renderNot(-1, false);
@@ -23791,7 +24106,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Dev: Reset Course
   document.getElementById('dgDevReset').addEventListener('click', function() {
-    if (confirm('Reset the course? All progress will be deleted.')) _resetAll();
+    if (confirm(_t('Reset the course? All progress will be deleted.'))) _resetAll();
   });
 
   // Prev = zurück in der History
@@ -23835,7 +24150,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var bpm = _exBpm(ex, entry.bpmStep);
       _pushHistory({ entry: entry, bpm: bpm });
       _setGroove(ex, bpm);
-      document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+      document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Start') + '</button>';
       document.getElementById('dgStart2').addEventListener('click', startExercise);
       renderNot(-1, false);
       _showCompletedBanner(ex.id);
@@ -23880,9 +24195,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var inp = document.getElementById('rampAskInput');
       var err = document.getElementById('rampAskErr');
       var v = parseInt(inp.value, 10);
-      if (!inp.value || isNaN(v)) { err.textContent = 'Please enter a number.'; inp.focus(); return; }
+      if (!inp.value || isNaN(v)) { err.textContent = _t('Please enter a number.'); inp.focus(); return; }
       if (v < RAMP_FROM || v > RAMP_TO) {
-        err.textContent = 'Enter a value between ' + RAMP_FROM + ' and ' + RAMP_TO + '.';
+        err.textContent = _t('Enter a value between {a} and {b}.', { a: RAMP_FROM, b: RAMP_TO });
         inp.focus(); return;
       }
       _rampSubmit(v);
@@ -23898,7 +24213,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var box = document.getElementById('rampDoneBox');
       if (box) box.classList.add('hidden');
       var hint = document.getElementById('rampHint');
-      if (hint) { hint.style.display = ''; hint.textContent = 'Play along as long as you can'; }
+      if (hint) { hint.style.display = ''; hint.textContent = _t('Play along as long as you can'); }
       startExercise();
     });
   } else {
@@ -23981,7 +24296,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var dot = document.getElementById('syncDot');
         var msg = document.getElementById('syncMsg');
         if (dot) dot.className = 'sync-bar-dot';
-        if (msg) msg.textContent = 'Progress not saved';
+        if (msg) msg.textContent = _t('Progress not saved');
         if (openLink) openLink.style.display = 'inline';
       }
     }
@@ -23992,7 +24307,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       submitBtn.addEventListener('click', function() {
         var email = (input ? input.value.trim() : '').toLowerCase();
         if (!email || !email.includes('@')) {
-          if (errDiv) { errDiv.textContent = 'Please enter a valid email address.'; errDiv.style.display = 'block'; }
+          if (errDiv) { errDiv.textContent = _t('Please enter a valid email address.'); errDiv.style.display = 'block'; }
           return;
         }
         if (errDiv) errDiv.style.display = 'none';
@@ -24011,7 +24326,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             }
           });
         }).catch(function() {
-          if (errDiv) { errDiv.textContent = 'Sync is not available here.'; errDiv.style.display = 'block'; }
+          if (errDiv) { errDiv.textContent = _t('Sync is not available here.'); errDiv.style.display = 'block'; }
         });
       });
     }
@@ -24155,13 +24470,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   });
 
   // ── Stats + Einstellungen (16.09.2026) ──────────────────────────────
-  function _fmtNum(n) { return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function _fmtNum(n) {
+    var sep = { de: '.', es: '.', pt: '.', fr: '\u202F' }[DL_LANG] || ',';
+    return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+  }
   function _fmtPlayTime(sec) {
     var m = Math.floor(sec / 60), h = Math.floor(m / 60);
     if (h < 1) return m + '<small>min</small>';
     return _fmtNum(h) + '<small>h</small>' + String(m % 60).padStart(2, '0') + '<small>min</small>';
   }
-  function _fmtPct(p) { return (p > 0 && p < 10 ? p.toFixed(1) : String(Math.round(p))) + '%'; }
+  function _fmtPct(p) {
+    var s = (p > 0 && p < 10 ? p.toFixed(1) : String(Math.round(p)));
+    return (DL_LANG === 'en' ? s : s.replace('.', ',')) + '%';
+  }
 
   var statsOverlay    = document.getElementById('dgStatsOverlay');
   var settingsOverlay = document.getElementById('dgSettingsOverlay');
@@ -24216,8 +24537,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _catPool[c].forEach(function(e) { if (!inCourse[e.id]) { inCourse[e.id] = 1; courseTotal++; } });
     });
     var exDone = (_cState.completed || []).filter(function(id) { return inCourse[id]; }).length;
-    var bestLbl = !_stats.bestSec ? 'No record yet'
-                : (_stats.bestWk === _stats.wk ? 'This week' : _weekLabel(_stats.bestWk));
+    var bestLbl = !_stats.bestSec ? _t('No record yet')
+                : (_stats.bestWk === _stats.wk ? _t('This week') : _weekLabel(_stats.bestWk));
+    var lessonsTxt = (lessons === 1) ? _t('1 lesson completed') : _t('{n} lessons completed', { n: _fmtNum(lessons) });
+    var whereTxt = '<strong>' + _t('Level') + ' ' + info.level + '</strong> · ' + _t('Chapter') + ' ' + info.chapter + ' · ' + _t('Lesson') + ' ' + info.lessons;
     var body = document.getElementById('dgStatsBody');
     if (!body) return;
 
@@ -24235,17 +24558,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                (cap !== undefined ? '<div class="dl-stat-cap" id="' + id + 'C">' + cap + '</div>' : '') + '</div>';
       };
       body.innerHTML =
-        '<p class="dl-stat-where" id="dgStWhere"><strong>Level ' + info.level + '</strong> · Chapter ' + info.chapter + ' · Lesson ' + info.lessons + '</p>' +
-        '<div class="dl-stat-bars">' + bar('dgStBarCh', 'Chapter', 60) + bar('dgStBarLv', 'Level', 120) + bar('dgStBarAc', 'Academy', 180) + '</div>' +
+        '<p class="dl-stat-where" id="dgStWhere">' + whereTxt + '</p>' +
+        '<div class="dl-stat-bars">' + bar('dgStBarCh', _t('Chapter'), 60) + bar('dgStBarLv', _t('Level'), 120) + bar('dgStBarAc', 'Academy', 180) + '</div>' +
         '<div class="dl-stat-grid">' +
-          tile('dgStTime',    'Time played',    240) +
-          tile('dgStStrokes', 'Strokes played', 300) +
-          tile('dgStWeek',    'This week',      360, false, _weekLabel(_weekId())) +
-          tile('dgStBest',    'Best week',      420, false, bestLbl) +
-          tile('dgStDone',    'Exercises completed', 480, true) +
+          tile('dgStTime',    _t('Time played'),    240) +
+          tile('dgStStrokes', _t('Strokes played'), 300) +
+          tile('dgStWeek',    _t('This week'),      360, false, _weekLabel(_weekId())) +
+          tile('dgStBest',    _t('Best week'),      420, false, bestLbl) +
+          tile('dgStDone',    _t('Exercises completed'), 480, true) +
         '</div>' +
-        '<p class="dl-stat-note" id="dgStNote" style="animation-delay:540ms">' + _fmtNum(lessons) + ' lesson' + (lessons === 1 ? '' : 's') + ' completed<br>' +
-        'Counts only what you play: no count-ins, breaks or clicks.</p>';
+        '<p class="dl-stat-note" id="dgStNote" style="animation-delay:540ms">' + lessonsTxt + '<br>' +
+        _t('Counts only what you play: no count-ins, breaks or clicks.') + '</p>';
       _statsBuilt = true;
       _statsStopAnims();
 
@@ -24263,13 +24586,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _countUp(document.getElementById('dgStStrokes'), _stats.strokes, function(v) { return _fmtNum(v); }, 1200);
       _countUp(document.getElementById('dgStWeek'),    _stats.wkSec,   function(v) { return _fmtPlayTime(v); }, 1000);
       _countUp(document.getElementById('dgStBest'),    _stats.bestSec, function(v) { return _fmtPlayTime(v); }, 1000);
-      _countUp(document.getElementById('dgStDone'),    exDone,         function(v) { return _fmtNum(v) + '<small>of ' + _fmtNum(courseTotal) + '</small>'; }, 900);
+      _countUp(document.getElementById('dgStDone'),    exDone,         function(v) { return _fmtNum(v) + '<small>' + _t('of') + ' ' + _fmtNum(courseTotal) + '</small>'; }, 900);
       return;
     }
 
     // Laufende Aktualisierung: nur Werte tauschen
     var w = document.getElementById('dgStWhere');
-    if (w) w.innerHTML = '<strong>Level ' + info.level + '</strong> · Chapter ' + info.chapter + ' · Lesson ' + info.lessons;
+    if (w) w.innerHTML = whereTxt;
     [['dgStBarCh', info.chapterPct], ['dgStBarLv', info.levelPct], ['dgStBarAc', info.academyPct]].forEach(function(p) {
       var el = document.getElementById(p[0]);
       if (el) el.style.width = Math.min(100, p[1]).toFixed(1) + '%';
@@ -24280,12 +24603,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _setNum(document.getElementById('dgStStrokes'), _fmtNum(_stats.strokes));
     _setNum(document.getElementById('dgStWeek'),    _fmtPlayTime(_stats.wkSec));
     _setNum(document.getElementById('dgStBest'),    _fmtPlayTime(_stats.bestSec));
-    _setNum(document.getElementById('dgStDone'),    _fmtNum(exDone) + '<small>of ' + _fmtNum(courseTotal) + '</small>');
+    _setNum(document.getElementById('dgStDone'),    _fmtNum(exDone) + '<small>' + _t('of') + ' ' + _fmtNum(courseTotal) + '</small>');
     var bc = document.getElementById('dgStBestC');
     if (bc) bc.textContent = bestLbl;
     var nt = document.getElementById('dgStNote');
-    if (nt) nt.innerHTML = _fmtNum(lessons) + ' lesson' + (lessons === 1 ? '' : 's') + ' completed<br>' +
-                           'Counts only what you play: no count-ins, breaks or clicks.';
+    if (nt) nt.innerHTML = lessonsTxt + '<br>' + _t('Counts only what you play: no count-ins, breaks or clicks.');
   }
 
   // Farbschema (Erwin, 20.10.2026): Dark (Standard), Light, Auto = folgt dem
@@ -24352,15 +24674,33 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (reset) reset.addEventListener('click', function() { setOffset(0); });
   })();
 
+  // Sprache wählen: gilt für dieses Gerät. Die Lektionsseite bekommt die Wahl
+  // per postMessage mit, damit Website und Player dieselbe Sprache sprechen.
+  // Danach neu laden — ohne ?lang=, das die Wahl sonst gleich wieder überstimmt.
+  (function() {
+    var sel = document.getElementById('dgLangSel');
+    if (!sel) return;
+    var sec = document.getElementById('dgLangSec');
+    if (sec && !(DL_LANG_SWITCH || _devMode)) sec.style.display = 'none';
+    sel.value = DL_LANG;
+    sel.addEventListener('change', function() {
+      var l = sel.value;
+      try { localStorage.setItem('dl_lang', l); } catch(e) {}
+      try { window.parent.postMessage({ drumlion: 'lang', lang: l }, 'https://www.drumlion.com'); } catch(e) {}
+      var u = location.href.replace(/([?&])lang=[a-z]{2}(&|$)/, function(m, a, b) { return b ? a : ''; });
+      location.replace(u);
+    });
+  })();
+
   function _renderSettings() {
     _renderCursorOffset();
     var el = document.getElementById('dgSetSync');
     if (_syncKey()) {
-      el.innerHTML = '<span class="dl-set-dot on"></span><span>On. Your progress and stats are saved and shared across your devices.</span>';
+      el.innerHTML = '<span class="dl-set-dot on"></span><span>' + _t('On. Your progress and stats are saved and shared across your devices.') + '</span>';
       return;
     }
-    el.innerHTML = '<span class="dl-set-dot"></span><span>Off. Progress is only saved in this browser.</span>' +
-                   '<button class="dl-set-link" type="button" id="dgSetSyncOn">Turn on sync</button>';
+    el.innerHTML = '<span class="dl-set-dot"></span><span>' + _t('Off. Progress is only saved in this browser.') + '</span>' +
+                   '<button class="dl-set-link" type="button" id="dgSetSyncOn">' + _t('Turn on sync') + '</button>';
     document.getElementById('dgSetSyncOn').addEventListener('click', function() {
       _closePanel(settingsOverlay);
       var l = document.getElementById('syncOpenLink');
@@ -24390,8 +24730,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var on = !!(en && en.boost);
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.querySelector('.dl-pill-t').textContent = on ? 'Boosted' : 'Boost';
-    b.title = on ? 'Boost on: comes up 3× as often (tap to turn off)' : 'Boost: this exercise comes up 3× as often';
+    b.querySelector('.dl-pill-t').textContent = _t(on ? 'Boosted' : 'Boost');
+    b.title = _t(on ? 'Boost on: comes up 3× as often (tap to turn off)' : 'Boost: this exercise comes up 3× as often');
     _updateExActions();
   }
   // Knopfzeile nur zeigen, wenn mindestens ein Knopf darin sichtbar ist —
@@ -24410,7 +24750,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setInfo('Boost off');
     } else {
       var n = _cState.cats[GROOVE.cat].active.filter(function(e) { return e.boost; }).length;
-      if (n >= MAX_BOOST_PER_CAT) { setInfo('You can boost up to ' + MAX_BOOST_PER_CAT + ' exercises per category'); return; }
+      if (n >= MAX_BOOST_PER_CAT) { setInfo(_t('You can boost up to {n} exercises per category', { n: MAX_BOOST_PER_CAT })); return; }
       en.boost = 1;
       setInfo('⚡ Boost on — comes up 3× as often');
     }
@@ -24434,8 +24774,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var on = !!(show && _favs().indexOf(GROOVE.id) > -1);
     b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.querySelector('.dl-pill-t').textContent = on ? 'Favorite' : 'Add to favorites';
-    b.title = on ? 'In My Exercises (tap to remove)' : 'Save to My Exercises';
+    b.querySelector('.dl-pill-t').textContent = _t(on ? 'Favorite' : 'Add to favorites');
+    b.title = _t(on ? 'In My Exercises (tap to remove)' : 'Save to My Exercises');
     _updateExActions();
   }
   document.getElementById('dgFavBtn').addEventListener('click', function() {
@@ -24459,16 +24799,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _renderMine() {
     var body = document.getElementById('dgMineBody'), h = '';
     var favs = _favs().map(function(id) { return EXERCISES.find(function(e) { return e.id === id; }); }).filter(Boolean);
-    h += '<section class="dl-set-sec"><div class="dl-set-h">Favorites</div>';
+    h += '<section class="dl-set-sec"><div class="dl-set-h">' + _t('Favorites') + '</div>';
     if (!favs.length) {
-      h += '<p class="dl-set-p">No favorites yet. Tap the star during an exercise to save it here.</p>';
+      h += '<p class="dl-set-p">' + _t('No favorites yet. Tap the star during an exercise to save it here.') + '</p>';
     } else {
       h += '<div class="dl-mine-list">';
       favs.forEach(function(ex) {
         h += '<button type="button" class="dl-mine-item" data-free="' + ex.id + '">'
            +   '<span class="dl-mine-txt"><span class="dl-mine-name">' + ex.name + '</span>'
            +   '<span class="dl-mine-sub">' + (ex.catLabel || '') + ' · ' + _freeBpmFor(ex) + ' BPM</span></span>'
-           +   '<span class="dl-mine-go">Practice →</span>'
+           +   '<span class="dl-mine-go">' + _t('Practice →') + '</span>'
            + '</button>';
       });
       h += '</div>';
@@ -24497,7 +24837,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (playing) stopExercise();
     _freeMode = { id: ex.id };
     _setGroove(ex, _freeBpmFor(ex));
-    document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>Start</button>';
+    document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Start') + '</button>';
     document.getElementById('dgStart2').addEventListener('click', startExercise);
     _showCompletedBanner(null);
     _renderFree();
@@ -24523,7 +24863,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_dm) setTimeout(function(){ _showDailyCelebration(_dm); }, 1400);
     document.getElementById('dgTotal').style.display='inline';
     document.getElementById('dgCtrl').innerHTML =
-      '<button class="btn-go" id="dgAgain"><span class="btn-play-icon"></span>Again</button>';
+      '<button class="btn-go" id="dgAgain"><span class="btn-play-icon"></span>' + _t('Again') + '</button>';
     document.getElementById('dgAgain').addEventListener('click', startExercise);
   }
   document.getElementById('dgFreeDown').addEventListener('click', function() { _freeStep(-5); });
