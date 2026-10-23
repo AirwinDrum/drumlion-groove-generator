@@ -681,6 +681,8 @@ body.one-block #dgTotal { display: none !important; }
 .ni-goal { color: var(--dl-gold-ink); font-weight: 700; white-space: nowrap; }
 /* Schmal: statt „Rep 9 · Goal tempo“ nur „Goal tempo“, sonst wird der Übungsname gequetscht */
 @media (max-width: 700px) { .ni-repn { display: none; } }
+/* Handy: „First time 🎯“ nur als 🎯 — der Übungsname war sonst auf „Gro…“ gekürzt (23.10.2026) */
+@media (max-width: 600px) { .ni-ft { display: none; } }
 .legend-btn {
   background: rgba(var(--dl-ink-rgb),0.07); border: 1px solid rgba(var(--dl-ink-rgb),0.15);
   color: var(--dl-ink); font-size: 13px; font-weight: 600;
@@ -1016,32 +1018,31 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   transition: color 0.15s;
 }
 .legend-close:hover { color: var(--dl-ink); }
-/* Drum Key (21.10.2026): Gruppen aus Mini-Notensystemen, die ohne Lücke
-   aneinanderstoßen und so wie ein durchgehendes System wirken */
-.dk-modal { width: min(640px, 94vw); max-height: 92vh; overflow-y: auto; }
-.dk-modal h3 { margin-bottom: 4px; }
-.dk-hint { text-align: center; font-size: 13px; color: rgba(var(--dl-ink-rgb),0.55); margin: 0 0 6px; }
-.dk-group-h {
-  margin: 16px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--dl-gold-ink);
+/* Noten zum Anklicken (Erwin, 23.10.2026) — ersetzt den Drum Key: über einem
+   Notenkopf ein Ring und der Name, ein Klick oder Tipp spielt den Klang.
+   Beide hängen direkt am <body> (fixed), weil die Notenfläche überstehenden
+   Inhalt abschneidet — auf dem Handy ist sie zu flach für das Namensschild.
+   Position und Ringgröße setzt _noteShow(). */
+.notation-box.nh-on { cursor: pointer; }
+.note-ring {
+  position: fixed; left: 0; top: 0; z-index: 60;
+  width: 24px; height: 24px; transform: translate(-50%, -50%);
+  border: 1.5px solid #C9A84C; border-radius: 50%;
+  pointer-events: none; opacity: 0; transition: opacity 0.12s ease;
 }
-.dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 0; }
-@media (max-width: 480px) { .dk-grid { grid-template-columns: repeat(3, 1fr); } }
-.dk-item {
-  appearance: none; background: none; border: 0; margin: 0; padding: 0 0 10px; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; color: var(--dl-ink); font: inherit;
-  border-radius: 8px;
+.note-tip {
+  position: fixed; left: 0; top: 0; z-index: 61;
+  transform: translate(-50%, calc(-100% - 16px));
+  padding: 4px 10px; border-radius: 7px;
+  background: var(--dl-menu); border: 1px solid var(--dl-line); color: var(--dl-ink);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  font-size: 13px; font-weight: 600; line-height: 1.3; white-space: nowrap;
+  pointer-events: none; opacity: 0; transition: opacity 0.12s ease;
 }
-.dk-item svg { display: block; width: 100%; height: auto; overflow: visible; transition: color 0.15s; }
-.dk-item .dk-name {
-  margin-top: 2px; font-size: 12px; line-height: 1.25; text-align: center;
-  color: rgba(var(--dl-ink-rgb),0.72); padding: 0 2px;
-}
-.dk-item:hover svg { color: var(--dl-gold-ink); }
-.dk-item.on svg { color: #C9A84C; }
-.dk-item:focus-visible { outline: 2px solid #C9A84C; outline-offset: -2px; }
-.dk-foot { margin: 14px 0 0; font-size: 12.5px; line-height: 1.55; color: rgba(var(--dl-ink-rgb),0.6); }
-.dk-foot b { color: var(--dl-ink); font-weight: 600; }
+/* Zu nah an der Oberkante (Becken): Name unter den Kopf */
+.note-tip.below { transform: translate(-50%, 16px); }
+.note-ring.on, .note-tip.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .note-ring, .note-tip { transition: none; } }
 .legend-table { width: 100%; border-collapse: collapse; }
 .legend-table tr td {
   padding: 7px 6px; font-size: 14px; color: var(--dl-ink);
@@ -1072,10 +1073,10 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   letter-spacing: 0.3px;
 }
 
-/* Kopfzeile rechts: Drum Key, Stats, Einstellungen als eine Gruppe */
+/* Kopfzeile rechts: Stats und Einstellungen als eine Gruppe */
 .ni-tools { display: flex; align-items: center; gap: 6px; }
 /* ?hdr=1: Die Lektionsseite hat eine eigene Drumlion-Kopfleiste mit Stats und
-   Zahnrad (Erwin, 16.09.2026) — im Player bleibt dann nur der Drum Key. */
+   Zahnrad (Erwin, 16.09.2026) — im Player bleiben die Knöpfe dann weg. */
 body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 /* Handy: die zwei neuen Knöpfe kosten ~60px, die der Titel in der Mitte
    braucht. Die Blockinfo steht dort deshalb zweizeilig: „1 Block" / „Rep 5". */
@@ -2049,15 +2050,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               <circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/>
             </svg>
           </button>
-        <!-- Drum Key -->
-          <button class="legend-btn" id="dgLegendBtn" title="Drum Key">
-          <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="6.5" cy="11.5" r="3.5"/>
-            <line x1="9.5" y1="8.5" x2="15.5" y2="2.5"/>
-            <line x1="13" y1="5" x2="15.5" y2="7.5"/>
-            <line x1="11.5" y1="6.5" x2="14" y2="9"/>
-          </svg>
-        </button>
           <!-- Stats (16.09.2026) -->
           <button class="legend-btn" id="dgStatsBtn" type="button" title="Your stats" aria-label="Your stats">
             <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
@@ -2173,16 +2165,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     </div>
 
     <!-- Drum Legend Modal -->
-    <div class="legend-overlay" id="dgLegendOverlay">
-      <div class="legend-modal dk-modal" role="dialog" aria-modal="true" aria-labelledby="dgLegendTitle">
-        <button class="legend-close" id="dgLegendClose" aria-label="Close">×</button>
-        <h3 id="dgLegendTitle">Drum Key</h3>
-        <p class="dk-hint">Tap a note to hear it.</p>
-        <!-- Inhalt baut _buildDrumKey() beim Öffnen: dieselben Notenköpfe und
-             Positionen (DRUM_MAP) wie in den Übungen, in den Farben des Schemas -->
-        <div id="dgLegendBody"></div>
-      </div>
-    </div>
 
     <!-- Übung merken / öfter üben (Abo-Stufe, nach dem Launch — Erwin, 01.10.2026) -->
     <div class="dl-ex-actions" id="dgExActions">
@@ -16414,7 +16396,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261023-154356';
+  var DL_BUILD = '20261023-155325';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17858,8 +17840,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // `opt` (Song-Builder, 20.10.2026): { svg: Ziel-SVG statt #dgSvg, plain: einfache
   // Taktstriche statt Wiederholungszeichen — ein Takt aus einem Song, keine Schleife,
   // colors: festes Farbset statt Farbschema }
+  // Wo die Notenköpfe im Hauptbild sitzen (SVG-Koordinaten) — für die Noten
+  // zum Anklicken. renderNot() füllt die Liste bei jedem Zeichnen neu.
+  var _noteHits;
   function renderNot(curBeat, dimmed, opt) { dimmed = false;
     var svg  = (opt && opt.svg) || document.getElementById('dgSvg');
+    var _hits = (opt && opt.svg) ? null : (_noteHits = []);
     var _plain = !!(opt && opt.plain);
     var lbl4  = ['1', '2', '3', '4'];
     var lbl8  = ['1', '&', '2', '&', '3', '&', '4', '&'];
@@ -18338,6 +18324,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                  '</circle>';
           }
           h += drawNoteHead(n, x + offArr[ci], y, nc, op);
+          if (_hits) _hits.push({ x: x + offArr[ci], y: y, inst: n.inst });
           // Handsatz direkt am Notenkopf (Erwin, 10.09.2026).
           // Nur bei Unabhängigkeit: dort steht die Gliedmaße pro Instrument
           // fest — auf dem Ride immer rechts, auf der Snare immer links —,
@@ -18881,7 +18868,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (_fbpm) _fbpm.textContent = tBpm + ' BPM';
     } else if (_curLesson) {
       var _step = _curLesson.entry.bpmStep || 0;
-      _repStr = _step === 0 ? 'First time 🎯' : 'Rep '+_step;
+      _repStr = _step === 0 ? '<span class="ni-ft">First time </span>🎯' : 'Rep '+_step;
       // Letzte Stufe = Zieltempo der Übung — auch oben sichtbar, nicht erst im
       // Abschluss-Popup (Erwin, 22.10.2026)
       if (_step >= _exSteps(_curLesson.ex) - 1) {
@@ -19211,6 +19198,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     pauses  = getPauses(tBpm, blocks.length);
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
     _syncOneBlock(); _progSet(0); _progDur = 0;
+    _noteShow(null);   // Notenname vom Antippen ausblenden
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ Stop</button>';
     document.getElementById('dgStop').addEventListener('click', stopExercise);
     renderBlocksBar(); renderNot(-1, false); startTotal(); startCountIn();
@@ -24079,96 +24067,91 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   // Drum Legend Modal
-  var legendBtn = document.getElementById('dgLegendBtn');
-  var legendOverlay = document.getElementById('dgLegendOverlay');
-  var legendClose = document.getElementById('dgLegendClose');
-  // Drum Key (21.10.2026): Notenköpfe, Positionen und Zeichen wie in den
-  // Übungen (DRUM_MAP + drawNoteHead), je Instrument ein Mini-System. Die
-  // Systeme stoßen im Raster ohne Lücke aneinander — eine durchgehende Zeile.
-  var DRUM_KEY = [
-    { h: 'Cymbals', items: [['crash1', 'Crash'], ['crash2', 'Crash 2'], ['china', 'China'], ['ride', 'Ride'],
-      ['rideBell', 'Ride bell'], ['hh', 'Hi-hat'], ['hhOpen', 'Hi-hat open'], ['hhPedal', 'Hi-hat foot'], ['cowbell', 'Cowbell']] },
-    { h: 'Drums', items: [['tom1', 'Tom 1'], ['tom2', 'Tom 2'], ['snare', 'Snare'], ['tom3', 'Floor tom'],
-      ['kick', 'Bass drum'], ['kick2', 'Bass drum 2']] },
-    { h: 'Techniques', items: [['snareAccent', 'Accent'], ['ghost', 'Ghost note'], ['snareFlam', 'Flam'],
-      ['snareDrag', 'Drag'], ['crossStick', 'Cross stick'], ['hhAccent', 'Hi-hat accent']] }
-  ];
-  // Klang beim Antippen, wo der Schlüssel kein eigenes Sample hat
-  var DRUM_KEY_SOUND = { ghost: 'snareGhost' };
-  function _drumKeySvg(k) {
-    var d = DRUM_MAP[k], sY = 40, ls = 8, x = 30, c = 'currentColor', h = '', i;
-    var y = sY + d.line * ls;
-    for (i = 0; i < 5; i++) {
-      h += '<line x1="0" y1="' + (sY + i * ls) + '" x2="64" y2="' + (sY + i * ls) +
-           '" stroke="' + c + '" stroke-width="0.8" opacity="0.45"/>';
-    }
-    h += drawLedgerLines(d.line, x, c, 1);
-    h += drawNoteHead({ head: d.head }, x, y, c, 1);
-    h += '<line x1="' + (x + 5) + '" y1="' + y + '" x2="' + (x + 5) + '" y2="' + (sY - 18) +
-         '" stroke="' + c + '" stroke-width="1.2"/>';
-    // Zeichen über dem Hals — wie renderNot, nur ohne Balken darunter
-    var ax = x + 5, ay = sY - 26;
-    if (d.articulation === 'o') {
-      h += '<circle cx="' + ax + '" cy="' + ay + '" r="4.5" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
-    } else if (d.articulation === '>') {
-      h += '<path d="M' + (ax - 4.5) + ' ' + (ay - 4) + ' L' + (ax + 4.5) + ' ' + ay + ' L' + (ax - 4.5) + ' ' + (ay + 4) +
-           '" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
-    }
-    // Vorschlagnoten: Flam eine (durchgestrichen), Drag zwei mit Doppelbalken
-    var cnt = d.grace ? d.grace : (d.flam ? 1 : 0), gx0 = x - (cnt === 2 ? 17 : 11), gsp = 6;
-    for (i = 0; i < cnt; i++) {
-      var gx = gx0 + i * gsp;
-      h += '<ellipse cx="' + gx + '" cy="' + y + '" rx="3.2" ry="2.3" fill="' + c + '" transform="rotate(-20 ' + gx + ' ' + y + ')"/>';
-      h += '<line x1="' + (gx + 3) + '" y1="' + y + '" x2="' + (gx + 3) + '" y2="' + (y - 13) + '" stroke="' + c + '" stroke-width="1"/>';
-      if (cnt === 1) {
-        var fx = gx + 3, ft = y - 13;
-        h += '<path d="M' + fx + ' ' + ft + ' C' + (fx + 0.6) + ' ' + (ft + 3.6) + ' ' + (fx + 5.2) + ' ' + (ft + 4.6) + ' ' + (fx + 4.2) + ' ' + (ft + 9.5) +
-             '" fill="none" stroke="' + c + '" stroke-width="1.1" stroke-linecap="round"/>';
-        h += '<line x1="' + (gx - 1.5) + '" y1="' + (y - 4.5) + '" x2="' + (gx + 7.5) + '" y2="' + (y - 11) + '" stroke="' + c + '" stroke-width="0.9"/>';
-      }
-    }
-    if (cnt === 2) {
-      h += '<line x1="' + (gx0 + 3) + '" y1="' + (y - 13) + '" x2="' + (gx0 + gsp + 3) + '" y2="' + (y - 13) + '" stroke="' + c + '" stroke-width="1.5"/>';
-      h += '<line x1="' + (gx0 + 3) + '" y1="' + (y - 10) + '" x2="' + (gx0 + gsp + 3) + '" y2="' + (y - 10) + '" stroke="' + c + '" stroke-width="1.5"/>';
-    }
-    return '<svg viewBox="0 0 64 88" aria-hidden="true">' + h + '</svg>';
-  }
-  function _buildDrumKey() {
-    var body = document.getElementById('dgLegendBody');
-    if (!body || body.firstChild) return;
-    var h = '';
-    DRUM_KEY.forEach(function(g) {
-      h += '<div class="dk-group-h">' + g.h + '</div><div class="dk-grid">';
-      g.items.forEach(function(it) {
-        if (!DRUM_MAP[it[0]]) return;
-        h += '<button type="button" class="dk-item" data-dk="' + it[0] + '" aria-label="Play ' + it[1] + '">' +
-             _drumKeySvg(it[0]) + '<span class="dk-name">' + it[1] + '</span></button>';
-      });
-      h += '</div>';
+  // ── Noten zum Anklicken (Erwin, 23.10.2026) ─────────────────────────────
+  // Ersetzt den Drum Key: Maus über einem Notenkopf zeigt den Namen, ein Klick
+  // oder Tipp spielt den Klang. renderNot() merkt sich, wo jeder Kopf sitzt
+  // (_noteHits). Während einer Lektion ist das aus — dann wird getrommelt.
+  // Namen bleiben in jeder Sprache Englisch, wie die Fachbegriffe im Kurs.
+  var NOTE_NAMES = {
+    crash1: 'Crash', crash2: 'Crash 2', china: 'China', ride: 'Ride', rideBell: 'Ride bell',
+    hh: 'Hi-hat', hhOpen: 'Hi-hat open', hhClose: 'Hi-hat closing', hhClosing: 'Hi-hat closing',
+    hhAccent: 'Hi-hat accent', hhPedal: 'Hi-hat foot', cowbell: 'Cowbell', tambourin: 'Tambourine',
+    tom1: 'Tom 1', tom2: 'Tom 2', tom3: 'Tom 3', tom4: 'Tom 4',
+    snare: 'Snare', snareAccent: 'Snare accent', ghost: 'Ghost note', snareGhost: 'Ghost note',
+    snareFlam: 'Flam', snareFlamAccent: 'Flam accent', snareDrag: 'Drag', snareDragAccent: 'Drag accent',
+    snareBuzz: 'Buzz stroke', crossStick: 'Cross stick', kick: 'Bass drum', kick2: 'Bass drum 2'
+  };
+  // Klang beim Antippen, wo das Instrument kein eigenes Sample hat
+  var NOTE_SOUND = { ghost: 'snareGhost' };
+  var _nbox = document.querySelector('.notation-box');
+  var _nsvg = document.getElementById('dgSvg');
+  var _nring = document.createElement('div');
+  var _ntip = document.createElement('div');
+  _nring.className = 'note-ring'; _nring.setAttribute('aria-hidden', 'true');
+  _ntip.className = 'note-tip'; _ntip.setAttribute('role', 'status'); _ntip.setAttribute('aria-live', 'polite');
+  document.body.appendChild(_nring); document.body.appendChild(_ntip);
+  var _ntipTimer = null;
+
+  // Nächster Notenkopf unter dem Zeiger, sonst null. Radius in SVG-Einheiten;
+  // per Finger etwas großzügiger, die Köpfe sind auf dem Handy klein.
+  function _noteAt(e, touch) {
+    if (playing || !_noteHits || !_noteHits.length || !_nsvg.getScreenCTM) return null;
+    var m = _nsvg.getScreenCTM();
+    if (!m) return null;
+    var p = _nsvg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    p = p.matrixTransform(m.inverse());
+    var best = null, bd = touch ? 14 : 10;
+    _noteHits.forEach(function(nh) {
+      if (!NOTE_NAMES[nh.inst]) return;
+      var d = Math.sqrt((nh.x - p.x) * (nh.x - p.x) + (nh.y - p.y) * (nh.y - p.y));
+      if (d < bd) { bd = d; best = nh; }
     });
-    h += '<p class="dk-foot"><b>R</b> / <b>L</b> under the notes: right / left hand. ' +
-         'Numbers above the staff: the count (1 e &amp; a).</p>';
-    body.innerHTML = h;
-    body.addEventListener('click', function(e) {
-      var b = e.target.closest('[data-dk]');
-      if (!b) return;
-      var k = b.getAttribute('data-dk');
-      initA();
-      playSound(DRUM_KEY_SOUND[k] || k);
-      b.classList.add('on');
-      setTimeout(function() { b.classList.remove('on'); }, 350);
-    });
+    return best;
   }
-  legendBtn.addEventListener('click', function() {
-    _buildDrumKey();
-    initA();   // Samples schon beim Öffnen dekodieren — der erste Tipp klingt dann sofort
-    legendOverlay.classList.add('open');
+  function _noteShow(nh) {
+    if (_ntipTimer) { clearTimeout(_ntipTimer); _ntipTimer = null; }
+    if (!nh) {
+      _nring.classList.remove('on'); _ntip.classList.remove('on');
+      _nbox.classList.remove('nh-on');
+      return;
+    }
+    // SVG-Koordinaten → Bildschirm. Der Ring wächst mit der Notengröße.
+    var m = _nsvg.getScreenCTM(), p = _nsvg.createSVGPoint();
+    p.x = nh.x; p.y = nh.y;
+    p = p.matrixTransform(m);
+    var d = Math.max(16, Math.min(30, 20 * m.a));
+    _nring.style.width = _nring.style.height = d + 'px';
+    _nring.style.left = p.x + 'px'; _nring.style.top = p.y + 'px';
+    _ntip.textContent = NOTE_NAMES[nh.inst];
+    // Nicht über den Rand hinaus: links/rechts einrücken
+    var hw = _ntip.offsetWidth / 2 + 6;
+    _ntip.style.left = Math.max(hw, Math.min(window.innerWidth - hw, p.x)) + 'px';
+    _ntip.style.top = p.y + 'px';
+    // Lieber innerhalb der Notenfläche bleiben: oben, wenn dort Platz ist,
+    // sonst darunter (Becken) — nie über die Kopfleiste
+    var r = _nbox.getBoundingClientRect(), th = _ntip.offsetHeight + 18;
+    _ntip.classList.toggle('below', p.y - th < r.top);
+    _nring.classList.add('on'); _ntip.classList.add('on');
+    _nbox.classList.add('nh-on');
+  }
+  _nbox.addEventListener('pointermove', function(e) {
+    if (e.pointerType === 'mouse') _noteShow(_noteAt(e, false));
   });
-  legendClose.addEventListener('click', function() {
-    legendOverlay.classList.remove('open');
+  _nbox.addEventListener('pointerleave', function(e) {
+    if (e.pointerType === 'mouse') _noteShow(null);
   });
-  legendOverlay.addEventListener('click', function(e) {
-    if (e.target === legendOverlay) legendOverlay.classList.remove('open');
+  // Fixed positioniert: beim Scrollen bliebe das Schild sonst in der Luft stehen
+  window.addEventListener('scroll', function() { _noteShow(null); }, { passive: true });
+  _nbox.addEventListener('pointerdown', function(e) {
+    var touch = e.pointerType !== 'mouse';
+    var nh = _noteAt(e, touch);
+    if (!nh) { if (touch) _noteShow(null); return; }
+    initA();
+    playSound(NOTE_SOUND[nh.inst] || nh.inst);
+    _noteShow(nh);
+    // Per Finger gibt es kein Wegfahren — der Name verschwindet nach kurzer Zeit
+    if (touch) _ntipTimer = setTimeout(function() { _noteShow(null); }, 1400);
   });
 
   // ── Stats + Einstellungen (16.09.2026) ──────────────────────────────
@@ -24563,7 +24546,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   });
   document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
-    [statsOverlay, settingsOverlay, legendOverlay, mineOverlay].forEach(function(ov) {
+    [statsOverlay, settingsOverlay, mineOverlay].forEach(function(ov) {
       if (ov.classList.contains('open')) _closePanel(ov);
     });
   });
@@ -24582,7 +24565,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var target = (d.panel === 'stats') ? statsOverlay : (d.panel === 'settings') ? settingsOverlay : null;
     if (!target) return;
     var wasOpen = target.classList.contains('open');
-    [statsOverlay, settingsOverlay, legendOverlay].forEach(function(ov) {
+    [statsOverlay, settingsOverlay].forEach(function(ov) {
       if (ov.classList.contains('open')) _closePanel(ov);
     });
     if (!wasOpen) document.getElementById(d.panel === 'stats' ? 'dgStatsBtn' : 'dgSettingsBtn').click();
