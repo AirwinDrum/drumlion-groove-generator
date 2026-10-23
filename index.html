@@ -421,6 +421,33 @@ body:has(.sync-bar:not(.hidden)) .dg-inner {
   text-align: center; min-height: clamp(28px, 4vh, 36px);
   font-weight: 500;
 }
+/* Länge der Lektion vor dem Start — leiser als die Ansagen beim Spielen */
+.phase-info.plan {
+  color: rgba(var(--dl-ink-rgb),0.62);
+  font-size: clamp(15px, 2.4vw, 18px);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 1-Block-Übungen (Erwin, 23.10.2026) ─────────────────────────────────
+   In der ersten Kurshälfte hat fast jede Lektion nur einen Block. Die
+   Blockleiste zeigte dort nur noch Tempo und Taktzahl, die schon oben stehen.
+   Stattdessen: Takt im Badge, Restzeit daneben, vor dem Start die Länge in der
+   Infozeile und eine dünne Fortschrittslinie an der Unterkante der Noten.
+   Mehrere Blöcke behalten die Leiste. */
+.dg-prog {
+  display: none;
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 3px; pointer-events: none;
+}
+.dg-prog-fill {
+  height: 100%; width: 100%;
+  background: #C9A84C;
+  transform: scaleX(0); transform-origin: left center;
+}
+body.one-block .dg-prog { display: block; }
+body.one-block #dgBlocks,
+body.one-block .notation-info-bar,
+body.one-block #dgTotal { display: none !important; }
 
 /* Blocks bar */
 .blocks-bar {
@@ -843,6 +870,7 @@ body.ramp-mode .legend-btn,
 body.ramp-mode .phase-row,
 body.ramp-mode .phase-info,
 body.ramp-mode .blocks-bar,
+body.ramp-mode .dg-prog,
 body.ramp-mode .level-display,
 body.ramp-mode .progress-row,
 body.ramp-mode .sync-bar,
@@ -2054,6 +2082,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       <div class="countin-overlay" id="dgCountIn" style="display:none;">
         <div class="countin-number" id="dgCountNum">1</div>
       </div>
+      <!-- Fortschritt der Lektion, nur bei 1-Block-Übungen (siehe _progSet) -->
+      <div class="dg-prog" aria-hidden="true"><div class="dg-prog-fill" id="dgProgFill"></div></div>
     </div>
     <!-- Timing-Trainer: Vorwarnung und Zustandsanzeige.
          Bewusst AUSSERHALB des Notenfelds, in einer eigenen Zeile darunter —
@@ -16384,7 +16414,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261022-225037';
+  var DL_BUILD = '20261023-154356';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18755,7 +18785,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var s = {
       idle:    { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888',    t:'READY' },
       countIn: { bg:'rgba(201,168,76,0.15)',  c:'var(--dl-gold-ink)', t:'COUNT IN' },
-      playing: { bg:'rgba(44,90,163,0.2)',    c:'#5b8fd9', t:'BLOCK '+(bIdx+1)+'/'+blocks.length },
+      playing: { bg:'rgba(44,90,163,0.2)',    c:'#5b8fd9',
+                 t: _oneBlock() ? 'Bar 1/' + blocks[0].bars : 'BLOCK '+(bIdx+1)+'/'+blocks.length },
       pause:   { bg:'rgba(201,168,76,0.1)',   c:'#888',    t:'PAUSE' },
       done:    { bg:'rgba(76,175,80,0.15)',   c:'#66bb6a', t:'DONE!', html:'<span class="done-check">✔</span>DONE!' }
     }[p] || { bg:'rgba(var(--dl-ink-rgb),0.05)', c:'#888', t:'READY' };
@@ -18764,18 +18795,44 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else { el.textContent = s.t; el.classList.remove('badge-done-anim'); }
   }
 
-  function setInfo(txt) { document.getElementById('dgInfo').textContent = txt; }
+  function setInfo(txt, cls) {
+    var el = document.getElementById('dgInfo');
+    el.textContent = txt;
+    el.className = 'phase-info' + (cls ? ' ' + cls : '');
+  }
 
-  function setCountdown(secs) {
-    var el = document.getElementById('dgCountdown');
-    if (secs <= 0) { el.textContent = ''; return; }
+  function _secTxt(secs) {
     var r = Math.ceil(secs);
     if (r >= 60) {
       var m = Math.floor(r/60), s = r%60;
-      el.textContent = m+':'+(s<10?'0':'')+s;
-    } else {
-      el.textContent = r+'s';
+      return m+':'+(s<10?'0':'')+s;
     }
+    return r+'s';
+  }
+  function setCountdown(secs) {
+    var el = document.getElementById('dgCountdown');
+    el.textContent = (secs <= 0) ? '' : _secTxt(secs);
+  }
+
+  // ── 1-Block-Übungen: ohne Blockleiste (CSS body.one-block) ──────────────
+  // Die Rampe des Einstufungstests hat eine eigene Anzeige und bleibt außen vor.
+  var _progT0 = 0, _progDur = 0;
+  function _oneBlock() { return blocks.length === 1 && !_rampMode; }
+  function _syncOneBlock() { document.body.classList.toggle('one-block', _oneBlock()); }
+  // Vor dem Start: wie lang die Lektion ist, z.B. „12 bars · 48s"
+  function _planInfo() {
+    var b = blocks[0];
+    setInfo(b.bars + ' bars · ' + _secTxt(b.dur), 'plan');
+  }
+  // Takt im Badge, nur solange gespielt wird
+  function _setBarBadge(txt) {
+    if (phase !== 'playing' || !_oneBlock()) return;
+    document.getElementById('dgBadge').textContent = txt;
+  }
+  // Linie an der Unterkante der Noten, 0…1
+  function _progSet(f) {
+    var el = document.getElementById('dgProgFill');
+    if (el) el.style.transform = 'scaleX(' + Math.max(0, Math.min(1, f)) + ')';
   }
 
   function showCountIn(content) {
@@ -18836,15 +18893,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('dgInfoLeft').innerHTML = tBpm + ' BPM' + (GROOVE.cat === 'notes' ? '<span class="ni-meter">4/4</span>' : '');
     // Zwei Teile in eigenen Spans: auf dem Handy stehen sie untereinander,
     // sonst bräche die Zeile mitten in „Rep 5".
-    document.getElementById('dgInfoRight').innerHTML =
-      '<span>' + blocks.length + ' Block' + (blocks.length > 1 ? 's' : '') + '</span>' +
-      (_repStr ? '<span class="ni-sep">  ·  </span><span class="ni-rep">' + _repStr + '</span>' : '');
+    // Bei nur einem Block entfällt die Blockzahl — dann steht dort nur die Wiederholung.
+    _syncOneBlock();
+    document.getElementById('dgInfoRight').innerHTML = _oneBlock()
+      ? (_repStr ? '<span class="ni-rep">' + _repStr + '</span>' : '')
+      : '<span>' + blocks.length + ' Blocks</span>' +
+        (_repStr ? '<span class="ni-sep">  ·  </span><span class="ni-rep">' + _repStr + '</span>' : '');
     // Die Taktzeile darunter gehört zur laufenden Lektion — beim Tempowechsel
     // ist keine im Gange.
     var _ib = document.getElementById('dgInfoBar');
     if (_ib) _ib.textContent = '';
     bIdx=0; phase='idle';
-    renderBlocksBar(); setBadge('idle'); setInfo(''); setCountdown(0);
+    renderBlocksBar(); setBadge('idle'); setCountdown(0); _progSet(0);
+    if (_oneBlock()) _planInfo(); else setInfo('');
     renderNot(-1, false);
     if (typeof _updateCourseUI === 'function') _updateCourseUI();
     _devTempoSync();
@@ -19004,11 +19065,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!playing || !aCtx) return;
     var now = aCtx.currentTime - _audioLatency();   // was gerade aus dem Lautsprecher kommt
     _statsDrain(now);
+    if (_progDur) _progSet((now - _progT0) / _progDur);
     var ev = null;
     while (_visQ.length && _visQ[0].t <= now) { ev = _visQ.shift(); }
     if (ev) {
       if (ev.info != null) setInfo(ev.info);
       if (ev.cue !== undefined) _applyTimingCue(ev.cue);
+      if (ev.bar) _setBarBadge(ev.bar);
       renderNot(ev.bt, false);
     }
   }
@@ -19147,6 +19210,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     blocks  = getBlocks(tBpm);
     pauses  = getPauses(tBpm, blocks.length);
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
+    _syncOneBlock(); _progSet(0); _progDur = 0;
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ Stop</button>';
     document.getElementById('dgStop').addEventListener('click', stopExercise);
     renderBlocksBar(); renderNot(-1, false); startTotal(); startCountIn();
@@ -19328,12 +19392,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // der Zeile darunter (Erwin, 18.09.2026).
       var _ib = document.getElementById('dgInfoBar');
       if (_ib) _ib.textContent = rightStr;
+      _barTxt = 'Bar ' + realBar + '/' + totalRealBars;
       return '';
     }
+    var _barTxt = '';
 
     // Tight scheduling: übernimm exakte Zeit vom Count-In (nahtloser Übergang)
     var nextBeatTime = inheritedTime || (aCtx ? aCtx.currentTime : 0);
     if (_rampMode) { _rampStartTime = nextBeatTime; _rampDone = false; }
+    // Fortschrittslinie (1 Block): läuft auf der Audio-Uhr mit, siehe _visDrain
+    _progT0 = nextBeatTime;
+    _progDur = _oneBlock() ? eighthsLeft * eighthMs / 1000 : 0;
 
     function tickAndRender(bt, br, when) {
       // Statistik: Schläge dieses Rasterschritts, abgerechnet erst wenn erklungen
@@ -19383,7 +19452,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       // Der Hinweis wechselt an derselben Taktgrenze wie die Infozeile.
       _visQ.push({ t: when, bt: bt, info: _info,
-                   cue: (_info != null) ? cueFor(br) : undefined });
+                   cue: (_info != null) ? cueFor(br) : undefined,
+                   bar: (_info != null) ? _barTxt : undefined });
     }
 
     setInfo(infoLine(bar, beat));
@@ -19661,6 +19731,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     playing=false; _visReset(); phase='done'; bIdx=blocks.length;
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
+    if (_progDur) { _progDur = 0; _progSet(1); }   // Linie voll stehen lassen
     _statsCommit(true);
     _addLessonTime(_lessonDurationMinutes());
     _updateLevelUI();
@@ -24463,6 +24534,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     playing=false; _visReset(); phase='done'; bIdx=blocks.length;
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
+    if (_progDur) { _progDur = 0; _progSet(1); }   // Linie voll stehen lassen
     _statsCommit(true);                      // Übungszeit und Schläge zählen mit
     var _dm = _addDailyTime(_lessonDurationMinutes());
     if (_dm) setTimeout(function(){ _showDailyCelebration(_dm); }, 1400);
