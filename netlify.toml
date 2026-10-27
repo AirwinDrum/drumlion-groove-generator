@@ -1,0 +1,15 @@
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # iFrame-Einbettung von überall erlauben (für Tests)
+    Content-Security-Policy = "frame-ancestors *"
+    X-Content-Type-Options = "nosniff"
+
+# Die Netlify-Kopie ist stillgelegt (Launch 30.10.2026): alles auf den echten
+# Player bei GitHub Pages umleiten, Abfrageparameter gehen mit. Netlify baut
+# weiter bei jedem Push, bis die Site dort gelöscht wird.
+[[redirects]]
+  from = "/*"
+  to = "https://airwindrum.github.io/drumlion-groove-generator/:splat"
+  status = 301
+  force = true
