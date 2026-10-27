@@ -15735,8 +15735,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       'Hands — Cross': 100,              'Feet — Cross': 80,              'Hand & Foot — Cross': 90,
       'Three Limbs — Hands + Foot': 110, 'Three Limbs — Hand + Feet': 100, 'Four Limbs': 100
     };
+    // Einzelne Übungen enden noch früher als ihre Unterkategorie (Erwin,
+    // 27.10.2026). Schlüssel ist die id, nicht der Name — Namen können sich
+    // beim Übersetzen ändern, die id bleibt. Umrechnung: RANGE_MIGRATIONS.
+    var COORD_MAX_BY_ID = {
+      471: 100,   // Ride R 1/4 · Snare L Triplet
+      472: 100    // Ride R Triplet · Snare L 1/4
+    };
     out.forEach(function(ex) {
       var cap = COORD_MAX_BPM[ex.catLabel];
+      if (COORD_MAX_BY_ID[ex.id] && (!cap || COORD_MAX_BY_ID[ex.id] < cap)) cap = COORD_MAX_BY_ID[ex.id];
       if (cap && ex.maxBPM > cap) { ex.maxUncapped = ex.maxBPM; ex.maxBPM = cap; }
     });
     out.forEach(function(ex){ EXERCISES.push(ex); });
@@ -16422,6 +16430,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ,
     // Quarter Fills und Eighth Note Fills starten bei 60 statt 40 (Erwin, 01.10.2026)
     { key: 'r20261001-fills60', old: _oldRuns([[21, 50, {minBPM:40, maxBPM:120, step:10}]]) }
+    ,
+    // Ride R 1/4 · Snare L Triplet und Ride R Triplet · Snare L 1/4 enden bei
+    // 100 statt 120 (Erwin, 27.10.2026, COORD_MAX_BY_ID)
+    { key: 'r20261027-coord471', old: _oldRuns([[471, 472, {minBPM:40, maxBPM:120, step:10}]]) }
   ];
   // [von-id, bis-id, alte Werte] ausschreiben; mit `cat` kommen die gedeckelten
   // Übungen dieser Säule dazu (Start und Schrittweite blieben, nur das Ende sank)
@@ -16750,7 +16762,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261027-104907';
+  var DL_BUILD = '20261027-180832';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
