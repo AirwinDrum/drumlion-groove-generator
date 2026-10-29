@@ -1822,6 +1822,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-bg="green"] .sb-vid-prog { background: #10331e; }
 .sb-vid[data-bg="green"] #sbVidMarks i { background: #f2f2f2; }
 .sb-vid[data-bg="green"] .sb-vid-wm { background: #00b140; }
+/* Kameras (29.10.2026): Draufsicht als Vollbild, Füße als Fenster, Noten unten
+   auf einem halbtransparenten Streifen — Kopf und Fortschritt entfallen */
+.sb-vid-cam { position: absolute; display: none; object-fit: cover; background: #000; }
+.sb-vid-cam-main { left: 0; top: 0; width: 100%; height: 100%; }
+.sb-vid-cam-win { border-radius: 18px; border: 3px solid rgba(232,228,219,0.9); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.sb-vid[data-cam="1"] .sb-vid-cam-main, .sb-vid[data-cam="1"] .sb-vid-cam-win.on { display: block; }
+.sb-vid[data-cam="1"] .sb-vid-head, .sb-vid[data-cam="1"] .sb-vid-foot, .sb-vid[data-cam="1"] .sb-vid-opt-bg { display: none; }
+.sb-vid[data-cam="1"] .sb-vid-mid { top: auto; bottom: var(--sb-cam-b, 56px); transform: none; }
+.sb-vid[data-cam="1"] .sb-vid-count { top: auto; bottom: 100%; margin: 0 0 110px; }
+.sb-vid[data-cam="1"] .sb-vid-wm { background: none; }
+.sb-vid-opt-cam { display: none; }
+.sb-vid[data-cam="1"] .sb-vid-opt-cam { display: flex; }
+.sb-vid-cams { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
+.sb-vid-camrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+.sb-vid-camrow b { min-width: 104px; color: var(--sb-text); }
+.sb-vid-camname { color: var(--sb-mute); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-vid-cammsg { color: var(--sb-mute); }
 .sb-vid-panel {
   position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 2;
   width: min(1040px, calc(100vw - 32px)); max-height: calc(100vh - 44px); overflow: auto;
@@ -16762,7 +16779,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261029-214113';
+  var DL_BUILD = '20261029-221056';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20337,7 +20354,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var _sbUndo = [], _sbRedo = [];
   var _sbPrefs = { w: 360, loop: false, click: false, countIn: true, counts: true,
                    vidBg: 'dark', vidDrums: true, vidClick: false, vidSong: false, vidBars: 2, vidFrom: 'start', vidFmt: 'wide',
-                   vidLayout: 'band', vidPer: 4, songOn: true, drumsOn: false, syncOpen: false };
+                   vidLayout: 'band', vidPer: 4, songOn: true, drumsOn: false, syncOpen: false,
+                   vidMix: false, vidWin: 'tr', vidWinSize: 0.3 };
   var _sbRoot = null, _sbTiles = [], _sbCells = [], _sbStickEls = [], _sbCntEls = [];
   var _sbIsOpen = false, _sbP = null, _sbClip = null, _sbRepN = 3, _sbEdCur = -1;
   var _sbDirty = {}, _sbDirtyRaf = 0, _sbDrag = null, _sbSaveT = 0, _sbPrevOverflow = '';
@@ -20399,6 +20417,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!out.bars.length) out.bars.push(_sbEmptyBar(16));
     // Mittippen: Startpunkt von Takt 1 in der Aufnahme (Sekunden)
     if (s.sync && isFinite(+s.sync.offset)) out.sync = { offset: Math.round(+s.sync.offset * 1000) / 1000 };
+    // Kameras und Mix fürs Cover-Video: nur Dateiname und Versatz (die Dateien bleiben beim Nutzer)
+    var _cm = function(c) {
+      return (c && isFinite(+c.at)) ? { name: String(c.name || '').slice(0, 160), at: Math.round(+c.at * 1000) / 1000 } : null;
+    };
+    if (s.cams && typeof s.cams === 'object') ['main', 'win'].forEach(function(k) {
+      var c = _cm(s.cams[k]);
+      if (c) { out.cams = out.cams || {}; out.cams[k] = c; }
+    });
+    if (_cm(s.mix)) out.mix = _cm(s.mix);
     if (+s.updated > 0) out.updated = +s.updated;   // für den Abgleich mit dem Ordner
     return out;
   }
@@ -20454,6 +20481,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbPrefs.vidPer = Math.max(1, Math.min(4, Math.round(+_sbPrefs.vidPer) || 4));
     if (['dark', 'green'].indexOf(_sbPrefs.vidBg) === -1) _sbPrefs.vidBg = 'dark';
     if (['start', 'sel'].indexOf(_sbPrefs.vidFrom) === -1) _sbPrefs.vidFrom = 'start';
+    if (['tl', 'tr'].indexOf(_sbPrefs.vidWin) === -1) _sbPrefs.vidWin = 'tr';
+    _sbPrefs.vidWinSize = Math.max(0.2, Math.min(0.45, +_sbPrefs.vidWinSize || 0.3));
     try { _sbClip = JSON.parse(localStorage.getItem(SB_CLIP_KEY) || 'null'); } catch (e) { _sbClip = null; }
     if (!Array.isArray(_sbClip) || !_sbClip.length) _sbClip = null;
   }
@@ -21507,6 +21536,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       P.t = P.startT = t0 + 4 * P.qd;
     }
     if (withSong) _sbSongAt(t0, _sbBarPos(from) - (P.startT - t0));
+    P.camRel = _sbRelOf(from);
+    if (video && opts.mix && _sbMixOn()) _sbSongAt(t0, _sbSong.mix.at + P.camRel - (P.startT - t0), _sbCams.mix.buf);
     P.timer = setInterval(_sbPump, 25);
     _sbPump();
     P.raf = requestAnimationFrame(_sbTick);
@@ -21584,7 +21615,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var SB_VID_W = 1920, SB_VID_H = 1080, SB_VID_HEAD = 0.3;   // Abspiellinie bei 30 %
   var SB_VID_PAPER = { dark: '#121211', green: '#00b140' };
   var _sbVid = null;
-  function _sbVidPaper() { return SB_VID_PAPER[_sbPrefs.vidBg] || SB_VID_PAPER.dark; }
+  function _sbVidPaper() { return _sbCamOn() ? SB_CAM_BAND : (SB_VID_PAPER[_sbPrefs.vidBg] || SB_VID_PAPER.dark); }
   // x-Position (Bühnenpixel im Band) eines Slots; Takt i beginnt bei i·W
   function _sbVidX(bi, slot) {
     var V = _sbVid, b = _sbSong.bars[bi], g = _sbGeom(b ? b.n : 16);
@@ -21598,6 +21629,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     v.setAttribute('aria-label', 'Video view');
     v.innerHTML =
       '<div class="sb-vid-stage" id="sbVidStage">' +
+        '<video class="sb-vid-cam sb-vid-cam-main" id="sbCamMain" muted playsinline preload="auto"></video>' +
+        '<video class="sb-vid-cam sb-vid-cam-win" id="sbCamWin" muted playsinline preload="auto"></video>' +
         '<div class="sb-vid-head">' +
           '<div class="sb-vid-brand"><i class="sb-vid-lion"></i><span>DRUM<em>LION</em></span></div>' +
           '<div class="sb-vid-title" id="sbVidTitle"></div>' +
@@ -21630,18 +21663,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-v="start">Beginning</button><button type="button" data-v="sel">Selected bar</button></span></label>' +
           '<label class="sb-group"><span class="sb-lbl">Format</span><span class="sb-seg" data-vopt="vidFmt">' +
             '<button type="button" data-v="wide">16:9</button><button type="button" data-v="tall">9:16</button></span></label>' +
-          '<label class="sb-group"><span class="sb-lbl">Background</span><span class="sb-seg" data-vopt="vidBg">' +
+          '<label class="sb-group sb-vid-opt-bg"><span class="sb-lbl">Background</span><span class="sb-seg" data-vopt="vidBg">' +
             '<button type="button" data-v="dark">Dark</button><button type="button" data-v="green">Green screen</button></span></label>' +
           '<span class="sb-group"><span class="sb-lbl">Sound</span>' +
             '<button type="button" class="sb-btn" data-vtog="vidDrums">Drums</button>' +
             '<button type="button" class="sb-btn" data-vtog="vidClick">Click</button>' +
-            '<button type="button" class="sb-btn" data-vtog="vidSong" title="The song recording (load it under Audio in the editor)">Song</button></span>' +
+            '<button type="button" class="sb-btn" data-vtog="vidSong" title="The song recording (load it under Audio in the editor)">Song</button>' +
+            '<button type="button" class="sb-btn" data-vtog="vidMix" title="Your own mix, e.g. from Logic (load it below)">Mix</button></span>' +
           '<label class="sb-group"><span class="sb-lbl">Layout</span><span class="sb-seg" data-vopt="vidLayout">' +
             '<button type="button" data-v="band">One line</button><button type="button" data-v="lines">Two lines</button></span></label>' +
           '<label class="sb-group sb-vid-opt-band"><span class="sb-lbl">Bars on screen</span>' +
             '<input type="range" class="sb-zoom" id="sbVidSize" min="1" max="4" step="0.25"><span class="sb-meta" id="sbVidSizeV"></span></label>' +
           '<label class="sb-group sb-vid-opt-lines"><span class="sb-lbl">Bars per line</span>' +
             '<input type="range" class="sb-zoom" id="sbVidPer" min="1" max="4" step="1"><span class="sb-meta" id="sbVidPerV"></span></label>' +
+          '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Window</span><span class="sb-seg" data-vopt="vidWin">' +
+            '<button type="button" data-v="tl">Top left</button><button type="button" data-v="tr">Top right</button></span></label>' +
+          '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Window size</span>' +
+            '<input type="range" class="sb-zoom" id="sbVidWinSize" min="0.2" max="0.45" step="0.01"></label>' +
+          '<div class="sb-vid-cams" id="sbVidCams"></div>' +
+          '<input type="file" id="sbCamFile" hidden>' +
           '<span class="sb-group">' +
             '<button type="button" class="sb-btn" id="sbVidCountIn">Count-in</button>' +
             '<button type="button" class="sb-btn gold" id="sbVidExport" title="Render the video with sound as an MP4 file">Export MP4</button>' +
@@ -21651,6 +21691,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         '</div>' +
         '<p class="sb-vid-tip"><b>Export MP4</b> renders exactly this view with sound into a video file (1080p, 60 fps). ' +
         'With <b>Green screen</b> you can key the notes over your drum video. ' +
+        '<b>Drum cover:</b> load your top view as main video and the feet as window, optionally your own mix. ' +
+        'They stay on this device and are matched to the notes by their sound. ' +
         '<kbd>Space</kbd> start / stop · <kbd>F</kbd> fullscreen · <kbd>Esc</kbd> back</p>' +
       '</div>' +
       // Fortschritt des Video-Exports
@@ -21677,6 +21719,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbVidPer').addEventListener('input', function() {
       _sbPrefs.vidPer = +this.value; _sbSavePrefs(); _sbVidLayout(); _sbVidUi();
     });
+    $('sbVidWinSize').addEventListener('input', function() {
+      _sbPrefs.vidWinSize = +this.value; _sbSavePrefs(); _sbCamLayout();
+    });
+    $('sbVidCams').addEventListener('click', function(e) {
+      var b = e.target.closest('[data-camact]');
+      if (b) _sbCamAct(b.getAttribute('data-camact'), b.getAttribute('data-camk'));
+    });
+    $('sbCamFile').addEventListener('change', function() {
+      var f = this.files && this.files[0], k = this.getAttribute('data-k');
+      this.value = '';
+      if (f && SB_CAM_LBL[k]) _sbCamLoad(k, f);
+    });
+    // Ruhebild der Kameras, sobald ihre Länge bekannt ist
+    [$('sbCamMain'), $('sbCamWin')].forEach(function(el) {
+      el.addEventListener('loadedmetadata', function() { if (!_sbP) _sbCamIdle(_sbVidFrom()); });
+    });
     v.querySelector('.sb-vid-panel').addEventListener('click', function(e) {
       var tg = e.target.closest('[data-vtog]');
       if (tg) { var key = tg.getAttribute('data-vtog'); _sbPrefs[key] = !_sbPrefs[key]; _sbSavePrefs(); _sbVidUi(); return; }
@@ -21688,6 +21746,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var opt = seg.getAttribute('data-vopt');
       if (opt === 'vidBg' || opt === 'vidFmt' || opt === 'vidLayout') _sbVidLayout();
       if (opt === 'vidFrom') _sbVidReset();
+      if (opt === 'vidWin') _sbCamLayout();
     });
     // Mauszeiger und Bedienfeld blenden sich während der Aufnahme aus
     v.addEventListener('pointermove', function() {
@@ -21714,6 +21773,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     var sg = V.el.querySelector('[data-vtog="vidSong"]');
     if (sg) sg.hidden = !_sbAudio.buf;
+    var mx = V.el.querySelector('[data-vtog="vidMix"]');
+    if (mx) mx.hidden = !_sbMixOn();
+    document.getElementById('sbVidWinSize').value = _sbPrefs.vidWinSize;
+    _sbCamUi();
     var ci = document.getElementById('sbVidCountIn');
     ci.classList.toggle('on', !!_sbPrefs.countIn);
     ci.setAttribute('aria-pressed', String(!!_sbPrefs.countIn));
@@ -21723,7 +21786,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('sbVidPerV').textContent = String(_sbPrefs.vidPer);
     V.el.setAttribute('data-layout', _sbPrefs.vidLayout === 'lines' ? 'lines' : 'band');
     document.getElementById('sbVidGo').textContent = (_sbP && _sbP.video) ? '■ Stop' : '▶ Start';
-    V.el.setAttribute('data-bg', _sbPrefs.vidBg === 'green' ? 'green' : 'dark');
+    V.el.setAttribute('data-bg', _sbPrefs.vidBg === 'green' && !_sbCamOn() ? 'green' : 'dark');
   }
   // Bühnenmaße: quer 1920×1080 (YouTube), hoch 1080×1920 (Shorts, Reels, TikTok)
   function _sbVidDims() {
@@ -21738,6 +21801,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // zwei Zeilen sichtbar.
   function _sbVidLayout() {
     var V = _sbVid, top = _sbTop();
+    _sbCamLayout();
     V.mode = _sbPrefs.vidLayout === 'lines' ? 'lines' : 'band';
     V.SW = _sbVidDims().w;
     V.el.setAttribute('data-fmt', _sbPrefs.vidFmt === 'tall' ? 'tall' : 'wide');
@@ -21792,6 +21856,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var tot = Math.round(tm.total);
     document.getElementById('sbVidTot').textContent = Math.floor(tot / 60) + ':' + ('0' + tot % 60).slice(-2);
     document.getElementById('sbVidEl').textContent = '0:00';
+    _sbCamIdle(from);
   }
   // Takt `bi` als Kachel ins Band zeichnen (oder neu zeichnen); `cur` = Slot im Cursor
   function _sbVidTile(bi, cur) {
@@ -21809,7 +21874,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       parent.appendChild(el);
       V.tiles[bi] = el;
     }
-    _sbDrawInto(el.firstChild, bar, cur, _sbVidPaper(), _sbPrefs.vidBg === 'green');
+    // Mit Kameras: Noten ohne eigenes Papier, der Streifen darunter ist halbtransparent
+    var cam = _sbCamOn();
+    _sbDrawInto(el.firstChild, bar, cur, cam ? 'rgba(0,0,0,0)' : _sbVidPaper(), _sbPrefs.vidBg === 'green' && !cam);
   }
   // Zweizeilig: Zeile k (Takte k·P … k·P+P−1) anlegen
   function _sbVidRow(k) {
@@ -21900,7 +21967,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_sbP) { _sbStop(); return; }
     _sbVidReset();
     _sbPlay({ video: true, from: _sbVid.from, drums: _sbPrefs.vidDrums, click: _sbPrefs.vidClick,
-              song: _sbPrefs.vidSong && !!_sbAudio.buf });
+              song: _sbPrefs.vidSong && !!_sbAudio.buf, mix: _sbPrefs.vidMix && _sbMixOn() });
   }
   function _sbVidStarted(P) {
     _sbVid.el.classList.add('playing');
@@ -21913,6 +21980,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     V.el.classList.remove('playing');
     V.el.classList.add('awake');
     document.getElementById('sbVidCount').textContent = '';
+    _sbCamPause();
     _sbVidUi();
   }
   // Ein Bild: Position aus der Audio-Uhr zwischen dem letzten und dem
@@ -21954,6 +22022,555 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('sbVidFill').style.transform = 'scaleX(' + (el / total).toFixed(4) + ')';
     var es = Math.floor(el);
     document.getElementById('sbVidEl').textContent = Math.floor(es / 60) + ':' + ('0' + es % 60).slice(-2);
+    _sbCamTick(P, now);
+  }
+
+  // ── Kameras im Video (29.10.2026) ───────────────────────────
+  // Drum-Cover: Draufsicht als Vollbild, Füße als Fenster, Noten unten auf einem
+  // halbtransparenten Streifen (Erwin: „Vollbild + Fenster“, „Direkt alles im
+  // Builder“). Videos und Mix bleiben auf dem Gerät und sind nur für diese
+  // Sitzung geladen; im Song stehen nur Dateiname und Versatz (`song.cams.main`,
+  // `song.cams.win`, `song.mix`: Sekunde der Datei, an der Takt 1 beginnt).
+  // Den Versatz findet `_sbCamSync` über den Ton: Einsätze der Tonspur gegen die
+  // notierten Drums. Der Export liest die MP4/MOV-Datei selbst (`_sbMp4Open`) und
+  // dekodiert Bild für Bild (`_sbCamReader`, WebCodecs) — bildgenau.
+  var SB_CAM_BAND = 'rgba(10,10,9,0.62)';
+  var SB_CAM_LBL = { main: 'Main (top)', win: 'Window (feet)', mix: 'Mix' };
+  var _sbCams = { songId: null, main: null, win: null, mix: null, msg: {} };
+
+  function _sbCamOn() {
+    return !!(_sbCams.main && _sbCams.songId === _sbSong.id && _sbSong.cams && _sbSong.cams.main);
+  }
+  function _sbWinOn() {
+    return _sbCamOn() && !!(_sbCams.win && _sbSong.cams.win);
+  }
+  function _sbMixOn() { return !!(_sbCams.mix && _sbCams.songId === _sbSong.id && _sbSong.mix); }
+  // Zeit (s) ab Takt 1, an der Takt `bi` beginnt
+  function _sbRelOf(bi) { return _sbBarPos(bi) - (_sbSong.sync ? _sbSong.sync.offset : 0); }
+  function _sbCamMeta(k) { return k === 'mix' ? _sbSong.mix : (_sbSong.cams && _sbSong.cams[k]); }
+  function _sbCamSet(k, m) {
+    if (k === 'mix') { if (m) _sbSong.mix = m; else delete _sbSong.mix; }
+    else {
+      if (!_sbSong.cams) _sbSong.cams = {};
+      if (m) _sbSong.cams[k] = m; else delete _sbSong.cams[k];
+      if (!_sbSong.cams.main && !_sbSong.cams.win) delete _sbSong.cams;
+    }
+    _sbSave();
+  }
+  // Fenster oben links/rechts, Breite als Anteil der Bühne, 16:9
+  function _sbCamWinRect(w, h) {
+    var ww = Math.round(w * (_sbPrefs.vidWinSize || 0.3)), m = Math.round(Math.min(w, h) * 0.04);
+    return { x: _sbPrefs.vidWin === 'tl' ? m : w - m - ww, y: m, w: ww, h: Math.round(ww * 9 / 16) };
+  }
+  function _sbCamEl(k) { return document.getElementById(k === 'main' ? 'sbCamMain' : 'sbCamWin'); }
+
+  // ---- MP4/MOV lesen: nur das Inhaltsverzeichnis („moov“) kommt in den
+  // Speicher; Bild- und Tondaten werden später stückweise aus der Datei gelesen.
+  function _sbFourCC(dv, o) {
+    return String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1), dv.getUint8(o + 2), dv.getUint8(o + 3));
+  }
+  function _sbBoxes(dv, a, b) {
+    var out = [];
+    while (a + 8 <= b) {
+      var size = dv.getUint32(a), type = _sbFourCC(dv, a + 4), hdr = 8;
+      if (size === 1) { size = dv.getUint32(a + 8) * 4294967296 + dv.getUint32(a + 12); hdr = 16; }
+      else if (size === 0) size = b - a;
+      if (size < hdr || a + size > b) break;
+      out.push({ type: type, s: a + hdr, e: a + size });
+      a += size;
+    }
+    return out;
+  }
+  function _sbBox(dv, a, b, path) {
+    var cur = { s: a, e: b };
+    for (var i = 0; i < path.length; i++) {
+      var hit = null, list = _sbBoxes(dv, cur.s, cur.e);
+      for (var j = 0; j < list.length && !hit; j++) if (list[j].type === path[i]) hit = list[j];
+      if (!hit) return null;
+      cur = hit;
+    }
+    return cur;
+  }
+  // Box irgendwo im Bereich suchen (esds steckt bei MOV teils in „wave“)
+  function _sbFindBox(dv, a, b, type) {
+    for (var i = a + 4; i + 4 <= b; i++) {
+      if (_sbFourCC(dv, i) !== type) continue;
+      var size = dv.getUint32(i - 4);
+      if (size >= 8 && i - 4 + size <= b) return { s: i + 4, e: i - 4 + size };
+    }
+    return null;
+  }
+  function _sbHex(b) { return ('0' + b.toString(16)).slice(-2); }
+  function _sbHevcCodec(fmt, c) {
+    var ps = c[1] >> 6, tier = (c[1] >> 5) & 1, flags = ((c[2] << 24) | (c[3] << 16) | (c[4] << 8) | c[5]) >>> 0, rev = 0;
+    for (var i = 0; i < 32; i++) { rev = rev * 2 + (flags & 1); flags = flags >>> 1; }
+    var s = fmt + '.' + (ps ? 'ABC'.charAt(ps - 1) : '') + (c[1] & 31) + '.' + rev.toString(16) + '.' + (tier ? 'H' : 'L') + c[12];
+    var cons = [c[6], c[7], c[8], c[9], c[10], c[11]];
+    while (cons.length && !cons[cons.length - 1]) cons.pop();
+    cons.forEach(function(b) { s += '.' + b.toString(16).toUpperCase(); });
+    return s;
+  }
+  function _sbMp4Open(file) {
+    function find(pos) {
+      if (pos + 8 > file.size) return Promise.reject(new Error('no video index found'));
+      return file.slice(pos, pos + 16).arrayBuffer().then(function(ab) {
+        var dv = new DataView(ab), size = dv.getUint32(0), hdr = 8;
+        if (size === 1) { size = dv.getUint32(8) * 4294967296 + dv.getUint32(12); hdr = 16; }
+        else if (size === 0) size = file.size - pos;
+        if (size < hdr) throw new Error('damaged file');
+        if (_sbFourCC(dv, 4) === 'moov') return file.slice(pos + hdr, pos + size).arrayBuffer();
+        return find(pos + size);
+      });
+    }
+    return find(0).then(function(ab) {
+      var dv = new DataView(ab), mts = 1000, mv = { video: null, audio: null };
+      var mh = _sbBox(dv, 0, dv.byteLength, ['mvhd']);
+      if (mh) mts = dv.getUint32(mh.s + (dv.getUint8(mh.s) === 1 ? 20 : 12));
+      _sbBoxes(dv, 0, dv.byteLength).forEach(function(b) {
+        if (b.type !== 'trak') return;
+        var t = _sbMp4Track(dv, b, mts);
+        if (t && !mv[t.kind]) mv[t.kind] = t;
+      });
+      return mv;
+    });
+  }
+  function _sbMp4Track(dv, trak, mts) {
+    var hd = _sbBox(dv, trak.s, trak.e, ['mdia', 'hdlr']), md = _sbBox(dv, trak.s, trak.e, ['mdia', 'mdhd']);
+    var st = _sbBox(dv, trak.s, trak.e, ['mdia', 'minf', 'stbl']);
+    if (!hd || !md || !st) return null;
+    var h = _sbFourCC(dv, hd.s + 8), kind = h === 'vide' ? 'video' : h === 'soun' ? 'audio' : null;
+    var sd = _sbBox(dv, st.s, st.e, ['stsd']), ent = sd && _sbBoxes(dv, sd.s + 8, sd.e)[0];
+    if (!kind || !ent) return null;
+    var T = { kind: kind, ts: dv.getUint32(md.s + (dv.getUint8(md.s) === 1 ? 20 : 12)), fmt: ent.type, rot: 0 };
+    if (kind === 'video') {
+      T.w = dv.getUint16(ent.s + 24); T.h = dv.getUint16(ent.s + 26);
+      var cfg = _sbBoxes(dv, ent.s + 78, ent.e).filter(function(x) { return x.type === 'avcC' || x.type === 'hvcC'; })[0];
+      if (cfg) {
+        T.desc = new Uint8Array(dv.buffer.slice(cfg.s, cfg.e));
+        T.codec = cfg.type === 'avcC' ? 'avc1.' + _sbHex(T.desc[1]) + _sbHex(T.desc[2]) + _sbHex(T.desc[3])
+                                      : _sbHevcCodec(T.fmt === 'hev1' ? 'hev1' : 'hvc1', T.desc);
+      }
+      // Drehung aus der Matrix im Spurkopf (Hochkant-Aufnahmen vom Handy)
+      var tk = _sbBox(dv, trak.s, trak.e, ['tkhd']);
+      if (tk) {
+        var mo = tk.s + (dv.getUint8(tk.s) === 1 ? 52 : 40);
+        T.rot = (Math.round(Math.atan2(dv.getInt32(mo + 4), dv.getInt32(mo)) / (Math.PI / 2)) * 90 + 360) % 360;
+      }
+    } else {
+      var es = _sbFindBox(dv, ent.s, ent.e, 'esds'), asc = es && _sbAsc(new Uint8Array(dv.buffer.slice(es.s + 4, es.e)));
+      if (asc && asc.length >= 2 && asc.length <= 5) {
+        var SR = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
+        T.desc = asc; T.codec = 'mp4a.40.' + (asc[0] >> 3);
+        T.sr = SR[((asc[0] & 7) << 1) | (asc[1] >> 7)] || 48000; T.ch = (asc[1] >> 3) & 15 || 2;
+      }
+    }
+    _sbMp4Samples(dv, st, T);
+    // Edit-Liste: wo die Spur auf der gemeinsamen Zeitachse liegt; pts = cts/ts − t0
+    var el = _sbBox(dv, trak.s, trak.e, ['edts', 'elst']), empty = 0, start = 0;
+    if (el) {
+      var v1 = dv.getUint8(el.s) === 1, ne = dv.getUint32(el.s + 4), p = el.s + 8;
+      for (var i = 0; i < ne; i++) {
+        var dur = v1 ? dv.getUint32(p) * 4294967296 + dv.getUint32(p + 4) : dv.getUint32(p);
+        var mt = v1 ? dv.getInt32(p + 8) * 4294967296 + dv.getUint32(p + 12) : dv.getInt32(p + 4);
+        p += v1 ? 20 : 12;
+        if (mt === -1) { empty += dur / mts; continue; }
+        start = mt / T.ts; break;
+      }
+    }
+    T.t0 = start - empty;
+    return T;
+  }
+  // Probentabelle: Dateiposition, Größe, Zeiten, Schlüsselbild
+  function _sbMp4Samples(dv, st, T) {
+    var box = function(t) { return _sbBox(dv, st.s, st.e, [t]); };
+    var sz = box('stsz'), sc = box('stsc'), c32 = box('stco'), c64 = box('co64'), co = c32 || c64;
+    var tt = box('stts'), ct = box('ctts'), ss = box('stss'), i, k, s;
+    var n = sz ? dv.getUint32(sz.s + 8) : 0, fixed = sz ? dv.getUint32(sz.s + 4) : 0;
+    var size = new Uint32Array(n), off = new Float64Array(n), cts = new Float64Array(n), key = new Uint8Array(n);
+    for (i = 0; i < n; i++) size[i] = fixed || dv.getUint32(sz.s + 12 + 4 * i);
+    var nc = co ? dv.getUint32(co.s + 4) : 0, chunk = new Float64Array(nc);
+    for (i = 0; i < nc; i++) chunk[i] = c32 ? dv.getUint32(co.s + 8 + 4 * i)
+                                           : dv.getUint32(co.s + 8 + 8 * i) * 4294967296 + dv.getUint32(co.s + 12 + 8 * i);
+    var ne = sc ? dv.getUint32(sc.s + 4) : 0;
+    for (i = 0, s = 0; i < ne && s < n; i++) {
+      var first = dv.getUint32(sc.s + 8 + 12 * i) - 1, per = dv.getUint32(sc.s + 12 + 12 * i);
+      var last = i + 1 < ne ? dv.getUint32(sc.s + 20 + 12 * i) - 1 : nc;
+      for (var c = first; c < last && s < n; c++) {
+        var pos = chunk[c];
+        for (k = 0; k < per && s < n; k++) { off[s] = pos; pos += size[s]; s++; }
+      }
+    }
+    var t = 0, ntt = tt ? dv.getUint32(tt.s + 4) : 0;
+    for (i = 0, s = 0; i < ntt; i++) {
+      var cnt = dv.getUint32(tt.s + 8 + 8 * i), d = dv.getUint32(tt.s + 12 + 8 * i);
+      for (k = 0; k < cnt && s < n; k++) { cts[s++] = t; t += d; }
+    }
+    if (ct) {
+      var nct = dv.getUint32(ct.s + 4);
+      for (i = 0, s = 0; i < nct; i++) {
+        var cc = dv.getUint32(ct.s + 8 + 8 * i), o = dv.getInt32(ct.s + 12 + 8 * i);
+        for (k = 0; k < cc && s < n; k++) cts[s++] += o;
+      }
+    }
+    if (ss) { var nss = dv.getUint32(ss.s + 4); for (i = 0; i < nss; i++) { k = dv.getUint32(ss.s + 8 + 4 * i) - 1; if (k < n) key[k] = 1; } }
+    else for (i = 0; i < n; i++) key[i] = 1;
+    T.n = n; T.size = size; T.off = off; T.cts = cts; T.key = key;
+  }
+  // Nächste Portion ab Probe i: liest am Stück (höchstens `max` Proben, Lücken
+  // bis `gap` Bytes — dort liegen bei Kameras die Daten der anderen Spur)
+  function _sbMp4Batch(T, i, max, gap) {
+    var j = i + 1, a = T.off[i], end = a + T.size[i];
+    while (j < T.n && j - i < max && T.off[j] >= end && T.off[j] - end <= gap && T.off[j] + T.size[j] - a < 8e6) {
+      end = T.off[j] + T.size[j]; j++;
+    }
+    return j;
+  }
+  function _sbMp4Read(T, file, i, j) {
+    var a = T.off[i], b = T.off[j - 1] + T.size[j - 1];
+    return file.slice(a, b).arrayBuffer().then(function(ab) {
+      var out = [];
+      for (var k = i; k < j; k++) out.push(new Uint8Array(ab, T.off[k] - a, T.size[k]));
+      return out;
+    });
+  }
+  function _sbPts(T, i) { return T.cts[i] / T.ts - T.t0; }
+
+  // ---- Bilder für den Export: dekodiert der Reihe nach; `at(t)` liefert das
+  // Bild, das zur Zeit t zu sehen ist (t steigt nur). Das Bild bleibt offen, bis
+  // das nächste es ablöst — sonst läuft der Bildspeicher des Decoders voll.
+  function _sbCamReader(T, file) {
+    var R = { frames: [], cur: null, next: 0, flushing: false, flushed: false, err: null, wait: null };
+    function wake() { var w = R.wait; R.wait = null; if (w) w(); }
+    var dec = new VideoDecoder({
+      output: function(fr) { R.frames.push(fr); R.frames.sort(function(a, b) { return a.timestamp - b.timestamp; }); wake(); },
+      error: function(e) { R.err = e; wake(); }
+    });
+    dec.configure({ codec: T.codec, codedWidth: T.w, codedHeight: T.h, description: T.desc });
+    function feed() {
+      var i = R.next, j = _sbMp4Batch(T, i, 12, 2e6);
+      R.next = j;
+      return _sbMp4Read(T, file, i, j).then(function(parts) {
+        parts.forEach(function(d, k) {
+          dec.decode(new EncodedVideoChunk({ type: T.key[i + k] ? 'key' : 'delta',
+                                             timestamp: Math.round(_sbPts(T, i + k) * 1e6), data: d }));
+        });
+      });
+    }
+    function pause() { return new Promise(function(r) { R.wait = r; setTimeout(r, 40); }); }
+    R.start = function(t) {   // ab dem letzten Schlüsselbild vor t
+      var s = 0;
+      for (var i = 0; i < T.n; i++) if (T.key[i] && _sbPts(T, i) <= t) s = i;
+      R.next = s;
+    };
+    R.at = function(t) {
+      var lim = t * 1e6 + 500;
+      function step() {
+        if (R.err) return Promise.reject(R.err);
+        var keep = -1;
+        for (var i = 0; i < R.frames.length; i++) if (R.frames[i].timestamp <= lim) keep = i;
+        if (keep >= 0) {
+          if (R.cur) R.cur.close();
+          R.cur = R.frames[keep];
+          for (var k = 0; k < keep; k++) R.frames[k].close();
+          R.frames = R.frames.slice(keep + 1);
+        }
+        if (R.frames.length || (R.flushed && !dec.decodeQueueSize)) return Promise.resolve(R.cur);
+        if (dec.decodeQueueSize > 3) return pause().then(step);
+        if (R.next < T.n) return feed().then(step);
+        if (!R.flushing) { R.flushing = true; return dec.flush().then(function() { R.flushed = true; }).then(step); }
+        return pause().then(step);
+      }
+      return step();
+    };
+    R.close = function() {
+      try { if (dec.state !== 'closed') dec.close(); } catch (e) {}
+      R.frames.forEach(function(f) { f.close(); });
+      if (R.cur) R.cur.close();
+      R.frames = []; R.cur = null;
+    };
+    return R;
+  }
+  function _sbCamReaders(P) {
+    var out = {};
+    return Promise.all(['main', 'win'].map(function(k) {
+      if (k === 'win' && !P.winOn) return null;
+      var c = _sbCams[k], T = c.mp.video, cfg = { codec: T.codec, codedWidth: T.w, codedHeight: T.h, description: T.desc };
+      return VideoDecoder.isConfigSupported(cfg).then(function(r) {
+        if (!r || !r.supported) throw new Error('this browser cannot decode ' + c.name + ' (' + T.codec + ')');
+        out[k] = _sbCamReader(T, c.file);
+        out[k].start(_sbSong.cams[k].at + P.rel - P.startT);
+      });
+    })).then(function() { return out; });
+  }
+  // Kamerabild füllend (Ränder abgeschnitten) ins Rechteck, Drehung beachtet
+  function _sbCamPaint(ctx, fr, rot, x, y, w, h) {
+    if (!fr) { ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h); return; }
+    var fw = fr.displayWidth, fh = fr.displayHeight, side = rot === 90 || rot === 270;
+    var k = Math.max(w / (side ? fh : fw), h / (side ? fw : fh));
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.translate(x + w / 2, y + h / 2);
+    if (rot) ctx.rotate(rot * Math.PI / 180);
+    ctx.drawImage(fr, -fw * k / 2, -fh * k / 2, fw * k, fh * k);
+    ctx.restore();
+  }
+  function _sbRoundPath(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  // ---- Abgleich über den Ton
+  // Tonspur einer Kamera als Mono-Samples: AAC selbst dekodieren (liest nur die
+  // Tondaten), sonst die ganze Datei über decodeAudioData (nur bei kleinen Dateien)
+  function _sbCamPcm(c) {
+    var A = c.mp.audio;
+    function whole() {
+      if (c.file.size > 700e6) return Promise.reject(new Error('its sound track cannot be read here'));
+      return c.file.arrayBuffer().then(_sbDecode).then(function(b) { return { data: b.getChannelData(0), sr: b.sampleRate, t0: 0 }; });
+    }
+    if (!A || !A.codec || typeof window.AudioDecoder !== 'function') return whole();
+    var cfg = { codec: A.codec, sampleRate: A.sr, numberOfChannels: A.ch, description: A.desc };
+    return AudioDecoder.isConfigSupported(cfg).then(function(r) {
+      if (!r || !r.supported) return whole();
+      return new Promise(function(res, rej) {
+        var parts = [], total = 0, t0 = null, i = 0;
+        var dec = new AudioDecoder({
+          output: function(ad) {
+            if (t0 == null) t0 = ad.timestamp / 1e6;
+            var buf = new Float32Array(ad.numberOfFrames);
+            try { ad.copyTo(buf, { planeIndex: 0, format: 'f32-planar' }); } catch (e) { rej(e); }
+            ad.close(); parts.push(buf); total += buf.length;
+          },
+          error: rej
+        });
+        dec.configure(cfg);
+        function next() {
+          if (i >= A.n) return dec.flush().then(function() {
+            dec.close();
+            var data = new Float32Array(total), o = 0;
+            parts.forEach(function(p) { data.set(p, o); o += p.length; });
+            res({ data: data, sr: A.sr, t0: t0 || 0 });
+          });
+          var a = i, b = _sbMp4Batch(A, i, 400, 0);
+          i = b;
+          return _sbMp4Read(A, c.file, a, b).then(function(parts2) {
+            parts2.forEach(function(d, k) {
+              dec.decode(new EncodedAudioChunk({ type: 'key', timestamp: Math.round(_sbPts(A, a + k) * 1e6), data: d }));
+            });
+            return dec.decodeQueueSize > 200 ? _sbWait(10).then(next) : next();
+          });
+        }
+        next().catch(rej);
+      });
+    });
+  }
+  // Einsatz-Kurve, 1000 Werte pro Sekunde: wie stark die Energie gegenüber den
+  // letzten 10 ms ansteigt (Schlagzeug-Einsätze geben scharfe Spitzen)
+  function _sbOnsets(x, sr) {
+    var hop = sr / 1000, n = Math.floor(x.length / hop), e = new Float32Array(n), o = new Float32Array(n), i, j;
+    for (i = 0; i < n; i++) {
+      var a = Math.max(1, Math.floor(i * hop)), b = Math.floor((i + 1) * hop), s = 0;
+      for (j = a; j < b; j++) { var d = x[j] - x[j - 1]; s += d * d; }
+      e[i] = Math.log(1e-7 + s);
+    }
+    for (i = 1; i < n; i++) {
+      var p = e[i - 1];
+      for (j = 2; j <= 10 && i - j >= 0; j++) if (e[i - j] > p) p = e[i - j];
+      o[i] = e[i] > p ? e[i] - p : 0;
+    }
+    return o;
+  }
+  function _sbPool(o, f) {
+    var n = Math.floor(o.length / f), r = new Float32Array(n);
+    for (var i = 0; i < n; i++) { var s = 0; for (var j = 0; j < f; j++) s += o[i * f + j]; r[i] = s; }
+    return r;
+  }
+  // Versatz L in [lo, hi] mit sig[n + L] ≈ ref[n]
+  function _sbXcorr(ref, sig, lo, hi) {
+    var best = -1, bestL = lo;
+    for (var L = lo; L <= hi; L++) {
+      var s = 0, a = Math.max(0, -L), b = Math.min(ref.length, sig.length - L);
+      for (var n = a; n < b; n++) s += ref[n] * sig[n + L];
+      if (s > best) { best = s; bestL = L; }
+    }
+    return bestL;
+  }
+  function _sbWaitWavs() {
+    var tries = 0;
+    try { initA(); } catch (e) {}
+    function w() {
+      if (Object.keys(WAVS).length >= Object.keys(MP3_B64).length || tries++ > 80) return Promise.resolve();
+      return _sbWait(75).then(w);
+    }
+    return w();
+  }
+  // Sekunde in der Datei, an der Takt 1 beginnt: Einsätze der Datei gegen die
+  // notierten Drums (gerendert ab 0,5 s Vorlauf), grob mit 50 Werten/s, dann auf 1 ms
+  function _sbCamSync(k) {
+    var c = _sbCams[k], lead = 0.5, tm = _sbTimes(0);
+    var pcm = k === 'mix' ? Promise.resolve({ data: c.buf.getChannelData(0), sr: c.buf.sampleRate, t0: 0 }) : _sbCamPcm(c);
+    var ref = _sbWaitWavs().then(function() {
+      return _sbExpAudio({ drums: true, click: false, song: false, mix: false, countIn: false, from: 0, at: tm.at,
+                           songSec: tm.total, startT: lead, total: lead + tm.total + 1, qd: 60 / _sbBarBpm(0) }, 0);
+    });
+    return Promise.all([pcm, ref]).then(function(r) {
+      return _sbWait(30).then(function() {
+        var sig = _sbOnsets(r[0].data, r[0].sr), rf = _sbOnsets(r[1].getChannelData(0), r[1].sampleRate);
+        var sc = _sbPool(sig, 20), rc = _sbPool(rf, 20), half = Math.floor(rc.length / 2);
+        var L1 = _sbXcorr(rc, sc, -half, Math.max(-half, sc.length - half)) * 20;
+        var L = _sbXcorr(rf, sig, L1 - 40, L1 + 40);
+        return r[0].t0 + (Math.round(lead * 1000) + L) / 1000;
+      });
+    });
+  }
+
+  // ---- Laden, Bedienung, Vorschau
+  function _sbCamAct(act, k) {
+    var m = _sbCamMeta(k);
+    if (act === 'load') {
+      var inp = document.getElementById('sbCamFile');
+      inp.setAttribute('data-k', k);
+      inp.accept = k === 'mix' ? 'audio/*,.wav,.aif,.aiff,.m4a,.mp3' : 'video/*,.mov,.mp4,.m4v';
+      inp.click();
+    } else if ((act === '-' || act === '+') && m) {
+      _sbCamSet(k, { name: m.name, at: Math.round((m.at + (act === '+' ? 0.01 : -0.01)) * 1000) / 1000 });
+      _sbCamUi();
+      if (!_sbP) _sbCamIdle(_sbVidFrom());
+    } else if (act === 'sync' && _sbCams[k]) _sbCamMatch(k);
+    else if (act === 'del') {
+      _sbCamDrop(k);
+      _sbCamSet(k, null);
+      _sbCamRefresh();
+    }
+  }
+  function _sbCamMsg(k, txt) {
+    _sbCams.msg[k] = txt || '';
+    var el = document.getElementById('sbCamMsg-' + k);
+    if (el) el.textContent = _sbCams.msg[k];
+  }
+  function _sbCamUi() {
+    var box = document.getElementById('sbVidCams');
+    if (!box) return;
+    var same = _sbCams.songId === _sbSong.id;
+    box.innerHTML = ['main', 'win', 'mix'].map(function(k) {
+      var m = _sbCamMeta(k), c = same && _sbCams[k], h = '<div class="sb-vid-camrow"><b>' + SB_CAM_LBL[k] + '</b>';
+      if (c) {
+        h += '<span class="sb-vid-camname">' + _sbEsc(c.name) + '</span>' +
+             '<span class="sb-lbl">Bar 1 at</span>' +
+             '<button type="button" class="sb-btn sb-nudge" data-camact="-" data-camk="' + k + '" aria-label="10 ms earlier">−</button>' +
+             '<span class="sb-meta">' + (m ? (+m.at).toFixed(2) : '0.00') + ' s</span>' +
+             '<button type="button" class="sb-btn sb-nudge" data-camact="+" data-camk="' + k + '" aria-label="10 ms later">+</button>' +
+             '<button type="button" class="sb-btn" data-camact="sync" data-camk="' + k + '">Match again</button>' +
+             '<button type="button" class="sb-btn warn" data-camact="del" data-camk="' + k + '">Remove</button>';
+      } else {
+        if (m) h += '<span class="sb-vid-camname">' + _sbEsc(m.name) + ' · load it again</span>';
+        h += '<button type="button" class="sb-btn" data-camact="load" data-camk="' + k + '">' +
+             (k === 'mix' ? 'Load audio…' : 'Load video…') + '</button>';
+      }
+      return h + '<span class="sb-vid-cammsg" id="sbCamMsg-' + k + '"></span></div>';
+    }).join('');
+    ['main', 'win', 'mix'].forEach(function(k) { _sbCamMsg(k, _sbCams.msg[k]); });
+  }
+  function _sbCamRefresh() {
+    if (!_sbVid || !_sbVid.open) return;
+    _sbStop();
+    _sbVidUi();
+    _sbVidLayout();
+  }
+  function _sbCamDrop(k) {
+    var c = _sbCams[k];
+    if (c && c.url) URL.revokeObjectURL(c.url);
+    _sbCams[k] = null;
+    _sbCams.msg[k] = '';
+  }
+  function _sbCamClear() { ['main', 'win', 'mix'].forEach(_sbCamDrop); _sbCams.songId = null; }
+  function _sbCamLoad(k, file) {
+    if (_sbCams.songId !== _sbSong.id) _sbCamClear();
+    _sbCams.songId = _sbSong.id;
+    _sbCamMsg(k, 'Loading…');
+    var p = k === 'mix'
+      ? file.arrayBuffer().then(_sbDecode).then(function(buf) { return { file: file, name: file.name, buf: buf }; })
+      : _sbMp4Open(file).then(function(mp) {
+          if (!mp.video || !mp.video.codec || !mp.video.n) throw new Error('no readable video track');
+          return { file: file, name: file.name, mp: mp, url: URL.createObjectURL(file) };
+        });
+    p.then(function(c) {
+      _sbCamDrop(k);
+      _sbCams[k] = c;
+      var m = _sbCamMeta(k);
+      // dieselbe Datei wie beim letzten Mal: Versatz behalten
+      if (m && m.name === c.name) { _sbCamMsg(k, ''); _sbCamRefresh(); return; }
+      _sbCamSet(k, { name: c.name, at: 0 });
+      _sbCamRefresh();
+      _sbCamMatch(k);
+    }, function(e) {
+      _sbCamMsg(k, 'Could not open ' + file.name + ': ' + ((e && e.message) || e) + '.');
+    });
+  }
+  function _sbCamMatch(k) {
+    var c = _sbCams[k];
+    _sbCamMsg(k, 'Matching to the notes by sound…');
+    _sbCamSync(k).then(function(at) {
+      if (_sbCams[k] !== c) return;
+      _sbCamSet(k, { name: c.name, at: Math.round(at * 1000) / 1000 });
+      _sbCams.msg[k] = 'Matched by sound. Fine-tune with − / + if needed.';
+      _sbCamRefresh();
+    }, function(e) {
+      _sbCamMsg(k, 'Could not match it automatically (' + ((e && e.message) || e) + '). Set the start with − / +.');
+    });
+  }
+  function _sbCamLayout() {
+    var V = _sbVid;
+    if (!V) return;
+    var on = _sbCamOn(), win = _sbWinOn(), d = _sbVidDims();
+    V.el.setAttribute('data-cam', on ? '1' : '0');
+    [['main', on], ['win', win]].forEach(function(it) {
+      var el = _sbCamEl(it[0]), url = it[1] ? _sbCams[it[0]].url : '';
+      if ((el.getAttribute('src') || '') === url) return;
+      if (url) el.src = url; else { el.removeAttribute('src'); el.load(); }
+    });
+    var w = _sbCamEl('win'), r = _sbCamWinRect(d.w, d.h);
+    w.classList.toggle('on', win);
+    w.style.left = r.x + 'px'; w.style.top = r.y + 'px'; w.style.width = r.w + 'px'; w.style.height = r.h + 'px';
+    V.mid.style.setProperty('--sb-cam-b', (d.h > d.w ? 260 : 56) + 'px');
+  }
+  // Ruhebild: die Kameras zeigen den Anfang des Startakts
+  function _sbCamIdle(from) {
+    if (!_sbCamOn()) return;
+    var rel = _sbRelOf(from);
+    ['main', 'win'].forEach(function(k) {
+      var el = _sbCamEl(k), m = _sbSong.cams[k];
+      if (!m || !el.getAttribute('src') || !el.readyState) return;
+      el.pause(); el.playbackRate = 1;
+      el.currentTime = Math.max(0, m.at + rel);
+    });
+  }
+  function _sbCamPause() {
+    ['main', 'win'].forEach(function(k) { var el = _sbCamEl(k); if (el) { el.pause(); el.playbackRate = 1; } });
+  }
+  // Wiedergabe: Videos laufen mit und werden sanft (Tempo ±6 %) oder per Sprung
+  // an die Audio-Uhr angeglichen
+  function _sbCamTick(P, now) {
+    if (!_sbCamOn()) return;
+    if (P.camRel == null) P.camRel = _sbRelOf(P.from);
+    ['main', 'win'].forEach(function(k) {
+      var el = _sbCamEl(k), m = _sbSong.cams[k];
+      if (!m || !el.getAttribute('src')) return;
+      var want = m.at + P.camRel + (now - P.startT);
+      if (want < 0 || (el.duration && want > el.duration)) { if (!el.paused) el.pause(); return; }
+      if (el.paused) {
+        if (!el._sbGo) {
+          el._sbGo = 1; el.currentTime = want + 0.1;
+          var go = el.play(), done = function() { el._sbGo = 0; };
+          if (go && go.then) go.then(done, done); else done();
+        }
+        return;
+      }
+      var dlt = el.currentTime - want;
+      if (Math.abs(dlt) > 0.3) { el.currentTime = want + 0.08; el.playbackRate = 1; }
+      else el.playbackRate = Math.abs(dlt) < 0.025 ? 1 : (dlt > 0 ? 0.94 : 1.06);
+    });
   }
 
   // ── Song-Aufnahme und Mittippen (21.10.2026) ─────────────────
@@ -21991,6 +22608,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Aufnahme des offenen Songs aus dem Speicher holen (beim Öffnen und Songwechsel)
   function _sbAudioFor(song) {
     var id = song.id;
+    if (_sbCams.songId && _sbCams.songId !== id) _sbCamClear();   // Kameras gehören zum Song
     _sbAudio = { id: id, name: '', buf: null };
     _sbSyncUi();
     _sbIdb('readonly', function(st) { return st.get(id); }).then(function(rec) {
@@ -22035,14 +22653,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return (_sbSong.sync ? _sbSong.sync.offset : 0) + (bi < tm.at.length ? tm.at[bi] : tm.total);
   }
   // Aufnahme ab Position `pos` zur Audio-Zeit `when` starten
-  function _sbSongAt(when, pos) {
-    if (!_sbAudio.buf || !aCtx) return;
+  // `buf`: andere Aufnahme, z.B. der eigene Mix in der Video-Ansicht
+  function _sbSongAt(when, pos, buf) {
+    buf = buf || _sbAudio.buf;
+    if (!buf || !aCtx) return;
     if (pos < 0) { when -= pos; pos = 0; }
     var late = aCtx.currentTime - when;
     if (late > 0) { pos += late; when = aCtx.currentTime; }
-    if (pos >= _sbAudio.buf.duration) return;
+    if (pos >= buf.duration) return;
     var src = aCtx.createBufferSource();
-    src.buffer = _sbAudio.buf;
+    src.buffer = buf;
     src.connect(_aOut());
     src.start(when, pos);
     _sbSongSrcs.push(src);
@@ -22345,6 +22965,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     P.midTop = Math.round((P.tall ? 0.47 : 0.5) * P.h - P.midH / 2);
     P.paper = P.green ? '#00b140' : '#121211';
     P.bg = P.green ? '#00b140' : '#0b0b0a';
+    P.rel = _sbRelOf(from);
+    P.mix = !!(_sbPrefs.vidMix && _sbMixOn());
+    // Cover-Video: Kamera als Vollbild, Fenster, Noten unten halbtransparent
+    P.cam = _sbCamOn();
+    if (P.cam) {
+      P.green = false; P.paper = SB_CAM_BAND; P.bg = '#000';
+      P.midTop = P.h - P.midH - (P.tall ? 260 : 56);
+      P.winOn = _sbWinOn();
+      P.winR = _sbCamWinRect(P.w, P.h);
+      P.rotA = _sbCams.main.mp.video.rot || 0;
+      P.rotB = P.winOn ? (_sbCams.win.mp.video.rot || 0) : 0;
+    }
     return P;
   }
   // Takt und Slot zur Zeit t: null vor dem ersten Takt, { end } danach
@@ -22375,8 +23007,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Linien — die wird an der gerade klingenden Note darübergelegt.
   function _sbExpBarSrc(P, bi, gold) {
     var bar = _sbSong.bars[bi], svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    var C = gold ? { ink: SB_GOLD, paper: P.paper, soft: SB_GOLD, faint: SB_GOLD, dim: SB_GOLD, active: SB_GOLD }
-                 : { ink: '#ffffff', paper: P.paper, soft: P.green ? '#dcdcdc' : 'rgba(255,255,255,0.6)',
+    var paper = P.cam ? 'rgba(0,0,0,0)' : P.paper;   // mit Kameras liegt der Streifen darunter
+    var C = gold ? { ink: SB_GOLD, paper: paper, soft: SB_GOLD, faint: SB_GOLD, dim: SB_GOLD, active: SB_GOLD }
+                 : { ink: '#ffffff', paper: paper, soft: P.green ? '#dcdcdc' : 'rgba(255,255,255,0.6)',
                      faint: P.green ? '#dcdcdc' : 'rgba(255,255,255,0.35)', dim: 'rgba(255,255,255,0.2)', active: SB_GOLD };
     var keep = GROOVE;
     GROOVE = _sbGroove(bar);
@@ -22394,7 +23027,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // `shift`: so viel früher mischen, wie der Encoder vorne anfügt (AAC: 2112
   // Samples = 44 ms) — sonst läuft der Ton im fertigen Video hinter dem Bild her.
   function _sbExpAudio(P, shift) {
-    if (!(P.drums || P.click || P.song)) return Promise.resolve(null);
+    if (!(P.drums || P.click || P.song || P.mix)) return Promise.resolve(null);
     var ctx = new OfflineAudioContext(2, Math.ceil(P.total * SB_EXP_SR), SB_EXP_SR), openG = null;
     var out = _limiter(ctx);   // derselbe Sicherheits-Begrenzer wie bei der Wiedergabe
     shift = shift || 0;
@@ -22429,6 +23062,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var song = ctx.createBufferSource(), p0 = _sbBarPos(P.from) - P.startT + shift;
       song.buffer = _sbAudio.buf; song.connect(out);
       if (p0 >= 0) song.start(0, p0); else song.start(-p0, 0);
+    }
+    // Eigener Mix (z.B. aus Logic): Takt 1 liegt bei `song.mix.at`
+    if (P.mix) {
+      var mx = ctx.createBufferSource(), m0 = _sbSong.mix.at + P.rel - P.startT + shift;
+      mx.buffer = _sbCams.mix.buf; mx.connect(out);
+      if (m0 >= 0) mx.start(0, m0); else mx.start(-m0, 0);
     }
     var bars = _sbSong.bars;
     for (var i = P.from; i < bars.length; i++) {
@@ -22497,48 +23136,60 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var spacing = function(v) { try { ctx.letterSpacing = v; } catch (e) {} };
     var title = _sbSong.title || 'Untitled song';
 
-    // ── Hintergrund
+    // ── Hintergrund; Cover-Video: Hauptkamera füllend, Fenster mit Rahmen
     ctx.fillStyle = P.bg; ctx.fillRect(0, 0, P.w, P.h);
-    if (!P.green) {
+    if (P.cam) {
+      _sbCamPaint(ctx, S.camA, P.rotA, 0, 0, P.w, P.h);
+      if (P.winOn) {
+        var wr = P.winR;
+        ctx.save(); _sbRoundPath(ctx, wr.x, wr.y, wr.w, wr.h, 18); ctx.clip();
+        _sbCamPaint(ctx, S.camB, P.rotB, wr.x, wr.y, wr.w, wr.h);
+        ctx.restore();
+        _sbRoundPath(ctx, wr.x + 1.5, wr.y + 1.5, wr.w - 3, wr.h - 3, 17);
+        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(232,228,219,0.9)'; ctx.stroke();
+      }
+    } else if (!P.green) {
       var rg = ctx.createRadialGradient(P.w * 0.3, P.h * 0.5, 0, P.w * 0.3, P.h * 0.5, P.w * 0.49);
       rg.addColorStop(0, 'rgba(201,168,76,0.07)'); rg.addColorStop(1, 'rgba(201,168,76,0)');
       ctx.fillStyle = rg; ctx.fillRect(0, 0, P.w, P.h);
     }
-    // ── Kopf: Löwe + DRUMLION, Titel, BPM und Takt
-    var hx = P.tall ? 72 : 96, hy = P.tall ? 150 : 64;
-    if (lionW) ctx.drawImage(lionW, hx, hy, 46, 46 * lionW.height / lionW.width);
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.font = '800 26px ' + FONT; spacing('5.7px');
-    ctx.fillStyle = '#ffffff'; ctx.fillText('DRUM', hx + 60, hy + 24);
-    var dw = ctx.measureText('DRUM').width;
-    ctx.fillStyle = SB_GOLD; ctx.fillText('LION', hx + 60 + dw, hy + 24);
-    spacing('0px'); ctx.textBaseline = 'alphabetic';
-    var metaBpm = Math.round(_sbBarBpm(curBar)) + ' BPM', metaBar = 'Bar ' + (curBar + 1) + ' / ' + bars.length;
-    ctx.font = '600 28px ' + FONT;
-    var mw1 = ctx.measureText(metaBpm).width, mw2 = ctx.measureText(metaBar).width;
-    var metaCol = P.green ? '#f2f2f2' : '#a39d90';
-    if (P.tall) {
-      ctx.font = '800 76px ' + FONT; ctx.fillStyle = '#E8E4DB';
-      var words = title.split(/\s+/), lines = [''], maxW = P.w - 144;
-      words.forEach(function(wd) {
-        var cur = lines[lines.length - 1], tryL = cur ? cur + ' ' + wd : wd;
-        if (!cur || ctx.measureText(tryL).width <= maxW) lines[lines.length - 1] = tryL;
-        else if (lines.length < 2) lines.push(wd);
-        else lines[1] += ' ' + wd;
-      });
-      lines.forEach(function(ln, li) { ctx.fillText(ln, hx, hy + 122 + li * 80, maxW); });
-      var ty = hy + 122 + (lines.length - 1) * 80;
-      ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol;
-      ctx.fillText(metaBpm, hx, ty + 58);
-      ctx.fillText(metaBar, hx + mw1 + 36, ty + 58);
-    } else {
-      ctx.font = '800 68px ' + FONT; ctx.fillStyle = '#E8E4DB';
-      ctx.fillText(title, hx, hy + 114, P.w - 2 * hx - mw1 - mw2 - 76);
-      ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol; ctx.textAlign = 'right';
-      ctx.fillText(metaBar, P.w - hx, hy + 108);
-      ctx.fillText(metaBpm, P.w - hx - mw2 - 36, hy + 108);
-      ctx.textAlign = 'left';
-    }
+    // ── Kopf: Löwe + DRUMLION, Titel, BPM und Takt (nicht im Cover-Video)
+    if (!P.cam) {
+      var hx = P.tall ? 72 : 96, hy = P.tall ? 150 : 64;
+      if (lionW) ctx.drawImage(lionW, hx, hy, 46, 46 * lionW.height / lionW.width);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.font = '800 26px ' + FONT; spacing('5.7px');
+      ctx.fillStyle = '#ffffff'; ctx.fillText('DRUM', hx + 60, hy + 24);
+      var dw = ctx.measureText('DRUM').width;
+      ctx.fillStyle = SB_GOLD; ctx.fillText('LION', hx + 60 + dw, hy + 24);
+      spacing('0px'); ctx.textBaseline = 'alphabetic';
+      var metaBpm = Math.round(_sbBarBpm(curBar)) + ' BPM', metaBar = 'Bar ' + (curBar + 1) + ' / ' + bars.length;
+      ctx.font = '600 28px ' + FONT;
+      var mw1 = ctx.measureText(metaBpm).width, mw2 = ctx.measureText(metaBar).width;
+      var metaCol = P.green ? '#f2f2f2' : '#a39d90';
+      if (P.tall) {
+        ctx.font = '800 76px ' + FONT; ctx.fillStyle = '#E8E4DB';
+        var words = title.split(/\s+/), lines = [''], maxW = P.w - 144;
+        words.forEach(function(wd) {
+          var cur = lines[lines.length - 1], tryL = cur ? cur + ' ' + wd : wd;
+          if (!cur || ctx.measureText(tryL).width <= maxW) lines[lines.length - 1] = tryL;
+          else if (lines.length < 2) lines.push(wd);
+          else lines[1] += ' ' + wd;
+        });
+        lines.forEach(function(ln, li) { ctx.fillText(ln, hx, hy + 122 + li * 80, maxW); });
+        var ty = hy + 122 + (lines.length - 1) * 80;
+        ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol;
+        ctx.fillText(metaBpm, hx, ty + 58);
+        ctx.fillText(metaBar, hx + mw1 + 36, ty + 58);
+      } else {
+        ctx.font = '800 68px ' + FONT; ctx.fillStyle = '#E8E4DB';
+        ctx.fillText(title, hx, hy + 114, P.w - 2 * hx - mw1 - mw2 - 76);
+        ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol; ctx.textAlign = 'right';
+        ctx.fillText(metaBar, P.w - hx, hy + 108);
+        ctx.fillText(metaBpm, P.w - hx - mw2 - 36, hy + 108);
+        ctx.textAlign = 'left';
+      }
+    }   // Ende Kopf
     // ── Abschnitt (blendet beim Wechsel ein)
     var sec = '';
     for (var si = Math.min(curBar, bars.length - 1); si >= 0; si--) if (bars[si].label) { sec = bars[si].label; break; }
@@ -22580,7 +23231,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var b0 = Math.max(0, Math.floor((x - P.headX) / P.W) - 1), b1 = Math.min(bars.length - 1, Math.floor((x - P.headX + P.w) / P.W) + 1);
       for (var bb = b0; bb <= b1; bb++) { var im = ready[bb + 'n']; if (im) ctx.drawImage(im, off0 + bb * P.W, ly, P.W, P.H); }
       if (a && !a.end) slotHi(off0 + a.bar * P.W, ly, a.bar, a.slot);
-      if (!P.green) {   // Ränder weich ausblenden wie in der Ansicht
+      if (!P.green && !P.cam) {   // Ränder weich ausblenden wie in der Ansicht
         var fw = P.w * 0.07, gl = ctx.createLinearGradient(0, 0, fw, 0);
         gl.addColorStop(0, P.bg); gl.addColorStop(1, 'rgba(11,11,10,0)');
         ctx.fillStyle = gl; ctx.fillRect(0, ly - 2, fw, P.H + 4);
@@ -22616,7 +23267,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var wmText = 'drumlion.com', wmW = 48 + 34 + 10 + ctx.measureText(wmText).width + 22, wmH = 54;
     var wmX = (P.lines ? P.w - P.M : P.w) - wmW, wmY = P.midTop + P.midH - wmH;
     if (P.green) { ctx.fillStyle = '#00b140'; ctx.fillRect(wmX, wmY, wmW, wmH); }
-    else {
+    else if (!P.cam) {
       var wg = ctx.createLinearGradient(wmX, 0, wmX + 34, 0);
       wg.addColorStop(0, 'rgba(18,18,17,0)'); wg.addColorStop(1, P.paper);
       ctx.fillStyle = wg; ctx.fillRect(wmX, wmY, 34, wmH);
@@ -22632,13 +23283,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var cp = ease((t - SB_EXP_LEAD - (cn - 1) * P.qd) / 0.45), sc = 1.35 - 0.35 * cp;
       ctx.save();
       ctx.globalAlpha = 0.2 + 0.8 * cp;
-      ctx.translate(P.w / 2, P.midTop + P.midH + 124);
+      ctx.translate(P.w / 2, P.cam ? P.midTop - 160 : P.midTop + P.midH + 124);
       ctx.scale(sc, sc);
       ctx.font = '800 150px ' + FONT; ctx.fillStyle = SB_GOLD; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(cn), 0, 0);
       ctx.restore();
     }
-    // ── Fortschritt
+    // ── Fortschritt (nicht im Cover-Video)
+    if (P.cam) return;
     var fx = P.tall ? 72 : 96, fb = P.h - (P.tall ? 300 : 70), fwid = P.w - 2 * fx, py = fb - 49;
     var el = Math.max(0, Math.min(P.songSec, t - P.startT));
     ctx.fillStyle = P.green ? '#10331e' : 'rgba(255,255,255,0.12)'; ctx.fillRect(fx, py, fwid, 6);
@@ -22672,11 +23324,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbExport() {
     if (_sbExp || !_sbVid) return;
     if (!_sbExpSupported()) { _devToast('Video export needs a current Chrome, Edge or Safari'); return; }
+    if (_sbCamOn() && typeof window.VideoDecoder !== 'function') { _devToast('Videos with cameras need a current Chrome or Edge'); return; }
     _sbStop();
     var job = _sbExp = { cancel: false };
     var P = _sbExpPlan(), fps = SB_EXP_FPS, nFrames = Math.ceil(P.total * fps);
-    var bars = _sbSong.bars, title = _sbSong.title || 'Untitled song';
-    var lionW = null, lionG = null, audio = null, aCfg = null, vCfg = null, muxer = null, encErr = null;
+    var bars = _sbSong.bars, title = _sbSong.title || 'Untitled song', anySound = P.drums || P.click || P.song || P.mix;
+    var lionW = null, lionG = null, audio = null, aCfg = null, vCfg = null, muxer = null, encErr = null, cams = null;
     var check = function() { if (job.cancel) throw new Error('cancelled'); if (encErr) throw encErr; };
     _sbExpUi(true, 0, 'Preparing…');
     try { initA(); } catch (e) {}
@@ -22706,7 +23359,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }, function() {}) : null;
     }).then(function() {
       check();
-      return ((P.drums || P.click || P.song) && typeof window.AudioEncoder === 'function') ? _sbFirstSupported(AudioEncoder, [
+      return (anySound && typeof window.AudioEncoder === 'function') ? _sbFirstSupported(AudioEncoder, [
         { cfg: { codec: 'mp4a.40.2', sampleRate: SB_EXP_SR, numberOfChannels: 2, bitrate: 192000 }, mux: 'aac' },
         { cfg: { codec: 'opus', sampleRate: SB_EXP_SR, numberOfChannels: 2, bitrate: 160000 }, mux: 'opus' }
       ]) : null;
@@ -22720,7 +23373,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       audio = buf;
       if (!audio) aCfg = null;
       return _sbFirstSupported(VideoEncoder, ['avc1.64002A', 'avc1.4D402A', 'avc1.42002A', 'avc1.640033'].map(function(c) {
-        return { codec: c, width: P.w, height: P.h, bitrate: 12000000, framerate: fps };
+        return { codec: c, width: P.w, height: P.h, bitrate: P.cam ? 16000000 : 12000000, framerate: fps };
       }));
     }).then(function(v) {
       check();
@@ -22749,6 +23402,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return aenc.flush().then(function() { aenc.close(); });
     }).then(function() {
       check();
+      return P.cam ? _sbCamReaders(P) : null;
+    }).then(function(rd) {
+      check();
+      cams = rd;
       // Bilder rendern und kodieren — in Portionen, damit die Seite bedienbar bleibt
       var venc = new VideoEncoder({ output: function(ch, meta) { muxer.addVideoChunk(ch, meta); },
                                     error: function(e) { encErr = e; } });
@@ -22775,6 +23432,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             var burst = 0;
             while (f < nFrames) {
               check();
+              // Cover-Video: erst die Kamerabilder zu diesem Zeitpunkt dekodieren
+              if (cams && S.camF !== f) {
+                var tc = P.rel + f / fps - P.startT, ff = f;
+                Promise.all([cams.main ? cams.main.at(_sbSong.cams.main.at + tc) : null,
+                             cams.win ? cams.win.at(_sbSong.cams.win.at + tc) : null]).then(function(fr) {
+                  S.camA = fr[0]; S.camB = fr[1]; S.camF = ff;
+                  if (ff % 30 === 0) _sbExpUi(true, ff / nFrames, 'Rendering ' + Math.round(ff / nFrames * 100) + ' % · ' +
+                                              _sbMmSs(ff / fps) + ' of ' + _sbMmSs(P.total));
+                  run();
+                }, reject);
+                return;
+              }
               var missing = _sbExpNeeds(P, f, fps).map(load).filter(Boolean);
               // vorausladen: die nächsten Takte, solange gerechnet wird
               _sbExpNeeds(P, Math.min(nFrames - 1, f + fps), fps).forEach(load);
@@ -22813,12 +23482,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = ((title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-')) || 'song') +
-                      (P.tall ? '-9x16' : '') + (P.green ? '-greenscreen' : '') + '.mp4';
+                      (P.cam ? '-cover' : '') + (P.tall ? '-9x16' : '') + (P.green ? '-greenscreen' : '') + '.mp4';
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(function() { URL.revokeObjectURL(link.href); }, 60000);
       _devToast('Video saved: ' + link.download +
                 (!soundOk ? ' — but its sound track could not be read back. Please try Chrome.' :
-                 (aCfg || !(P.drums || P.click || P.song)) ? '' : ' (without sound: this browser cannot encode audio)'));
+                 (aCfg || !anySound) ? '' : ' (without sound: this browser cannot encode audio)'));
     }).catch(function(err) {
       if (err && err.message === 'cancelled') _devToast('Video export cancelled');
       else {
@@ -22826,6 +23495,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         _devToast('Video export failed: ' + ((err && err.message) || err));
       }
     }).then(function() {
+      if (cams) ['main', 'win'].forEach(function(k) { if (cams[k]) cams[k].close(); });
       _sbExp = null;
       _sbExpUi(false);
     });
