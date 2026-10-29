@@ -16762,7 +16762,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261027-180832';
+  var DL_BUILD = '20261029-205432';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17386,6 +17386,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _fb = _lessonFeedback;
     _lessonFeedback = null;
     var _oldStep = entry.bpmStep || 0;
+    entry.reps = _repCount(entry) + 1;
     entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
     // Höchste je erreichte Stufe — Grundlage für Level und Balken
     entry.best = Math.max(entry.best || 0, entry.bpmStep);
@@ -19258,7 +19259,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (_fbpm) _fbpm.textContent = tBpm + ' BPM';
     } else if (_curLesson) {
       var _step = _curLesson.entry.bpmStep || 0;
-      _repStr = _step === 0 ? '<span class="ni-ft">' + _t('First time') + ' </span>🎯' : _t('Rep {n}', { n: _step });
+      var _reps = _repCount(_curLesson.entry);
+      _repStr = _reps === 0 ? '<span class="ni-ft">' + _t('First time') + ' </span>🎯' : _t('Rep {n}', { n: _reps });
       // Letzte Stufe = Zieltempo der Übung — auch oben sichtbar, nicht erst im
       // Abschluss-Popup (Erwin, 22.10.2026)
       if (_step >= _exSteps(_curLesson.ex) - 1) {
@@ -20018,6 +20020,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ab (siehe _doneNext). Wer das Popup schließt, kommt über „Done → Next" weiter
   // — dann ohne Antwort, also eine Stufe.
   var _lessonFeedback = null;
+
+  // Wie oft die Übung schon gespielt wurde — „Rep n“ oben rechts (Erwin, 29.10.2026:
+  // „Es ist eher relevant wie oft man die übung schon gespielt hat“). Vorher stand
+  // dort die Tempostufe, die bei „Too easy“ springt und bei „Too hard“ stehen bleibt.
+  // Einträge von vor dem Zähler starten mit ihrer Stufe als bester Schätzung.
+  function _repCount(entry) {
+    var r = parseInt(entry && entry.reps, 10);
+    return r >= 0 ? r : ((entry && parseInt(entry.bpmStep, 10)) || 0);
+  }
 
   function _feedbackStep(ex, entry, fb) {
     var cur = entry.bpmStep || 0;
