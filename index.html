@@ -1831,7 +1831,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-head, .sb-vid[data-cam="1"] .sb-vid-foot, .sb-vid[data-cam="1"] .sb-vid-opt-bg { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-mid { top: auto; bottom: var(--sb-cam-b, 56px); transform: none; }
 .sb-vid[data-cam="1"] .sb-vid-count { top: auto; bottom: 100%; margin: 0 0 110px; }
-.sb-vid[data-cam="1"] .sb-vid-wm { background: none; }
+.sb-vid[data-cam="1"] .sb-vid-wm { display: none; }
+/* rechts unten liegt bei YouTube das Kanal-Logo: das Band läuft vorher aus */
+.sb-vid[data-cam="1"][data-layout="band"] .sb-vid-lane {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 78%, transparent 86%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 78%, transparent 86%);
+}
 .sb-vid-opt-cam { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-opt-cam { display: flex; }
 .sb-vid-cams { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
@@ -1839,6 +1844,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid-camrow b { min-width: 104px; color: var(--sb-text); }
 .sb-vid-camname { color: var(--sb-mute); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-vid-cammsg { color: var(--sb-mute); }
+.sb-vid-fx { position: absolute; width: 0; height: 0; }
+/* Titel im Cover-Video: oben, gegenüber dem Fenster; blendet nach dem Einstieg aus */
+.sb-vid-ctitle {
+  position: absolute; top: 56px; left: 64px; display: none; flex-direction: column; gap: 8px;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.65); opacity: 0; transition: opacity 0.6s ease;
+}
+.sb-vid[data-cam="1"] .sb-vid-ctitle { display: flex; }
+.sb-vid[data-cam="1"] .sb-vid-ctitle.show { opacity: 1; }
+.sb-vid[data-win="tl"] .sb-vid-ctitle { left: auto; right: 64px; align-items: flex-end; text-align: right; }
+.sb-vid-ctitle-t { font-size: 64px; font-weight: 800; line-height: 1.05; color: #E8E4DB; max-width: 1100px; }
+.sb-vid-ctitle-s { font-size: 28px; font-weight: 700; letter-spacing: 0.08em; color: var(--sb-gold); text-transform: uppercase; }
 .sb-vid-panel {
   position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 2;
   width: min(1040px, calc(100vw - 32px)); max-height: calc(100vh - 44px); overflow: auto;
@@ -16779,7 +16795,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261029-221056';
+  var DL_BUILD = '20261029-222541';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20355,7 +20371,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var _sbPrefs = { w: 360, loop: false, click: false, countIn: true, counts: true,
                    vidBg: 'dark', vidDrums: true, vidClick: false, vidSong: false, vidBars: 2, vidFrom: 'start', vidFmt: 'wide',
                    vidLayout: 'band', vidPer: 4, songOn: true, drumsOn: false, syncOpen: false,
-                   vidMix: false, vidWin: 'tr', vidWinSize: 0.3 };
+                   vidMix: false, vidWin: 'tr', vidWinSize: 0.3, vidLook: 'natural', vidBright: 1, vidWb: true, vidEnd: '20' };
   var _sbRoot = null, _sbTiles = [], _sbCells = [], _sbStickEls = [], _sbCntEls = [];
   var _sbIsOpen = false, _sbP = null, _sbClip = null, _sbRepN = 3, _sbEdCur = -1;
   var _sbDirty = {}, _sbDirtyRaf = 0, _sbDrag = null, _sbSaveT = 0, _sbPrevOverflow = '';
@@ -20419,13 +20435,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (s.sync && isFinite(+s.sync.offset)) out.sync = { offset: Math.round(+s.sync.offset * 1000) / 1000 };
     // Kameras und Mix fürs Cover-Video: nur Dateiname und Versatz (die Dateien bleiben beim Nutzer)
     var _cm = function(c) {
-      return (c && isFinite(+c.at)) ? { name: String(c.name || '').slice(0, 160), at: Math.round(+c.at * 1000) / 1000 } : null;
+      if (!c || !isFinite(+c.at)) return null;
+      var o = { name: String(c.name || '').slice(0, 160), at: Math.round(+c.at * 1000) / 1000 };
+      // Weißabgleich der Kamera: Verstärkung je Farbkanal
+      if (Array.isArray(c.wb) && c.wb.length === 3 && c.wb.every(function(g) { return +g >= 0.5 && +g <= 2; }))
+        o.wb = c.wb.map(function(g) { return Math.round(+g * 1000) / 1000; });
+      return o;
     };
     if (s.cams && typeof s.cams === 'object') ['main', 'win'].forEach(function(k) {
       var c = _cm(s.cams[k]);
       if (c) { out.cams = out.cams || {}; out.cams[k] = c; }
     });
     if (_cm(s.mix)) out.mix = _cm(s.mix);
+    if (s.outro && s.outro.name) out.outro = { name: String(s.outro.name).slice(0, 160) };
     if (+s.updated > 0) out.updated = +s.updated;   // für den Abgleich mit dem Ordner
     return out;
   }
@@ -20483,6 +20505,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (['start', 'sel'].indexOf(_sbPrefs.vidFrom) === -1) _sbPrefs.vidFrom = 'start';
     if (['tl', 'tr'].indexOf(_sbPrefs.vidWin) === -1) _sbPrefs.vidWin = 'tr';
     _sbPrefs.vidWinSize = Math.max(0.2, Math.min(0.45, +_sbPrefs.vidWinSize || 0.3));
+    if (!SB_LOOKS.hasOwnProperty(_sbPrefs.vidLook)) _sbPrefs.vidLook = 'natural';
+    _sbPrefs.vidBright = Math.max(0.8, Math.min(1.3, +_sbPrefs.vidBright || 1));
+    if (['0', '10', '20'].indexOf(_sbPrefs.vidEnd) === -1) _sbPrefs.vidEnd = '20';
     try { _sbClip = JSON.parse(localStorage.getItem(SB_CLIP_KEY) || 'null'); } catch (e) { _sbClip = null; }
     if (!Array.isArray(_sbClip) || !_sbClip.length) _sbClip = null;
   }
@@ -21631,6 +21656,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       '<div class="sb-vid-stage" id="sbVidStage">' +
         '<video class="sb-vid-cam sb-vid-cam-main" id="sbCamMain" muted playsinline preload="auto"></video>' +
         '<video class="sb-vid-cam sb-vid-cam-win" id="sbCamWin" muted playsinline preload="auto"></video>' +
+        // Farbe der Kameras: Weißabgleich, Helligkeit, Look (auch für den Export)
+        '<svg class="sb-vid-fx" width="0" height="0" aria-hidden="true">' +
+          '<filter id="sbLookMain" color-interpolation-filters="sRGB"><feColorMatrix id="sbLookMainM" type="matrix" ' +
+            'values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter>' +
+          '<filter id="sbLookWin" color-interpolation-filters="sRGB"><feColorMatrix id="sbLookWinM" type="matrix" ' +
+            'values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0"/></filter></svg>' +
+        '<div class="sb-vid-ctitle" id="sbVidCTitle"><div class="sb-vid-brand"><i class="sb-vid-lion"></i><span>DRUM<em>LION</em></span></div>' +
+          '<div class="sb-vid-ctitle-t" id="sbVidCTitleT"></div><div class="sb-vid-ctitle-s">Drum cover</div></div>' +
         '<div class="sb-vid-head">' +
           '<div class="sb-vid-brand"><i class="sb-vid-lion"></i><span>DRUM<em>LION</em></span></div>' +
           '<div class="sb-vid-title" id="sbVidTitle"></div>' +
@@ -21680,6 +21713,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-v="tl">Top left</button><button type="button" data-v="tr">Top right</button></span></label>' +
           '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Window size</span>' +
             '<input type="range" class="sb-zoom" id="sbVidWinSize" min="0.2" max="0.45" step="0.01"></label>' +
+          '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Look</span><span class="sb-seg" data-vopt="vidLook">' +
+            '<button type="button" data-v="off">Off</button><button type="button" data-v="natural">Natural</button>' +
+            '<button type="button" data-v="warm">Warm</button><button type="button" data-v="punchy">Punchy</button></span></label>' +
+          '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Brightness</span>' +
+            '<input type="range" class="sb-zoom" id="sbVidBright" min="0.8" max="1.3" step="0.02"></label>' +
+          '<span class="sb-group sb-vid-opt-cam"><button type="button" class="sb-btn" data-vtog="vidWb" ' +
+            'title="Evens out the color cast of each camera">Auto white balance</button></span>' +
+          '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">End screen</span><span class="sb-seg" data-vopt="vidEnd">' +
+            '<button type="button" data-v="0">Off</button><button type="button" data-v="10">10 s</button>' +
+            '<button type="button" data-v="20">20 s</button></span></label>' +
           '<div class="sb-vid-cams" id="sbVidCams"></div>' +
           '<input type="file" id="sbCamFile" hidden>' +
           '<span class="sb-group">' +
@@ -21722,6 +21765,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     $('sbVidWinSize').addEventListener('input', function() {
       _sbPrefs.vidWinSize = +this.value; _sbSavePrefs(); _sbCamLayout();
     });
+    $('sbVidBright').addEventListener('input', function() {
+      _sbPrefs.vidBright = +this.value; _sbSavePrefs(); _sbCamLook();
+    });
     $('sbVidCams').addEventListener('click', function(e) {
       var b = e.target.closest('[data-camact]');
       if (b) _sbCamAct(b.getAttribute('data-camact'), b.getAttribute('data-camk'));
@@ -21747,6 +21793,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (opt === 'vidBg' || opt === 'vidFmt' || opt === 'vidLayout') _sbVidLayout();
       if (opt === 'vidFrom') _sbVidReset();
       if (opt === 'vidWin') _sbCamLayout();
+      if (opt === 'vidLook') _sbCamLook();
     });
     // Mauszeiger und Bedienfeld blenden sich während der Aufnahme aus
     v.addEventListener('pointermove', function() {
@@ -21776,7 +21823,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var mx = V.el.querySelector('[data-vtog="vidMix"]');
     if (mx) mx.hidden = !_sbMixOn();
     document.getElementById('sbVidWinSize').value = _sbPrefs.vidWinSize;
+    document.getElementById('sbVidBright').value = _sbPrefs.vidBright;
     _sbCamUi();
+    _sbCamLook();
     var ci = document.getElementById('sbVidCountIn');
     ci.classList.toggle('on', !!_sbPrefs.countIn);
     ci.setAttribute('aria-pressed', String(!!_sbPrefs.countIn));
@@ -21810,7 +21859,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (V.mode === 'lines') {
       var M = _sbPrefs.vidFmt === 'tall' ? 60 : 96;
       V.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
-      V.W = Math.floor((V.SW - 2 * M) / V.P);
+      V.W = Math.floor((V.SW - 2 * M - (_sbCamOn() ? _sbYtSafe(V.SW) : 0)) / V.P);
       V.H = Math.round(V.W * (98 - top) / 500);
       V.G = Math.round(V.H * 0.28);
       V.mid.style.setProperty('--sb-m', M + 'px');
@@ -22035,8 +22084,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // notierten Drums. Der Export liest die MP4/MOV-Datei selbst (`_sbMp4Open`) und
   // dekodiert Bild für Bild (`_sbCamReader`, WebCodecs) — bildgenau.
   var SB_CAM_BAND = 'rgba(10,10,9,0.62)';
-  var SB_CAM_LBL = { main: 'Main (top)', win: 'Window (feet)', mix: 'Mix' };
-  var _sbCams = { songId: null, main: null, win: null, mix: null, msg: {} };
+  var SB_CAM_LBL = { main: 'Main (top)', win: 'Window (feet)', mix: 'Mix', outro: 'Outro (talk)' };
+  var _sbCams = { songId: null, main: null, win: null, mix: null, outro: null, msg: {} };
 
   function _sbCamOn() {
     return !!(_sbCams.main && _sbCams.songId === _sbSong.id && _sbSong.cams && _sbSong.cams.main);
@@ -22047,9 +22096,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbMixOn() { return !!(_sbCams.mix && _sbCams.songId === _sbSong.id && _sbSong.mix); }
   // Zeit (s) ab Takt 1, an der Takt `bi` beginnt
   function _sbRelOf(bi) { return _sbBarPos(bi) - (_sbSong.sync ? _sbSong.sync.offset : 0); }
-  function _sbCamMeta(k) { return k === 'mix' ? _sbSong.mix : (_sbSong.cams && _sbSong.cams[k]); }
+  function _sbCamMeta(k) { return (k === 'mix' || k === 'outro') ? _sbSong[k] : (_sbSong.cams && _sbSong.cams[k]); }
   function _sbCamSet(k, m) {
-    if (k === 'mix') { if (m) _sbSong.mix = m; else delete _sbSong.mix; }
+    if (k === 'mix' || k === 'outro') { if (m) _sbSong[k] = m; else delete _sbSong[k]; }
     else {
       if (!_sbSong.cams) _sbSong.cams = {};
       if (m) _sbSong.cams[k] = m; else delete _sbSong.cams[k];
@@ -22214,7 +22263,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     if (ss) { var nss = dv.getUint32(ss.s + 4); for (i = 0; i < nss; i++) { k = dv.getUint32(ss.s + 8 + 4 * i) - 1; if (k < n) key[k] = 1; } }
     else for (i = 0; i < n; i++) key[i] = 1;
-    T.n = n; T.size = size; T.off = off; T.cts = cts; T.key = key;
+    T.n = n; T.size = size; T.off = off; T.cts = cts; T.key = key; T.dur = T.ts ? t / T.ts : 0;
   }
   // Nächste Portion ab Probe i: liest am Stück (höchstens `max` Proben, Lücken
   // bis `gap` Bytes — dort liegen bei Kameras die Daten der anderen Spur)
@@ -22292,22 +22341,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _sbCamReaders(P) {
     var out = {};
-    return Promise.all(['main', 'win'].map(function(k) {
-      if (k === 'win' && !P.winOn) return null;
+    return Promise.all(['main', 'win', 'outro'].map(function(k) {
+      if ((k === 'win' && !P.winOn) || (k === 'outro' && !P.outroDur)) return null;
       var c = _sbCams[k], T = c.mp.video, cfg = { codec: T.codec, codedWidth: T.w, codedHeight: T.h, description: T.desc };
       return VideoDecoder.isConfigSupported(cfg).then(function(r) {
         if (!r || !r.supported) throw new Error('this browser cannot decode ' + c.name + ' (' + T.codec + ')');
         out[k] = _sbCamReader(T, c.file);
-        out[k].start(_sbSong.cams[k].at + P.rel - P.startT);
+        out[k].start(k === 'outro' ? 0 : _sbSong.cams[k].at + P.rel - P.startT);
       });
     })).then(function() { return out; });
   }
   // Kamerabild füllend (Ränder abgeschnitten) ins Rechteck, Drehung beachtet
-  function _sbCamPaint(ctx, fr, rot, x, y, w, h) {
+  function _sbCamPaint(ctx, fr, rot, x, y, w, h, flt) {
     if (!fr) { ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h); return; }
     var fw = fr.displayWidth, fh = fr.displayHeight, side = rot === 90 || rot === 270;
     var k = Math.max(w / (side ? fh : fw), h / (side ? fw : fh));
     ctx.save();
+    if (flt) ctx.filter = flt;   // Farbe: dieselbe Matrix wie in der Vorschau
     ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
     ctx.translate(x + w / 2, y + h / 2);
     if (rot) ctx.rotate(rot * Math.PI / 180);
@@ -22386,12 +22436,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     for (var i = 0; i < n; i++) { var s = 0; for (var j = 0; j < f; j++) s += o[i * f + j]; r[i] = s; }
     return r;
   }
-  // Versatz L in [lo, hi] mit sig[n + L] ≈ ref[n]
+  // Versatz L in [lo, hi] mit sig[n + L] ≈ ref[n]. Normiert auf die Energie im
+  // überdeckten Stück: sonst gewinnt bei einem Groove, der sich jeden Takt
+  // wiederholt, einfach die Lage mit der größten Überdeckung (im Test 12 s daneben).
   function _sbXcorr(ref, sig, lo, hi) {
-    var best = -1, bestL = lo;
+    function cum(x) { var c = new Float64Array(x.length + 1); for (var i = 0; i < x.length; i++) c[i + 1] = c[i] + x[i] * x[i]; return c; }
+    var cr = cum(ref), cs = cum(sig), best = -1, bestL = lo;
     for (var L = lo; L <= hi; L++) {
       var s = 0, a = Math.max(0, -L), b = Math.min(ref.length, sig.length - L);
+      if (b <= a) continue;
       for (var n = a; n < b; n++) s += ref[n] * sig[n + L];
+      s /= Math.sqrt((cr[b] - cr[a]) * (cs[b + L] - cs[a + L])) + 1e-9;
       if (s > best) { best = s; bestL = L; }
     }
     return bestL;
@@ -22417,15 +22472,91 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return Promise.all([pcm, ref]).then(function(r) {
       return _sbWait(30).then(function() {
         var sig = _sbOnsets(r[0].data, r[0].sr), rf = _sbOnsets(r[1].getChannelData(0), r[1].sampleRate);
-        var sc = _sbPool(sig, 20), rc = _sbPool(rf, 20), half = Math.floor(rc.length / 2);
-        var L1 = _sbXcorr(rc, sc, -half, Math.max(-half, sc.length - half)) * 20;
+        // mindestens die Hälfte der kürzeren Aufnahme muss sich überdecken — die
+        // Kamera kann auch nur einen Teil des Songs zeigen
+        var sc = _sbPool(sig, 20), rc = _sbPool(rf, 20), ov = Math.floor(Math.min(rc.length, sc.length) / 2);
+        var L1 = _sbXcorr(rc, sc, ov - rc.length, sc.length - ov) * 20;
         var L = _sbXcorr(rf, sig, L1 - 40, L1 + 40);
         return r[0].t0 + (Math.round(lead * 1000) + L) / 1000;
       });
     });
   }
 
+  // ---- Farbe: Weißabgleich je Kamera (Grauwelt-Annahme, nur zu 60 % angewandt,
+  // weil ein rotes Set sonst ins Grüne kippt), Helligkeit und Look für beide.
+  // Als feColorMatrix — wirkt per CSS in der Vorschau und per ctx.filter im Export.
+  var SB_LOOKS = { off: null, natural: { c: 1.04, s: 1.05, w: 0 }, warm: { c: 1.08, s: 1.08, w: 0.045 },
+                   punchy: { c: 1.16, s: 1.16, w: 0.02 } };
+  function _sbLookMatrix(k) {
+    var L = SB_LOOKS[_sbPrefs.vidLook], m = _sbCamMeta(k), b = _sbPrefs.vidBright || 1;
+    var wb = (_sbPrefs.vidWb && m && m.wb) ? m.wb : [1, 1, 1];
+    if (!L && b === 1 && wb.join() === '1,1,1') return null;
+    L = L || { c: 1, s: 1, w: 0 };
+    var g = [wb[0] * b * (1 + L.w), wb[1] * b, wb[2] * b * (1 - L.w)];
+    var s = L.s, lr = 0.2126 * (1 - s), lg = 0.7152 * (1 - s), lb = 0.0722 * (1 - s);
+    var S = [[lr + s, lg, lb], [lr, lg + s, lb], [lr, lg, lb + s]], c = L.c, v = [];
+    for (var r = 0; r < 3; r++) v.push(c * S[r][0] * g[0], c * S[r][1] * g[1], c * S[r][2] * g[2], 0, 0.5 * (1 - c));
+    v.push(0, 0, 0, 1, 0);
+    return v.map(function(x) { return Math.round(x * 10000) / 10000; }).join(' ');
+  }
+  function _sbLookId(k) { return k === 'main' ? 'sbLookMain' : 'sbLookWin'; }
+  function _sbCamLook() {
+    ['main', 'win'].forEach(function(k) {
+      var M = _sbLookMatrix(k), el = _sbCamEl(k), fm = document.getElementById(_sbLookId(k) + 'M');
+      if (!el || !fm) return;
+      if (M) fm.setAttribute('values', M);
+      el.style.filter = M ? 'url(#' + _sbLookId(k) + ')' : '';
+    });
+  }
+  // Farbstich aus drei Bildern (30/50/70 %) messen; ohne Schatten und Spitzlichter
+  function _sbCamWb(c) {
+    return new Promise(function(res) {
+      var v = document.createElement('video'), cv = document.createElement('canvas'), at = [0.3, 0.5, 0.7], i = 0;
+      var R = 0, G = 0, B = 0, fin = false;
+      cv.width = 64; cv.height = 36;
+      var g = cv.getContext('2d', { willReadFrequently: true });
+      function done(val) {
+        if (fin) return;
+        fin = true; v.removeAttribute('src'); v.load(); res(val);
+      }
+      function next() {
+        if (i >= at.length || !isFinite(v.duration)) {
+          var m = (R + G + B) / 3;
+          return done(R && G && B ? [m / R, m / G, m / B].map(function(x) {
+            return Math.max(0.8, Math.min(1.25, 1 + 0.6 * (x - 1)));
+          }) : null);
+        }
+        v.currentTime = v.duration * at[i++];
+      }
+      v.muted = true; v.preload = 'auto';
+      v.onloadedmetadata = next;
+      v.onerror = function() { done(null); };
+      v.onseeked = function() {
+        try {
+          g.drawImage(v, 0, 0, 64, 36);
+          var d = g.getImageData(0, 0, 64, 36).data;
+          for (var p = 0; p < d.length; p += 4) {
+            var l = (d[p] + d[p + 1] + d[p + 2]) / 3;
+            if (l > 24 && l < 232) { R += d[p]; G += d[p + 1]; B += d[p + 2]; }
+          }
+        } catch (e) {}
+        next();
+      };
+      v.src = c.url;
+      setTimeout(function() { done(null); }, 20000);
+    });
+  }
+  // Rechts unten blendet YouTube das Kanal-Logo ein (Erwin, 29.10.2026): diese
+  // Breite bleibt im Cover-Video frei, das Notenband endet davor
+  function _sbYtSafe(w) { return Math.round(w * 0.14); }
+
   // ---- Laden, Bedienung, Vorschau
+  function _sbCamPatch(k, patch) {
+    var m = _sbCamMeta(k), o = {};
+    if (m) Object.keys(m).forEach(function(x) { o[x] = m[x]; });
+    Object.keys(patch).forEach(function(x) { o[x] = patch[x]; });
+    _sbCamSet(k, o);
+  }
   function _sbCamAct(act, k) {
     var m = _sbCamMeta(k);
     if (act === 'load') {
@@ -22434,7 +22565,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       inp.accept = k === 'mix' ? 'audio/*,.wav,.aif,.aiff,.m4a,.mp3' : 'video/*,.mov,.mp4,.m4v';
       inp.click();
     } else if ((act === '-' || act === '+') && m) {
-      _sbCamSet(k, { name: m.name, at: Math.round((m.at + (act === '+' ? 0.01 : -0.01)) * 1000) / 1000 });
+      _sbCamPatch(k, { at: Math.round((m.at + (act === '+' ? 0.01 : -0.01)) * 1000) / 1000 });
       _sbCamUi();
       if (!_sbP) _sbCamIdle(_sbVidFrom());
     } else if (act === 'sync' && _sbCams[k]) _sbCamMatch(k);
@@ -22453,9 +22584,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var box = document.getElementById('sbVidCams');
     if (!box) return;
     var same = _sbCams.songId === _sbSong.id;
-    box.innerHTML = ['main', 'win', 'mix'].map(function(k) {
+    box.innerHTML = ['main', 'win', 'mix', 'outro'].map(function(k) {
       var m = _sbCamMeta(k), c = same && _sbCams[k], h = '<div class="sb-vid-camrow"><b>' + SB_CAM_LBL[k] + '</b>';
-      if (c) {
+      if (c && k === 'outro') {   // Abspann: läuft nach dem Song mit eigenem Ton, kein Abgleich
+        h += '<span class="sb-vid-camname">' + _sbEsc(c.name) + ' · ' + _sbMmSs(c.mp.video.dur) + ' after the song</span>' +
+             '<button type="button" class="sb-btn warn" data-camact="del" data-camk="outro">Remove</button>';
+      } else if (c) {
         h += '<span class="sb-vid-camname">' + _sbEsc(c.name) + '</span>' +
              '<span class="sb-lbl">Bar 1 at</span>' +
              '<button type="button" class="sb-btn sb-nudge" data-camact="-" data-camk="' + k + '" aria-label="10 ms earlier">−</button>' +
@@ -22470,7 +22604,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       return h + '<span class="sb-vid-cammsg" id="sbCamMsg-' + k + '"></span></div>';
     }).join('');
-    ['main', 'win', 'mix'].forEach(function(k) { _sbCamMsg(k, _sbCams.msg[k]); });
+    ['main', 'win', 'mix', 'outro'].forEach(function(k) { _sbCamMsg(k, _sbCams.msg[k]); });
   }
   function _sbCamRefresh() {
     if (!_sbVid || !_sbVid.open) return;
@@ -22484,7 +22618,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbCams[k] = null;
     _sbCams.msg[k] = '';
   }
-  function _sbCamClear() { ['main', 'win', 'mix'].forEach(_sbCamDrop); _sbCams.songId = null; }
+  function _sbCamClear() { ['main', 'win', 'mix', 'outro'].forEach(_sbCamDrop); _sbCams.songId = null; }
   function _sbCamLoad(k, file) {
     if (_sbCams.songId !== _sbSong.id) _sbCamClear();
     _sbCams.songId = _sbSong.id;
@@ -22500,7 +22634,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbCams[k] = c;
       var m = _sbCamMeta(k);
       // dieselbe Datei wie beim letzten Mal: Versatz behalten
-      if (m && m.name === c.name) { _sbCamMsg(k, ''); _sbCamRefresh(); return; }
+      if (k === 'outro') { _sbCamSet(k, { name: c.name }); _sbCamMsg(k, ''); _sbCamRefresh(); return; }
+      if (m && m.name === c.name) {
+        _sbCamMsg(k, '');
+        _sbCamRefresh();
+        if (k !== 'mix' && !m.wb) _sbCamColor(k);
+        return;
+      }
       _sbCamSet(k, { name: c.name, at: 0 });
       _sbCamRefresh();
       _sbCamMatch(k);
@@ -22513,11 +22653,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbCamMsg(k, 'Matching to the notes by sound…');
     _sbCamSync(k).then(function(at) {
       if (_sbCams[k] !== c) return;
-      _sbCamSet(k, { name: c.name, at: Math.round(at * 1000) / 1000 });
+      _sbCamPatch(k, { name: c.name, at: Math.round(at * 1000) / 1000 });
       _sbCams.msg[k] = 'Matched by sound. Fine-tune with − / + if needed.';
       _sbCamRefresh();
+      if (k !== 'mix') _sbCamColor(k);
     }, function(e) {
       _sbCamMsg(k, 'Could not match it automatically (' + ((e && e.message) || e) + '). Set the start with − / +.');
+    });
+  }
+  function _sbCamColor(k) {
+    var c = _sbCams[k];
+    _sbCamWb(c).then(function(wb) {
+      if (!wb || _sbCams[k] !== c) return;
+      _sbCamPatch(k, { wb: wb });
+      _sbCamLook();
     });
   }
   function _sbCamLayout() {
@@ -22525,6 +22674,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!V) return;
     var on = _sbCamOn(), win = _sbWinOn(), d = _sbVidDims();
     V.el.setAttribute('data-cam', on ? '1' : '0');
+    V.el.setAttribute('data-win', _sbPrefs.vidWin);
+    document.getElementById('sbVidCTitleT').textContent = _sbSong.title || 'Untitled song';
     [['main', on], ['win', win]].forEach(function(it) {
       var el = _sbCamEl(it[0]), url = it[1] ? _sbCams[it[0]].url : '';
       if ((el.getAttribute('src') || '') === url) return;
@@ -22539,6 +22690,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbCamIdle(from) {
     if (!_sbCamOn()) return;
     var rel = _sbRelOf(from);
+    document.getElementById('sbVidCTitle').classList.add('show');
     ['main', 'win'].forEach(function(k) {
       var el = _sbCamEl(k), m = _sbSong.cams[k];
       if (!m || !el.getAttribute('src') || !el.readyState) return;
@@ -22554,6 +22706,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbCamTick(P, now) {
     if (!_sbCamOn()) return;
     if (P.camRel == null) P.camRel = _sbRelOf(P.from);
+    document.getElementById('sbVidCTitle').classList.toggle('show', now < P.startT + 4);
     ['main', 'win'].forEach(function(k) {
       var el = _sbCamEl(k), m = _sbSong.cams[k];
       if (!m || !el.getAttribute('src')) return;
@@ -22967,15 +23120,28 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     P.bg = P.green ? '#00b140' : '#0b0b0a';
     P.rel = _sbRelOf(from);
     P.mix = !!(_sbPrefs.vidMix && _sbMixOn());
+    P.songEnd = P.total;
     // Cover-Video: Kamera als Vollbild, Fenster, Noten unten halbtransparent
     P.cam = _sbCamOn();
     if (P.cam) {
       P.green = false; P.paper = SB_CAM_BAND; P.bg = '#000';
+      P.ytR = _sbYtSafe(P.w);
+      if (lines) {   // Zeilen enden vor dem YouTube-Logo
+        P.W = Math.floor((P.w - 2 * P.M - P.ytR) / P.P);
+        P.H = Math.round(P.W * (98 - top) / 500); P.G = Math.round(P.H * 0.28); P.midH = 2 * P.H + P.G;
+      }
       P.midTop = P.h - P.midH - (P.tall ? 260 : 56);
+      P.lookA = _sbLookMatrix('main') ? 'url(#sbLookMain)' : '';
+      // Abspann (eigenes Video mit Ton) und Endcard für die YouTube-Endelemente
+      P.outroDur = (_sbCams.outro && _sbSong.outro) ? (_sbCams.outro.mp.video.dur || 0) : 0;
+      P.rotO = P.outroDur ? (_sbCams.outro.mp.video.rot || 0) : 0;
+      P.endDur = +_sbPrefs.vidEnd || 0;
+      P.total = P.songEnd + P.outroDur + P.endDur;
       P.winOn = _sbWinOn();
       P.winR = _sbCamWinRect(P.w, P.h);
       P.rotA = _sbCams.main.mp.video.rot || 0;
       P.rotB = P.winOn ? (_sbCams.win.mp.video.rot || 0) : 0;
+      P.lookB = P.winOn && _sbLookMatrix('win') ? 'url(#sbLookWin)' : '';
     }
     return P;
   }
@@ -23029,8 +23195,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbExpAudio(P, shift) {
     if (!(P.drums || P.click || P.song || P.mix)) return Promise.resolve(null);
     var ctx = new OfflineAudioContext(2, Math.ceil(P.total * SB_EXP_SR), SB_EXP_SR), openG = null;
-    var out = _limiter(ctx);   // derselbe Sicherheits-Begrenzer wie bei der Wiedergabe
+    var lim = _limiter(ctx), out = lim;   // derselbe Sicherheits-Begrenzer wie bei der Wiedergabe
     shift = shift || 0;
+    // Cover-Video: der Song blendet am Ende aus, danach der Abspann mit eigenem Ton
+    if (P.cam) {
+      out = ctx.createGain(); out.connect(lim);
+      out.gain.setValueAtTime(1, Math.max(0, P.songEnd - 1.2));
+      out.gain.linearRampToValueAtTime(0.0001, P.songEnd);
+      if (P.outroPcm) {
+        var ob = ctx.createBuffer(1, P.outroPcm.data.length, P.outroPcm.sr), os = ctx.createBufferSource();
+        ob.copyToChannel(P.outroPcm.data, 0); os.buffer = ob; os.connect(lim);
+        var ow = P.songEnd + P.outroPcm.t0;
+        if (ow >= 0) os.start(ow); else os.start(0, -ow);
+      }
+    }
     function vol(k) {
       return (k === 'crash1' || k === 'crash2') ? 0.38 : k === 'ride' ? 0.70 : k === 'hhOpen' ? 0.48 :
              k === 'hh' ? 0.225 : (k === 'hhPedal' || k === 'hhAccent') ? 0.56 : 1.0;
@@ -23130,6 +23308,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // weiterläuft (Abschnitt, Zeile, Bildlauf), `ready` die geladenen Takt-Bilder.
   function _sbExpDraw(ctx, P, f, fps, S, ready, lionW, lionG) {
     var bars = _sbSong.bars, t = f / fps, a = _sbExpAt(P, t), x = _sbExpPos(P, a);
+    if (P.cam && t >= P.songEnd) { _sbExpOutro(ctx, P, t - P.songEnd, S, lionW); return; }
     var curBar = a && !a.end ? a.bar : (a && a.end ? bars.length - 1 : P.from);
     var FONT = '"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
     var ease = function(p) { p = Math.max(0, Math.min(1, p)); return 1 - Math.pow(1 - p, 3); };
@@ -23139,11 +23318,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // ── Hintergrund; Cover-Video: Hauptkamera füllend, Fenster mit Rahmen
     ctx.fillStyle = P.bg; ctx.fillRect(0, 0, P.w, P.h);
     if (P.cam) {
-      _sbCamPaint(ctx, S.camA, P.rotA, 0, 0, P.w, P.h);
+      _sbCamPaint(ctx, S.camA, P.rotA, 0, 0, P.w, P.h, P.lookA);
       if (P.winOn) {
         var wr = P.winR;
         ctx.save(); _sbRoundPath(ctx, wr.x, wr.y, wr.w, wr.h, 18); ctx.clip();
-        _sbCamPaint(ctx, S.camB, P.rotB, wr.x, wr.y, wr.w, wr.h);
+        _sbCamPaint(ctx, S.camB, P.rotB, wr.x, wr.y, wr.w, wr.h, P.lookB);
         ctx.restore();
         _sbRoundPath(ctx, wr.x + 1.5, wr.y + 1.5, wr.w - 3, wr.h - 3, 17);
         ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(232,228,219,0.9)'; ctx.stroke();
@@ -23190,6 +23369,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         ctx.textAlign = 'left';
       }
     }   // Ende Kopf
+    // Cover-Video, einzeilig: Abschnitt und Band auf eigener Ebene, damit das Band
+    // vor dem YouTube-Logo weich ausläuft
+    var base = ctx;
+    if (P.cam && !P.lines) {
+      if (!S.layer) { S.layer = document.createElement('canvas'); S.layer.width = P.w; S.layer.height = P.h; }
+      ctx = S.layer.getContext('2d');
+      ctx.clearRect(0, 0, P.w, P.h);
+    }
     // ── Abschnitt (blendet beim Wechsel ein)
     var sec = '';
     for (var si = Math.min(curBar, bars.length - 1); si >= 0; si--) if (bars[si].label) { sec = bars[si].label; break; }
@@ -23262,21 +23449,34 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       ctx.restore();
       ctx.restore();
     }
-    // ── Wasserzeichen unten rechts im Notenband
-    ctx.font = '700 22px ' + FONT;
-    var wmText = 'drumlion.com', wmW = 48 + 34 + 10 + ctx.measureText(wmText).width + 22, wmH = 54;
-    var wmX = (P.lines ? P.w - P.M : P.w) - wmW, wmY = P.midTop + P.midH - wmH;
-    if (P.green) { ctx.fillStyle = '#00b140'; ctx.fillRect(wmX, wmY, wmW, wmH); }
-    else if (!P.cam) {
-      var wg = ctx.createLinearGradient(wmX, 0, wmX + 34, 0);
-      wg.addColorStop(0, 'rgba(18,18,17,0)'); wg.addColorStop(1, P.paper);
-      ctx.fillStyle = wg; ctx.fillRect(wmX, wmY, 34, wmH);
-      ctx.fillStyle = P.paper; ctx.fillRect(wmX + 34, wmY, wmW - 34, wmH);
+    // ── Wasserzeichen unten rechts im Notenband (nicht im Cover-Video: dort zeigt
+    // YouTube das Kanal-Logo)
+    if (!P.cam) {
+      ctx.font = '700 22px ' + FONT;
+      var wmText = 'drumlion.com', wmW = 48 + 34 + 10 + ctx.measureText(wmText).width + 22, wmH = 54;
+      var wmX = (P.lines ? P.w - P.M : P.w) - wmW, wmY = P.midTop + P.midH - wmH;
+      if (P.green) { ctx.fillStyle = '#00b140'; ctx.fillRect(wmX, wmY, wmW, wmH); }
+      else {
+        var wg = ctx.createLinearGradient(wmX, 0, wmX + 34, 0);
+        wg.addColorStop(0, 'rgba(18,18,17,0)'); wg.addColorStop(1, P.paper);
+        ctx.fillStyle = wg; ctx.fillRect(wmX, wmY, 34, wmH);
+        ctx.fillStyle = P.paper; ctx.fillRect(wmX + 34, wmY, wmW - 34, wmH);
+      }
+      if (lionG) ctx.drawImage(lionG, wmX + 48, wmY + 10, 34, 34 * lionG.height / lionG.width);
+      ctx.fillStyle = '#e8e4db'; ctx.textBaseline = 'middle';
+      ctx.fillText(wmText, wmX + 92, wmY + wmH / 2 + 1);
+      ctx.textBaseline = 'alphabetic';
     }
-    if (lionG) ctx.drawImage(lionG, wmX + 48, wmY + 10, 34, 34 * lionG.height / lionG.width);
-    ctx.fillStyle = '#e8e4db'; ctx.textBaseline = 'middle';
-    ctx.fillText(wmText, wmX + 92, wmY + wmH / 2 + 1);
-    ctx.textBaseline = 'alphabetic';
+    // Band-Ebene: links und vor dem YouTube-Logo weich ausblenden, dann aufs Bild
+    if (ctx !== base) {
+      var fadeR = P.w - P.ytR, mk = ctx.createLinearGradient(0, 0, fadeR, 0);
+      mk.addColorStop(0, 'rgba(0,0,0,0)'); mk.addColorStop(0.06, '#000');
+      mk.addColorStop(Math.max(0.07, 1 - 160 / fadeR), '#000'); mk.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalCompositeOperation = 'destination-in'; ctx.fillStyle = mk; ctx.fillRect(0, 0, P.w, P.h);
+      ctx.globalCompositeOperation = 'source-over';
+      base.drawImage(S.layer, 0, 0);
+      ctx = base;
+    }
     // ── Einzähler
     if (P.countIn && t >= SB_EXP_LEAD && t < P.startT) {
       var cn = Math.min(4, Math.floor((t - SB_EXP_LEAD) / P.qd) + 1);
@@ -23289,8 +23489,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       ctx.fillText(String(cn), 0, 0);
       ctx.restore();
     }
-    // ── Fortschritt (nicht im Cover-Video)
-    if (P.cam) return;
+    // ── Cover-Video: Titel, Blende aus Schwarz am Anfang und nach Schwarz am Songende
+    if (P.cam) {
+      _sbExpCTitle(ctx, P, t, lionW);
+      var fa = Math.max(1 - t / 0.6, (t - (P.songEnd - 0.8)) / 0.8);
+      if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, fa).toFixed(3) + ')'; ctx.fillRect(0, 0, P.w, P.h); }
+      return;
+    }
+    // ── Fortschritt
     var fx = P.tall ? 72 : 96, fb = P.h - (P.tall ? 300 : 70), fwid = P.w - 2 * fx, py = fb - 49;
     var el = Math.max(0, Math.min(P.songSec, t - P.startT));
     ctx.fillStyle = P.green ? '#10331e' : 'rgba(255,255,255,0.12)'; ctx.fillRect(fx, py, fwid, 6);
@@ -23303,6 +23509,96 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ctx.textAlign = 'left'; ctx.fillText(_sbMmSs(el), fx, fb - 6);
     ctx.textAlign = 'right'; ctx.fillText(_sbMmSs(Math.round(P.songSec)), fx + fwid, fb - 6);
     ctx.textAlign = 'left';
+  }
+
+  // ── Cover-Video: Titel, Abspann, Endcard, Lautstärke (29.10.2026)
+  var SB_FONT = '"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+  function _sbEase(p) { p = Math.max(0, Math.min(1, p)); return 1 - Math.pow(1 - p, 3); }
+  function _sbSpacing(ctx, v) { try { ctx.letterSpacing = v; } catch (e) {} }
+  // DRUMLION-Schriftzug mit Löwe; (x, y) = linke Kante, Grundlinie
+  function _sbExpBrand(ctx, x, y, size, lionW) {
+    ctx.font = '800 ' + size + 'px ' + SB_FONT; _sbSpacing(ctx, (size * 0.22).toFixed(1) + 'px');
+    var ls = size * 1.75, dw = ctx.measureText('DRUM').width;
+    if (lionW) ctx.drawImage(lionW, x, y - size * 1.25, ls, ls * lionW.height / lionW.width);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff'; ctx.fillText('DRUM', x + ls + 14, y);
+    ctx.fillStyle = SB_GOLD; ctx.fillText('LION', x + ls + 14 + dw, y);
+    _sbSpacing(ctx, '0px');
+    return ls + 14 + dw + ctx.measureText('LION').width;
+  }
+  // Titel oben, gegenüber dem Fenster; blendet ein und nach dem Einstieg wieder aus
+  function _sbExpCTitle(ctx, P, t, lionW) {
+    var al = Math.min(_sbEase((t - 0.4) / 0.6), 1 - _sbEase((t - P.startT - 4) / 0.8));
+    if (al <= 0.01) return;
+    var right = _sbPrefs.vidWin === 'tl', x = right ? P.w - 64 : 64, y = 56;
+    ctx.save();
+    ctx.globalAlpha = al; ctx.shadowColor = 'rgba(0,0,0,0.65)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 2;
+    ctx.textBaseline = 'alphabetic';
+    ctx.font = '800 26px ' + SB_FONT; _sbSpacing(ctx, '5.7px');
+    var bw = 60 + ctx.measureText('DRUMLION').width;
+    _sbExpBrand(ctx, right ? x - bw : x, y + 33, 26, lionW);
+    ctx.textAlign = right ? 'right' : 'left';
+    ctx.font = '800 64px ' + SB_FONT; ctx.fillStyle = '#E8E4DB';
+    ctx.fillText(_sbSong.title || 'Untitled song', x, y + 124, P.w * 0.55);
+    ctx.font = '700 28px ' + SB_FONT; ctx.fillStyle = SB_GOLD; _sbSpacing(ctx, '2.2px');
+    ctx.fillText('DRUM COVER', x, y + 170);
+    ctx.restore();
+  }
+  // Nach dem Song: eigener Abspann (Video mit Ton), dann die Endcard
+  function _sbExpOutro(ctx, P, t, S, lionW) {
+    var fo;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, P.w, P.h);
+    if (t < P.outroDur) {
+      _sbCamPaint(ctx, S.camO, P.rotO, 0, 0, P.w, P.h, '');
+      fo = Math.max(1 - t / 0.5, P.endDur ? (t - (P.outroDur - 0.5)) / 0.5 : 0);
+    } else {
+      _sbExpEndCard(ctx, P, lionW);
+      fo = 1 - (t - P.outroDur) / 0.6;
+    }
+    if (fo > 0) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, fo).toFixed(3) + ')'; ctx.fillRect(0, 0, P.w, P.h); }
+  }
+  // Endcard: links Drumlion Academy mit Link, rechts frei für die YouTube-Endelemente
+  // (Video-Vorschlag, Abonnieren, Link-Element)
+  function _sbExpEndCard(ctx, P, lionW) {
+    var x = P.tall ? 72 : 120, y = P.tall ? 560 : 330;
+    ctx.fillStyle = '#0b0b0a'; ctx.fillRect(0, 0, P.w, P.h);
+    var rg = ctx.createRadialGradient(P.w * 0.28, P.h * 0.5, 0, P.w * 0.28, P.h * 0.5, P.w * 0.5);
+    rg.addColorStop(0, 'rgba(201,168,76,0.10)'); rg.addColorStop(1, 'rgba(201,168,76,0)');
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, P.w, P.h);
+    ctx.save();
+    ctx.textBaseline = 'alphabetic';
+    _sbExpBrand(ctx, x, y, 30, lionW);
+    ctx.textAlign = 'left';
+    ctx.font = '800 84px ' + SB_FONT; ctx.fillStyle = '#E8E4DB';
+    ctx.fillText('Drumlion Academy', x, y + 124);
+    ctx.font = '500 36px ' + SB_FONT; ctx.fillStyle = '#c9c3b6';
+    ['Learn drums step by step – 100 levels.', 'Grooves, fills, rudiments and reading.', '20 minutes a day.'].forEach(function(l, i) {
+      ctx.fillText(l, x, y + 196 + i * 52);
+    });
+    var url = 'drumlion.com/academy', uy = y + 380;
+    ctx.font = '700 34px ' + SB_FONT;
+    var uw = ctx.measureText(url).width + 56;
+    _sbRoundPath(ctx, x, uy, uw, 68, 34); ctx.fillStyle = SB_GOLD; ctx.fill();
+    ctx.fillStyle = '#0b0b0a'; ctx.textBaseline = 'middle'; ctx.fillText(url, x + 28, uy + 35);
+    ctx.restore();
+  }
+  // Lautstärke angleichen: Ziel etwa −14 LUFS wie bei YouTube, grob über den
+  // Effektivwert des Songteils; Spitzen bleiben unter 0,97, also kein Übersteuern
+  function _sbLoudness(buf, P) {
+    var sr = buf.sampleRate, a = Math.floor(P.startT * sr), b = Math.min(buf.length, Math.floor(P.songEnd * sr));
+    var sum = 0, n = 0, peak = 0, ch, i, d;
+    for (ch = 0; ch < buf.numberOfChannels; ch++) {
+      d = buf.getChannelData(ch);
+      for (i = 0; i < d.length; i++) { var v = d[i] < 0 ? -d[i] : d[i]; if (v > peak) peak = v; }
+      for (i = a; i < b; i++) { sum += d[i] * d[i]; n++; }
+    }
+    if (!n || !peak || !sum) return;
+    var gain = Math.max(0.25, Math.min(4, Math.min(0.2 / Math.sqrt(sum / n), 0.97 / peak)));
+    if (Math.abs(gain - 1) < 0.03) return;
+    for (ch = 0; ch < buf.numberOfChannels; ch++) {
+      d = buf.getChannelData(ch);
+      for (i = 0; i < d.length; i++) d[i] *= gain;
+    }
   }
 
   // Welche Takt-Bilder ein Bild braucht: [Takt, gold?]
@@ -23367,10 +23663,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       check();
       aCfg = a;
       _sbExpUi(true, 0, 'Mixing sound…');
+      return (aCfg && P.outroDur) ? _sbCamPcm(_sbCams.outro).then(function(pcm) { P.outroPcm = pcm; }, function() {}) : null;
+    }).then(function() {
       return aCfg ? _sbExpAudio(P, aCfg.mux === 'aac' ? 2112 / SB_EXP_SR : 0) : null;
     }).then(function(buf) {
       check();
       audio = buf;
+      if (audio && P.cam) _sbLoudness(audio, P);
       if (!audio) aCfg = null;
       return _sbFirstSupported(VideoEncoder, ['avc1.64002A', 'avc1.4D402A', 'avc1.42002A', 'avc1.640033'].map(function(c) {
         return { codec: c, width: P.w, height: P.h, bitrate: P.cam ? 16000000 : 12000000, framerate: fps };
@@ -23434,10 +23733,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               check();
               // Cover-Video: erst die Kamerabilder zu diesem Zeitpunkt dekodieren
               if (cams && S.camF !== f) {
-                var tc = P.rel + f / fps - P.startT, ff = f;
-                Promise.all([cams.main ? cams.main.at(_sbSong.cams.main.at + tc) : null,
-                             cams.win ? cams.win.at(_sbSong.cams.win.at + tc) : null]).then(function(fr) {
-                  S.camA = fr[0]; S.camB = fr[1]; S.camF = ff;
+                var tt = f / fps, tc = P.rel + tt - P.startT, ff = f, inSong = tt < P.songEnd;
+                Promise.all([inSong && cams.main ? cams.main.at(_sbSong.cams.main.at + tc) : null,
+                             inSong && cams.win ? cams.win.at(_sbSong.cams.win.at + tc) : null,
+                             !inSong && cams.outro && tt < P.songEnd + P.outroDur ? cams.outro.at(tt - P.songEnd) : null
+                            ]).then(function(fr) {
+                  S.camA = fr[0]; S.camB = fr[1]; S.camO = fr[2]; S.camF = ff;
                   if (ff % 30 === 0) _sbExpUi(true, ff / nFrames, 'Rendering ' + Math.round(ff / nFrames * 100) + ' % · ' +
                                               _sbMmSs(ff / fps) + ' of ' + _sbMmSs(P.total));
                   run();
@@ -23495,7 +23796,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         _devToast('Video export failed: ' + ((err && err.message) || err));
       }
     }).then(function() {
-      if (cams) ['main', 'win'].forEach(function(k) { if (cams[k]) cams[k].close(); });
+      if (cams) ['main', 'win', 'outro'].forEach(function(k) { if (cams[k]) cams[k].close(); });
       _sbExp = null;
       _sbExpUi(false);
     });
