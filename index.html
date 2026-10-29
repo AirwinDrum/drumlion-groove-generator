@@ -16762,7 +16762,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261029-205432';
+  var DL_BUILD = '20261029-214113';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21498,10 +21498,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                      drums: video ? !!opts.drums : (!withSong || !!_sbPrefs.drumsOn),
                      click: video ? !!opts.click : !!_sbPrefs.click,
                      t0: t0, qd: 60 / _sbBarBpm(from), startT: t0, prev: null };
-    // Einzähler; mit Aufnahme im Editor ohne — dort führt der Song selbst hinein.
-    // In der Video-Ansicht läuft die Aufnahme während des Einzählers schon mit.
-    if (_sbPrefs.countIn && !(withSong && !video)) {
-      if ((P.drums || P.click) && !withSong) for (var c = 0; c < 4; c++) playCountClick(c === 0, 1.0, t0 + c * P.qd);
+    // Einzähler: ein Takt Klicks vor dem Start, die Aufnahme läuft währenddessen
+    // als Vorlauf mit. Mit Aufnahme fiel er bisher weg (Erwin, 29.10.2026: „der
+    // einzähler funktioniert nicht“). Im Editor klickt er mit Aufnahme immer, in
+    // der Video-Ansicht nur mit Drums oder Click — „nur Song“ bleibt ohne Klicks.
+    if (_sbPrefs.countIn) {
+      if (P.drums || P.click || (withSong && !video)) for (var c = 0; c < 4; c++) playCountClick(c === 0, 1.0, t0 + c * P.qd);
       P.t = P.startT = t0 + 4 * P.qd;
     }
     if (withSong) _sbSongAt(t0, _sbBarPos(from) - (P.startT - t0));
@@ -22421,7 +22423,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.start(t); o.stop(t + 0.06);
     }
-    if (P.countIn && (P.drums || P.click) && !P.song) for (var c = 0; c < 4; c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
+    if (P.countIn && (P.drums || P.click)) for (var c = 0; c < 4; c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
     // Aufnahme: läuft so, dass der Takt `from` genau bei P.startT einsetzt (davor die Aufnahme als Vorlauf)
     if (P.song) {
       var song = ctx.createBufferSource(), p0 = _sbBarPos(P.from) - P.startT + shift;
