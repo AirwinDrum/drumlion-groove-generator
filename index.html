@@ -16797,7 +16797,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261030-200220';
+  var DL_BUILD = '20261030-220041';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21640,12 +21640,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Video-Ansicht: jede Quelle über ihren Mixer-Bus (Regler wirken sofort)
     if (video) P.bus = _sbMixBuses(aCtx, _aOut());
     // Einzähler: ein Takt Klicks vor dem Start, die Aufnahme läuft währenddessen
-    // als Vorlauf mit. Mit Aufnahme fiel er bisher weg (Erwin, 29.10.2026: „der
-    // einzähler funktioniert nicht“). Im Editor klickt er mit Aufnahme immer, in
-    // der Video-Ansicht nur mit Drums oder Click — „nur Song“ bleibt ohne Klicks.
+    // als Vorlauf mit (Erwin, 29.10.2026: „der einzähler funktioniert nicht“).
+    // Er klickt immer, auch im Cover-Modus mit nur Song oder Mix (Erwin, 30.10.2026:
+    // „der einzähler hat im cover modus keinen sound“); laut/leise über den Click-Regler im Mixer.
     if (_sbPrefs.countIn) {
       P.cq = _sbQ(_sbSong.bars[from]);
-      if (P.drums || P.click || (withSong && !video)) _sbOnBus(P.bus && P.bus.click, function() {
+      _sbOnBus(P.bus && P.bus.click, function() {
         for (var c = 0; c < P.cq; c++) playCountClick(c === 0, 1.0, t0 + c * P.qd);
       });
       P.t = P.startT = t0 + P.cq * P.qd;
@@ -23374,7 +23374,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // `shift`: so viel früher mischen, wie der Encoder vorne anfügt (AAC: 2112
   // Samples = 44 ms) — sonst läuft der Ton im fertigen Video hinter dem Bild her.
   function _sbExpAudio(P, shift) {
-    if (!(P.drums || P.click || P.song || P.mix)) return Promise.resolve(null);
+    if (!(P.drums || P.click || P.song || P.mix || P.countIn)) return Promise.resolve(null);
     var ctx = new OfflineAudioContext(2, Math.ceil(P.total * SB_EXP_SR), SB_EXP_SR), openG = null;
     var lim = _limiter(ctx), out = lim;   // derselbe Sicherheits-Begrenzer wie bei der Wiedergabe
     shift = shift || 0;
@@ -23423,7 +23423,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
       o.start(t); o.stop(t + 0.06);
     }
-    if (P.countIn && (P.drums || P.click)) for (var c = 0; c < (P.cq || 4); c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
+    if (P.countIn) for (var c = 0; c < (P.cq || 4); c++) click(c === 0, 1.0, SB_EXP_LEAD + c * P.qd);
     // Aufnahme: läuft so, dass der Takt `from` genau bei P.startT einsetzt (davor die Aufnahme als Vorlauf)
     if (P.song) {
       var song = ctx.createBufferSource(), p0 = _sbBarPos(P.from) - P.startT + shift;
@@ -23796,7 +23796,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbStop();
     var job = _sbExp = { cancel: false };
     var P = _sbExpPlan(), fps = SB_EXP_FPS, nFrames = Math.ceil(P.total * fps);
-    var bars = _sbSong.bars, title = _sbSong.title || 'Untitled song', anySound = P.drums || P.click || P.song || P.mix;
+    var bars = _sbSong.bars, title = _sbSong.title || 'Untitled song', anySound = P.drums || P.click || P.song || P.mix || P.countIn;
     var lionW = null, lionG = null, audio = null, aCfg = null, vCfg = null, muxer = null, encErr = null, cams = null;
     var check = function() { if (job.cancel) throw new Error('cancelled'); if (encErr) throw encErr; };
     var fname = ((title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-')) || 'song') +
