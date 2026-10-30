@@ -16797,7 +16797,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261030-193958';
+  var DL_BUILD = '20261030-200220';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -23799,10 +23799,29 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var bars = _sbSong.bars, title = _sbSong.title || 'Untitled song', anySound = P.drums || P.click || P.song || P.mix;
     var lionW = null, lionG = null, audio = null, aCfg = null, vCfg = null, muxer = null, encErr = null, cams = null;
     var check = function() { if (job.cancel) throw new Error('cancelled'); if (encErr) throw encErr; };
+    var fname = ((title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-')) || 'song') +
+                (P.cam ? '-cover' : '') + (P.tall ? '-9x16' : '') + (P.green ? '-greenscreen' : '') + '.mp4';
+    // Direkt in eine Datei schreiben statt im Speicher zu sammeln (30.10.2026: lange Cover-Videos mit zwei
+    // Kameras brachen ab — das ganze Video lag bis zum Schluss mehrfach im Arbeitsspeicher). Der Speicherdialog
+    // muss sofort im Klick kommen; ohne ihn (Safari, eingebettet) bleibt es beim Download wie bisher.
+    var fileOut = null, pick = null;
+    if (typeof window.showSaveFilePicker === 'function' && window.self === window.top) {
+      try {
+        pick = window.showSaveFilePicker({ suggestedName: fname, types: [{ description: 'MP4 video', accept: { 'video/mp4': ['.mp4'] } }] });
+      } catch (e) { pick = null; }
+    }
     _sbExpUi(true, 0, 'Preparing…');
     try { initA(); } catch (e) {}
 
-    _sbLoadMuxer().then(function() {
+    Promise.resolve(pick).then(function(h) {
+      return h ? h.createWritable() : null;
+    }, function(e) {
+      if (e && e.name === 'AbortError') throw new Error('cancelled');   // Dialog abgebrochen
+      return null;
+    }).then(function(ws) {
+      fileOut = ws;
+      return _sbLoadMuxer();
+    }).then(function() {
       // Samples müssen dekodiert sein, bevor gemischt wird
       var tries = 0;
       function waitSamples() {
@@ -23851,10 +23870,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!v) throw new Error('This browser cannot encode H.264 video');
       vCfg = v;
       muxer = new Mp4Muxer.Muxer({
-        target: new Mp4Muxer.ArrayBufferTarget(),
+        target: fileOut ? new Mp4Muxer.FileSystemWritableFileStreamTarget(fileOut) : new Mp4Muxer.ArrayBufferTarget(),
         video: { codec: 'avc', width: P.w, height: P.h, frameRate: fps },
         audio: aCfg ? { codec: aCfg.mux, numberOfChannels: 2, sampleRate: SB_EXP_SR } : undefined,
-        fastStart: 'in-memory',
+        fastStart: fileOut ? false : 'in-memory',
         firstTimestampBehavior: 'offset'
       });
       if (!aCfg) return null;
@@ -23944,24 +23963,34 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     }).then(function() {
       check();
-      _sbExpUi(true, 1, 'Checking sound…');
       muxer.finalize();
+      if (fileOut) {
+        _sbExpUi(true, 1, 'Saving…');
+        var ws = fileOut;
+        fileOut = null;
+        return ws.close().then(function() { return 'file'; });
+      }
+      _sbExpUi(true, 1, 'Checking sound…');
       // Gegenprobe: lässt sich die Tonspur der fertigen Datei wieder lesen?
       return (aCfg ? _sbDecode(muxer.target.buffer.slice(0)).then(function() { return true; }, function() { return false; })
                    : Promise.resolve(true));
     }).then(function(soundOk) {
+      if (soundOk === 'file') {
+        _devToast('Video saved: ' + fname + ((aCfg || !anySound) ? '' : ' (without sound: this browser cannot encode audio)'));
+        return;
+      }
       _sbExpUi(true, 1, 'Saving…');
       var blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
       var link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = ((title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-')) || 'song') +
-                      (P.cam ? '-cover' : '') + (P.tall ? '-9x16' : '') + (P.green ? '-greenscreen' : '') + '.mp4';
+      link.download = fname;
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(function() { URL.revokeObjectURL(link.href); }, 60000);
       _devToast('Video saved: ' + link.download +
                 (!soundOk ? ' — but its sound track could not be read back. Please try Chrome.' :
                  (aCfg || !anySound) ? '' : ' (without sound: this browser cannot encode audio)'));
     }).catch(function(err) {
+      if (fileOut) { try { fileOut.abort(); } catch (e) {} fileOut = null; }   // halbe Datei verwerfen
       if (err && err.message === 'cancelled') _devToast('Video export cancelled');
       else {
         if (window.console) console.error('Video export', err);
