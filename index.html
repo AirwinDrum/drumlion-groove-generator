@@ -1841,6 +1841,69 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid-camrow b { min-width: 104px; color: var(--sb-text); }
 .sb-vid-camname { color: var(--sb-mute); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-vid-cammsg { color: var(--sb-mute); }
+/* Level-Test (02.11.2026): ?test=1 — Fragen, Spielteil, Ergebnis mit Teilen-Karte */
+.lt { position: fixed; inset: 0; z-index: 9000; display: none; overflow-y: auto; background: var(--dl-page); color: var(--dl-ink); }
+.lt.open { display: block; }
+.lt-wrap { max-width: 760px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column;
+  padding: max(14px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px)) 40px max(18px, env(safe-area-inset-left, 0px)); }
+.lt-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0 16px; }
+.lt-brand { font-weight: 800; letter-spacing: 0.2em; font-size: 14px; }
+.lt-brand em { color: var(--dl-gold-ink); font-style: normal; }
+.lt-x { background: none; border: 0; color: inherit; font-size: 28px; line-height: 1; cursor: pointer; opacity: 0.55; padding: 4px 8px; }
+.lt-prog { height: 4px; border-radius: 2px; background: var(--dl-line-2); overflow: hidden; margin-bottom: 26px; }
+.lt-prog i { display: block; height: 100%; width: 0; background: #C9A84C; transition: width 0.35s ease; }
+.lt-card { flex: 1; display: flex; flex-direction: column; gap: 18px; animation: ltIn 0.35s ease; }
+@keyframes ltIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.lt-kick { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dl-gold-ink); font-weight: 700; }
+.lt-h { font-size: clamp(28px, 6vw, 46px); line-height: 1.08; font-weight: 800; margin: 0; text-wrap: balance; }
+.lt-p { font-size: 16px; line-height: 1.55; opacity: 0.8; margin: 0; max-width: 56ch; }
+.lt-opts { display: grid; gap: 10px; }
+.lt-opt { text-align: left; padding: 16px 18px; border-radius: 12px; border: 1px solid var(--dl-line); background: var(--dl-raise);
+  color: inherit; font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.lt-opt:hover, .lt-opt:focus-visible { border-color: #C9A84C; outline: none; }
+.lt-opt.on { border-color: #C9A84C; background: rgba(201,168,76,0.14); }
+.lt-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.lt-chips .lt-opt { padding: 11px 16px; font-size: 15px; }
+.lt-go { align-self: flex-start; padding: 15px 30px; border-radius: 999px; border: 0; background: #C9A84C; color: #0b0b0a;
+  font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-block; }
+.lt-go:disabled { opacity: 0.4; cursor: default; }
+.lt-go:focus-visible, .lt-ghost:focus-visible, .lt-link:focus-visible { outline: 2px solid #C9A84C; outline-offset: 3px; }
+.lt-ghost { padding: 14px 22px; border-radius: 999px; border: 1px solid var(--dl-line); background: transparent; color: inherit;
+  font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+.lt-link { background: none; border: 0; color: var(--dl-gold-ink); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; align-self: flex-start; }
+.lt-play { background: var(--dl-paper); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 12px 8px; }
+.lt-play svg { display: block; width: 100%; height: auto; }
+.lt-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; opacity: 0.8; margin-bottom: 4px; }
+.lt-again { background: none; border: 1px solid var(--dl-line); color: inherit; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.lt-ans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.lt-ans .lt-opt { text-align: center; font-size: 16px; padding: 14px 8px; }
+.lt-ans .lt-opt small { display: block; font-weight: 500; opacity: 0.65; font-size: 12px; margin-top: 4px; }
+.lt-score { font-size: clamp(96px, 24vw, 160px); font-weight: 800; line-height: 0.9; color: #C9A84C; font-variant-numeric: tabular-nums; }
+.lt-score span { font-size: 0.28em; color: var(--dl-ink); opacity: 0.5; margin-left: 8px; }
+.lt-facts { display: flex; flex-wrap: wrap; gap: 8px; }
+.lt-fact { padding: 6px 12px; border-radius: 999px; background: var(--dl-raise); border: 1px solid var(--dl-line); font-size: 13px; }
+.lt-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+@media (max-width: 520px) { .lt-ans { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .lt-card { animation: none; } .lt-prog i { transition: none; } }
+/* Notenstücke (02.11.2026): Laufband oder zwei Zeilen, siehe _mbRender */
+.mb { display: none; width: 100%; flex-direction: column; gap: 4px; }
+.mb.on { display: flex; }
+.mb-top { display: flex; justify-content: flex-end; }
+.mb-seg { display: inline-flex; border: 1px solid var(--dl-line); border-radius: 999px; overflow: hidden; }
+.mb-seg button { background: none; border: 0; color: inherit; font: inherit; font-size: 12px; font-weight: 700;
+  padding: 4px 12px; cursor: pointer; opacity: 0.6; }
+.mb-seg button.on { background: rgba(201,168,76,0.18); color: var(--dl-gold-ink); opacity: 1; }
+.mb-seg button:focus-visible { outline: 2px solid #C9A84C; outline-offset: -2px; }
+.mb-view { position: relative; overflow: hidden; width: 100%; }
+.notation-box .mb svg { display: block; width: 100%; max-height: none; }
+.mb-strip { display: flex; align-items: flex-start; will-change: transform; }
+.mb-strip .mb-tile { flex: none; }
+.mb-mark { position: absolute; top: 4px; bottom: 4px; width: 2px; margin-left: -1px; border-radius: 1px;
+  background: rgba(201,168,76,0.5); pointer-events: none; }
+.mb-rows { display: flex; flex-direction: column; gap: 6px; will-change: transform; }
+.mb-row { display: flex; }
+.mb-row .mb-tile { min-width: 0; }
+@media (prefers-reduced-motion: reduce) { .mb-strip, .mb-rows { transition: none !important; } }
 .sb-camat { width: 5.4em; }
 .sb-vid-mixer { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; font-size: 13px; }
 .sb-mix { display: inline-flex; align-items: center; gap: 7px; color: var(--sb-text); }
@@ -15785,6 +15848,141 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     out.forEach(function(ex){ EXERCISES.push(ex); });
   })();
 
+  // ── NOTE READING: Zweitakt-Kombis und Notenstücke (02.11.2026) ─────────────
+  // Erwin: „dann erstmal zweitaktige kombis mit den bisher vorgekommenen notenübungen. und dann
+  // komplette Noten stücke … 4 Takte und wachsend. immer nur mit noten die schon als einzelübungen
+  // vorkamen.“ Jeder Takt ist ein Takt einer Einzelübung (Verweis per ID), erzeugt mit
+  // docs/tools/notes_reading_gen.py. Sie hängen hinten am Notes-Pool, kommen also erst nach allen
+  // Einzelübungen. Tempo wie die feinste beteiligte Einzelübung. Kombis laufen als zweitaktige
+  // Übung (`beats2`, anderes Raster im 2. Takt über `grid2`), Stücke über `bars` (startPlaying und
+  // `_mbRender`). IDs 5001+ / 5501+ sind Fortschritts-Schlüssel: nur hinten anhängen.
+  var NOTES_READING_LABELS = ['Two-Bar Reading · Quarter Notes', 'Two-Bar Reading · Eighth Notes', 'Two-Bar Reading · Sixteenth Notes', 'Two-Bar Reading · Quarter & Eighth Notes', 'Two-Bar Reading · Eighth & Sixteenth Notes', 'Two-Bar Reading · Quarter & Sixteenth Notes', 'Reading Pieces · 4 Bars', 'Reading Pieces · 8 Bars', 'Reading Pieces · 12 Bars', 'Reading Pieces · 16 Bars'];
+  // [id, Kategorie, Takt 1, Takt 2] — Takte = IDs der Einzelübungen
+  var NOTES_COMBOS = [
+    [5001,0,201,202],[5002,0,201,205],[5003,0,205,218],[5004,0,206,219],[5005,0,209,218],[5006,0,203,208],[5007,0,213,201],[5008,0,208,205],
+    [5009,0,218,214],[5010,0,206,210],[5011,0,214,219],[5012,0,215,219],[5013,0,216,203],[5014,0,209,211],[5015,0,207,214],[5016,0,215,207],
+    [5017,0,211,213],[5018,0,216,210],[5019,0,211,217],[5020,0,216,217],[5021,1,220,221],[5022,1,222,225],[5023,1,223,226],[5024,1,221,231],
+    [5025,1,229,225],[5026,1,220,235],[5027,1,228,229],[5028,1,222,236],[5029,1,224,235],[5030,1,225,235],[5031,1,233,229],[5032,1,240,223],
+    [5033,1,241,223],[5034,1,238,227],[5035,1,240,227],[5036,1,230,239],[5037,1,234,236],[5038,1,241,232],[5039,1,239,236],[5040,1,240,241],
+    [5041,2,251,250],[5042,2,254,250],[5043,2,251,255],[5044,2,250,258],[5045,2,255,254],[5046,2,251,259],[5047,2,256,255],[5048,2,254,258],
+    [5049,2,252,261],[5050,2,258,256],[5051,2,252,262],[5052,2,263,252],[5053,2,260,256],[5054,2,264,253],[5055,2,261,257],[5056,2,262,257],
+    [5057,2,257,263],[5058,2,262,260],[5059,2,263,261],[5060,2,260,264],[5061,3,220,201],[5062,3,201,226],[5063,3,224,204],[5064,3,206,223],
+    [5065,3,210,221],[5066,3,230,203],[5067,3,202,235],[5068,3,222,213],[5069,3,208,229],[5070,3,218,238],[5071,3,231,208],[5072,3,207,233],
+    [5073,3,217,223],[5074,3,239,205],[5075,3,206,239],[5076,3,228,217],[5077,3,211,237],[5078,3,234,215],[5079,3,215,237],[5080,3,241,217],
+    [5081,4,220,250],[5082,4,220,254],[5083,4,225,253],[5084,4,256,222],[5085,4,251,232],[5086,4,221,259],[5087,4,256,227],[5088,4,224,259],
+    [5089,4,220,263],[5090,4,222,262],[5091,4,240,251],[5092,4,235,255],[5093,4,239,253],[5094,4,258,233],[5095,4,229,262],[5096,4,241,255],
+    [5097,4,239,258],[5098,4,238,260],[5099,4,235,264],[5100,4,264,241],[5101,5,250,201],[5102,5,252,218],[5103,5,253,203],[5104,5,256,218],
+    [5105,5,209,251],[5106,5,256,204],[5107,5,205,256],[5108,5,262,201],[5109,5,254,210],[5110,5,214,252],[5111,5,251,216],[5112,5,218,264],
+    [5113,5,262,204],[5114,5,206,262],[5115,5,213,257],[5116,5,206,264],[5117,5,261,211],[5118,5,264,209],[5119,5,263,213],[5120,5,217,263]
+  ];
+  // [id, Kategorie, [Takte]] — Takte = IDs der Einzelübungen
+  var NOTES_PIECES = [
+    [5501,6,[224,202,203,201]],
+    [5502,6,[224,218,225,202]],
+    [5503,6,[227,218,222,218]],
+    [5504,6,[223,227,221,201]],
+    [5505,6,[203,227,223,214]],
+    [5506,6,[221,220,202,214]],
+    [5507,6,[222,203,204,201]],
+    [5508,6,[204,220,227,201]],
+    [5509,6,[224,227,220,214]],
+    [5510,6,[204,223,226,202]],
+    [5511,6,[224,222,201,214]],
+    [5512,6,[223,203,222,218]],
+    [5513,6,[222,256,255,202]],
+    [5514,6,[255,251,205,214]],
+    [5515,6,[221,226,221,218]],
+    [5516,6,[225,201,220,218]],
+    [5517,6,[226,251,227,214]],
+    [5518,6,[208,224,203,202]],
+    [5519,6,[256,257,229,214]],
+    [5520,6,[203,256,255,202]],
+    [5521,6,[203,202,225,214]],
+    [5522,6,[253,202,207,218]],
+    [5523,6,[252,204,257,218]],
+    [5524,6,[257,250,226,214]],
+    [5525,6,[227,230,201,202]],
+    [5526,6,[228,253,220,201]],
+    [5527,6,[254,223,230,214]],
+    [5528,6,[252,256,226,218]],
+    [5529,6,[253,250,257,201]],
+    [5530,6,[256,230,254,201]],
+    [5531,7,[233,228,253,251,227,218,207,201]],
+    [5532,7,[224,255,202,255,209,221,258,202]],
+    [5533,7,[218,210,203,259,225,224,210,202]],
+    [5534,7,[256,223,222,210,257,205,223,201]],
+    [5535,7,[254,233,201,221,207,202,222,202]],
+    [5536,7,[257,202,230,251,226,255,256,214]],
+    [5537,7,[259,206,251,229,252,209,231,218]],
+    [5538,7,[201,250,253,219,234,223,259,214]],
+    [5539,7,[231,204,209,255,253,221,206,218]],
+    [5540,7,[220,207,228,208,204,251,201,218]],
+    [5541,7,[259,225,229,202,252,234,257,214]],
+    [5542,7,[253,225,218,251,204,207,223,218]],
+    [5543,7,[252,201,254,201,208,253,223,218]],
+    [5544,7,[211,224,220,221,207,202,226,201]],
+    [5545,7,[228,250,225,204,228,231,206,201]],
+    [5546,7,[202,257,210,257,258,201,252,201]],
+    [5547,7,[213,219,222,251,211,254,230,201]],
+    [5548,7,[201,218,227,201,228,256,252,201]],
+    [5549,7,[224,205,204,261,210,250,233,218]],
+    [5550,7,[255,250,205,261,260,207,213,214]],
+    [5551,8,[260,211,228,204,259,257,222,236,221,226,203,214]],
+    [5552,8,[256,252,223,204,257,207,261,229,256,258,255,201]],
+    [5553,8,[233,226,228,236,223,252,251,261,252,256,220,202]],
+    [5554,8,[220,218,202,251,258,250,201,229,211,254,202,201]],
+    [5555,8,[262,258,256,210,251,230,237,236,251,255,256,202]],
+    [5556,8,[222,256,225,218,225,257,261,210,229,254,212,218]],
+    [5557,8,[258,253,203,201,236,223,228,229,232,228,225,214]],
+    [5558,8,[229,258,211,204,259,211,207,236,223,257,206,218]],
+    [5559,8,[222,252,215,229,255,251,213,236,210,253,215,214]],
+    [5560,8,[222,236,202,257,206,254,209,251,256,211,212,201]],
+    [5561,9,[262,222,262,239,255,237,231,255,224,256,253,257,234,238,252,218]],
+    [5562,9,[251,223,262,219,218,255,259,236,253,250,254,229,257,260,261,214]],
+    [5563,9,[258,257,255,236,212,222,203,201,227,221,220,236,228,212,204,218]],
+    [5564,9,[209,231,226,236,226,258,222,255,258,223,206,229,238,229,239,218]],
+    [5565,9,[216,223,263,255,205,232,250,255,209,238,254,240,254,237,262,214]],
+    [5566,9,[258,222,259,202,231,207,209,259,261,210,226,261,216,252,201,202]],
+    [5567,9,[252,205,263,240,231,252,223,221,261,254,232,229,232,258,255,201]],
+    [5568,9,[259,229,234,236,230,214,203,218,201,232,259,214,227,232,263,202]],
+    [5569,9,[215,211,263,214,234,258,204,236,234,201,227,204,210,230,263,202]],
+    [5570,9,[215,255,219,210,238,204,207,216,208,254,255,259,263,256,251,202]]
+  ];
+  (function _buildReading() {
+    var byId = {}, RANK = { whole: 0, half: 0, quarter: 0, eighth: 1, sixteenth: 2 };
+    EXERCISES.forEach(function(e) { if (e.cat === 'notes') byId[e.id] = e; });
+    function finest(list) {
+      var f = list[0];
+      list.forEach(function(e) { if ((RANK[e.noteValue] || 0) > (RANK[f.noteValue] || 0)) f = e; });
+      // nur Ganze/Halbe: Tempo der Viertel (deren Spanne beginnt tiefer)
+      return (RANK[f.noteValue] || 0) === 0 ? (byId[203] || f) : f;
+    }
+    function mk(id, lab, name, srcs) {
+      var f = finest(srcs), a = srcs[0];
+      var ex = { id: id, cat: 'notes', name: name, catLabel: NOTES_READING_LABELS[lab], noteValue: f.noteValue,
+                 hihatHands: 'one', minBPM: f.minBPM, maxBPM: f.maxBPM, step: f.step,
+                 beats: a.beats, stickings: a.stickings || null };
+      if (f.warmup) ex.warmup = { minBPM: f.warmup.minBPM, step: f.warmup.step };
+      return ex;
+    }
+    NOTES_COMBOS.forEach(function(c, k) {
+      var a = byId[c[2]], b = byId[c[3]];
+      if (!a || !b) return;
+      var ex = mk(c[0], c[1], 'Combo ' + (k + 1), [a, b]);
+      ex.beats2 = b.beats; ex.stickings2 = b.stickings || null;
+      ex.nv1 = a.noteValue; ex.nv2 = b.noteValue;   // Pausen je Takt wie in der Einzelübung
+      if (b.beats.length !== a.beats.length) { var q = b.beats.length / 4; ex.grid2 = [q, q, q, q]; }
+      EXERCISES.push(ex);
+    });
+    NOTES_PIECES.forEach(function(p, k) {
+      var srcs = p[2].map(function(id) { return byId[id]; });
+      if (srcs.some(function(e) { return !e; })) return;
+      var ex = mk(p[0], p[1], 'Piece ' + (k + 1), srcs);
+      ex.bars = srcs.map(function(e) { return { beats: e.beats, stickings: e.stickings || null, noteValue: e.noteValue }; });
+      EXERCISES.push(ex);
+    });
+  })();
+
 
   // Dev-Ranges aus diesem Browser auf die Übungen legen (siehe oben)
   (function _applyDevRanges() {
@@ -16797,7 +16995,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261102-153942';
+  var DL_BUILD = '20261102-190629';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18248,7 +18446,196 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Wo die Notenköpfe im Hauptbild sitzen (SVG-Koordinaten) — für die Noten
   // zum Anklicken. renderNot() füllt die Liste bei jedem Zeichnen neu.
   var _noteHits;
+
+  // ── Notenstücke mit mehr als zwei Takten (02.11.2026) ─────────────────────
+  // Erwin: „du hast den songplayer schon vorbereitet. das kannst du doch als mehrtaktstruktur
+  // nehmen. bei höheren taktzahlen mach per dafault laufband aber die möglichkeit auf zeitzeiliges
+  // scrollen zu wechseln.“ Jeder Takt ist wie im Song-Player eine eigene Kachel (renderNot mit
+  // `opt.svg`). Laufband: die Kacheln gleiten unter einer festen Lesemarke durch, hinten hängen
+  // Kopien der ersten Takte, damit die Wiederholung nahtlos anschließt. Zwei Zeilen: die laufende
+  // Zeile oben, die nächste darunter. Bis 4 Takte stehen standardmäßig alle auf zwei Zeilen.
+  var MB_VIEW_KEY = 'drumlion_reading_view';
+  var _mb = null, _mbCur = -1;
+  function _mbMap(G) {
+    if (!G || !G.bars || G.bars.length < 3) return null;
+    if (G._mbMap) return G._mbMap;
+    var bpb = G.beatsPerBar || 4, slots = [];
+    G.bars.forEach(function(b, j) {
+      var q = b.beats.length / bpb;
+      b.beats.forEach(function(notes, s) { slots.push({ bar: j, s: s, q: q, notes: notes || [] }); });
+    });
+    return (G._mbMap = { bars: G.bars.length, slots: slots });
+  }
+  function _mbView(G) {
+    var v = null;
+    try { v = localStorage.getItem(MB_VIEW_KEY); } catch (e) {}
+    return (v === 'band' || v === 'lines') ? v : (G.bars.length > 4 ? 'band' : 'lines');
+  }
+  function _mbDrawTile(svg, b, cur) {
+    var keep = GROOVE;
+    GROOVE = { name: '', cat: 'notes', noteValue: b.noteValue, beatsPerBar: keep.beatsPerBar || 4,
+               beats: b.beats, stickings: b.stickings };
+    try { renderNot(cur == null ? -1 : cur, false, { svg: svg, plain: true }); } catch (e) {}
+    finally { GROOVE = keep; }
+    if (svg._vb) svg.setAttribute('viewBox', svg._vb);
+  }
+  // Kachel auf die Notenlinien zuschneiden: Nachbartakte teilen sich einen Taktstrich, die Linien
+  // laufen durch. Nur der erste Takt einer Zeile (bzw. des Bands) behält den linken Strich.
+  function _mbTile(b, j, ghost, keepLeft) {
+    var t = document.createElement('div');
+    t.className = 'mb-tile' + (ghost ? ' ghost' : '');
+    t.setAttribute('data-i', j);
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', 'Bar ' + (j + 1));
+    t.appendChild(svg);
+    _mbDrawTile(svg, b, null);
+    var vb = (svg.getAttribute('viewBox') || '0 0 560 108').split(/\s+/).map(Number), lo = Infinity, hi = -Infinity;
+    Array.prototype.forEach.call(svg.querySelectorAll('line'), function(l) {
+      var y1 = +l.getAttribute('y1'), y2 = +l.getAttribute('y2');
+      if (y1 === 40 && y2 === 40) { lo = Math.min(lo, +l.getAttribute('x1')); hi = Math.max(hi, +l.getAttribute('x2')); }
+    });
+    if (hi > lo) {
+      var x0 = keepLeft ? lo - 1 : lo + 1.2;
+      vb = [x0, vb[1], hi + 0.8 - x0, vb[3]];
+      svg._vb = vb.join(' ');
+      svg.setAttribute('viewBox', svg._vb);
+    }
+    t._ar = vb[2] / vb[3];
+    return t;
+  }
+  function _mbBuild(el, key) {
+    var G = GROOVE, bars = G.bars, view = _mbView(G), w = el.clientWidth || 600;
+    var M = { key: key, view: view, tiles: [], curBar: -1, row: 0, perRow: w >= 620 ? 2 : 1 };
+    el.innerHTML = '<div class="mb-top"><span class="mb-seg" role="group" aria-label="Reading view">' +
+      '<button type="button" data-mbview="band">Scroll</button><button type="button" data-mbview="lines">2 lines</button></span></div>';
+    Array.prototype.forEach.call(el.querySelectorAll('[data-mbview]'), function(b) {
+      var on = b.getAttribute('data-mbview') === view;
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+    });
+    var vw = document.createElement('div');
+    el.appendChild(vw);
+    if (view === 'band') {
+      // Kachelhöhe fest, Breite nach Notenwert (16tel-Takte breiter als Viertel-Takte, wie gedruckt).
+      // Höhe so, dass gut zwei Achtel-Takte (Handy: gut einer) zum Vorauslesen sichtbar sind.
+      var H = Math.round(Math.max(64, Math.min(130, w / (w >= 900 ? 2.2 : w >= 600 ? 1.8 : 1.25) / (560 / 108))));
+      vw.className = 'mb-view mb-band';
+      vw.style.height = H + 'px';
+      var strip = document.createElement('div'), mark = Math.round(w * 0.25), sp = document.createElement('div');
+      strip.className = 'mb-strip';
+      sp.style.cssText = 'flex:none;width:' + mark + 'px';
+      strip.appendChild(sp);
+      var size = function(t) { t.style.width = Math.round(t._ar * H) + 'px'; t.firstChild.style.height = H + 'px'; };
+      bars.forEach(function(b, j) { var t = _mbTile(b, j, false, j === 0); size(t); strip.appendChild(t); M.tiles.push(t); });
+      for (var g = 0, gw = 0; g < bars.length && gw < w; g++) { var gt = _mbTile(bars[g], g, true); size(gt); strip.appendChild(gt); gw += gt._ar * H; }
+      vw.appendChild(strip);
+      var mk = document.createElement('i');
+      mk.className = 'mb-mark';
+      mk.style.left = mark + 'px';
+      vw.appendChild(mk);
+      M.strip = strip; M.mark = mark;
+    } else {
+      vw.className = 'mb-view mb-lines';
+      var rowsEl = document.createElement('div'), rows = [], per = M.perRow;
+      rowsEl.className = 'mb-rows';
+      var addRow = function(from, ghost) {
+        var r = document.createElement('div');
+        r.className = 'mb-row';
+        for (var j = from; j < Math.min(bars.length, from + per); j++) {
+          var t = _mbTile(bars[j], j, ghost, j === from);
+          t.style.flex = t._ar + ' 1 0';
+          r.appendChild(t);
+          if (!ghost) M.tiles.push(t);
+        }
+        rowsEl.appendChild(r);
+        return r;
+      };
+      for (var f = 0; f < bars.length; f += per) rows.push(addRow(f, false));
+      if (rows.length > 2) addRow(0, true);
+      vw.appendChild(rowsEl);
+      M.rows = rows; M.rowsEl = rowsEl;
+      // Zwei Zeilen hoch; die Höhe steht erst nach dem Einhängen fest
+      if (rows.length > 2) vw.style.height = (rows[1].offsetTop + rows[1].offsetHeight) + 'px';
+    }
+    _mb = M;
+  }
+  function _mbMove(el, css, sec, ease) {
+    el.style.transition = sec > 0 ? 'transform ' + sec.toFixed(3) + 's ' + (ease ? 'ease' : 'linear') : 'none';
+    el.style.transform = css;
+  }
+  function _mbCursor(cur) {
+    var M = _mb, map = _mbMap(GROOVE), bars = GROOVE.bars;
+    if (cur == null || cur < 0 || !map.slots[cur]) {
+      if (M.curBar >= 0 && M.tiles[M.curBar]) { M.tiles[M.curBar].classList.remove('cur'); _mbDrawTile(M.tiles[M.curBar].firstChild, bars[M.curBar], null); }
+      M.curBar = -1; M.row = 0;
+      if (M.strip) _mbMove(M.strip, 'translateX(0px)', 0);
+      if (M.rowsEl) _mbMove(M.rowsEl, 'translateY(0px)', 0);
+      return;
+    }
+    var sl = map.slots[cur], wrap = sl.bar < M.curBar;
+    if (sl.bar !== M.curBar) {
+      if (M.curBar >= 0 && M.tiles[M.curBar]) { M.tiles[M.curBar].classList.remove('cur'); _mbDrawTile(M.tiles[M.curBar].firstChild, bars[M.curBar], null); }
+      M.curBar = sl.bar;
+      M.tiles[sl.bar].classList.add('cur');
+    }
+    _mbDrawTile(M.tiles[sl.bar].firstChild, bars[sl.bar], sl.s);
+    if (M.strip) {
+      // Ziel: Ende des laufenden Rasterplatzes — dort ist das Band, wenn der nächste erklingt
+      var t = M.tiles[sl.bar], n = bars[sl.bar].beats.length;
+      var bpm = (typeof blocks !== 'undefined' && blocks[bIdx]) ? blocks[bIdx].bpm : tBpm;
+      var sec = 60 / bpm * (GROOVE.beatsPerBar || 4) / n;
+      if (wrap) { _mbMove(M.strip, 'translateX(0px)', 0); void M.strip.offsetWidth; }
+      _mbMove(M.strip, 'translateX(' + (-(t.offsetLeft + (sl.s + 1) / n * t.offsetWidth - M.mark)).toFixed(1) + 'px)', sec);
+    } else if (M.rows.length > 2) {
+      var r = Math.floor(sl.bar / M.perRow);
+      if (r !== M.row) {
+        if (r < M.row) {
+          // Wiederholung: erst weich zur Kopie der ersten Zeile, dann unsichtbar zurück
+          var ghost = M.rowsEl.lastChild, rowsEl = M.rowsEl;
+          _mbMove(rowsEl, 'translateY(' + (-ghost.offsetTop) + 'px)', 0.35, true);
+          setTimeout(function() { if (_mb === M && M.row === 0) _mbMove(rowsEl, 'translateY(0px)', 0); }, 380);
+        } else _mbMove(M.rowsEl, 'translateY(' + (-M.rows[r].offsetTop) + 'px)', 0.35, true);
+        M.row = r;
+      }
+    }
+  }
+  // true = Stück gezeichnet; false = normale Übung (dann zeichnet renderNot wie immer)
+  function _mbRender(cur) {
+    var el = document.getElementById('dgMulti'), svg = document.getElementById('dgSvg');
+    if (!_mbMap(GROOVE)) {
+      if (el && el.classList.contains('on')) { el.classList.remove('on'); svg.style.display = ''; _mb = null; }
+      return false;
+    }
+    if (!el) {
+      var box = svg && svg.parentNode;
+      if (!box) return false;
+      el = document.createElement('div');
+      el.id = 'dgMulti';
+      el.className = 'mb';
+      box.insertBefore(el, svg);
+      el.addEventListener('click', function(e) {
+        var b = e.target.closest('[data-mbview]');
+        if (!b) return;
+        try { localStorage.setItem(MB_VIEW_KEY, b.getAttribute('data-mbview')); } catch (x) {}
+        _mb = null;
+        _mbRender(_mbCur);
+      });
+    }
+    el.classList.add('on');
+    svg.style.display = 'none';
+    _mbCur = cur;
+    var key = GROOVE.id + '|' + _mbView(GROOVE) + '|' + (el.clientWidth >= 620 ? 2 : 1) + '|' + _notaColors().paper + '|' + window.innerHeight;
+    if (!_mb || _mb.key !== key) _mbBuild(el, key);
+    _mbCursor(cur);
+    return true;
+  }
+  window.addEventListener('resize', function() {
+    clearTimeout(_mbRender._t);
+    _mbRender._t = setTimeout(function() { if (_mb) { _mb = null; _mbRender(_mbCur); } }, 150);
+  });
+
   function renderNot(curBeat, dimmed, opt) { dimmed = false;
+    if (!opt && _mbRender(curBeat)) return;
     var svg  = (opt && opt.svg) || document.getElementById('dgSvg');
     var _hits = (opt && opt.svg) ? null : (_noteHits = []);
     var _plain = !!(opt && opt.plain);
@@ -18297,6 +18684,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // stickings:  per-beat sticking string array for bar 2
     function drawBeatsInBar(beatsArr, sX, bs, activeBeatOffset, labelText, showLabels, fillStart, stickings, skipStaff, groups, grid) {
       var n = beatsArr.length;
+      // Notenwert dieses Takts: Zweitakt-Kombis aus Einzelübungen (02.11.2026) tragen ihn je Takt
+      // (`nv1`/`nv2`), damit Pausen wie in der Einzelübung stehen — nach einer Ganzen keine, im
+      // Viertel-Takt Viertelpausen. Sonst gilt der Notenwert der Übung.
+      var _nv = (GROOVE.nv2 && beatsArr === GROOVE.beats2) ? GROOVE.nv2 : (GROOVE.nv1 && beatsArr === GROOVE.beats) ? GROOVE.nv1 : GROOVE.noteValue;
       // Taktart: `beatsPerBar` an der Übung, Standard 4 (Seventeen Stroke Roll
       // steht in 5/4, 16.09.2026). Die Raster-Logik — Beschriftung, Balken,
       // Fähnchen, Pausen, Notendauern — hängt an den Slots EINER Zählzeit.
@@ -18870,9 +19261,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var _restGst = Math.floor(bi / _restGrp) * _restGrp;
         var beatRest = false;
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
-            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet' ||
-             (GROOVE.songBar && (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet' ||
-                                 GROOVE.noteValue === 'thirtysecond'))) &&
+            (_nv === 'sixteenth' || _nv === 'sixteenthTriplet' ||
+             (GROOVE.songBar && (_nv === 'eighth' || _nv === 'triplet' ||
+                                 _nv === 'thirtysecond'))) &&
             _restGrp > 1 && _restGrp === Math.floor(_restGrp) && !hasV2) {
           beatRest = true;
           for (var _rk = _restGst; _rk < _restGst + _restGrp; _rk++) {
@@ -18892,7 +19283,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // Grooves mit `beamRests` (Shuffle Grooves, Erwin 21.09.2026) bekommen
         // die Pause ebenfalls: ohne sie hinge der Balken 1–a über einer Lücke.
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.beamRests) &&
-            (GROOVE.noteValue === 'eighth' || GROOVE.noteValue === 'triplet') && bn.length === 0 && !coveredByQuarter &&
+            (_nv === 'eighth' || _nv === 'triplet') && bn.length === 0 && !coveredByQuarter &&
             !beatRest && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
@@ -18915,7 +19306,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // coveredByQuarter auch hier prüfen: eine Viertelnote deckt die
         // folgenden Slots ihrer Gruppe ab, dort gehört keine Pause hin.
         if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') &&
-            (GROOVE.noteValue === 'sixteenth' || GROOVE.noteValue === 'sixteenthTriplet') &&
+            (_nv === 'sixteenth' || _nv === 'sixteenthTriplet') &&
             bn.length === 0 && !coveredByQuarter && !beatRest && !_sbPair && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
@@ -18923,7 +19314,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           h += bravuraGlyph('rest16th', x - 5, sY + 2*ls, nc, op);
         }
         // Quarter rest symbol — authentisches Bravura-Glyph
-        if (GROOVE.cat === 'notes' && GROOVE.noteValue === 'quarter' && bn.length === 0 && !isHalfRest) {
+        if (GROOVE.cat === 'notes' && _nv === 'quarter' && bn.length === 0 && !isHalfRest) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
@@ -19749,14 +20140,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     renderBlocksBar();
 
     var cb            = blocks[bIdx];
-    var isTimingBlock = (cb.bpm >= 60);
+    // Notenstück mit mehr als zwei Takten (`bars`, 02.11.2026): eine Phrase ist das ganze Stück.
+    // Ohne Click-only-Strecken — beim Lesen langer Stücke ist das Mitlesen die Aufgabe.
+    var mb            = _mbMap(GROOVE);
+    var isTimingBlock = (cb.bpm >= 60) && !mb;
     var totalBars     = cb.bars;
 
     // 2-bar fill support
-    var isFill     = !!(GROOVE.beats2 && GROOVE.beats2.length);
+    var isFill     = !mb && !!(GROOVE.beats2 && GROOVE.beats2.length);
     var n1         = isFill ? GROOVE.beats.length  : GROOVE.beats.length; // beats per bar
     var n2         = isFill ? GROOVE.beats2.length : 0;
-    var phraseLen  = isFill ? (n1 + n2) : n1;
+    var phraseLen  = mb ? mb.slots.length : isFill ? (n1 + n2) : n1;
 
     // Adaptive tick interval: derive from beat count per bar (4/4 assumed)
     // 4 beats = quarter, 8 = eighth, 16 = sixteenth, etc.
@@ -19770,11 +20164,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       g2Map = [];
       GROOVE.grid2.forEach(function(q, gb) { for (var gp = 0; gp < q; gp++) g2Map.push({ b: gb, p: gp, q: q }); });
     }
-    function slotMul(bt) { return (g2Map && bt >= n1) ? ticksPerBeat / g2Map[bt - n1].q : 1; }
+    function slotMul(bt) { return mb ? ticksPerBeat / mb.slots[bt].q : (g2Map && bt >= n1) ? ticksPerBeat / g2Map[bt - n1].q : 1; }
     // Länge einer Phrase in Ticks des ersten Takts (für Restzeit und Ansage)
-    var phraseUnits = g2Map ? n1 + GROOVE.grid2.length * ticksPerBeat : phraseLen;
-    // Fills haben phraseLen = 2 Takte → loopBars halbieren damit Gesamtzeit gleich bleibt
-    var loopBars    = isFill ? Math.ceil(totalBars / 2) : totalBars;
+    var phraseUnits = mb ? mb.bars * (GROOVE.beatsPerBar || 4) * ticksPerBeat
+                    : g2Map ? n1 + GROOVE.grid2.length * ticksPerBeat : phraseLen;
+    // Fills haben phraseLen = 2 Takte → loopBars halbieren damit Gesamtzeit gleich bleibt.
+    // Stücke laufen mindestens einmal ganz durch.
+    var loopBars    = mb ? Math.max(1, Math.round(totalBars / mb.bars)) : isFill ? Math.ceil(totalBars / 2) : totalBars;
     // Rampe endet ausschließlich über die Zeit (RAMP_SEC), nie über die Taktzahl.
     // Ohne das beendet die reguläre Blocklänge den Test vorzeitig — beschleunigt
     // sind die Takte deutlich früher durch als nach 60 Sekunden.
@@ -19786,7 +20182,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // 18.09.2026): bei zweitaktigen Übungen ist eine Phrase zwei Takte lang,
     // vorher zählte `b` Phrasen — das Timing-Training begann dort erst nach 16
     // Takten. `barsPerPhrase` rechnet das um.
-    var barsPerPhrase   = isFill ? 2 : 1;
+    var barsPerPhrase   = mb ? mb.bars : isFill ? 2 : 1;
     var TIMING_START_BAR = 8;
     function grooveOn(b) {
       if (!isTimingBlock) return true;
@@ -19836,11 +20232,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // totalRealBars = tatsächliche Takte (für Info-Anzeige)
-    var totalRealBars = totalBars;
+    var totalRealBars = mb ? loopBars * mb.bars : totalBars;
 
     function infoLine(br, bt) {
       var realBar;
-      if (isFill) {
+      if (mb) {
+        realBar = br * mb.bars + mb.slots[bt].bar + 1;
+      } else if (isFill) {
         realBar = br * 2 + (bt < n1 ? 1 : 2);
       } else {
         realBar = br + 1;
@@ -19872,18 +20270,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     function tickAndRender(bt, br, when) {
       // Statistik: Schläge dieses Rasterschritts, abgerechnet erst wenn erklungen
-      var _stSlot = isFill ? (bt < n1 ? GROOVE.beats[bt] : GROOVE.beats2[bt - n1]) : GROOVE.beats[bt];
+      var _stSlot = mb ? mb.slots[bt].notes : isFill ? (bt < n1 ? GROOVE.beats[bt] : GROOVE.beats2[bt - n1]) : GROOVE.beats[bt];
       _statQ.push({ t: when, d: tickSecAt(when) * slotMul(bt), n: _slotStrokes(_stSlot) });
       // Audio wird auf `when` geplant, das Bild geht in die Queue und wird
       // von _drawLoop() erst zum selben Zeitpunkt gezeichnet.
       var _info = null;
-      if (isFill) {
+      if (mb) {
+        // Stück: jeder Takt mit eigenem Raster, Klick nach dessen Teilung
+        var _ms = mb.slots[bt];
+        if (_ms.s === 0) _info = infoLine(br, bt);
+        _ms.notes.forEach(function(n) { if (!n.rest) playSound(n.inst, when); });
+        scheduleMetroClicks(_ms.s, eighthMs/1000 * ticksPerBeat / _ms.q, _ms.q, when);
+      } else if (isFill) {
         if (bt === 0 || bt === n1) _info = infoLine(br, bt);
         if (bt < n1) {
           // Groove bar
           var clickOnly = isTimingBlock && !grooveOn(br);
           if (grooveOn(br)) {
-            GROOVE.beats[bt].forEach(function(n) { playSound(n.inst, when); });
+            GROOVE.beats[bt].forEach(function(n) { if (!n.rest) playSound(n.inst, when); });
             scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
           } else { scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly); }
         } else {
@@ -19897,7 +20301,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var _mTick = _g ? eighthMs/1000 * ticksPerBeat / _g.q : eighthMs/1000;
           var _mQ = _g ? _g.q : ticksPerBeat;
           if (grooveOn(br)) {
-            GROOVE.beats2[fb].forEach(function(n) { playSound(n.inst, when); });
+            GROOVE.beats2[fb].forEach(function(n) { if (!n.rest) playSound(n.inst, when); });
             scheduleMetroClicks(_mBt, _mTick, _mQ, when);
           } else { scheduleMetroClicks(_mBt, _mTick, _mQ, when, clickOnly); }
         }
@@ -24275,6 +24679,510 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   window.addEventListener('pagehide', function() { if (_sbData) _sbSaveNow(); });
   try {
     if (_premium() && new URLSearchParams(window.location.search).get('builder') === '1') setTimeout(_sbOpen, 0);
+  } catch (e) {}
+
+  // ============================================================
+  // LEVEL-TEST (02.11.2026)
+  // „What's your drum level? Out of 100.“ — Lead-Magnet für YouTube und Einstieg für
+  // neue Mitglieder (Erwin: „diesen einstufungstest zu machen ist essenziell. aber muss
+  // richtig catchy sein“). Öffnen mit ?test=1. Ablauf: persönliche Fragen → Spielteil
+  // „Can you play this?“ mit echten Übungen aus dem Kursablauf (`_ltMap` rechnet ihn wie
+  // die Course Map voraus), passt sich an wie ein Sehtest → Level mit Teilen-Karte.
+  // Die Antworten bleiben auf dem Gerät (localStorage), nichts geht an Supabase.
+  // ============================================================
+  var LT_KEY = 'drumlion_leveltest_v1';
+  var LT_ACADEMY = 'https://www.drumlion.com/academy';
+  var LT_PLAN_URL = '';   // Systeme.io-Seite für den Startplan (Schritt 2); leer = Knopf ausgeblendet
+  // Jede zweite Runde ein Groove, dazwischen reihum die anderen Säulen, soweit es sie im Level gibt
+  // (Fills enden im Kurs bei Level 8, Notes bei 7). Coordination bleibt draußen: schon in Level 1
+  // laufen dort Triolen und Verschiebungen, das verzerrt die Einstufung.
+  var LT_OTHER = ['fillins', 'rudiments', 'notes'];
+  var LT_PLAY_SEC = 20;   // so lange läuft eine Übung (Erwin: „lass die übungen etwas länger laufen“), 4–16 Takte
+  var LT_Q = [
+    { id: 'years', q: 'How long have you been playing drums?',
+      opts: [['0', 'Not yet – I want to start'], ['1', 'Less than a year'], ['3', '1–3 years'], ['7', '3–10 years'], ['12', 'More than 10 years']] },
+    { id: 'band', q: 'Do you play in a band?', opts: [['no', 'No'], ['hobby', 'Yes, just for fun'], ['regular', 'Yes, regularly']] },
+    { id: 'live', q: 'Have you ever played live?', opts: [['never', 'Never'], ['few', 'A few times'], ['often', 'Many times']] },
+    { id: 'gigs', q: 'How many gigs did you play in the last 6 months?', opts: [['0', 'None'], ['2', '1–3'], ['6', '4–10'], ['12', 'More than 10']],
+      when: function(a) { return a.live && a.live !== 'never'; } },
+    { id: 'read', q: 'Can you read drum notation?', opts: [['no', 'No'], ['little', 'A little'], ['yes', 'Yes']] },
+    { id: 'age', q: 'How old are you?', opts: [['u13', 'Under 13'], ['13', '13–17'], ['18', '18–29'], ['30', '30–49'], ['50', '50 or older']] },
+    { id: 'genres', q: 'What do you love to play?', multi: true,
+      opts: [['rock', 'Rock'], ['pop', 'Pop'], ['funk', 'Funk'], ['metal', 'Metal'], ['jazz', 'Jazz'], ['worship', 'Worship / Gospel'],
+             ['hiphop', 'Hip-Hop'], ['latin', 'Latin'], ['blues', 'Blues'], ['other', 'Something else']] },
+    { id: 'goal', q: "What's your goal?",
+      opts: [['start', 'Learn the basics'], ['songs', 'Play my favorite songs'], ['band', 'Join a band'], ['live', 'Play live with confidence'],
+             ['tech', 'Better technique and timing'], ['pro', 'Go pro']] },
+    { id: 'time', q: 'How much time can you practice per day?', opts: [['10', 'About 10 minutes'], ['20', 'About 20 minutes'], ['30', '30 minutes or more']] }
+  ];
+  var LT_BANDS = [
+    [1, 'Fresh Start', "You're right at the beginning – the perfect moment to build clean habits from day one."],
+    [6, 'Groove Builder', 'You know your way around the kit. Next up: solid grooves and steady time.'],
+    [21, 'Solid Player', 'You can hold a groove. Next: fills that flow, more speed and cleaner reading.'],
+    [41, 'Confident Drummer', 'You play with confidence. Coordination, dynamics and tempo will take you further.'],
+    [61, 'Advanced', "You're well past the basics. Independence and speed are your playground now."],
+    [81, 'Master Level', 'Serious skills. The hardest challenges in the Academy are waiting for you.']
+  ];
+  var LT_GOAL = {
+    start: "You'll start with the very first groove and build up step by step.",
+    songs: 'The grooves and fills at your level are the building blocks of the songs you love.',
+    band: 'Steady time and reliable fills – exactly what a band needs from its drummer.',
+    live: 'Timing training is built in, so you stay in time when it counts on stage.',
+    tech: 'Every exercise climbs in tempo, so your technique grows with every session.',
+    pro: '100 levels, one system – from where you are now all the way to the top.'
+  };
+  var _lt = null, _ltMapCache = null, _ltById = null;
+
+  function _ltEx(id) {
+    if (!_ltById) { _ltById = {}; EXERCISES.forEach(function(e) { _ltById[e.id] = e; }); }
+    return _ltById[id];
+  }
+  // Kursablauf vorausrechnen (wie die Course Map im Dev-Panel): Lektion i → Säule, Übung, Tempo
+  function _ltMap() {
+    if (_ltMapCache) return _ltMapCache;
+    var rotation = ['grooves', 'notes', 'fillins'], cats = {}, poolPos = {}, out = [], rot = 0, guard = 0, rudi = false;
+    var max = TOTAL_CONTENT_LESSONS + 10;
+    function init(cat) {
+      var p = _catPool[cat] || [];
+      cats[cat] = { pool: p, active: p[0] ? [{ id: p[0].id, s: 0 }] : [], intro: p[0] ? 1 : 0, n: 0, last: null, adv: [] };
+    }
+    if ((_catPool.coordination || []).length) rotation.push('coordination');
+    rotation.forEach(init);
+    Object.keys(_catPool).forEach(function(c) { (_catPool[c] || []).forEach(function(e, i) { poolPos[e.id] = i; }); });
+    while (out.length < max && guard++ < max * 2) {
+      if (!rudi && out.length >= LESSONS_PER_LEVEL && (_catPool.rudiments || []).length) { rotation.push('rudiments'); init('rudiments'); rudi = true; }
+      var cat = null;
+      for (var i = 0; i < rotation.length; i++) {
+        var c = rotation[(rot + i) % rotation.length];
+        if (cats[c] && cats[c].active.length) { cat = c; break; }
+      }
+      if (!cat) break;
+      var cs = cats[cat], li = -1;
+      for (var j = 0; j < cs.active.length; j++) if (cs.active[j].id === cs.last) { li = j; break; }
+      var en = cs.active[(li + 1) % cs.active.length], ex = _ltEx(en.id);
+      if (!ex) { rot = (rot + 1) % rotation.length; continue; }
+      out.push({ cat: cat, id: ex.id, bpm: _exBpm(ex, en.s), p: poolPos[ex.id] || 0 });
+      en.s++; cs.last = en.id; cs.n++;
+      var nSt = _exSteps(ex);
+      if (en.s >= nSt) cs.active = cs.active.filter(function(e) { return e !== en; });
+      else if (!en.adv && _exAdvanced(ex) && en.s >= Math.ceil(nSt / 2)) {
+        cs.active = cs.active.filter(function(e) { return e !== en; });
+        cs.adv.push(en);
+        cs.adv.sort(function(a, b) { return poolPos[a.id] - poolPos[b.id]; });
+      }
+      if ((cs.n % STEPS_PER_NEW_EX === 0 || cs.active.length < (cat === 'notes' ? NOTES_MIN_ACTIVE : 1)) &&
+          cs.active.length < MAX_ACTIVE_PER_CAT && cs.intro < cs.pool.length) {
+        cs.active.push({ id: cs.pool[cs.intro].id, s: 0 }); cs.intro++;
+      }
+      if (cs.intro >= cs.pool.length) {
+        while (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT) { var aw = cs.adv.shift(); aw.adv = true; cs.active.push(aw); }
+      }
+      rot = (rot + 1) % rotation.length;
+    }
+    return (_ltMapCache = out);
+  }
+  // Eine Übung, die in Level L wirklich geübt wird, im mittleren Tempo dieses Levels (Median der
+  // Säule; Erwin fand die schnellsten zu schnell). Gesucht wird in L, dann L−1, L+1, L−2, L+2 —
+  // der Treffer bringt sein echtes Level mit (`lv`), danach richtet sich die Einstufung.
+  // Ein Level übt fast nur einen Groove-Stil (Level 30–35 nur Shuffles); deshalb nimmt ein Groove
+  // zuerst einen Stil, der im Test noch nicht dran war.
+  function _ltPick(L, cat) {
+    var M = _ltMap(), lpl = LESSONS_PER_LEVEL, st = _lt.st, order = [0, -1, 1, -2, 2], k, r;
+    var ok = function(x) { var ex = _ltEx(x.id); return x.cat === cat && ex && ex.beats && ex.beats.length && !ex.grid2 && !ex.bars && !st.used[x.id]; };
+    var inLevel = function(lv, fresh) {
+      if (lv < 1 || lv > 100) return null;
+      var a = (lv - 1) * lpl, b = Math.min(M.length, lv * lpl), list = [], i;
+      for (i = a; i < b; i++) if (ok(M[i]) && !(fresh && st.styles[_ltEx(M[i].id).catLabel])) list.push(M[i]);
+      if (!list.length) return null;
+      var bp = list.map(function(x) { return x.bpm; }).sort(function(x, y) { return x - y; });
+      var mid = bp[Math.floor(bp.length / 2)], best = list[0];
+      list.forEach(function(x) {
+        var d = Math.abs(x.bpm - mid), db = Math.abs(best.bpm - mid);
+        if (d < db || (d === db && x.p > best.p)) best = x;
+      });
+      return { cat: cat, id: best.id, bpm: best.bpm, lv: lv };
+    };
+    if (cat === 'grooves') for (k = 0; k < order.length; k++) if ((r = inLevel(L + order[k], true))) return r;
+    for (k = 0; k < order.length; k++) if ((r = inLevel(L + order[k], false))) return r;
+    return null;
+  }
+
+  function _ltBuild() {
+    var el = document.createElement('div');
+    el.className = 'lt';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Drum level test');
+    el.innerHTML = '<div class="lt-wrap"><div class="lt-top"><div class="lt-brand">DRUM<em>LION</em></div>' +
+      '<button type="button" class="lt-x" aria-label="Close the test">×</button></div>' +
+      '<div class="lt-prog" aria-hidden="true"><i></i></div><div class="lt-body"></div></div>';
+    document.body.appendChild(el);
+    el.querySelector('.lt-x').addEventListener('click', _ltClose);
+    _lt = { el: el, body: el.querySelector('.lt-body'), bar: el.querySelector('.lt-prog i'), st: null };
+  }
+  function _ltOpen() {
+    if (!_lt) _ltBuild();
+    _lt.st = { qi: 0, a: {}, round: 0, used: {}, styles: {}, lo: 0, hi: 101, L: 1, step: 12, cur: null };
+    _lt.el.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    _ltIntro();
+  }
+  function _ltClose() {
+    _ltStop();
+    if (_lt) _lt.el.classList.remove('open');
+    document.documentElement.style.overflow = '';
+  }
+  function _ltQs() { return LT_Q.filter(function(q) { return !q.when || q.when(_lt.st.a); }); }
+  function _ltProgress(done) {
+    var total = _ltQs().length + 6;
+    _lt.bar.style.width = Math.min(100, Math.round(done / total * 100)) + '%';
+  }
+  // Neue Karte: Elemente per DOM, Texte per textContent
+  function _ltCard() {
+    var c = document.createElement('div');
+    c.className = 'lt-card';
+    _lt.body.innerHTML = '';
+    _lt.body.appendChild(c);
+    _lt.el.scrollTop = 0;
+    return c;
+  }
+  function _ltAdd(parent, tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    parent.appendChild(e);
+    return e;
+  }
+  function _ltIntro() {
+    _ltProgress(0);
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Free drum level test');
+    var h = _ltAdd(c, 'h1', 'lt-h', "What's your drum level?");
+    h.appendChild(document.createElement('br'));
+    h.appendChild(document.createTextNode('Out of 100.'));
+    _ltAdd(c, 'p', 'lt-p', 'A few quick questions, then real grooves and fills from the Academy – can you play them? ' +
+      'About 3 minutes. Turn your sound on.');
+    var go = _ltAdd(c, 'button', 'lt-go', 'Start the test');
+    go.type = 'button';
+    go.addEventListener('click', function() { try { initA(); } catch (e) {} _ltQuestion(); });
+    go.focus();
+  }
+  function _ltQuestion() {
+    var qs = _ltQs(), st = _lt.st;
+    if (st.qi >= qs.length) { _ltPlayIntro(); return; }
+    var q = qs[st.qi];
+    _ltProgress(st.qi);
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Question ' + (st.qi + 1) + ' of ' + qs.length);
+    _ltAdd(c, 'h2', 'lt-h', q.q);
+    var box = _ltAdd(c, 'div', q.multi ? 'lt-chips' : 'lt-opts');
+    var picked = q.multi ? (st.a[q.id] || []).slice() : null, go = null;
+    q.opts.forEach(function(o) {
+      var b = _ltAdd(box, 'button', 'lt-opt', o[1]);
+      b.type = 'button';
+      if (q.multi && picked.indexOf(o[0]) !== -1) b.classList.add('on');
+      b.addEventListener('click', function() {
+        if (!q.multi) { st.a[q.id] = o[0]; st.qi++; _ltQuestion(); return; }
+        var k = picked.indexOf(o[0]);
+        if (k === -1) picked.push(o[0]); else picked.splice(k, 1);
+        b.classList.toggle('on', k === -1);
+        b.setAttribute('aria-pressed', String(k === -1));
+        go.disabled = !picked.length;
+      });
+    });
+    if (q.multi) {
+      go = _ltAdd(c, 'button', 'lt-go', 'Continue');
+      go.type = 'button';
+      go.disabled = !picked.length;
+      go.addEventListener('click', function() { st.a[q.id] = picked; st.qi++; _ltQuestion(); });
+    }
+    if (st.qi > 0) {
+      var back = _ltAdd(c, 'button', 'lt-link', 'Back');
+      back.type = 'button';
+      back.addEventListener('click', function() { st.qi--; _ltQuestion(); });
+    }
+  }
+  // Startpunkt für den Spielteil aus den Antworten (danach entscheidet nur noch das Spielen)
+  function _ltPrior(a) {
+    var y = +a.years || 0;
+    var L = y === 0 ? 1 : y === 1 ? 5 : y === 3 ? 14 : y === 7 ? 28 : 40;
+    if (y > 0) {
+      if (a.read === 'yes') L += 6; else if (a.read === 'no') L -= 3;
+      if (a.band === 'regular') L += 6; else if (a.band === 'hobby') L += 3;
+      if (+a.gigs >= 6) L += 5; else if (+a.gigs >= 2) L += 2;
+    }
+    return Math.max(1, Math.min(70, L));
+  }
+  function _ltPlayIntro() {
+    var st = _lt.st;
+    st.L = _ltPrior(st.a);
+    _ltProgress(_ltQs().length);
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Part 2 of 2');
+    _ltAdd(c, 'h2', 'lt-h', "Now let's see what you can play.");
+    _ltAdd(c, 'p', 'lt-p', "You'll hear and see real exercises from the Academy, at their real tempo. " +
+      'For each one, be honest: could you play it right now?');
+    var go = _ltAdd(c, 'button', 'lt-go', "Let's go");
+    go.type = 'button';
+    go.addEventListener('click', _ltRound);
+  }
+  function _ltRound() {
+    var st = _lt.st, r = null, k;
+    if (st.round % 2) {
+      var s0 = ((st.round - 1) / 2) % LT_OTHER.length;
+      for (k = 0; k < LT_OTHER.length && !r; k++) r = _ltPick(st.L, LT_OTHER[(s0 + k) % LT_OTHER.length]);
+    }
+    r = r || _ltPick(st.L, 'grooves');
+    if (!r) { _ltResult(); return; }
+    st.used[r.id] = 1;
+    if (r.cat === 'grooves') st.styles[_ltEx(r.id).catLabel] = 1;
+    st.cur = r;
+    _ltProgress(_ltQs().length + st.round);
+    var ex = _ltEx(r.id), c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Exercise ' + (st.round + 1));
+    _ltAdd(c, 'h2', 'lt-h', 'Can you play this?');
+    var play = _ltAdd(c, 'div', 'lt-play'), meta = _ltAdd(play, 'div', 'lt-meta');
+    _ltAdd(meta, 'span', null, (ex.cat === 'rudiments' ? ex.name : (ex.catLabel || '')) + ' · ' + Math.round(r.bpm) + ' BPM');
+    var again = _ltAdd(meta, 'button', 'lt-again', '▶ Play');
+    again.type = 'button';
+    again.addEventListener('click', function() { if (_lt.playing) _ltStop(); else _ltPlay(); });
+    _lt.btn = again;
+    _lt.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    _lt.svg.setAttribute('role', 'img');
+    _lt.svg.setAttribute('aria-label', ex.name);
+    play.appendChild(_lt.svg);
+    _ltDraw(null);
+    var ans = _ltAdd(c, 'div', 'lt-ans');
+    [['easy', 'Easy', 'I could play it now'], ['practice', 'With practice', "I'd need a few tries"], ['not', 'Not yet', "That's beyond me"]].forEach(function(o) {
+      var b = _ltAdd(ans, 'button', 'lt-opt', o[1]);
+      b.type = 'button';
+      _ltAdd(b, 'small', null, o[2]);
+      b.addEventListener('click', function() { _ltAnswer(o[0]); });
+    });
+    _ltPlay();
+  }
+  // Wie ein Sehtest: „Easy“ schiebt die Untergrenze hoch, „Not yet“ die Obergrenze runter
+  function _ltAnswer(ans) {
+    var st = _lt.st, L = (st.cur && st.cur.lv) || st.L;
+    _ltStop();
+    if (ans === 'easy') st.lo = Math.max(st.lo, L);
+    else if (ans === 'not') st.hi = Math.min(st.hi, L);
+    else { st.lo = Math.max(st.lo, L - 2); st.hi = Math.min(st.hi, L + 4); }
+    if (st.lo >= st.hi) st.hi = st.lo + 1;
+    st.round++;
+    var done = st.round >= 7 || (st.round >= 4 && st.hi - st.lo <= 5) ||
+               (L <= 1 && ans === 'not') || (L >= 100 && ans === 'easy');
+    if (done) { _ltResult(); return; }
+    if (st.hi > 100) st.L = Math.min(100, L + st.step);
+    else if (st.lo <= 0) st.L = Math.max(1, L - st.step);
+    else st.L = Math.max(1, Math.min(100, Math.round((st.lo + st.hi) / 2)));
+    st.step = Math.round(st.step * 1.4);
+    _ltRound();
+  }
+  function _ltLevel(st) {
+    if (st.hi > 100) return Math.max(1, Math.min(100, st.lo + 2));
+    if (st.lo <= 0) return Math.max(1, st.hi - 3);
+    return Math.max(1, Math.min(100, Math.round((st.lo + st.hi) / 2)));
+  }
+
+  // ---- Notenbild und Ton der Übung (über einen eigenen Lautstärke-Bus, damit Stop sofort greift)
+  function _ltDraw(cur) {
+    var r = _lt.st.cur;
+    if (!r || !_lt.svg) return;
+    var keep = GROOVE;
+    GROOVE = _ltEx(r.id);
+    try { renderNot(cur == null ? -1 : cur, false, { svg: _lt.svg }); } catch (e) {}
+    finally { GROOVE = keep; }
+  }
+  function _ltPlay() {
+    var r = _lt.st.cur, ex = r && _ltEx(r.id);
+    _ltStop();
+    try { initA(); } catch (e) {}
+    if (!aCtx || !ex) return;
+    var bus = aCtx.createGain(), bpb = ex.beatsPerBar || 4, qd = 60 / r.bpm, t = aCtx.currentTime + 0.12, q = [];
+    bus.connect(_aOut());
+    var bars = [ex.beats];
+    if (ex.beats2 && ex.beats2.length) bars.push(ex.beats2);
+    // Etwa LT_PLAY_SEC lang, 4–16 Takte, Fills in ganzen Phrasen (Groove + Fill)
+    var nBars = Math.max(4, Math.min(16, Math.ceil(LT_PLAY_SEC / (bpb * qd)))), reps = Math.ceil(nBars / bars.length);
+    _sbOnBus(bus, function() {
+      for (var c = 0; c < bpb; c++) playCountClick(c === 0, 1, t + c * qd);
+      t += bpb * qd;
+      for (var k = 0; k < reps; k++) {
+        var off = 0;
+        bars.forEach(function(bar) {
+          var n = bar.length, sd = bpb * qd / n;
+          // Klick läuft in Vierteln mit (Erwin: „lass den klick laufen bei den Übungen“)
+          for (var c2 = 0; c2 < bpb; c2++) playCountClick(c2 === 0, 1, t + c2 * qd);
+          for (var s = 0; s < n; s++) {
+            (bar[s] || []).forEach(function(nt) { if (nt && nt.inst) _sbHit(nt.inst, t + s * sd); });
+            q.push({ t: t + s * sd, cur: off + s });
+          }
+          off += n;
+          t += bpb * qd;
+        });
+      }
+    });
+    _lt.bus = bus; _lt.q = q; _lt.end = t; _lt.playing = true; _lt.cur = -2;
+    if (_lt.btn) _lt.btn.textContent = '■ Stop';
+    cancelAnimationFrame(_lt.raf);
+    _lt.raf = requestAnimationFrame(_ltTick);
+  }
+  function _ltTick() {
+    if (!_lt || !_lt.playing) return;
+    var now = aCtx.currentTime - _audioLatency(), cur = -1;
+    for (var i = 0; i < _lt.q.length && _lt.q[i].t <= now; i++) cur = _lt.q[i].cur;
+    if (cur !== _lt.cur) { _lt.cur = cur; _ltDraw(cur >= 0 ? cur : null); }
+    if (now > _lt.end + 0.15) { _ltStop(); return; }
+    _lt.raf = requestAnimationFrame(_ltTick);
+  }
+  function _ltStop() {
+    if (!_lt) return;
+    cancelAnimationFrame(_lt.raf);
+    if (_lt.bus && aCtx) {
+      var b = _lt.bus;
+      try { b.gain.cancelScheduledValues(aCtx.currentTime); b.gain.setValueAtTime(0, aCtx.currentTime); } catch (e) {}
+      setTimeout(function() { try { b.disconnect(); } catch (e) {} }, 200);
+    }
+    _lt.bus = null;
+    if (_lt.playing) { _lt.playing = false; _ltDraw(null); }
+    if (_lt.btn) _lt.btn.textContent = '▶ Play again';
+  }
+
+  // ---- Ergebnis
+  function _ltBand(level) {
+    var b = LT_BANDS[0];
+    LT_BANDS.forEach(function(x) { if (level >= x[0]) b = x; });
+    return b;
+  }
+  function _ltFacts(a) {
+    var out = [], yrs = { '0': 'Just starting', '1': 'Less than a year', '3': '1–3 years', '7': '3–10 years', '12': '10+ years' };
+    if (yrs[a.years]) out.push(yrs[a.years]);
+    if (a.band === 'regular') out.push('Plays in a band'); else if (a.band === 'hobby') out.push('Jams in a band');
+    if (+a.gigs >= 2) out.push((a.gigs === '12' ? '10+' : a.gigs === '6' ? '4–10' : '1–3') + ' gigs in 6 months');
+    if (a.read === 'yes') out.push('Reads notation');
+    var names = {};
+    (LT_Q.filter(function(q) { return q.id === 'genres'; })[0].opts).forEach(function(o) { names[o[0]] = o[1]; });
+    (a.genres || []).slice(0, 3).forEach(function(g) { if (names[g] && g !== 'other') out.push(names[g]); });
+    return out;
+  }
+  function _ltResult() {
+    var st = _lt.st, level = _ltLevel(st), band = _ltBand(level);
+    st.level = level;
+    _ltProgress(999);
+    try { localStorage.setItem(LT_KEY, JSON.stringify({ level: level, at: Date.now(), a: st.a })); } catch (e) {}
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Your Drumlion level');
+    var sc = _ltAdd(c, 'div', 'lt-score', '1');
+    var of = _ltAdd(sc, 'span', null, '/ 100');
+    sc.setAttribute('aria-label', 'Level ' + level + ' of 100');
+    _ltAdd(c, 'h2', 'lt-h', band[1]);
+    _ltAdd(c, 'p', 'lt-p', band[2] + (LT_GOAL[st.a.goal] ? ' ' + LT_GOAL[st.a.goal] : ''));
+    var facts = _ltAdd(c, 'div', 'lt-facts');
+    _ltFacts(st.a).forEach(function(f) { _ltAdd(facts, 'span', 'lt-fact', f); });
+    var row = _ltAdd(c, 'div', 'lt-row');
+    var go = _ltAdd(row, 'a', 'lt-go', 'Start at Level ' + level);
+    go.href = LT_ACADEMY + '?level=' + level;
+    go.target = '_top';
+    go.rel = 'noopener';
+    var sh = _ltAdd(row, 'button', 'lt-ghost', 'Share my result');
+    sh.type = 'button';
+    sh.addEventListener('click', function() { _ltShare(level); });
+    _ltPrepCard(level, band[1], _ltFacts(st.a));
+    if (LT_PLAN_URL) {
+      var plan = _ltAdd(c, 'a', 'lt-link', 'Get my personal start plan by email →');
+      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level;
+      plan.target = '_top';
+    }
+    var again = _ltAdd(c, 'button', 'lt-link', 'Take the test again');
+    again.type = 'button';
+    again.addEventListener('click', _ltOpen);
+    // Zahl zählt hoch (ohne Bewegung bei reduzierter Animation)
+    var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, t0 = performance.now();
+    (function up(now) {
+      var p = calm ? 1 : Math.min(1, (now - t0) / 900), v = Math.max(1, Math.round(level * (1 - Math.pow(1 - p, 3))));
+      sc.firstChild.nodeValue = String(v);
+      if (p < 1) requestAnimationFrame(up);
+    })(t0);
+  }
+  // Teilen-Karte 1080×1350 (Instagram/WhatsApp): Level groß, Stufe, Fakten, Drumlion
+  // Die Karte entsteht schon beim Ergebnis: iOS teilt nur direkt aus dem Tipp heraus,
+  // nicht nach dem Warten auf Bild und PNG
+  function _ltPrepCard(level, bandName, facts) {
+    _lt.card = null;
+    var tmp = document.createElement('div'), m;
+    tmp.className = 'sb-vid';
+    document.body.appendChild(tmp);
+    m = getComputedStyle(tmp).getPropertyValue('--sb-lion').match(/url\(\s*["']?([^"')]+)["']?\s*\)/);
+    tmp.remove();
+    var lion = m ? _sbLoadImg(m[1]).then(null, function() { return null; }) : Promise.resolve(null);
+    var fonts = (document.fonts && document.fonts.load) ? document.fonts.load('700 100px "DM Sans"').then(null, function() {}) : Promise.resolve();
+    return Promise.all([lion, fonts]).then(function(r) {
+      return new Promise(function(res) {
+        _ltCardCanvas(level, bandName, facts, r[0]).toBlob(function(blob) {
+          if (!blob) { res(null); return; }
+          var file = null;
+          try { file = new File([blob], 'my-drum-level-' + level + '.png', { type: 'image/png' }); } catch (e) {}
+          _lt.card = { level: level, blob: blob, file: file };
+          res(_lt.card);
+        }, 'image/png');
+      });
+    });
+  }
+  function _ltShare(level) {
+    var c = _lt.card;
+    if (!c || c.level !== level) return;
+    if (c.file && navigator.canShare && navigator.canShare({ files: [c.file] })) {
+      navigator.share({ files: [c.file], text: "I'm Level " + level + ' of 100 on Drumlion 🥁 Find yours: drumlion.com' }).catch(function() {});
+      return;
+    }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(c.blob);
+    a.download = 'my-drum-level-' + level + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function() { URL.revokeObjectURL(a.href); }, 30000);
+  }
+  // Teilen-Karte 1080×1350 (Instagram/WhatsApp): Löwe, Level groß, Stufe, Fakten, Drumlion
+  function _ltCardCanvas(level, bandName, facts, lion) {
+    var cv = document.createElement('canvas'), W = 1080, H = 1350;
+    cv.width = W; cv.height = H;
+    var g = cv.getContext('2d'), F = '"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+    g.fillStyle = '#0b0b0a'; g.fillRect(0, 0, W, H);
+    var rg = g.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.75);
+    rg.addColorStop(0, 'rgba(201,168,76,0.20)'); rg.addColorStop(1, 'rgba(201,168,76,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, W, H);
+    // Löwe in Gold (die Vorlage ist eine Silhouette)
+    if (lion && lion.width) {
+      var lh = 170, lw = lion.width * lh / lion.height, oc = document.createElement('canvas');
+      oc.width = Math.round(lw); oc.height = lh;
+      var og = oc.getContext('2d');
+      og.drawImage(lion, 0, 0, oc.width, oc.height);
+      og.globalCompositeOperation = 'source-in'; og.fillStyle = '#C9A84C'; og.fillRect(0, 0, oc.width, oc.height);
+      g.drawImage(oc, Math.round((W - oc.width) / 2), 70);
+    }
+    g.textBaseline = 'alphabetic';
+    g.font = '700 46px ' + F;
+    var dw = g.measureText('DRUM').width, lw2 = g.measureText('LION').width, x0 = W / 2 - (dw + lw2) / 2;
+    g.textAlign = 'left';
+    g.fillStyle = '#ffffff'; g.fillText('DRUM', x0, 310);
+    g.fillStyle = '#C9A84C'; g.fillText('LION', x0 + dw, 310);
+    g.textAlign = 'center';
+    g.font = '700 38px ' + F; g.fillStyle = 'rgba(232,228,219,0.7)';
+    g.fillText('MY DRUM LEVEL', W / 2, 430);
+    g.font = '700 380px ' + F; g.fillStyle = '#C9A84C';
+    g.fillText(String(level), W / 2, 770);
+    g.font = '700 60px ' + F; g.fillStyle = 'rgba(255,255,255,0.5)';
+    g.fillText('of 100', W / 2, 860);
+    g.font = '700 80px ' + F; g.fillStyle = '#ffffff';
+    g.fillText(bandName, W / 2, 1000);
+    g.font = '400 38px ' + F; g.fillStyle = 'rgba(232,228,219,0.8)';
+    g.fillText(facts.slice(0, 3).join('  ·  '), W / 2, 1075, W - 120);
+    g.fillStyle = 'rgba(201,168,76,0.35)'; g.fillRect(W / 2 - 60, 1160, 120, 3);
+    g.font = '700 40px ' + F; g.fillStyle = '#E8E4DB';
+    g.fillText('Find yours – free test at drumlion.com', W / 2, 1250, W - 120);
+    return cv;
+  }
+  try {
+    if (new URLSearchParams(window.location.search).get('test') === '1') setTimeout(_ltOpen, 0);
   } catch (e) {}
 
   // ============================================================
