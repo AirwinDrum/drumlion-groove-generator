@@ -16522,9 +16522,65 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   });
   function _exAdvanced(ex) { return !!ex && (ex.cat === 'rudiments' || !!_advLabels[ex.catLabel]); }
   function _advStart(ex) { return Math.ceil(_exSteps(ex) / 2); }   // erste Advanced-Stufe
-  function _basicDone(ex, en) {
-    var s = en.bpmStep || 0;
-    return _exAdvanced(ex) && !en.adv && s >= _advStart(ex) && s < _exSteps(ex);
+  // Seit der Spirale (03.11.2026) gibt es keine Basic-Hälfte mehr, die eine Übung aus der
+  // Rotation nimmt. Die Funktion bleibt, damit alte Aufrufer nichts mehr parken; `_exAdvanced`
+  // steuert weiter nur die Blöcke (`_blockCount`).
+  function _basicDone(ex, en) { return false; }
+
+  // ── Spirale (Erwin, 02./03.11.2026) ─────────────────────────────────────
+  // Säulen-Anteil: jede Säule bekommt Lektionen nach ihrem verbleibenden Inhalt, damit alle bis
+  // Level 100 reichen („ist sogar geil wenn dann andere häufiger drankommen“), siehe _peekLesson.
+  // In der Säule: ein Arbeitssatz von 2–10 Übungen (nach Säulengröße, eine offene Übung kommt
+  // etwa alle SPIRAL_GAP Lektionen dran). Jede bleibt SPIRAL_SLICE Lektionen und stellt sich
+  // dann hinten an (`cs.park`, älteste zuerst). Freie Plätze bekommt alle STEPS_PER_NEW_EX
+  // Stufen eine neue Übung, sonst die am längsten wartende. Basic/Advanced-Hälften entfallen
+  // („wenn wir auf spirale gehen, brauchen wir dann noch die beiden hälften?“ — nein).
+  var SPIRAL_SLICE = 3, SPIRAL_GAP = 60;
+  var _catSteps = {}, _catOfId = {}, _catMaxActive = {};
+  (function() {
+    var grand = 0;
+    Object.keys(_catPool).forEach(function(c) {
+      var t = 0;
+      _catPool[c].forEach(function(e) { t += _exSteps(e); _catOfId[e.id] = c; });
+      _catSteps[c] = t; grand += t;
+    });
+    Object.keys(_catPool).forEach(function(c) {
+      _catMaxActive[c] = Math.max(2, Math.min(10, Math.round(SPIRAL_GAP * _catSteps[c] / Math.max(1, grand))));
+    });
+  })();
+  function _maxActive(cat) { return _catMaxActive[cat] || MAX_ACTIVE_PER_CAT; }
+  // Freie Plätze im Arbeitssatz füllen: neue Übung, wenn ihr Takt dran ist, sonst die am
+  // längsten wartende. Ohne Wartende bleibt ein Platz frei, bis der Takt der nächsten neuen
+  // Übung dran ist — so wächst der Satz am Anfang wie bisher (alle STEPS_PER_NEW_EX Stufen eine).
+  function _spiralRefill(cat, cs, completed) {
+    if (!cs.park) cs.park = [];
+    var minA = (cat === 'notes') ? NOTES_MIN_ACTIVE : 1, max = _maxActive(cat), guard = 0;
+    while (cs.active.length < max && guard++ < 50) {
+      var wantNew = (cs.sinceNew || 0) >= STEPS_PER_NEW_EX || cs.active.length < minA;
+      var nx = wantNew ? _introNext(cat, cs, completed) : null;
+      if (nx) { cs.active.push({ id: nx.id, bpmStep: 0 }); cs.sinceNew = 0; continue; }
+      var back = null;
+      while (cs.park.length && !back) {
+        var cand = cs.park.shift();
+        if (EXERCISES.some(function(e) { return e.id === cand.id; })) back = cand;   // entfernte Übung verwerfen
+      }
+      if (back) { back.slice = 0; cs.active.push(back); continue; }
+      break;
+    }
+  }
+  // Verbleibender Inhalt einer Säule in Stufen (für den Säulen-Anteil)
+  function _catRemaining(cat) {
+    var done = 0, seen = {}, cs = _cState && _cState.cats && _cState.cats[cat];
+    ((_cState && _cState.completed) || []).forEach(function(id) {
+      if (_catOfId[id] !== cat || seen[id]) return;
+      seen[id] = 1; done += _exStepsById(id);
+    });
+    if (cs) (cs.active || []).concat(cs.park || [], cs.adv || []).forEach(function(en) {
+      if (!en || seen[en.id]) return;
+      seen[en.id] = 1;
+      done += Math.min(Math.max(en.best || 0, en.bpmStep || 0), _exStepsById(en.id));
+    });
+    return Math.max(0, (_catSteps[cat] || 0) - done);
   }
   function _advPark(cat, cs, en) {
     var pool = _catPool[cat] || [];
@@ -17094,7 +17150,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // erreichten Stufen), damit schnell Plätze frei werden. Die gerade angezeigte
   // Lektion wird nie geparkt. Für Level und Balken zählt `park` voll mit.
   function _trimActive(cat, cs) {
-    if (!cs || !cs.active || cs.active.length <= MAX_ACTIVE_PER_CAT) return;
+    if (!cs || !cs.active || cs.active.length <= _maxActive(cat)) return;
     var pool = _catPool[cat] || [];
     function exOf(id) { for (var i = 0; i < pool.length; i++) if (pool[i].id === id) return pool[i]; return null; }
     function posOf(id) { for (var i = 0; i < pool.length; i++) if (pool[i].id === id) return i; return 1e9; }
@@ -17105,7 +17161,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!!a.boost !== !!b.boost) return a.boost ? -1 : 1;   // geboostete bleiben offen
       return frac(b) - frac(a);
     });
-    var keep = ranked.slice(0, MAX_ACTIVE_PER_CAT), wait = ranked.slice(MAX_ACTIVE_PER_CAT);
+    var keep = ranked.slice(0, _maxActive(cat)), wait = ranked.slice(_maxActive(cat));
     var keepIds = {}; keep.forEach(function(e) { keepIds[e.id] = 1; });
     cs.active = cs.active.filter(function(e) { return keepIds[e.id]; });   // Reihenfolge der Rotation bleibt
     cs.park = (cs.park || []).concat(wait).sort(function(a, b) { return posOf(a.id) - posOf(b.id); });
@@ -17130,44 +17186,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     // Geänderte Tempo-Ranges: gespeicherte Stufen aufs neue Raster umrechnen
     _applyRangeMigrations(p);
-    // Basic-Hälfte schon geschafft, aber noch nicht im Advanced-Teil (Stände
-    // von vor dem 22.09.2026, oder eine Range hat sich geändert)? Dann wartet
-    // die Übung mit ihrem Tempo auf Advanced. Wie viele dadurch aus der
-    // Rotation gehen, merkt sich `leftActive` — die Plätze füllen unten neue
-    // Übungen, damit die Rotation nicht plötzlich auf zwei, drei Übungen schrumpft.
-    var leftActive = {};
+    // Spirale (03.11.2026): die Advanced-Warteliste gibt es nicht mehr. Wer dort wartete, stellt
+    // sich in die normale Warteschlange (`park`) und macht bei seiner Stufe weiter; die
+    // Markierung `adv` entfällt.
     Object.keys(p.cats).forEach(function(c) {
       var cs = p.cats[c];
       if (!cs) return;
-      // Kategorie nicht mehr Advanced (z.B. Basic Grooves 1/2, 22.09.2026)?
-      // Dann zurück in die Rotation, weiter bei der erreichten Stufe; zu
-      // viele offene parkt `_trimActive` unten wie gewohnt.
-      (cs.active || []).concat(cs.park || []).forEach(function(en) {
-        if (!en.adv) return;
-        var ex = null;
-        for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
-        if (ex && !_exAdvanced(ex)) delete en.adv;
-      });
-      cs.adv = (cs.adv || []).filter(function(en) {
-        var ex = null;
-        for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
-        if (!ex || _exAdvanced(ex)) return true;
-        delete en.adv;
-        cs.active.push(en);
-        return false;
-      });
-      ['active', 'park'].forEach(function(list) {
-        if (!cs[list]) return;
-        cs[list] = cs[list].filter(function(en) {
-          var ex = null;
-          for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
-          if (!ex || !_basicDone(ex, en)) return true;
-          delete en.boost;
-          _advPark(c, cs, en);
-          if (list === 'active') leftActive[c] = (leftActive[c] || 0) + 1;
-          return false;
-        });
-      });
+      (cs.active || []).concat(cs.park || []).forEach(function(en) { if (en) delete en.adv; });
+      (cs.adv || []).forEach(function(en) { if (en) { delete en.adv; cs.park.push(en); } });
+      cs.adv = [];
     });
     // Position im Pool aus den bekannten Übungen bestimmen: so viele, wie am
     // Anfang des Pools lückenlos bekannt sind. Ohne Umsortieren ist das exakt
@@ -17194,19 +17221,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       cs.active = cs.active.filter(function(en) {
         return EXERCISES.some(function(ex) { return ex.id === en.id; });
       });
-      if (!cs.active.length && cs.introIdx > 0) {
-        var _nx2 = _introNext(c, cs, p.completed);
-        if (_nx2) cs.active.push({ id: _nx2.id, bpmStep: 0 });
-      }
-      // Nach Advanced verschobene Plätze mit neuen Basic-Übungen füllen. Hat
-      // die Säule keine mehr, rücken die Wartenden über `_unparkDue` nach.
-      var fill = Math.min(leftActive[c] || 0, MAX_ACTIVE_PER_CAT - cs.active.length);
-      for (var f = 0; f < fill; f++) {
-        var _nx3 = _introNext(c, cs, p.completed);
-        if (!_nx3) break;
-        cs.active.push({ id: _nx3.id, bpmStep: 0 });
-        cs.sinceNew = 0;
-      }
+      // Gestartete Säulen auf ihren Arbeitssatz auffüllen (noch nicht gestartete bleiben leer,
+      // die startet `_advanceState` am Level-Gate)
+      if (cs.active.length || (cs.park && cs.park.length) || cs.introIdx > 0) _spiralRefill(c, cs, p.completed);
     });
     return p;
   }
@@ -17307,7 +17324,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261102-223546';
+  var DL_BUILD = '20261103-005555';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17790,37 +17807,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _unparkDue() {
     Object.keys(_cState.cats).forEach(function(cat) {
       var cs = _cState.cats[cat];
-      if (!cs) return;
+      if (!cs || !_catPool[cat]) return;
       if (!cs.park) cs.park = [];
-      var bleibt = [];
-      cs.park.forEach(function(entry) {
-        var ex = EXERCISES.find(function(e){ return e.id === entry.id; });
-        if (!ex) return;                                   // Übung entfernt → verwerfen
-        if (cs.active.length < MAX_ACTIVE_PER_CAT) {
-          cs.active.push(entry);
-        } else {
-          bleibt.push(entry);
-        }
-      });
-      cs.park = bleibt;
-      // Kategorie sonst leer? Dann die nächste Übung aus dem Pool nachziehen,
-      // sonst käme sie nie wieder dran und würde in der Rotation übersprungen.
-      if (!cs.active.length) {
-        var nx = _introNext(cat, cs);
-        if (nx) { cs.active.push({ id: nx.id, bpmStep: 0 }); cs.sinceNew = 0; }
-      }
-      // Advanced: erst wenn die Säule keine neuen Übungen mehr hat, dann jeden
-      // freien Platz — in Kursreihenfolge, weiter bei der gespeicherten Stufe
-      if (!cs.adv) cs.adv = [];
-      if (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT && !_basicLeft(cat, cs, _cState.completed)) {
-        while (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT) {
-          var a = cs.adv.shift();
-          if (!EXERCISES.some(function(e){ return e.id === a.id; })) continue;   // Übung entfernt
-          a.adv = 1;
-          delete a.fbEasy; delete a.fbHard;   // „Too easy"-Serie von damals zählt nicht mehr
-          cs.active.push(a);
-        }
-      }
+      // Spirale (03.11.2026): eine alte Advanced-Warteliste reiht sich in die Warteschlange ein
+      if (cs.adv && cs.adv.length) cs.adv.forEach(function(a) { delete a.adv; cs.park.push(a); });
+      cs.adv = [];
+      // Noch nicht gestartete Säule (Level-Gate) bleibt leer, die startet `_advanceState`
+      if (!cs.active.length && !cs.park.length && !cs.introIdx) return;
+      _spiralRefill(cat, cs);
     });
   }
 
@@ -17844,6 +17838,34 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var idx = playedCat ? rotation.indexOf(playedCat) : -1;
     var from = (idx >= 0) ? idx : _cState.rotationPos;
     _cState.rotationPos = (from + 1) % rotation.length;
+    // Säulen-Anteil (Spirale, 03.11.2026): jede mitspielende Säule bekommt ihr Gewicht als
+    // Guthaben gutgeschrieben, die gespielte zahlt eine ganze Lektion. Nur wer mitspielt, sammelt —
+    // eine Säule, die später einsteigt (Rudiments ab Level 2), holt also nichts in einem Rutsch auf.
+    var w = _shareWeights(), sum = 0;
+    Object.keys(w).forEach(function(c) { var cs = _cState.cats[c]; cs.shareC = (cs.shareC || 0) + w[c]; sum += w[c]; });
+    if (playedCat && w[playedCat] != null) _cState.cats[playedCat].shareC -= sum;
+  }
+  // Gewicht je mitspielender Säule = Anteil am verbleibenden Inhalt. So enden alle Säulen etwa
+  // gleichzeitig, und neuer Inhalt (z.B. neue Fills) vergrößert den Anteil von selbst.
+  function _shareWeights() {
+    var w = {}, tot = 0;
+    _getRotation().forEach(function(c) {
+      var cs = _cState.cats[c];
+      if (!cs || !cs.active.length) return;
+      var rem = _catRemaining(c);
+      if (rem > 0) { w[c] = rem; tot += rem; }
+    });
+    Object.keys(w).forEach(function(c) { w[c] = w[c] / tot; });
+    return w;
+  }
+  // Reihenfolge der Säulen für die nächste Lektion: höchstes Guthaben nach dieser Runde zuerst,
+  // bei Gleichstand die feste Reihenfolge der Rotation.
+  function _shareOrder() {
+    var w = _shareWeights();
+    return _getRotation().map(function(c, i) {
+      var cs = _cState.cats[c];
+      return { c: c, v: (w[c] != null) ? ((cs && cs.shareC) || 0) + w[c] : -1e9, i: i };
+    }).sort(function(a, b) { return (b.v - a.v) || (a.i - b.i); }).map(function(o) { return o.c; });
   }
 
   // ── Boost (Abo-Stufe, nach dem Launch — Erwin, 01.10.2026) ──────────
@@ -17884,10 +17906,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Nächste Lektion ermitteln (ohne State zu ändern)
   function _peekLesson() {
-    var rotation = _getRotation();
-    // Suche aktive Kategorie ab rotationPos (überspringe leere)
-    for (var i = 0; i < rotation.length; i++) {
-      var cat = rotation[(_cState.rotationPos + i) % rotation.length];
+    // Säulen nach ihrem Anteil (`_shareOrder`), leere überspringen. Nie dieselbe Übung zweimal
+    // hintereinander: wäre die nächste dieselbe wie die letzte, kommt zuerst eine andere Säule
+    // (häufig am Anfang, wenn eine große Säule erst eine offene Übung hat).
+    var order = _shareOrder(), hist = _cState.history || [], lastId = hist.length ? hist[hist.length - 1].id : null;
+    var fallback = null;
+    for (var i = 0; i < order.length; i++) {
+      var cat = order[i];
       var cs  = _cState.cats[cat];
       if (cs && cs.active.length) {
         // Reihum innerhalb der Kategorie (mit Boost gewichtet), siehe _pickEntry
@@ -17896,12 +17921,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (!ex) continue;
         var rawBpm = _exBpm(ex, entry.bpmStep);
         var bpm    = _capBpm(ex, rawBpm);
-        return { ex: ex, bpm: bpm,
-                 sphm: bpmToSphm(bpm, ex),
-                 entry: entry, cat: cat };
+        var lesson = { ex: ex, bpm: bpm,
+                       sphm: bpmToSphm(bpm, ex),
+                       entry: entry, cat: cat };
+        if (entry.id === lastId) { if (!fallback) fallback = lesson; continue; }
+        return lesson;
       }
     }
-    return null;
+    return fallback;
   }
 
   // Lektion abschließen: State vorwärts
@@ -17952,22 +17979,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
       if (_cState.completed.indexOf(entry.id) === -1) _cState.completed.push(entry.id);
     }
-    // Basic-Hälfte geschafft → wartet mit ihrem Tempo auf Advanced
-    else if (_basicDone(lesson.ex, entry)) {
-      delete entry.boost;
-      cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
-      _advPark(cat, cs, entry);
-      _justBasicDone = { ex: lesson.ex, bpm: lesson.bpm };
+    // Zeitscheibe der Spirale: nach SPIRAL_SLICE Lektionen pausiert die Übung und stellt sich
+    // hinten an. Geboostete bleiben offen — Boost heißt öfter, nicht seltener. Wer nur noch das
+    // Endtempo vor sich hat (dorthin endet ein „Too easy“-Sprung), bleibt bis zum Abschluss offen;
+    // sonst wartete die letzte Lektion womöglich viele Level (Test 03.11.2026).
+    else {
+      entry.slice = (entry.slice || 0) + 1;
+      if (entry.slice >= SPIRAL_SLICE && !_boosted(entry) && entry.bpmStep < _exSteps(lesson.ex) - 1) {
+        entry.slice = 0;
+        cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
+        (cs.park || (cs.park = [])).push(entry);
+      }
     }
-
-    // Neue Übung einführen: alle STEPS_PER_NEW_EX Stufen ODER wenn keine aktive mehr
-    // Wartet jemand auf der Warteliste, rückt zuerst er nach (`_unparkDue` unten).
-    var _minActive = (cat === 'notes') ? NOTES_MIN_ACTIVE : 1;
-    if ((cs.sinceNew >= STEPS_PER_NEW_EX || cs.active.length < _minActive) &&
-        cs.active.length < MAX_ACTIVE_PER_CAT && !(cs.park && cs.park.length)) {
-      var _nx = _introNext(cat, cs);
-      if (_nx) { cs.active.push({ id: _nx.id, bpmStep: 0 }); cs.sinceNew = 0; }
-    }
+    // Freie Plätze füllen: neue Übung im Stufen-Takt, sonst die am längsten wartende
+    _spiralRefill(cat, cs);
 
     // Coordination/Rudiments lazy-initialisieren wenn Level-Gate erreicht
     var _curLevel = _getLevelInfo().level;
@@ -20898,14 +20923,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Der Sprung endet deshalb spätestens AUF der letzten Stufe; wer gerade das
     // Endtempo gespielt hat, ist damit durch.
     var to = Math.max(cur + 1, Math.min(next, steps - 1));
-    // Dasselbe für Basic (Erwin, 22.09.2026): In der Basic-Hälfte einer
-    // Advanced-Übung endet der Sprung spätestens auf der letzten Basic-Stufe —
-    // Basic ist erst geschafft, wenn dieses Tempo gespielt wurde. Vorher sprang
-    // Groove 1 mit zweimal „Too easy" von 50 direkt auf 80 (30→50→80).
-    if (_exAdvanced(ex) && !entry.adv) {
-      var lastBasic = _advStart(ex) - 1;
-      if (cur < lastBasic) to = Math.min(to, lastBasic);
-    }
+    // Bis 03.11.2026 endete der Sprung zusätzlich an der Basic-Grenze (Mitte der Range). Mit der
+    // Spirale gibt es keine Basic-Hälfte mehr, die Grenze entfällt.
     return to;
   }
 
@@ -25141,47 +25160,60 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_ltById) { _ltById = {}; EXERCISES.forEach(function(e) { _ltById[e.id] = e; }); }
     return _ltById[id];
   }
-  // Kursablauf vorausrechnen (wie die Course Map im Dev-Panel): Lektion i → Säule, Übung, Tempo
+  // Kursablauf vorausrechnen (wie die Course Map im Dev-Panel): Lektion i → Säule, Übung, Tempo, Stufe.
+  // Dieselbe Spirale wie `_advanceState` (03.11.2026), mit einer Stufe pro Lektion: Säulen-Anteil
+  // nach verbleibendem Inhalt, Arbeitssatz `_maxActive`, Zeitscheibe SPIRAL_SLICE, neue Übung alle
+  // STEPS_PER_NEW_EX Stufen, sonst die am längsten wartende. Rudiments ab Level 2.
   function _ltMap() {
     if (_ltMapCache) return _ltMapCache;
-    var rotation = ['grooves', 'notes', 'fillins'], cats = {}, poolPos = {}, out = [], rot = 0, guard = 0, rudi = false;
-    var max = TOTAL_CONTENT_LESSONS + 10;
-    function init(cat) {
-      var p = _catPool[cat] || [];
-      cats[cat] = { pool: p, active: p[0] ? [{ id: p[0].id, s: 0 }] : [], intro: p[0] ? 1 : 0, n: 0, last: null, adv: [] };
+    var names = ['grooves', 'notes', 'fillins', 'coordination', 'rudiments'], cats = {}, poolPos = {}, out = [], guard = 0;
+    var max = TOTAL_CONTENT_LESSONS + 10, lastLt = null;
+    names.forEach(function(c) {
+      var pool = _catPool[c] || [];
+      pool.forEach(function(e, i) { poolPos[e.id] = i; });
+      cats[c] = { pool: pool, tot: _catSteps[c] || 0, n: 0, active: [], park: [], intro: 0, sinceNew: 1e9, last: null };
+    });
+    function refill(cs, c) {
+      var minA = c === 'notes' ? NOTES_MIN_ACTIVE : 1;
+      while (cs.active.length < _maxActive(c)) {
+        var canNew = cs.intro < cs.pool.length;
+        if (canNew && (cs.sinceNew >= STEPS_PER_NEW_EX || cs.active.length < minA)) {
+          cs.active.push({ id: cs.pool[cs.intro].id, s: 0, q: 0 }); cs.intro++; cs.sinceNew = 0;
+        } else if (cs.park.length) { var back = cs.park.shift(); back.q = 0; cs.active.push(back); }
+        else break;
+      }
     }
-    if ((_catPool.coordination || []).length) rotation.push('coordination');
-    rotation.forEach(init);
-    Object.keys(_catPool).forEach(function(c) { (_catPool[c] || []).forEach(function(e, i) { poolPos[e.id] = i; }); });
-    while (out.length < max && guard++ < max * 2) {
-      if (!rudi && out.length >= LESSONS_PER_LEVEL && (_catPool.rudiments || []).length) { rotation.push('rudiments'); init('rudiments'); rudi = true; }
-      var cat = null;
-      for (var i = 0; i < rotation.length; i++) {
-        var c = rotation[(rot + i) % rotation.length];
-        if (cats[c] && cats[c].active.length) { cat = c; break; }
+    while (out.length < max && guard++ < max * 3) {
+      // Guthaben wie `_rotateOn`: Gewicht = verbleibender Inhalt der mitspielenden Säulen
+      var cat = null, best = -1e9, w = {}, sumW = 0;
+      for (var k = 0; k < names.length; k++) {
+        var c = names[k], cs0 = cats[c];
+        if (!cs0.tot || cs0.n >= cs0.tot) continue;
+        if (c === 'rudiments' && out.length < LESSONS_PER_LEVEL) continue;
+        if (!cs0.active.length) refill(cs0, c);
+        if (!cs0.active.length) continue;
+        w[c] = cs0.tot - cs0.n; sumW += w[c];
       }
+      // Höchstes Guthaben zuerst; wäre dort dieselbe Übung wie zuletzt dran, die nächste Säule
+      var nextOf = function(c) {
+        var cs1 = cats[c], l1 = -1;
+        for (var j1 = 0; j1 < cs1.active.length; j1++) if (cs1.active[j1].id === cs1.last) { l1 = j1; break; }
+        return cs1.active[(l1 + 1) % cs1.active.length];
+      };
+      var cand = Object.keys(w).map(function(c) { cats[c].cred = (cats[c].cred || 0) + w[c] / sumW; return c; })
+        .sort(function(a, b) { return cats[b].cred - cats[a].cred; });
+      cat = cand.filter(function(c) { return nextOf(c).id !== lastLt; })[0] || cand[0];
       if (!cat) break;
-      var cs = cats[cat], li = -1;
-      for (var j = 0; j < cs.active.length; j++) if (cs.active[j].id === cs.last) { li = j; break; }
-      var en = cs.active[(li + 1) % cs.active.length], ex = _ltEx(en.id);
-      if (!ex) { rot = (rot + 1) % rotation.length; continue; }
-      out.push({ cat: cat, id: ex.id, bpm: _exBpm(ex, en.s), p: poolPos[ex.id] || 0 });
-      en.s++; cs.last = en.id; cs.n++;
-      var nSt = _exSteps(ex);
-      if (en.s >= nSt) cs.active = cs.active.filter(function(e) { return e !== en; });
-      else if (!en.adv && _exAdvanced(ex) && en.s >= Math.ceil(nSt / 2)) {
-        cs.active = cs.active.filter(function(e) { return e !== en; });
-        cs.adv.push(en);
-        cs.adv.sort(function(a, b) { return poolPos[a.id] - poolPos[b.id]; });
-      }
-      if ((cs.n % STEPS_PER_NEW_EX === 0 || cs.active.length < (cat === 'notes' ? NOTES_MIN_ACTIVE : 1)) &&
-          cs.active.length < MAX_ACTIVE_PER_CAT && cs.intro < cs.pool.length) {
-        cs.active.push({ id: cs.pool[cs.intro].id, s: 0 }); cs.intro++;
-      }
-      if (cs.intro >= cs.pool.length) {
-        while (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT) { var aw = cs.adv.shift(); aw.adv = true; cs.active.push(aw); }
-      }
-      rot = (rot + 1) % rotation.length;
+      cats[cat].cred -= 1;
+      var cs = cats[cat];
+      var en = nextOf(cat), ex = _ltEx(en.id);
+      lastLt = en.id;
+      if (!ex) { cs.active = cs.active.filter(function(e) { return e !== en; }); continue; }
+      out.push({ cat: cat, id: ex.id, bpm: _exBpm(ex, en.s), p: poolPos[ex.id] || 0, s: en.s });
+      en.s++; en.q++; cs.last = en.id; cs.n++; cs.sinceNew++;
+      if (en.s >= _exSteps(ex)) cs.active = cs.active.filter(function(e) { return e !== en; });
+      else if (en.q >= SPIRAL_SLICE && en.s < _exSteps(ex) - 1) { cs.active = cs.active.filter(function(e) { return e !== en; }); cs.park.push(en); }
+      refill(cs, cat);
     }
     return (_ltMapCache = out);
   }
@@ -26183,98 +26215,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // ── Course-Map Simulation ────────────────────────────────
+    // Seit der Spirale (03.11.2026) dieselbe Rechnung wie die Kursreihenfolge (`_ltMap`) —
+    // vorher eine eigene Kopie der alten Rotation.
     function buildCourseMap() {
-      // Rotation ab Start: nur Grooves, Notes, Fills
-      // Coordination läuft ab Level 1 mit, Rudiments kommen ab Level 2 dazu
-      var rotation = ['grooves', 'notes', 'fillins'];
-      if ((_catPool.coordination || []).length) rotation.push('coordination');
-
-      // Initialer State (Kopie, nicht der echte)
-      var cats = {};
-      rotation.forEach(function(cat) {
-        var pool = _catPool[cat] || [];
-        var first = pool[0];
-        cats[cat] = {
-          pool: pool,
-          active: first ? [{id: first.id, bpmStep: 0}] : [],
-          introIdx: first ? 1 : 0,
-          counter: 0,
-          lastId: null,
-          adv: []
-        };
+      _ltMapCache = null;   // Dev-Ranges können sich geändert haben
+      return _ltMap().map(function(o) {
+        return { cat: o.cat, ex: _ltEx(o.id), bpm: o.bpm, stepIdx: o.s, adv: false };
       });
-      // Kursreihenfolge je Säule — die Advanced-Warteliste folgt ihr
-      var poolPos = {};
-      Object.keys(_catPool).forEach(function(c) { (_catPool[c] || []).forEach(function(e, i) { poolPos[e.id] = i; }); });
-
-      var lessons = [];
-      var maxLessons = TOTAL_CONTENT_LESSONS + 10;
-      var rotPos = 0;
-      var safety = 0;
-      var rudimentsAdded = false;
-
-      while (lessons.length < maxLessons && safety < maxLessons * 2) {
-        safety++;
-        // Rudiments ab Level 2 einschalten
-        if (!rudimentsAdded && lessons.length >= 1 * LESSONS_PER_LEVEL && _catPool.rudiments.length) {
-          rotation.push('rudiments');
-          cats['rudiments'] = {
-            pool: _catPool.rudiments,
-            active: _catPool.rudiments[0] ? [{id: _catPool.rudiments[0].id, bpmStep: 0}] : [],
-            introIdx: _catPool.rudiments[0] ? 1 : 0,
-            counter: 0, lastId: null, adv: []
-          };
-          rudimentsAdded = true;
-        }
-        var foundCat = null;
-        for (var i = 0; i < rotation.length; i++) {
-          var cat = rotation[(rotPos + i) % rotation.length];
-          var cs  = cats[cat];
-          if (cs && cs.active.length) { foundCat = cat; break; }
-        }
-        if (!foundCat) break;
-
-        var cs   = cats[foundCat];
-        var active = cs.active;
-        var lastIdx = -1;
-        for (var j = 0; j < active.length; j++) {
-          if (active[j].id === cs.lastId) { lastIdx = j; break; }
-        }
-        var entry = active[(lastIdx + 1) % active.length];
-        var ex    = EXERCISES.find(function(e){ return e.id === entry.id; });
-        if (!ex) { rotPos++; continue; }
-
-        var bpm = devExBpm(ex, entry.bpmStep);
-        lessons.push({ cat: foundCat, ex: ex, bpm: bpm, stepIdx: entry.bpmStep, adv: !!entry.adv });
-
-        // Advance
-        entry.bpmStep++;
-        cs.lastId  = entry.id;
-        cs.counter = (cs.counter || 0) + 1;
-
-        var nSt = devExSteps(ex);
-        if (entry.bpmStep >= nSt) {
-          cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
-        } else if (!entry.adv && _exAdvanced(ex) && entry.bpmStep >= Math.ceil(nSt / 2)) {
-          // Basic-Hälfte geschafft → wartet auf Advanced (wie `_advanceState`)
-          cs.active = cs.active.filter(function(e){ return e.id !== entry.id; });
-          cs.adv.push(entry);
-          cs.adv.sort(function(a, b) { return poolPos[a.id] - poolPos[b.id]; });
-        }
-        if ((cs.counter % 5 === 0 || cs.active.length < (foundCat === 'notes' ? NOTES_MIN_ACTIVE : 1)) &&
-            cs.active.length < MAX_ACTIVE_PER_CAT && cs.introIdx < cs.pool.length) {
-          cs.active.push({ id: cs.pool[cs.introIdx].id, bpmStep: 0 });
-          cs.introIdx++;
-        }
-        // Säule ohne neue Übungen → die Wartenden rücken in jeden freien Platz
-        if (cs.introIdx >= cs.pool.length) {
-          while (cs.adv.length && cs.active.length < MAX_ACTIVE_PER_CAT) {
-            var aw = cs.adv.shift(); aw.adv = true; cs.active.push(aw);
-          }
-        }
-        rotPos = (rotPos + 1) % rotation.length;
-      }
-      return lessons;
     }
 
     // ── HTML: Tab-Header ─────────────────────────────────────
