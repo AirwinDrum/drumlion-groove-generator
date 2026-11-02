@@ -17077,7 +17077,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261102-215607';
+  var DL_BUILD = '20261102-220716';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18541,8 +18541,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Zeile oben, die nächste darunter. Bis 4 Takte stehen standardmäßig alle auf zwei Zeilen.
   var MB_VIEW_KEY = 'drumlion_reading_view';
   var _mb = null, _mbCur = -1;
+  // Ab zwei Takten: die Zweitakt-Kombis mit Tuolen (02.11.2026) laufen auch hierüber, weil
+  // jede Kachel ihr eigenes Raster hat — Triole neben Quintole geht in `beats2/grid2` nicht.
   function _mbMap(G) {
-    if (!G || !G.bars || G.bars.length < 3) return null;
+    if (!G || !G.bars || G.bars.length < 2) return null;
     if (G._mbMap) return G._mbMap;
     var bpb = G.beatsPerBar || 4, slots = [];
     G.bars.forEach(function(b, j) {
@@ -18559,7 +18561,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _mbDrawTile(svg, b, cur) {
     var keep = GROOVE;
     GROOVE = { name: '', cat: 'notes', noteValue: b.noteValue, beatsPerBar: keep.beatsPerBar || 4,
-               beats: b.beats, stickings: b.stickings };
+               beats: b.beats, stickings: b.stickings,
+               // Tuolen/32tel wie in der Einzelübung (ein Balken pro Zählzeit), Pausen zusammengefasst
+               // nur in Stücken, Zählzeile in allen Kacheln auf einer Höhe, sobald im Stück
+               // irgendwo Tuolen stehen (02.11.2026)
+               beamRests: !!b.beamRests, mergeRests: !!keep.mergeRests,
+               lblHigh: !!(keep.bars && keep.bars.some(function(x) { return x.beamRests; })) };
     try { renderNot(cur == null ? -1 : cur, false, { svg: svg, plain: true }); } catch (e) {}
     finally { GROOVE = keep; }
     if (svg._vb) svg.setAttribute('viewBox', svg._vb);
@@ -18875,6 +18882,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var hasV2 = beatsArr.some(function(sl) {
         return sl && sl.some(function(nn){ return nn.voice === 2; });
       });
+      // Zusammengefasste Pausen (`mergeRests`, Notenstücke — Erwin, 02.11.2026: „bei den
+      // notenstücken kannst du pausenzeichen zusammenfassen“). Nur in geraden Rastern und nur
+      // ausgerichtet: ganzer Takt → Ganze, Takthälfte → Halbe, Zählzeit → Viertel, halbe
+      // Zählzeit → Achtel usw. Über die Mitte einer Gruppe hinweg wird nie zusammengefasst.
+      // Tuolen behalten ihre einzelnen Pausen. `restPlan[Slot] = Dauer in Slots`.
+      var restPlan = null;
+      if (GROOVE.mergeRests && !hasV2 && !gridAt && bpbar === 4 &&
+          (_nv === 'quarter' || _nv === 'eighth' || _nv === 'sixteenth' || _nv === 'thirtysecond')) {
+        restPlan = {};
+        var _rpFree = function(a, d) {
+          for (var k = a; k < a + d; k++) { var sl = beatsArr[k]; if ((sl && sl.length) || isCovered(k)) return false; }
+          return true;
+        };
+        var _rpSplit = function(a, d) {
+          if (_rpFree(a, d)) { restPlan[a] = d; return; }
+          if (d > 1) { _rpSplit(a, d / 2); _rpSplit(a + d / 2, d / 2); }
+        };
+        _rpSplit(0, n);
+      }
       // Halsende der unteren Stimme: gut drei Notenlinien-Abstände unter dem
       // tiefsten Notenkopf dieser Stimme, mindestens aber knapp unter dem System.
       // Fest bei sY+4*ls+18 wären die Hälse nach unten mehr als doppelt so lang
@@ -19192,7 +19218,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                      ? (sY + 4*ls + 13)
                      // Tuolen in Notenübungen (`beamRests`, 02.11.2026): höher wie bei den
                      // Rudiments, sonst steht das „&“ auf der Triolen- bzw. Sextolenziffer
-                     : (GROOVE.cat === 'rudiments' || (GROOVE.cat === 'notes' && GROOVE.beamRests) || upTupNum)
+                     : (GROOVE.cat === 'rudiments' || (GROOVE.cat === 'notes' && (GROOVE.beamRests || GROOVE.lblHigh)) || upTupNum)
                        ? (sY - 38)
                        : (sY - 27);
         // `hideCount` (Song-Builder): Zählzeiten über dem Takt ausblenden
@@ -19389,10 +19415,29 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           if (bi % 2 === 0 && !coveredByQuarter && _sbE(bi + 1)) _sbPair = 1;
           else if (bi % 2 === 1 && _sbE(bi - 1) && !isCovered(bi - 1)) _sbPair = 2;
         }
+        // Zusammengefasste Pause (siehe `restPlan`): leuchtet, solange der Cursor in ihr steht
+        var _rpD = restPlan && restPlan[bi];
+        if (_rpD) {
+          var _rpBeats = _rpD / (nq / 4);
+          var _rpA = !dimmed && curBeat >= globalBeat && curBeat < globalBeat + _rpD;
+          var _rpC = _rpA ? A : W;
+          var _rpX = (_rpBeats >= 4) ? sX + bW / 2 : x;   // Ganze Pause in der Taktmitte
+          if (_rpA) h += '<circle cx="'+_rpX+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
+                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
+                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
+          if (_rpBeats >= 4)      // Ganze: hängt an der zweiten Linie von oben
+            h += '<rect x="'+(_rpX-8)+'" y="'+(sY+ls)+'" width="16" height="6" fill="'+_rpC+'" rx="1" opacity="'+op+'"/>';
+          else if (_rpBeats >= 2) // Halbe: liegt auf der Mittellinie
+            h += '<rect x="'+(x-8)+'" y="'+(sY+2*ls-6)+'" width="16" height="6" fill="'+_rpC+'" rx="1" opacity="'+op+'"/>';
+          else {
+            var _rpG = _rpBeats >= 1 ? 'restQuarter' : _rpBeats >= 0.5 ? 'rest8th' : _rpBeats >= 0.25 ? 'rest16th' : 'rest32nd';
+            h += bravuraGlyph(_rpG, x - (_rpBeats >= 0.5 ? 4 : 5), sY + 2*ls, _rpC, op);
+          }
+        }
         // Eighth rest symbol — authentisches Bravura-Glyph
         // Grooves mit `beamRests` (Shuffle Grooves, Erwin 21.09.2026) bekommen
         // die Pause ebenfalls: ohne sie hinge der Balken 1–a über einer Lücke.
-        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.beamRests) &&
+        if (!restPlan && (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.beamRests) &&
             (_nv === 'eighth' || _nv === 'triplet') && bn.length === 0 && !coveredByQuarter &&
             !beatRest && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
@@ -19400,7 +19445,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
-        if (beatRest && bi === _restGst && !_sbEmpty) {
+        if (!restPlan && beatRest && bi === _restGst && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
@@ -19421,7 +19466,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var _nv16 = (_nv === 'sixteenth' || _nv === 'sixteenthTriplet') ||
                     (GROOVE.cat === 'notes' && (_nv === 'quintuplet' || _nv === 'septuplet'));
         var _nv32 = GROOVE.cat === 'notes' && _nv === 'thirtysecond';
-        if ((GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') && (_nv16 || _nv32) &&
+        if (!restPlan && (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') && (_nv16 || _nv32) &&
             bn.length === 0 && !coveredByQuarter && !beatRest && !_sbPair && !_sbEmpty) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
@@ -19429,7 +19474,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           h += bravuraGlyph(_nv32 ? 'rest32nd' : 'rest16th', x - 5, sY + 2*ls, nc, op);
         }
         // Quarter rest symbol — authentisches Bravura-Glyph
-        if (GROOVE.cat === 'notes' && _nv === 'quarter' && bn.length === 0 && !isHalfRest) {
+        if (!restPlan && GROOVE.cat === 'notes' && _nv === 'quarter' && bn.length === 0 && !isHalfRest) {
           if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
@@ -19478,7 +19523,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               if (gridAt) {
                 // Gemischtes Raster: die Balkenbildung oben hat vermerkt, was
                 // einen Balken bekommen hat, alles andere braucht ein Fähnchen.
-                if (!beamedSlots[bi])
+                // Viertel (1 Slot je Zählzeit) haben kein Fähnchen — vorher bekamen die Viertel-
+                // Takte der Zweitakt-Kombis Achtelfähnchen (Erwin, 02.11.2026, Combo 103)
+                if (!beamedSlots[bi] && gridAt[bi].q > 1)
                   h += bravuraGlyph(gridAt[bi].q <= 3 ? 'flag8thUp' : 'flag16thUp', x + 5, stemTop, nc, op);
               } else if (nq === 8) {
                 // Achtel: Paar-Check (2er-Gruppen)
