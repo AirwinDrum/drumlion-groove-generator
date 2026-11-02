@@ -16186,6 +16186,115 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
   })();
 
+  // ── Stücke mit Wechsel des Notenwerts im Takt (Erwin, 02.11.2026: „weiter übungen wo … innerhalb von
+  // halben takten die notenwerte ändern, gemischt mit ganzentakt übungen. danach noch welche wo innerhalb
+  // jeder viertel, jeder hälft und ganze takt übungen gemischt sind.“ Quiz: von einfach nach schwer, nur
+  // volle Figuren, nur Stücke). Erzeugt mit docs/tools/notes_reading_gen.py --teil3. Ein Takt mit Wechsel
+  // trägt `grid` (Slots je Zählzeit); Kacheln, Zeitraster und Klick lesen es. Tempo vom dichtesten Wert.
+  // IDs 6601–6630 (Hälfte), 6631–6660 (jede Zählzeit): Fortschritts-Schlüssel, nie umnummerieren.
+  NOTES_READING_LABELS = NOTES_READING_LABELS.concat(['Mixed Pieces · Half-Bar Switches · 4 Bars', 'Mixed Pieces · Half-Bar Switches · 8 Bars', 'Mixed Pieces · Half-Bar Switches · 12 Bars', 'Mixed Pieces · Half-Bar Switches · 16 Bars', 'Mixed Pieces · Beat Switches · 4 Bars', 'Mixed Pieces · Beat Switches · 8 Bars', 'Mixed Pieces · Beat Switches · 12 Bars', 'Mixed Pieces · Beat Switches · 16 Bars']);
+  // [id, Kategorie, [Takte]] — Takt = 4 Buchstaben (Wert je Zählzeit) oder ID des Schlusstakts
+  var NOTES_MIXED = [
+    [6601,26,['EETT','QQQQ','TTSS',201]],
+    [6602,26,['QQEE','SSSS','QQTT',202]],
+    [6603,26,['SSQQ','EEEE','SSSS',201]],
+    [6604,26,['TTTT','TTSS','EEEE',202]],
+    [6605,26,['QQQQ','TTSS','SSEE',201]],
+    [6606,26,['QQQQ','SSQQ','TTSS',202]],
+    [6607,26,['TTQQ','EETT','XXSS',201]],
+    [6608,26,['XXXX','QQQQ','TTEE',202]],
+    [6609,26,['EETT','EEEE','XXSS',201]],
+    [6610,26,['SSSS','XXSS','SSXX',202]],
+    [6611,27,['XXSS','SSEE','XXTT','SSQQ','XXXX','TTTT','XXXX',201]],
+    [6612,27,['QQXX','SSSS','EETT','TTXX','XXXX','TTSS','EEEE',202]],
+    [6613,27,['EEEE','TTEE','QQTT','DDEE','TTTT','XXEE','QQSS',201]],
+    [6614,27,['DDDD','QQQQ','TTSS','SSSS','XXSS','EEDD','EEEE',202]],
+    [6615,27,['DDDD','EEEE','QQDD','EEEE','QQEE','SSSS','TTTT',201]],
+    [6616,27,['QQQQ','SSSS','DDDD','QQSS','EEEE','DDTT','DDEE',202]],
+    [6617,27,['DDEE','QQDD','DDDD','QQQQ','SSSS','DDDD','QQQQ',201]],
+    [6618,27,['DDSS','DDDD','XXXX','SSSS','DDDD','SSTT','XXXX',202]],
+    [6619,27,['FFDD','EEEE','DDFF','XXFF','TTTT','FFEE','QQEE',201]],
+    [6620,27,['SSSS','FFQQ','FFXX','SSFF','FFXX','EEQQ','EEEE',202]],
+    [6621,28,['FFDD','FFFF','TTEE','FFFF','TTTT','SSSS','FFFF','DDDD','TTTT','SSTT','SSSS',201]],
+    [6622,28,['TTTT','EETT','SSQQ','EEQQ','QQQQ','TTTT','EEEE','QQQQ','EEEE','EEFF','XXXX',202]],
+    [6623,28,['EEEE','SSQQ','FFDD','DDDD','SSQQ','DDFF','XXXX','DDDD','FFDD','XXEE','TTTT',201]],
+    [6624,28,['QQFF','XXTT','QQXX','DDDD','XXXX','FFFF','FFEE','TTFF','FFFF','EEEE','FFSS',202]],
+    [6625,28,['TTVV','FFXX','EEEE','XXQQ','SSSS','QQVV','VVDD','XXXX','EEEE','EEVV','VVVV',201]],
+    [6626,29,['TTTT','VVVV','QQQQ','QQVV','QQSS','TTTT','EEDD','XXXX','QQQQ','XXTT','VVQQ','VVVV','FFFF','VVQQ','VVVV',201]],
+    [6627,29,['SSVV','XXVV','VVDD','SSVV','TTFF','DDFF','VVXX','VVVV','XXXX','SSEE','SSSS','FFFF','TTTT','VVEE','FFXX',202]],
+    [6628,29,['EEEE','FFFF','QQDD','DDDD','XXDD','EEXX','DDDD','SSFF','FFEE','DDDD','FFSS','VVVV','FFFF','DDVV','EEEE',201]],
+    [6629,29,['VVVV','FFTT','XXQQ','EEEE','TTTT','VVTT','EEXX','QQFF','DDQQ','VVVV','EEDD','XXXX','EEQQ','VVXX','QQDD',202]],
+    [6630,29,['FFVV','SSSS','QQQQ','TTEE','QQDD','VVSS','DDDD','TTTT','VVXX','FFEE','TTEE','FFFF','FFXX','XXFF','VVVV',201]],
+    [6631,30,['TSSS','QQSS','QQEE',201]],
+    [6632,30,['SSTT','SSQQ','SQES',202]],
+    [6633,30,['TTEE','EESE','SSQQ',201]],
+    [6634,30,['SSEQ','SEQE','EEEE',202]],
+    [6635,30,['TQQQ','SSEE','TTEE',201]],
+    [6636,30,['SSSS','QSSE','SSQQ',202]],
+    [6637,30,['XXQT','EEEE','XTTE',201]],
+    [6638,30,['ETXT','XXXX','XXQE',202]],
+    [6639,30,['QQXX','QQTX','STTQ',201]],
+    [6640,30,['XSQT','ESSE','TETX',202]],
+    [6641,31,['TTTT','QSQQ','QQXX','SXSX','SSSS','QQQQ','EXQT',201]],
+    [6642,31,['TSQX','EXET','EEEE','XXTQ','QTEQ','TQST','EEEE',202]],
+    [6643,31,['TXDE','DDEE','QQDD','QQDE','XXXX','XXEE','ESXT',201]],
+    [6644,31,['TTQQ','XXXX','TTET','QQEX','TEDS','EEDD','TESD',202]],
+    [6645,31,['TTTT','XQDS','DTDS','DTET','DDTT','XXQQ','DDXT',201]],
+    [6646,31,['EEEE','ESDQ','SEQQ','SSDD','EDXE','TTDD','QQDD',202]],
+    [6647,31,['TDDD','SSEE','SSXQ','TTXX','DDDE','DTST','XTXQ',201]],
+    [6648,31,['QDDD','DXQD','ETXT','EDQS','SSSS','XSQX','QQSS',202]],
+    [6649,31,['QQQQ','FFSS','ETDS','ESDF','DDDD','TFDQ','FFFF',201]],
+    [6650,31,['QTEE','SXQX','ETFF','FTXE','FFDD','EXSS','FQXD',202]],
+    [6651,32,['FFFF','DDTT','EEEE','DQED','SFEF','FFQE','DTFE','DSTD','EEEE','EQST','SEET',201]],
+    [6652,32,['FQSS','ESEE','EEEE','SSDT','SDFT','XXXX','DTFS','SFFS','DSXE','DFDT','QQSS',202]],
+    [6653,32,['TTTT','QQQQ','SSQQ','STST','EFQD','FQTX','ETXX','FFDE','XXXX','EEFF','QQXX',201]],
+    [6654,32,['QTTS','TTEE','XSTF','SSSS','DDTT','FFFF','TTFF','QQTF','SEEX','QTFX','SSDD',202]],
+    [6655,32,['VVVV','VQVS','VVTT','EEXX','DDDD','QEVX','TVES','FXVS','FFSS','QSED','DDDD',201]],
+    [6656,33,['DDXX','XSSS','FVTE','TQDT','XFVQ','SSFF','EEEE','QQQQ','FDVV','VVTX','QQTT','TTVV','FFXT','FFTT','XXXX',201]],
+    [6657,33,['DDQQ','STSS','SQFV','DDDD','TTTT','TTVV','QQSS','DXVF','VVQQ','DVEV','SQSS','DFSS','EFXF','QQVV','QVDX',202]],
+    [6658,33,['VVEE','TQVF','EEDD','TTVV','QFQQ','FFFF','QEXD','SSSS','QTXV','DVXT','XDVV','SVTD','QXVS','XXDD','SFFV',201]],
+    [6659,33,['EEEE','FXFQ','XXQQ','VDFQ','TFVX','XEXF','DVSS','TTTT','XXXX','FFQQ','FETE','QQTT','TTFF','DXVV','FFFF',202]],
+    [6660,33,['SSVV','VVVV','DEXD','DDDD','DVFF','DXDE','FQET','SSQQ','FFQQ','TEQV','VVDD','DXFV','DDTT','VTVX','TVFX',201]]
+  ];
+  (function _buildMixed() {
+    var byId = _readingById();
+    var Q = { Q: 1, E: 2, T: 3, S: 4, F: 5, X: 6, V: 7, D: 8 };
+    var NV = { Q: 'quarter', E: 'eighth', T: 'triplet', S: 'sixteenth', F: 'quintuplet', X: 'sixteenthTriplet',
+               V: 'septuplet', D: 'thirtysecond' };
+    var SRC = { Q: 203, E: 220, T: 5201, S: 250, F: 5301, X: 5211, V: 5321, D: 5281 };   // Tempo-Quelle je Wert
+    var TUP = { T: 1, F: 1, X: 1, V: 1, D: 1 };
+    function bar(code) {
+      var beats = [], stickings = [], grid = [], top = code.charAt(0), tup = false;
+      for (var b = 0; b < 4; b++) {
+        var c = code.charAt(b), q = Q[c];
+        if (READING_RANK[NV[c]] > READING_RANK[NV[top]]) top = c;
+        if (TUP[c]) tup = true;
+        grid.push(q);
+        for (var p = 0; p < q; p++) {
+          stickings.push(beats.length % 2 ? 'L' : 'R');   // durchgehend abwechselnd
+          beats.push([{inst: 'snare', line: 1.5, head: 'oval'}]);
+        }
+      }
+      var same = grid.every(function(q) { return q === grid[0]; });
+      return { beats: beats, stickings: stickings, noteValue: NV[top], beamRests: tup, grid: same ? null : grid, src: byId[SRC[top]] };
+    }
+    NOTES_MIXED.forEach(function(p, k) {
+      var bars = p[2].map(function(c) {
+        if (typeof c === 'number') { var e = byId[c]; return e ? _readingBars([e])[0] : null; }
+        return bar(c);
+      });
+      if (bars.some(function(b) { return !b; })) return;
+      var srcs = p[2].map(function(c, i) { return typeof c === 'number' ? byId[c] : bars[i].src; });
+      var ex = _readingEx(byId, p[0], p[1], 'Mixed Piece ' + (k + 1), [byId[203]].concat(srcs));
+      ex.bars = bars.map(function(b) { var o = { beats: b.beats, stickings: b.stickings, noteValue: b.noteValue, beamRests: b.beamRests };
+                                       if (b.grid) o.grid = b.grid; return o; });
+      ex.beats = ex.bars[0].beats; ex.stickings = ex.bars[0].stickings;
+      if (ex.bars[0].grid) ex.grid = ex.bars[0].grid;
+      if (ex.bars[0].beamRests) ex.beamRests = true; else delete ex.beamRests;
+      EXERCISES.push(ex);
+    });
+  })();
+
 
   // Dev-Ranges aus diesem Browser auf die Übungen legen (siehe oben)
   (function _applyDevRanges() {
@@ -17198,7 +17307,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261102-222206';
+  var DL_BUILD = '20261102-223546';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18669,8 +18778,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (G._mbMap) return G._mbMap;
     var bpb = G.beatsPerBar || 4, slots = [];
     G.bars.forEach(function(b, j) {
-      var q = b.beats.length / bpb;
-      b.beats.forEach(function(notes, s) { slots.push({ bar: j, s: s, q: q, notes: notes || [] }); });
+      // Teilung je Zählzeit: `grid` (Takt mit Wechsel, 02.11.2026) oder gleichmäßig.
+      // b = Zählzeit, p = Platz darin — für Klick und Zeitraster.
+      var grid = b.grid || null, per = b.beats.length / bpb, gb = 0, gp = 0;
+      b.beats.forEach(function(notes, s) {
+        var q = grid ? grid[gb] : per;
+        slots.push({ bar: j, s: s, q: q, b: gb, p: gp, notes: notes || [] });
+        if (++gp >= q) { gp = 0; gb++; }
+      });
     });
     return (G._mbMap = { bars: G.bars.length, slots: slots });
   }
@@ -18682,7 +18797,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _mbDrawTile(svg, b, cur) {
     var keep = GROOVE;
     GROOVE = { name: '', cat: 'notes', noteValue: b.noteValue, beatsPerBar: keep.beatsPerBar || 4,
-               beats: b.beats, stickings: b.stickings,
+               beats: b.beats, stickings: b.stickings, grid: b.grid || null,
                // Tuolen/32tel wie in der Einzelübung (ein Balken pro Zählzeit), Pausen zusammengefasst
                // nur in Stücken, Zählzeile in allen Kacheln auf einer Höhe, sobald im Stück
                // irgendwo Tuolen stehen (02.11.2026)
@@ -18891,7 +19006,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Breite einer Zählzeit im gemischten Raster (`grid2`): Achtel wie im
     // ersten Takt (2 × 56), Triolen etwas breiter, damit die Instrumentnamen
     // zwischen die Noten passen.
-    function _gridBeatW(q) { return Math.max(112, q * 46); }
+    // Einzeltakt mit gemischtem Raster (`GROOVE.grid`, Notenstücke mit Wechsel, 02.11.2026): alle
+    // Zählzeiten gleich breit, damit der Takt so breit bleibt wie ein Takt mit einem Raster.
+    var _gridFixW = 0;
+    function _gridBeatW(q) { return _gridFixW || Math.max(112, q * 46); }
 
     // showLabels: show instrument name for fill notes (at/after fillStart)
     // stickings:  per-beat sticking string array for bar 2
@@ -18929,7 +19047,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var gridAt = null;
       if (grid) {
         gridAt = []; lbl = [];
-        var _gSyl = { 2: ['&'], 3: ['&', 'a'], 4: ['e', '&', 'a'] }, _gx = 0;
+        var _gSyl = { 2: ['&'], 3: ['&', 'a'], 4: ['e', '&', 'a'], 6: ['', '', '&', '', ''] }, _gx = 0;
         grid.forEach(function(q, gb) {
           var w = _gridBeatW(q);
           for (var gp = 0; gp < q; gp++) {
@@ -19089,16 +19207,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       if (gridAt) {
         // Gemischtes Raster: Balken je Zählzeit über zusammenhängende Noten.
-        // Achtel und Achteltriolen 1 Balken, 16tel 2. Eine volle Triole
-        // bekommt die 3 über den Balken.
+        // Achtel und Achteltriolen 1 Balken, 16tel bis Septole 2, 32tel 3.
+        // Eine volle Tuole bekommt ihre Zahl über den Balken.
         var _gs = 0;
         grid.forEach(function(q) {
-          var nb = (q <= 3) ? 1 : 2, run = [];
+          var nb = (q <= 3) ? 1 : (q <= 7 ? 2 : 3), run = [];
           var flush = function() {
             if (run.length > 1) {
               var x1 = slotX(run[0]) + 5, x2 = slotX(run[run.length-1]) + 5;
               for (var k = 0; k < nb; k++)
-                h += '<rect x="'+(x1-SW)+'" y="'+(k ? BT + BSP : BT)+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
+                h += '<rect x="'+(x1-SW)+'" y="'+(BT + k * BSP)+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                      '" fill="'+W+'" opacity="'+op+'"/>';
               run.forEach(function(i) { beamedSlots[i] = true; });
               if ((q === 3 || q === 5 || q === 6 || q === 7) && run.length === q) {
@@ -19813,7 +19931,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       h += '<circle cx="'+(sX+bW)+'" cy="'+(sY+2.7*ls)+'" r="2" fill="'+W+'" opacity="'+op+'"/>';
       }
 
-      drawBeatsInBar(GROOVE.beats, sX, bs, 0, null, GROOVE.showLabels, 0, GROOVE.stickings, !!(opt && opt.noStaff));
+      if (GROOVE.grid) _gridFixW = bW / 4;
+      drawBeatsInBar(GROOVE.beats, sX, bs, 0, null, GROOVE.showLabels, 0, GROOVE.stickings, !!(opt && opt.noStaff),
+                     null, GROOVE.grid || null);
     }
 
     svg.innerHTML = h;
@@ -20563,7 +20683,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var _ms = mb.slots[bt];
         if (_ms.s === 0) _info = infoLine(br, bt);
         _ms.notes.forEach(function(n) { if (!n.rest) playSound(n.inst, when); });
-        scheduleMetroClicks(_ms.s, eighthMs/1000 * ticksPerBeat / _ms.q, _ms.q, when);
+        // Zählzeit × Teilung + Platz: stimmt auch, wenn das Raster im Takt wechselt (wie bei grid2)
+        scheduleMetroClicks(_ms.b * _ms.q + _ms.p, eighthMs/1000 * ticksPerBeat / _ms.q, _ms.q, when);
       } else if (isFill) {
         if (bt === 0 || bt === n1) _info = infoLine(br, bt);
         if (bt < n1) {
