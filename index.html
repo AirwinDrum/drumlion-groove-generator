@@ -1764,12 +1764,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 /* Zweizeilig: zwei Notenzeilen untereinander, am Zeilenende rückt die Seite hoch */
 .sb-vid-page {
   display: none; position: absolute; top: 0; bottom: 0;
-  left: var(--sb-m, 96px); right: var(--sb-m, 96px); overflow: hidden;
+  left: 0; right: 0; overflow: hidden;
 }
 .sb-vid[data-layout="lines"] .sb-vid-page { display: block; }
 .sb-vid[data-layout="lines"] .sb-vid-lane { display: none; }
-.sb-vid[data-layout="lines"] .sb-vid-sec { left: var(--sb-m, 96px); transform: none; }
-.sb-vid[data-layout="lines"] .sb-vid-wm { right: var(--sb-m, 96px); }
+.sb-vid[data-layout="lines"] .sb-vid-sec { left: 48px; transform: none; }
 .sb-vid-rows {
   position: absolute; left: 0; right: 0; top: 0; will-change: transform;
   transition: transform 0.55s cubic-bezier(.3,.7,.2,1);
@@ -17285,7 +17284,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261103-191900';
+  var DL_BUILD = '20261105-143403';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22468,10 +22467,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
     }
   }
+  // Anzeige-Uhr für den Cursor (Erwin, 05.11.2026: „zuckt und springt so komisch hin und her“).
+  // aCtx.currentTime läuft in Puffer-Schritten (gemessen 10,7–21,3 ms pro Bild), roh übernommen
+  // ruckelt die Anzeige. Darum zählt sie mit performance.now() weiter und wird nur sanft zur
+  // Audio-Uhr gezogen. Der Ton bleibt unberührt.
+  function _sbSmooth(P, raw) {
+    var w = performance.now() / 1000;
+    if (P.ckW == null) { P.ckW = w; P.ck = raw; return raw; }
+    var t = P.ck + (w - P.ckW), d = raw - t;
+    t = Math.abs(d) > 0.25 ? raw : t + d * 0.04;   // große Lücke (Tab im Hintergrund): direkt übernehmen
+    if (t < P.ck) t = P.ck;
+    P.ck = t; P.ckW = w;
+    return t;
+  }
   function _sbTick() {
     var P = _sbP;
     if (!P) return;
-    var now = aCtx.currentTime - _audioLatency(), hit = null;
+    var now = _sbSmooth(P, aCtx.currentTime - _audioLatency()), hit = null;
     if (P.video) _sbVidFrame(P, now);
     else {
       while (P.q.length && P.q[0].t <= now) hit = P.q.shift();
@@ -22771,12 +22783,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     V.el.setAttribute('data-layout', V.mode);
     _sbVidScale();
     if (V.mode === 'lines') {
-      var M = _sbPrefs.vidFmt === 'tall' ? 60 : 96;
       V.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
-      V.W = Math.floor((V.SW - 2 * M) / V.P);
+      V.W = Math.floor(V.SW / V.P);   // volle Bühnenbreite (Erwin, 05.11.2026)
       V.H = Math.round(V.W * (98 - top) / 500);
       V.G = Math.round(V.H * 0.28);
-      V.mid.style.setProperty('--sb-m', M + 'px');
       V.mid.style.height = (2 * V.H + V.G) + 'px';
       V.cur.style.height = V.H + 'px';
     } else {
@@ -22957,9 +22967,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else {
       var xa = _sbVidX(a.bar, a.slot);
       if (b) x = xa + (_sbVidX(b.bar, b.slot) - xa) * Math.max(0, Math.min(1, (now - a.t) / (b.t - a.t)));
-      else {   // letzter Slot: bis zum Taktende weiterlaufen
-        var xe = _sbVidX(a.bar + 1, 0);
-        x = xa + (xe - xa) * Math.max(0, Math.min(1, (now - a.t) / (_sbBarSec(a.bar) / (_sbSong.bars[a.bar] ? _sbSong.bars[a.bar].n : 16))));
+      else {   // Nächster Slot noch nicht eingeplant (bei langen Slots ist die Warteschlange oft leer): zu ihm weiterlaufen
+        var nb = _sbSong.bars[a.bar] ? _sbSong.bars[a.bar].n : 16;
+        var xe = a.slot + 1 < nb ? _sbVidX(a.bar, a.slot + 1) : _sbVidX(a.bar + 1, 0);
+        x = xa + (xe - xa) * Math.max(0, Math.min(1, (now - a.t) / (_sbBarSec(a.bar) / nb)));
       }
       if (a.bar !== V.curBar || a.slot !== V.curSlot) {
         var old = V.curBar;
@@ -24067,9 +24078,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     P.startT = SB_EXP_LEAD + (P.countIn ? P.cq * qd : 0);
     P.total = P.startT + P.songSec + SB_EXP_TAIL;
     if (lines) {
-      P.M = P.tall ? 60 : 96;
+      P.M = 0;
       P.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
-      P.W = Math.floor((P.w - 2 * P.M) / P.P);
+      P.W = Math.floor(P.w / P.P);
       P.H = Math.round(P.W * (98 - top) / 500);
       P.G = Math.round(P.H * 0.28);
       P.midH = 2 * P.H + P.G;
@@ -24350,7 +24361,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var sp = S.secT < 0 ? 1 : ease((t - S.secT) / 0.5);
       ctx.globalAlpha = sp;
       ctx.font = '800 34px ' + FONT; ctx.fillStyle = SB_GOLD; spacing('8px');
-      ctx.fillText(sec.toUpperCase(), P.lines ? P.M : P.headX - 2, P.midTop - 40 + 14 * (1 - sp));
+      ctx.fillText(sec.toUpperCase(), P.lines ? 48 : P.headX - 2, P.midTop - 40 + 14 * (1 - sp));
       spacing('0px'); ctx.globalAlpha = 1;
     }
     // ── Noten
