@@ -1767,7 +1767,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-exp-s { font-size: 13px; color: var(--sb-mute); font-variant-numeric: tabular-nums; min-height: 1.2em; }
 /* Zweizeilig: zwei Notenzeilen untereinander, am Zeilenende rückt die Seite hoch */
 .sb-vid-page {
-  display: none; position: absolute; top: var(--sb-page-t, 0); height: var(--sb-page-h, 100%);
+  display: none; position: absolute; top: var(--sb-page-t, 0); height: var(--sb-page-h, 100%); margin-left: var(--sb-page-l, 0);
   left: 0; right: 0; overflow: hidden;
 }
 .sb-vid[data-layout="lines"] .sb-vid-page { display: block; }
@@ -17307,7 +17307,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261105-215201';
+  var DL_BUILD = '20261105-215854';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22817,6 +22817,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   // Maße des Notenbereichs: Balken, Abstand oben, Abstand unten (9:16: Platz für die Shorts-Oberfläche)
   var SB_PARTS_H = 46, SB_PAGE_PAD = 14;
+  // Zwei Zeilen: Abstand der Noten zum Bildrand links und rechts (Erwin, 05.11.2026)
+  function _sbLineM(tall) { return tall ? 24 : 40; }
   function _sbPadB(tall) { return tall ? 260 : SB_PAGE_PAD; }
   // Zwei Zeilen: Der Notenbereich füllt das untere Drittel (Erwin, 05.11.2026); der freie Platz geht in die Abstände
   function _sbLineFit(h, H, tall) {
@@ -22850,7 +22852,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbVidScale();
     if (V.mode === 'lines') {
       V.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
-      V.W = Math.floor(V.SW / V.P);   // volle Bühnenbreite (Erwin, 05.11.2026)
+      V.LM = _sbLineM(_sbPrefs.vidFmt === 'tall');
+      V.W = Math.floor((V.SW - 2 * V.LM) / V.P);
+      V.mid.style.setProperty('--sb-page-l', V.LM + 'px');
       V.H = Math.round(V.W * (98 - top) / 500);
       var fit = _sbLineFit(_sbVidDims().h, V.H, _sbPrefs.vidFmt === 'tall');
       V.G = fit.G;
@@ -24171,7 +24175,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (lines) {
       P.M = 0;
       P.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
-      P.W = Math.floor(P.w / P.P);
+      P.LM = _sbLineM(P.tall);
+      P.W = Math.floor((P.w - 2 * P.LM) / P.P);
       P.H = Math.round(P.W * (98 - top) / 500);
       P.fit = _sbLineFit(P.h, P.H, P.tall);
       P.G = P.fit.G;
@@ -24511,6 +24516,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       ctx.fillStyle = P.paper; ctx.fillRect(0, panelY, P.w, P.h - panelY);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, P.midTop, P.w, P.midH); ctx.clip();
+      ctx.translate(P.LM, 0);
       var sysTop = (40 - P.top) / (98 - P.top) * P.H, sysH = 32 / (98 - P.top) * P.H;
       for (var k = Math.max(0, row - 1); k <= Math.min(lastRow, row + 2); k++) {
         var ry = P.midTop + k * step - S.scroll;
