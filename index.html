@@ -1841,6 +1841,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid-parts { display: none; position: absolute; left: 0; right: 0; top: 0; height: 46px; overflow: hidden;
   background: rgba(255,255,255,0.07); border-top: 2px solid var(--sb-gold); box-sizing: border-box; }
 .sb-vid[data-layout="lines"] .sb-vid-parts { display: block; }
+/* BPM links, Taktzähler rechts direkt über dem Balken (Erwin, 05.11.2026) */
+.sb-vid-pmeta { display: none; position: absolute; left: 24px; right: 24px; bottom: 100%; margin-bottom: 10px; justify-content: space-between;
+  font-size: 28px; font-weight: 600; color: #e8e4db; font-variant-numeric: tabular-nums; text-shadow: 0 1px 8px rgba(0,0,0,0.8); }
+.sb-vid[data-layout="lines"] .sb-vid-pmeta { display: flex; }
+.sb-vid[data-layout="lines"] .sb-vid-meta { display: none; }
+.sb-vid[data-bg="green"] .sb-vid-pmeta { text-shadow: none; color: #f2f2f2; }
 .sb-vid-pfill { position: absolute; inset: 0; background: rgba(201,168,76,0.38); transform: scaleX(0); transform-origin: left center; }
 .sb-vid-pseg { position: absolute; top: 0; bottom: 0; box-sizing: border-box; padding-left: 14px; overflow: hidden; white-space: nowrap;
   border-left: 2px solid rgba(232,228,219,0.4); font-size: 20px; font-weight: 700; line-height: 44px; letter-spacing: 2px;
@@ -17301,7 +17307,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261105-153419';
+  var DL_BUILD = '20261105-155925';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22593,6 +22599,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<div class="sb-vid-meta"><span id="sbVidBpm"></span><span id="sbVidBar"></span></div>' +
         '</div>' +
         '<div class="sb-vid-mid" id="sbVidMid">' +
+          '<div class="sb-vid-pmeta"><span id="sbVidPBpm"></span><span id="sbVidPBar"></span></div>' +
           '<div class="sb-vid-parts"><div class="sb-vid-pfill" id="sbVidPFill"></div><div id="sbVidPSegs"></div></div>' +
           '<div class="sb-vid-sec" id="sbVidSec"></div>' +
           '<div class="sb-vid-lane" id="sbVidLane">' +
@@ -22987,8 +22994,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       s.textContent = sec;
       s.classList.remove('in'); void s.offsetWidth; if (sec) s.classList.add('in');
     }
-    document.getElementById('sbVidBar').textContent = 'Bar ' + (bi + 1) + ' / ' + bars.length;
-    document.getElementById('sbVidBpm').textContent = Math.round(_sbBarBpm(bi)) + ' BPM';
+    var barTxt = 'Bar ' + (bi + 1) + ' / ' + bars.length, bpmTxt = Math.round(_sbBarBpm(bi)) + ' BPM';
+    document.getElementById('sbVidBar').textContent = document.getElementById('sbVidPBar').textContent = barTxt;
+    document.getElementById('sbVidBpm').textContent = document.getElementById('sbVidPBpm').textContent = bpmTxt;
   }
   function _sbVidOpen() {
     if (!_sbRoot) return;
@@ -24418,14 +24426,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         lines.forEach(function(ln, li) { ctx.fillText(ln, hx, hy + 122 + li * 80, maxW); });
         var ty = hy + 122 + (lines.length - 1) * 80;
         ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol;
-        ctx.fillText(metaBpm, hx, ty + 58);
-        ctx.fillText(metaBar, hx + mw1 + 36, ty + 58);
+        if (!P.lines) {
+          ctx.fillText(metaBpm, hx, ty + 58);
+          ctx.fillText(metaBar, hx + mw1 + 36, ty + 58);
+        }
       } else {
         ctx.font = '800 68px ' + FONT; ctx.fillStyle = '#E8E4DB';
         ctx.fillText(title, hx, hy + 114, P.w - 2 * hx - mw1 - mw2 - 76);
         ctx.font = '600 28px ' + FONT; ctx.fillStyle = metaCol; ctx.textAlign = 'right';
-        ctx.fillText(metaBar, P.w - hx, hy + 108);
-        ctx.fillText(metaBpm, P.w - hx - mw2 - 36, hy + 108);
+        if (!P.lines) {
+          ctx.fillText(metaBar, P.w - hx, hy + 108);
+          ctx.fillText(metaBpm, P.w - hx - mw2 - 36, hy + 108);
+        }
         ctx.textAlign = 'left';
       }
     }   // Ende Kopf
@@ -24516,6 +24528,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         }
       });
       spacing('0px'); ctx.textBaseline = 'alphabetic';
+      // BPM links, Taktzähler rechts direkt über dem Balken
+      ctx.save();
+      if (!P.green) { ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 1; }
+      ctx.font = '600 28px ' + FONT; ctx.fillStyle = P.green ? '#f2f2f2' : '#e8e4db';
+      ctx.textAlign = 'left'; ctx.fillText(Math.round(_sbBarBpm(curBar)) + ' BPM', 24, panelY - 16);
+      ctx.textAlign = 'right'; ctx.fillText('Bar ' + (curBar + 1) + ' / ' + bars.length, P.w - 24, panelY - 16);
+      ctx.restore();
     }
     // ── Wasserzeichen unten rechts im Notenband (nicht im Cover-Video: dort zeigt
     // YouTube das Kanal-Logo)
