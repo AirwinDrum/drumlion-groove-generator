@@ -1784,11 +1784,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   background: var(--sb-gold); border-radius: 2px; box-shadow: 0 0 14px rgba(201,168,76,0.55);
 }
 .sb-vid-cur.beat { animation: sbBeat 0.22s ease-out; }
+/* Schweif: vom letzten Ziel bis zum Cursor, blendet aus */
+.sb-vid-tail {
+  position: absolute; left: 0; top: 0; z-index: 1; width: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(to right, rgba(201,168,76,0), rgba(201,168,76,0.5));
+}
+/* Gespielte Note leuchtet auf, stärker als der Cursor */
+.sb-hit { animation: sbHit 0.32s ease-out; }
+@keyframes sbHit {
+  from { filter: drop-shadow(0 0 3px #fff3c4) drop-shadow(0 0 9px rgba(201,168,76,1)) drop-shadow(0 0 16px rgba(201,168,76,1)); }
+  to { filter: drop-shadow(0 0 2px rgba(201,168,76,0.6)); }
+}
 .sb-vid-opt-lines { display: none; }
 .sb-vid[data-layout="lines"] .sb-vid-opt-lines { display: flex; }
 .sb-vid[data-layout="lines"] .sb-vid-opt-band { display: none; }
 .sb-vid[data-bg="green"] .sb-vid-cur { box-shadow: none; animation: none; }
-@media (prefers-reduced-motion: reduce) { .sb-vid-rows { transition: none; } .sb-vid-cur.beat { animation: none; } }
+.sb-vid[data-bg="green"] .sb-vid-tail { display: none; }
+.sb-vid[data-bg="green"] .sb-hit { animation: none; }
+@media (prefers-reduced-motion: reduce) { .sb-vid-rows { transition: none; } .sb-vid-cur.beat { animation: none; } .sb-hit { animation: none; } }
 /* Hochformat 1080×1920 für Shorts, Reels, TikTok */
 .sb-vid[data-fmt="tall"] .sb-vid-stage { width: 1080px; height: 1920px; }
 .sb-vid[data-fmt="tall"] .sb-vid-head {
@@ -17307,7 +17320,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261105-215854';
+  var DL_BUILD = '20261105-220353';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22556,6 +22569,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var V = _sbVid, b = _sbSong.bars[bi], band = V.mode !== 'lines', g = _sbGeom(b, band);
     return _sbBandX(V, bi) + (58 + slot * g.bs - 32.6) / g.vbW * (band ? V.W * g.q / 4 : V.W);
   }
+  // Zwei Zeilen: Der Cursor springt von Note zu Note, bei Pausen von Zählzeit zu Zählzeit (Erwin, 05.11.2026).
+  // S merkt sich den Sprung; aufgerufen je Bild mit dem aktuellen Slot und dessen x-Position.
+  var SB_JUMP_SEC = 0.09, SB_TAIL_SEC = 0.35, SB_HIT_SEC = 0.32;
+  function _sbIsStop(bi, slot) {
+    var b = _sbSong.bars[bi];
+    if (!b) return false;
+    if (b.notes[slot] && b.notes[slot].length) return true;
+    return slot % Math.max(1, Math.round(b.n / _sbQ(b))) === 0;
+  }
+  function _sbJump(S, a, xa, now) {
+    if (a.bar !== S.jBar || a.slot !== S.jSlot) {
+      S.jBar = a.bar; S.jSlot = a.slot;
+      if (S.jTo == null) { S.jFrom = S.jTo = S.jPos = xa; S.jT = now; }
+      else if (_sbIsStop(a.bar, a.slot)) { S.jFrom = S.jTo; S.jTo = xa; S.jT = now; }
+    }
+    var p = Math.max(0, Math.min(1, (now - S.jT) / SB_JUMP_SEC));
+    S.jPos = S.jFrom + (S.jTo - S.jFrom) * (1 - Math.pow(1 - p, 3));
+    return S.jPos;
+  }
   // Einzeilig: Startpunkt jedes Takts (L.X, kumuliert, 2/4 = halbe Breite); zweizeilig gleich breit
   function _sbBandXs(L) {
     var X = [0], bars = _sbSong.bars;
@@ -22608,7 +22640,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '</div>' +
           // Zweizeilig: aktuelle Zeile oben, nächste darunter; am Zeilenende rückt alles hoch
           '<div class="sb-vid-page" id="sbVidPage"><div class="sb-vid-rows" id="sbVidRows">' +
-            '<div class="sb-vid-cur" id="sbVidCur"></div>' +
+            '<div class="sb-vid-tail" id="sbVidTail"></div><div class="sb-vid-cur" id="sbVidCur"></div>' +
           '</div></div>' +
           // Wasserzeichen im Notenband: bleibt auch drin, wenn das Band im Schnitt
           // freigestellt und zugeschnitten wird
@@ -22680,7 +22712,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbRoot.appendChild(v);
     var $ = function(id) { return document.getElementById(id); };
     _sbVid = { el: v, stage: $('sbVidStage'), mid: $('sbVidMid'), lane: $('sbVidLane'), strip: $('sbVidStrip'), line: $('sbVidLine'),
-               rows: $('sbVidRows'), cur: $('sbVidCur'), rowEls: {}, row: -1, mode: 'band',
+               rows: $('sbVidRows'), cur: $('sbVidCur'), tail: $('sbVidTail'), rowEls: {}, row: -1, mode: 'band',
                tiles: {}, SW: SB_VID_W, W: 960, H: 200, P: 4, G: 40, x: 0, sec: '', open: false, idleT: 0 };
     $('sbVidGo').addEventListener('click', _sbVidToggle);
     $('sbVidClose').addEventListener('click', _sbVidClose);
@@ -22888,6 +22920,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     V.from = from;
     V.x = _sbVidX(from, 0);
     V.lastBeat = null;
+    V.jTo = V.jFrom = null; V.jBar = V.jSlot = -1;
     if (V.curBar >= 0) _sbVidTile(V.curBar, null);
     V.curBar = -1;
     _sbVidMove(V.x);
@@ -22983,6 +23016,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       V.rows.style.transform = 'translate3d(0,' + (-row * step) + 'px,0)';
     }
     V.cur.style.transform = 'translate3d(' + pos.x.toFixed(1) + 'px,' + (row * step) + 'px,0)';
+    // Schweif nur innerhalb einer Zeile
+    var from = V.jFrom == null ? null : _sbLinePos(V, V.jFrom);
+    var al = from && from.row === row && pos.x > from.x ? 1 - (V.jNow - V.jT) / SB_TAIL_SEC : 0;
+    if (al > 0) {
+      V.tail.style.height = V.H + 'px';
+      V.tail.style.width = (pos.x - from.x).toFixed(1) + 'px';
+      V.tail.style.transform = 'translate3d(' + from.x.toFixed(1) + 'px,' + (row * step) + 'px,0)';
+      V.tail.style.opacity = al.toFixed(3);
+    } else V.tail.style.opacity = 0;
   }
   // Band verschieben und nur die sichtbaren Takte im DOM halten — so bleiben
   // auch Songs mit Hunderten Takten flüssig.
@@ -23066,11 +23108,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var xe = a.slot + 1 < nb ? _sbVidX(a.bar, a.slot + 1) : _sbVidX(a.bar + 1, 0);
         x = xa + (xe - xa) * Math.max(0, Math.min(1, (now - a.t) / (_sbBarSec(a.bar) / nb)));
       }
+      if (V.mode === 'lines') { x = _sbJump(V, a, xa, now); V.jNow = now; }
       if (a.bar !== V.curBar || a.slot !== V.curSlot) {
         var old = V.curBar;
         V.curBar = a.bar; V.curSlot = a.slot;
         if (old >= 0 && old !== a.bar && V.tiles[old]) _sbVidTile(old, null);
-        if (V.tiles[a.bar]) _sbVidTile(a.bar, a.slot);
+        if (V.tiles[a.bar]) {
+          _sbVidTile(a.bar, a.slot);
+          if (V.mode === 'lines') V.tiles[a.bar].querySelectorAll('[fill="#C9A84C"],[stroke="#C9A84C"]').forEach(function(n) { n.classList.add('sb-hit'); });
+        }
         _sbVidInfo(a.bar);
       }
     }
@@ -24391,6 +24437,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // weiterläuft (Abschnitt, Zeile, Bildlauf), `ready` die geladenen Takt-Bilder.
   function _sbExpDraw(ctx, P, f, fps, S, ready, lionW, lionG) {
     var bars = _sbSong.bars, t = f / fps, a = _sbExpAt(P, t), x = _sbExpPos(P, a);
+    if (P.lines && a && !a.end) {
+      var jg = _sbGeom(bars[a.bar], false);
+      x = _sbJump(S, a, _sbBandX(P, a.bar) + (58 + a.slot * jg.bs - 32.6) / jg.vbW * P.W, t);
+    } else if (P.lines && S.jPos != null) x = S.jPos;
     if (P.cam && t >= P.songEnd) { _sbExpOutro(ctx, P, t - P.songEnd, S, lionW); return; }
     var curBar = a && !a.end ? a.bar : (a && a.end ? bars.length - 1 : P.from);
     var FONT = '"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
@@ -24476,8 +24526,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var sx = (58 + slot * g.bs - 32.6) / g.vbW * tw, sw = g.bs / g.vbW * tw;
       ctx.save();
       ctx.beginPath(); ctx.rect(tileX + sx - sw / 2, tileY, sw, P.H); ctx.clip();
-      if (!P.green) { ctx.shadowColor = 'rgba(201,168,76,0.75)'; ctx.shadowBlur = 14; }
+      var hit = P.lines && !P.green ? Math.max(0, 1 - (t - S.jT) / SB_HIT_SEC) : 0;
+      if (!P.green) { ctx.shadowColor = hit ? 'rgba(255,226,140,1)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = 14 + 34 * hit; }
       ctx.drawImage(gimg, tileX, tileY, tw, P.H);
+      if (hit > 0.3) ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       ctx.restore();
     };
     // Abspiellinie pulsiert auf jeder Zählzeit
@@ -24525,6 +24577,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, ry + sysTop, 2, sysH);
       }
       if (a && !a.end) slotHi(P.R.col[a.bar] * P.W, P.midTop + P.R.row[a.bar] * step - S.scroll, a.bar, a.slot);
+      var tf = S.jFrom == null ? null : _sbLinePos(P, S.jFrom);
+      var ta = tf && tf.row === row && lp.x > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
+      if (ta > 0) {
+        var tg = ctx.createLinearGradient(tf.x, 0, lp.x, 0);
+        tg.addColorStop(0, 'rgba(201,168,76,0)'); tg.addColorStop(1, 'rgba(201,168,76,' + (0.5 * ta).toFixed(3) + ')');
+        ctx.fillStyle = tg; ctx.fillRect(tf.x, P.midTop + row * step - S.scroll, lp.x - tf.x, P.H);
+      }
       ctx.save(); glow(); ctx.fillStyle = SB_GOLD;
       ctx.fillRect(lp.x - 1.5, P.midTop + row * step - S.scroll, 3, P.H);
       ctx.restore();
