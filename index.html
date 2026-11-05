@@ -17307,7 +17307,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261105-155925';
+  var DL_BUILD = '20261105-215201';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22818,6 +22818,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Maße des Notenbereichs: Balken, Abstand oben, Abstand unten (9:16: Platz für die Shorts-Oberfläche)
   var SB_PARTS_H = 46, SB_PAGE_PAD = 14;
   function _sbPadB(tall) { return tall ? 260 : SB_PAGE_PAD; }
+  // Zwei Zeilen: Der Notenbereich füllt das untere Drittel (Erwin, 05.11.2026); der freie Platz geht in die Abstände
+  function _sbLineFit(h, H, tall) {
+    var G = Math.round(H * 0.2), base = tall ? 260 : 0;
+    var free = Math.round(h / 3) - SB_PARTS_H - 2 * H - base;
+    if (free < G + 2 * SB_PAGE_PAD) return { G: G, t: SB_PAGE_PAD, b: _sbPadB(tall) };
+    var t = Math.round(free / 4);
+    return { G: free - 2 * t, t: t, b: base + t };
+  }
   // Parts des Fortschrittsbalkens: Anteil an der Songlänge; Namen nur, wenn sie hineinpassen
   function _sbParts(from, tm, w) {
     var bars = _sbSong.bars, out = [], name = '';
@@ -22844,11 +22852,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       V.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
       V.W = Math.floor(V.SW / V.P);   // volle Bühnenbreite (Erwin, 05.11.2026)
       V.H = Math.round(V.W * (98 - top) / 500);
-      V.G = Math.round(V.H * 0.2);
+      var fit = _sbLineFit(_sbVidDims().h, V.H, _sbPrefs.vidFmt === 'tall');
+      V.G = fit.G;
       V.R = _sbLineMap(V.P);
-      V.mid.style.setProperty('--sb-page-t', (SB_PARTS_H + SB_PAGE_PAD) + 'px');
+      V.mid.style.setProperty('--sb-page-t', (SB_PARTS_H + fit.t) + 'px');
       V.mid.style.setProperty('--sb-page-h', (2 * V.H + V.G) + 'px');
-      V.mid.style.height = (SB_PARTS_H + SB_PAGE_PAD + 2 * V.H + V.G + _sbPadB(_sbPrefs.vidFmt === 'tall')) + 'px';
+      V.mid.style.height = (SB_PARTS_H + fit.t + 2 * V.H + V.G + fit.b) + 'px';
       V.cur.style.height = V.H + 'px';
     } else {
       V.W = Math.round(V.SW / (_sbPrefs.vidBars || 2));
@@ -24164,7 +24173,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       P.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
       P.W = Math.floor(P.w / P.P);
       P.H = Math.round(P.W * (98 - top) / 500);
-      P.G = Math.round(P.H * 0.2);
+      P.fit = _sbLineFit(P.h, P.H, P.tall);
+      P.G = P.fit.G;
       P.midH = 2 * P.H + P.G;
       P.R = _sbLineMap(P.P);
       P.parts = _sbParts(from, tm, P.w);
@@ -24175,7 +24185,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       P.midH = P.H;
       P.X = _sbBandXs(P);
     }
-    P.midTop = lines ? P.h - _sbPadB(P.tall) - P.midH : Math.round((P.tall ? 0.47 : 0.5) * P.h - P.midH / 2);
+    P.midTop = lines ? P.h - P.fit.b - P.midH : Math.round((P.tall ? 0.47 : 0.5) * P.h - P.midH / 2);
     P.paper = P.green ? '#00b140' : '#121211';
     P.bg = P.green ? '#00b140' : '#0b0b0a';
     P.rel = _sbRelOf(from);
@@ -24497,7 +24507,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (row !== S.row) { S.scrollFrom = S.row < 0 ? row * step : S.scroll; S.row = row; S.rowT = t; }
       S.scroll = S.scrollFrom + (row * step - S.scrollFrom) * ease((t - S.rowT) / 0.55);
       // Ein gemeinsamer Notenbereich bis zum unteren Rand, darüber der Balken mit den Parts
-      var panelY = P.midTop - SB_PAGE_PAD - SB_PARTS_H;
+      var panelY = P.midTop - P.fit.t - SB_PARTS_H;
       ctx.fillStyle = P.paper; ctx.fillRect(0, panelY, P.w, P.h - panelY);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, P.midTop, P.w, P.midH); ctx.clip();
@@ -24560,7 +24570,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var cp = ease((t - SB_EXP_LEAD - (cn - 1) * P.qd) / 0.45), sc = 1.35 - 0.35 * cp;
       ctx.save();
       ctx.globalAlpha = 0.2 + 0.8 * cp;
-      ctx.translate(P.w / 2, P.lines ? P.midTop - SB_PAGE_PAD - SB_PARTS_H - 185 : (P.cam ? P.midTop - 160 : P.midTop + P.midH + 124));
+      ctx.translate(P.w / 2, P.lines ? P.midTop - P.fit.t - SB_PARTS_H - 185 : (P.cam ? P.midTop - 160 : P.midTop + P.midH + 124));
       ctx.scale(sc, sc);
       ctx.font = '800 150px ' + FONT; ctx.fillStyle = SB_GOLD; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(cn), 0, 0);
