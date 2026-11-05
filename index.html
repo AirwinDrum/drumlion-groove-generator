@@ -1652,12 +1652,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-cnt.cur { color: var(--sb-gold); }
 .sb-c {
   height: 25px; display: flex; align-items: center; justify-content: center;
-  background: #181817; border-left: 1px solid #222120; border-bottom: 1px solid #222120;
+  background: var(--sb-cbg, #141413); border-left: 1px solid #33312c; border-bottom: 1px solid #33312c;
   color: #141414; font-size: 13px; font-weight: 800; cursor: pointer; line-height: 1;
 }
-.sb-c.alt { background: #1d1d1b; }
-.sb-c.b { border-left-color: #4b473f; }
-.sb-c:hover { background: #2a2926; }
+/* Abwechselnd helle und dunkle Zeilen, auch auf dunklen Bildschirmen gut zu trennen (Erwin, 05.11.2026) */
+.sb-c.alt { --sb-cbg: #1a1a18; }
+.sb-c.z { --sb-cbg: #2b2a26; }
+.sb-c.z.alt { --sb-cbg: #312f2a; }
+.sb-rl.z { background: #2b2a26; color: #e8e4db; }
+.sb-c.b { border-left-color: #6a6558; }
+.sb-c:hover { background: #4d4839; box-shadow: inset 0 0 0 1px var(--sb-gold); }
 .sb-c.f { background: var(--sb-gold); }
 .sb-c.f.g { background: var(--sb-gold-dim); }
 .sb-c.cur { box-shadow: inset 0 0 0 1px rgba(232,228,219,0.55); }
@@ -1763,20 +1767,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-exp-s { font-size: 13px; color: var(--sb-mute); font-variant-numeric: tabular-nums; min-height: 1.2em; }
 /* Zweizeilig: zwei Notenzeilen untereinander, am Zeilenende rückt die Seite hoch */
 .sb-vid-page {
-  display: none; position: absolute; top: 0; bottom: 0;
+  display: none; position: absolute; top: var(--sb-page-t, 0); height: var(--sb-page-h, 100%);
   left: 0; right: 0; overflow: hidden;
 }
 .sb-vid[data-layout="lines"] .sb-vid-page { display: block; }
 .sb-vid[data-layout="lines"] .sb-vid-lane { display: none; }
-.sb-vid[data-layout="lines"] .sb-vid-sec { left: 48px; transform: none; }
+.sb-vid[data-layout="lines"] .sb-vid-sec { display: none; }
 .sb-vid-rows {
   position: absolute; left: 0; right: 0; top: 0; will-change: transform;
   transition: transform 0.55s cubic-bezier(.3,.7,.2,1);
 }
-.sb-vid-row {
-  position: absolute; left: 0; background: var(--sb-paper);
-  box-shadow: 0 -1px 0 rgba(201,168,76,0.18), 0 1px 0 rgba(201,168,76,0.18);
-}
+.sb-vid-row { position: absolute; left: 0; }
 .sb-vid-sys { position: absolute; left: 0; width: 2px; background: #fff; }
 .sb-vid-cur {
   position: absolute; left: 0; top: 0; z-index: 2; width: 3px; margin-left: -1.5px;
@@ -1786,7 +1787,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid-opt-lines { display: none; }
 .sb-vid[data-layout="lines"] .sb-vid-opt-lines { display: flex; }
 .sb-vid[data-layout="lines"] .sb-vid-opt-band { display: none; }
-.sb-vid[data-bg="green"] .sb-vid-row { box-shadow: none; }
 .sb-vid[data-bg="green"] .sb-vid-cur { box-shadow: none; animation: none; }
 @media (prefers-reduced-motion: reduce) { .sb-vid-rows { transition: none; } .sb-vid-cur.beat { animation: none; } }
 /* Hochformat 1080×1920 für Shorts, Reels, TikTok */
@@ -1833,6 +1833,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-wm { display: none; }
 /* Cover-Video: Notenband über die volle Bildbreite, ohne weiche Ränder (Erwin, 30.10.2026) */
 .sb-vid[data-cam="1"] .sb-vid-lane { -webkit-mask-image: none; mask-image: none; }
+/* Zweizeilig (Erwin, 05.11.2026): ein Notenbereich unten über die volle Breite, oben abgeschlossen
+   vom Fortschrittsbalken mit den Parts — dort liegen bei YouTube auch die Kapitel */
+.sb-vid[data-layout="lines"] .sb-vid-mid { top: auto; bottom: 0; transform: none; background: var(--sb-paper); }
+.sb-vid[data-layout="lines"] .sb-vid-foot { display: none; }
+.sb-vid[data-layout="lines"] .sb-vid-count { top: auto; bottom: 100%; margin: 0 0 110px; }
+.sb-vid-parts { display: none; position: absolute; left: 0; right: 0; top: 0; height: 46px; overflow: hidden;
+  background: rgba(255,255,255,0.07); border-top: 2px solid var(--sb-gold); box-sizing: border-box; }
+.sb-vid[data-layout="lines"] .sb-vid-parts { display: block; }
+.sb-vid-pfill { position: absolute; inset: 0; background: rgba(201,168,76,0.38); transform: scaleX(0); transform-origin: left center; }
+.sb-vid-pseg { position: absolute; top: 0; bottom: 0; box-sizing: border-box; padding-left: 14px; overflow: hidden; white-space: nowrap;
+  border-left: 2px solid rgba(232,228,219,0.4); font-size: 20px; font-weight: 700; line-height: 44px; letter-spacing: 2px;
+  text-transform: uppercase; color: rgba(232,228,219,0.62); }
+.sb-vid-pseg:first-child { border-left: 0; }
+.sb-vid-pseg.on { color: #fff; }
+.sb-vid[data-bg="green"] .sb-vid-parts { background: #10331e; }
+.sb-vid[data-bg="green"] .sb-vid-pfill { background: #6f5f2c; }
+.sb-vid[data-bg="green"] .sb-vid-pseg { color: #f2f2f2; border-left-color: #f2f2f2; }
 .sb-vid-opt-cam { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-opt-cam { display: flex; }
 .sb-vid-cams { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
@@ -17284,7 +17301,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261105-143403';
+  var DL_BUILD = '20261105-153419';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21322,6 +21339,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbPrefs.vidBars = Math.max(1, Math.min(4, +_sbPrefs.vidBars || 2));
     if (['wide', 'tall'].indexOf(_sbPrefs.vidFmt) === -1) _sbPrefs.vidFmt = 'wide';
     if (['band', 'lines'].indexOf(_sbPrefs.vidLayout) === -1) _sbPrefs.vidLayout = 'band';
+    if (!_sbPrefs.vidPer4) { _sbPrefs.vidPer = 4; _sbPrefs.vidPer4 = 1; }   // neuer Standard (Erwin, 05.11.2026)
     _sbPrefs.vidPer = Math.max(1, Math.min(4, Math.round(+_sbPrefs.vidPer) || 4));
     if (['dark', 'green'].indexOf(_sbPrefs.vidBg) === -1) _sbPrefs.vidBg = 'dark';
     if (['start', 'sel'].indexOf(_sbPrefs.vidFrom) === -1) _sbPrefs.vidFrom = 'start';
@@ -21792,7 +21810,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _sbCellClass(bar, ri, s, per) {
     var k = _sbCellVal(bar, ri, s);
-    return 'sb-c' + (s % per === 0 ? ' b' : '') + (Math.floor(s / per) % 2 ? ' alt' : '') +
+    return 'sb-c' + (ri % 2 ? ' z' : '') + (s % per === 0 ? ' b' : '') + (Math.floor(s / per) % 2 ? ' alt' : '') +
            (k ? ' f' : '') + (k === 'snareGhost' ? ' g' : '') + (s === _sbEdCur ? ' cur' : '');
   }
   function _sbStickClass(bar, s, per) {
@@ -21851,7 +21869,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     h += '<div class="sb-rl"></div>';
     for (var s = 0; s < n; s++) h += '<div class="sb-cnt' + (s % per === 0 ? ' b' : '') + (s === _sbEdCur ? ' cur' : '') + '">' + cnt[s] + '</div>';
     SB_ROWS.forEach(function(row, ri) {
-      h += '<div class="sb-rl">' + row.name + '</div>';
+      h += '<div class="sb-rl' + (ri % 2 ? ' z' : '') + '">' + row.name + '</div>';
       for (var s2 = 0; s2 < n; s2++) {
         var k = _sbCellVal(bar, ri, s2);
         h += '<div class="' + _sbCellClass(bar, ri, s2, per) + '" data-r="' + ri + '" data-s="' + s2 + '"' +
@@ -22575,6 +22593,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<div class="sb-vid-meta"><span id="sbVidBpm"></span><span id="sbVidBar"></span></div>' +
         '</div>' +
         '<div class="sb-vid-mid" id="sbVidMid">' +
+          '<div class="sb-vid-parts"><div class="sb-vid-pfill" id="sbVidPFill"></div><div id="sbVidPSegs"></div></div>' +
           '<div class="sb-vid-sec" id="sbVidSec"></div>' +
           '<div class="sb-vid-lane" id="sbVidLane">' +
             '<div class="sb-vid-strip" id="sbVidStrip"></div>' +
@@ -22774,6 +22793,38 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Maße aus Format und Layout; Kacheln neu aufbauen. Einzeilig: Taktbreite aus
   // „Bars on screen“. Zweizeilig: 1–4 Takte pro Zeile über die Bühnenbreite,
   // zwei Zeilen sichtbar.
+  // Zweizeilig: Zeilen des Songs. Höchstens `per` Takte, ein neuer Part beginnt immer eine neue Zeile.
+  function _sbLineMap(per) {
+    var row = [], col = [], rows = [], c = 0;
+    _sbSong.bars.forEach(function(b, i) {
+      if (i === 0 || c >= per || b.label) { rows.push({ a: i, n: 0 }); c = 0; }
+      rows[rows.length - 1].n++;
+      row.push(rows.length - 1); col.push(c++);
+    });
+    return { row: row, col: col, rows: rows };
+  }
+  // Takt und x-Position in der Zeile zu einer Position im Song (Takt i beginnt bei i·W)
+  function _sbLinePos(L, x) {
+    var bi = Math.max(0, Math.min(_sbSong.bars.length - 1, Math.floor(x / L.W + 1e-6)));
+    return { row: L.R.row[bi], x: L.R.col[bi] * L.W + Math.max(0, x - bi * L.W) };
+  }
+  // Maße des Notenbereichs: Balken, Abstand oben, Abstand unten (9:16: Platz für die Shorts-Oberfläche)
+  var SB_PARTS_H = 46, SB_PAGE_PAD = 14;
+  function _sbPadB(tall) { return tall ? 260 : SB_PAGE_PAD; }
+  // Parts des Fortschrittsbalkens: Anteil an der Songlänge; Namen nur, wenn sie hineinpassen
+  function _sbParts(from, tm, w) {
+    var bars = _sbSong.bars, out = [], name = '';
+    for (var i = from; i >= 0; i--) if (bars[i].label) { name = bars[i].label; break; }
+    for (var b = from; b < bars.length; b++) {
+      if (b > from && !bars[b].label) continue;
+      if (b > from) name = bars[b].label;
+      var p = { name: name, a: tm.at[b - from] / tm.total, b: 1 };
+      if (out.length) out[out.length - 1].b = p.a;
+      out.push(p);
+    }
+    out.forEach(function(p) { p.fit = (p.b - p.a) * w >= p.name.length * 16 + 24; });
+    return out;
+  }
   function _sbVidLayout() {
     var V = _sbVid, top = _sbTop();
     _sbCamLayout();
@@ -22786,8 +22837,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       V.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
       V.W = Math.floor(V.SW / V.P);   // volle Bühnenbreite (Erwin, 05.11.2026)
       V.H = Math.round(V.W * (98 - top) / 500);
-      V.G = Math.round(V.H * 0.28);
-      V.mid.style.height = (2 * V.H + V.G) + 'px';
+      V.G = Math.round(V.H * 0.2);
+      V.R = _sbLineMap(V.P);
+      V.mid.style.setProperty('--sb-page-t', (SB_PARTS_H + SB_PAGE_PAD) + 'px');
+      V.mid.style.setProperty('--sb-page-h', (2 * V.H + V.G) + 'px');
+      V.mid.style.height = (SB_PARTS_H + SB_PAGE_PAD + 2 * V.H + V.G + _sbPadB(_sbPrefs.vidFmt === 'tall')) + 'px';
       V.cur.style.height = V.H + 'px';
     } else {
       V.W = Math.round(V.SW / (_sbPrefs.vidBars || 2));
@@ -22827,22 +22881,43 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     document.getElementById('sbVidMarks').innerHTML = marks;
     V.total = tm.total;
+    var segs = document.getElementById('sbVidPSegs');
+    segs.textContent = '';
+    V.parts = _sbParts(from, tm, V.SW); V.partI = -1;
+    V.parts.forEach(function(p) {
+      var d = document.createElement('div');
+      d.className = 'sb-vid-pseg';
+      d.style.left = (p.a * 100).toFixed(3) + '%'; d.style.width = ((p.b - p.a) * 100).toFixed(3) + '%';
+      if (p.fit) d.textContent = p.name;
+      segs.appendChild(d);
+    });
+    _sbVidPart(0);
     var tot = Math.round(tm.total);
     document.getElementById('sbVidTot').textContent = Math.floor(tot / 60) + ':' + ('0' + tot % 60).slice(-2);
     document.getElementById('sbVidEl').textContent = '0:00';
     _sbCamIdle(from);
   }
   // Takt `bi` als Kachel ins Band zeichnen (oder neu zeichnen); `cur` = Slot im Cursor
+  // Fortschrittsbalken der Parts: `f` = Anteil am Song (0–1)
+  function _sbVidPart(f) {
+    var V = _sbVid, ps = V.parts || [], i = ps.length - 1;
+    document.getElementById('sbVidPFill').style.transform = 'scaleX(' + f.toFixed(4) + ')';
+    while (i > 0 && ps[i].a > f) i--;
+    if (i === V.partI) return;
+    V.partI = i;
+    var el = document.getElementById('sbVidPSegs').children;
+    for (var k = 0; k < el.length; k++) el[k].classList.toggle('on', k === i);
+  }
   function _sbVidTile(bi, cur) {
     var V = _sbVid, bar = _sbSong.bars[bi];
     if (!bar) return;
     var el = V.tiles[bi];
     if (!el) {
-      var lines = V.mode === 'lines', parent = lines ? V.rowEls[Math.floor(bi / V.P)] : V.strip;
+      var lines = V.mode === 'lines', parent = lines ? V.rowEls[V.R.row[bi]] : V.strip;
       if (!parent) return;   // Zeile gerade nicht im Bild
       el = document.createElement('div');
       el.className = 'sb-vid-bar';
-      el.style.left = (lines ? (bi % V.P) * V.W : _sbBandX(V, bi)) + 'px';
+      el.style.left = (lines ? V.R.col[bi] * V.W : _sbBandX(V, bi)) + 'px';
       el.style.width = (lines ? V.W : V.W * _sbQ(bar) / 4) + 'px';
       el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>';
       parent.appendChild(el);
@@ -22864,23 +22939,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                    '%;height:' + (32 / tot * 100).toFixed(3) + '%"></i>';
     V.rows.insertBefore(el, V.cur);
     V.rowEls[k] = el;
-    for (var j = 0; j < V.P; j++) {
-      var bi = k * V.P + j;
-      if (bi < _sbSong.bars.length) _sbVidTile(bi, V.curBar === bi ? V.curSlot : null);
+    for (var j = 0; j < V.R.rows[k].n; j++) {
+      var bi = V.R.rows[k].a + j;
+      _sbVidTile(bi, V.curBar === bi ? V.curSlot : null);
     }
   }
   // Zweizeilig: Cursor in seiner Zeile; wechselt die Zeile, rückt die Seite
   // weich hoch, sodass die aktuelle Zeile oben steht und die nächste darunter.
   function _sbVidLines(x) {
-    var V = _sbVid, rowW = V.P * V.W, step = V.H + V.G;
-    var lastRow = Math.max(0, Math.floor((_sbSong.bars.length - 1) / V.P));
-    var row = Math.max(0, Math.min(lastRow, Math.floor(x / rowW + 1e-6)));
+    var V = _sbVid, step = V.H + V.G, lastRow = V.R.rows.length - 1;
+    var pos = _sbLinePos(V, x), row = pos.row;
     if (row !== V.row) {
       var first = V.row < 0;
       V.row = row;
       Object.keys(V.rowEls).forEach(function(k) {
         if (+k >= row - 1 && +k <= row + 2) return;
-        for (var j = 0; j < V.P; j++) delete V.tiles[+k * V.P + j];
+        for (var j = 0; j < V.R.rows[k].n; j++) delete V.tiles[V.R.rows[k].a + j];
         V.rowEls[k].remove();
         delete V.rowEls[k];
       });
@@ -22888,8 +22962,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       V.rows.style.transition = first ? 'none' : '';
       V.rows.style.transform = 'translate3d(0,' + (-row * step) + 'px,0)';
     }
-    var xr = Math.max(0, x - row * rowW);
-    V.cur.style.transform = 'translate3d(' + xr.toFixed(1) + 'px,' + (row * step) + 'px,0)';
+    V.cur.style.transform = 'translate3d(' + pos.x.toFixed(1) + 'px,' + (row * step) + 'px,0)';
   }
   // Band verschieben und nur die sichtbaren Takte im DOM halten — so bleiben
   // auch Songs mit Hunderten Takten flüssig.
@@ -22994,6 +23067,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var total = V.total || _sbTimes(P.from).total;
     var el = Math.max(0, Math.min(total, now - P.startT));
     document.getElementById('sbVidFill').style.transform = 'scaleX(' + (el / total).toFixed(4) + ')';
+    _sbVidPart(el / total);
     var es = Math.floor(el);
     document.getElementById('sbVidEl').textContent = Math.floor(es / 60) + ':' + ('0' + es % 60).slice(-2);
     _sbCamTick(P, now);
@@ -24082,8 +24156,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       P.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
       P.W = Math.floor(P.w / P.P);
       P.H = Math.round(P.W * (98 - top) / 500);
-      P.G = Math.round(P.H * 0.28);
+      P.G = Math.round(P.H * 0.2);
       P.midH = 2 * P.H + P.G;
+      P.R = _sbLineMap(P.P);
+      P.parts = _sbParts(from, tm, P.w);
     } else {
       P.M = 0;
       P.W = Math.round(P.w / (_sbPrefs.vidBars || 2));
@@ -24091,7 +24167,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       P.midH = P.H;
       P.X = _sbBandXs(P);
     }
-    P.midTop = Math.round((P.tall ? 0.47 : 0.5) * P.h - P.midH / 2);
+    P.midTop = lines ? P.h - _sbPadB(P.tall) - P.midH : Math.round((P.tall ? 0.47 : 0.5) * P.h - P.midH / 2);
     P.paper = P.green ? '#00b140' : '#121211';
     P.bg = P.green ? '#00b140' : '#0b0b0a';
     P.rel = _sbRelOf(from);
@@ -24102,7 +24178,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     P.cam = _sbCamOn();
     if (P.cam) {
       P.green = false; P.paper = SB_CAM_BAND; P.bg = '#000';
-      P.midTop = P.h - P.midH - (P.tall ? 260 : 56);
+      if (!lines) P.midTop = P.h - P.midH - (P.tall ? 260 : 56);
       P.lookA = _sbLookMatrix('main') ? 'url(#sbLookMain)' : '';
       // Abspann (eigenes Video mit Ton) und Endcard für die YouTube-Endelemente
       P.outroDur = (_sbCams.outro && _sbSong.outro) ? (_sbCams.outro.mp.video.dur || 0) : 0;
@@ -24357,11 +24433,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var sec = '';
     for (var si = Math.min(curBar, bars.length - 1); si >= 0; si--) if (bars[si].label) { sec = bars[si].label; break; }
     if (sec !== S.sec) { S.sec = sec; S.secT = (f === 0) ? -1 : t; }
-    if (sec) {
+    if (sec && !P.lines) {
       var sp = S.secT < 0 ? 1 : ease((t - S.secT) / 0.5);
       ctx.globalAlpha = sp;
       ctx.font = '800 34px ' + FONT; ctx.fillStyle = SB_GOLD; spacing('8px');
-      ctx.fillText(sec.toUpperCase(), P.lines ? 48 : P.headX - 2, P.midTop - 40 + 14 * (1 - sp));
+      ctx.fillText(sec.toUpperCase(), P.headX - 2, P.midTop - 40 + 14 * (1 - sp));
       spacing('0px'); ctx.globalAlpha = 1;
     }
     // ── Noten
@@ -24405,33 +24481,48 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       ctx.save(); glow(); ctx.fillStyle = SB_GOLD; ctx.fillRect(P.headX - 1.5, ly - 26, 3, P.H + 52); ctx.restore();
     } else {
-      var rowW = P.P * P.W, step = P.H + P.G, lastRow = Math.floor((bars.length - 1) / P.P);
-      var row = Math.max(0, Math.min(lastRow, Math.floor(x / rowW + 1e-6)));
+      var step = P.H + P.G, lastRow = P.R.rows.length - 1, lp = _sbLinePos(P, x), row = lp.row;
       if (row !== S.row) { S.scrollFrom = S.row < 0 ? row * step : S.scroll; S.row = row; S.rowT = t; }
       S.scroll = S.scrollFrom + (row * step - S.scrollFrom) * ease((t - S.rowT) / 0.55);
+      // Ein gemeinsamer Notenbereich bis zum unteren Rand, darüber der Balken mit den Parts
+      var panelY = P.midTop - SB_PAGE_PAD - SB_PARTS_H;
+      ctx.fillStyle = P.paper; ctx.fillRect(0, panelY, P.w, P.h - panelY);
       ctx.save();
-      ctx.beginPath(); ctx.rect(P.M, P.midTop, P.w - 2 * P.M, P.midH); ctx.clip();
+      ctx.beginPath(); ctx.rect(0, P.midTop, P.w, P.midH); ctx.clip();
       var sysTop = (40 - P.top) / (98 - P.top) * P.H, sysH = 32 / (98 - P.top) * P.H;
       for (var k = Math.max(0, row - 1); k <= Math.min(lastRow, row + 2); k++) {
         var ry = P.midTop + k * step - S.scroll;
         if (ry > P.midTop + P.midH || ry + P.H < P.midTop) continue;
-        ctx.fillStyle = P.paper; ctx.fillRect(P.M, ry, rowW, P.H);
-        if (!P.green) { ctx.fillStyle = 'rgba(201,168,76,0.18)'; ctx.fillRect(P.M, ry - 1, rowW, 1); ctx.fillRect(P.M, ry + P.H, rowW, 1); }
-        for (var j = 0; j < P.P; j++) { var im2 = ready[(k * P.P + j) + 'n']; if (im2) ctx.drawImage(im2, P.M + j * P.W, ry, P.W, P.H); }
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(P.M, ry + sysTop, 2, sysH);
+        for (var j = 0; j < P.R.rows[k].n; j++) { var im2 = ready[(P.R.rows[k].a + j) + 'n']; if (im2) ctx.drawImage(im2, j * P.W, ry, P.W, P.H); }
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, ry + sysTop, 2, sysH);
       }
-      if (a && !a.end) slotHi(P.M + (a.bar % P.P) * P.W, P.midTop + Math.floor(a.bar / P.P) * step - S.scroll, a.bar, a.slot);
+      if (a && !a.end) slotHi(P.R.col[a.bar] * P.W, P.midTop + P.R.row[a.bar] * step - S.scroll, a.bar, a.slot);
       ctx.save(); glow(); ctx.fillStyle = SB_GOLD;
-      ctx.fillRect(P.M + Math.max(0, x - row * rowW) - 1.5, P.midTop + row * step - S.scroll, 3, P.H);
+      ctx.fillRect(lp.x - 1.5, P.midTop + row * step - S.scroll, 3, P.H);
       ctx.restore();
       ctx.restore();
+      // Fortschrittsbalken mit den Parts
+      var pf = P.songSec ? Math.max(0, Math.min(1, (t - P.startT) / P.songSec)) : 0;
+      ctx.fillStyle = P.green ? '#10331e' : 'rgba(255,255,255,0.07)'; ctx.fillRect(0, panelY, P.w, SB_PARTS_H);
+      ctx.fillStyle = P.green ? '#6f5f2c' : 'rgba(201,168,76,0.38)'; ctx.fillRect(0, panelY, P.w * pf, SB_PARTS_H);
+      ctx.fillStyle = SB_GOLD; ctx.fillRect(0, panelY, P.w, 2);
+      ctx.font = '700 20px ' + FONT; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; spacing('2px');
+      P.parts.forEach(function(q, qi) {
+        var on = pf >= q.a && (pf < q.b || qi === P.parts.length - 1);
+        if (qi) { ctx.fillStyle = P.green ? '#f2f2f2' : 'rgba(232,228,219,0.4)'; ctx.fillRect(P.w * q.a, panelY + 2, 2, SB_PARTS_H - 2); }
+        if (q.fit) {
+          ctx.fillStyle = on ? '#ffffff' : (P.green ? '#f2f2f2' : 'rgba(232,228,219,0.62)');
+          ctx.fillText(q.name.toUpperCase(), P.w * q.a + 16, panelY + SB_PARTS_H / 2 + 2);
+        }
+      });
+      spacing('0px'); ctx.textBaseline = 'alphabetic';
     }
     // ── Wasserzeichen unten rechts im Notenband (nicht im Cover-Video: dort zeigt
     // YouTube das Kanal-Logo)
     if (!P.cam) {
       ctx.font = '700 22px ' + FONT;
       var wmText = 'drumlion.com', wmW = 48 + 34 + 10 + ctx.measureText(wmText).width + 22, wmH = 54;
-      var wmX = (P.lines ? P.w - P.M : P.w) - wmW, wmY = P.midTop + P.midH - wmH;
+      var wmX = (P.lines ? P.w - P.M : P.w) - wmW, wmY = (P.lines ? P.h : P.midTop + P.midH) - wmH;
       if (P.green) { ctx.fillStyle = '#00b140'; ctx.fillRect(wmX, wmY, wmW, wmH); }
       else {
         var wg = ctx.createLinearGradient(wmX, 0, wmX + 34, 0);
@@ -24450,7 +24541,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var cp = ease((t - SB_EXP_LEAD - (cn - 1) * P.qd) / 0.45), sc = 1.35 - 0.35 * cp;
       ctx.save();
       ctx.globalAlpha = 0.2 + 0.8 * cp;
-      ctx.translate(P.w / 2, P.cam ? P.midTop - 160 : P.midTop + P.midH + 124);
+      ctx.translate(P.w / 2, P.lines ? P.midTop - SB_PAGE_PAD - SB_PARTS_H - 185 : (P.cam ? P.midTop - 160 : P.midTop + P.midH + 124));
       ctx.scale(sc, sc);
       ctx.font = '800 150px ' + FONT; ctx.fillStyle = SB_GOLD; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(String(cn), 0, 0);
@@ -24463,7 +24554,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (fa > 0) { ctx.fillStyle = 'rgba(0,0,0,' + Math.min(1, fa).toFixed(3) + ')'; ctx.fillRect(0, 0, P.w, P.h); }
       return;
     }
-    // ── Fortschritt
+    // ── Fortschritt (zweizeilig: Balken mit den Parts über den Noten)
+    if (P.lines) return;
     var fx = P.tall ? 72 : 96, fb = P.h - (P.tall ? 300 : 70), fwid = P.w - 2 * fx, py = fb - 49;
     var el = Math.max(0, Math.min(P.songSec, t - P.startT));
     ctx.fillStyle = P.green ? '#10331e' : 'rgba(255,255,255,0.12)'; ctx.fillRect(fx, py, fwid, 6);
@@ -24572,10 +24664,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbExpNeeds(P, f, fps) {
     var bars = _sbSong.bars, t = f / fps, a = _sbExpAt(P, t), x = _sbExpPos(P, a), out = [];
     if (P.lines) {
-      var rowW = P.P * P.W, lastRow = Math.floor((bars.length - 1) / P.P);
-      var row = Math.max(0, Math.min(lastRow, Math.floor(x / rowW + 1e-6)));
+      var lastRow = P.R.rows.length - 1, row = _sbLinePos(P, x).row;
       for (var k = Math.max(0, row - 1); k <= Math.min(lastRow, row + 2); k++)
-        for (var j = 0; j < P.P; j++) out.push([k * P.P + j, false]);
+        for (var j = 0; j < P.R.rows[k].n; j++) out.push([P.R.rows[k].a + j, false]);
     } else {
       var b0 = Math.max(0, _sbBandAt(P, x - P.headX) - 1), b1 = _sbBandAt(P, x - P.headX + P.w) + 1;
       for (var b = b0; b <= b1; b++) out.push([b, false]);
