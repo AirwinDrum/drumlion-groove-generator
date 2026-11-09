@@ -1796,6 +1796,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 /* Schweif nach vorn: wächst in der Dauer der Note bis zur nächsten Note oder Pause */
 .sb-tail-f { transform-box: fill-box; transform-origin: left center; animation: sbTailF linear both; }
 @keyframes sbTailF { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* Das Cursorfeld pulsiert nicht, es leuchten nur die Noten (Erwin, 09.11.2026) */
+.sb-vid .sb-vid-cur.beat, .sb-vid .sb-vid-head-line.beat { animation: none !important; }
 /* Cursor wie im Player: Kasten um die aktuelle Stelle */
 .sb-vid-cur, .sb-vid-head-line { box-sizing: border-box; background: rgba(201,168,76,0.16); border: 1.5px solid rgba(201,168,76,0.8); border-radius: 6px; }
 .sb-vid[data-bg="green"] .sb-vid-cur, .sb-vid[data-bg="green"] .sb-vid-head-line { background: none; }
@@ -17335,7 +17337,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-123100';
+  var DL_BUILD = '20261109-123417';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19099,9 +19101,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // Song-Builder (`songBar`): ein ganz leerer Takt bekommt eine Ganztaktpause
       // statt einzelner Pausen. Ohne das Flag ändert sich nichts.
       var _sbEmpty = !!GROOVE.songBar && beatsArr.every(function(sl) { return !sl || !sl.length; });
-      if (_sbEmpty) {
-        h += '<rect x="'+(sX+bW/2-7)+'" y="'+(sY+ls)+'" width="14" height="'+(ls*0.55)+'" fill="'+W+'" opacity="'+op+'"/>';
-      }
       // Staff lines (skipped when caller draws them across full width)
       if (!skipStaff) {
         for (var i = 0; i < 5; i++)
@@ -19690,6 +19689,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var _sbE = function(k) { var a = beatsArr[k]; return !(a && a.length); };
           if (bi % 2 === 0 && !coveredByQuarter && _sbE(bi + 1)) _sbPair = 1;
           else if (bi % 2 === 1 && _sbE(bi - 1) && !isCovered(bi - 1)) _sbPair = 2;
+        }
+        // Ganz leerer Takt im Song: Viertelpausen statt einer ganzen, so sieht man, wo man ist (Erwin, 09.11.2026)
+        if (_sbEmpty && bi % (nq / 4) === 0) {
+          var _epA = !dimmed && curBeat >= globalBeat && curBeat < globalBeat + nq / 4;
+          h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, _epA ? A : W, op);
         }
         // Zusammengefasste Pause (siehe `restPlan`): leuchtet, solange der Cursor in ihr steht
         var _rpD = restPlan && restPlan[bi];
@@ -21173,16 +21177,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var SB_PREF_KEY = 'drumlion_builder_prefs';
   var SB_CLIP_KEY = 'drumlion_builder_clip';
   var SB_MAX_BARS = 2000;
-  var SB_GRIDS      = [8, 12, 16, 24, 32];
+  var SB_GRIDS      = [4, 8, 12, 16, 24, 32];
   // Taktart je Takt (30.10.2026, Erwin: „für jeden einzelnen takt eine taktartwahl, genau wie bei den bpm“).
   // `bar.q` = Viertel pro Takt (2/4 … 7/4, fehlt = 4/4). `bar.n` bleibt die echte Slotzahl; das Raster
   // (die Dichte) ist n · 4 / q und hat dieselben Werte wie bei 4/4 (8, 12, 16, 24, 32).
   var SB_SIGS       = [2, 3, 4, 5, 6, 7];
   function _sbQ(bar) { return (bar && bar.q) || 4; }
   function _sbGridOf(bar) { return bar.n * 4 / _sbQ(bar); }
-  var SB_GRID_NAME  = { 8:'8th notes', 12:'8th-note triplets', 16:'16th notes', 24:'16th-note triplets', 32:'32nd notes' };
-  var SB_GRID_SHORT = { 8:'8', 12:'8T', 16:'16', 24:'16T', 32:'32' };
-  var SB_NOTE_VALUE = { 8:'eighth', 12:'triplet', 16:'sixteenth', 24:'sixteenthTriplet', 32:'thirtysecond' };
+  var SB_GRID_NAME  = { 4:'Quarter notes', 8:'8th notes', 12:'8th-note triplets', 16:'16th notes', 24:'16th-note triplets', 32:'32nd notes' };
+  var SB_GRID_SHORT = { 4:'4', 8:'8', 12:'8T', 16:'16', 24:'16T', 32:'32' };
+  var SB_NOTE_VALUE = { 4:'quarter', 8:'eighth', 12:'triplet', 16:'sixteenth', 24:'sixteenthTriplet', 32:'thirtysecond' };
   // Zeilen von oben nach unten wie im Notensystem. `v` sind die Klänge einer
   // Zeile; ein weiterer Klick schaltet weiter (Snare → Akzent → Ghost → Flam → Rim).
   var SB_ROWS = [
@@ -24705,7 +24709,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       ctx.save();
       ctx.beginPath(); ctx.rect(tileX + sx - sw / 2, tileY, sw, P.H); ctx.clip();
       if (al != null) {   // Nachleuchten
-        ctx.globalAlpha = al; ctx.shadowColor = P.paperOn ? '#2c5aa3' : '#C9A84C'; ctx.shadowBlur = 34 * al + 8;
+        ctx.globalAlpha = al; ctx.shadowColor = P.paperOn ? '#2c5aa3' : '#C9A84C'; ctx.shadowBlur = 14 * al + 4;
         ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       } else {
         if (!P.green) { ctx.shadowColor = P.paperOn ? 'rgba(44,90,163,0.5)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = P.paperOn ? 6 : 14; }
@@ -24747,7 +24751,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         gr.addColorStop(0, 'rgba(11,11,10,0)'); gr.addColorStop(1, P.bg);
         ctx.fillStyle = gr; ctx.fillRect(P.w - fw, ly - 2, fw, P.H + 4);
       }
-      if (SB_VID_CURSOR) { ctx.save(); glow(); curBox(P.headX, ly); ctx.restore(); }
+      if (SB_VID_CURSOR) { ctx.save(); curBox(P.headX, ly); ctx.restore(); }
     } else {
       var step = P.H + P.G, lastRow = P.R.rows.length - 1, lp = _sbLinePos(P, x), row = lp.row;
       if (row !== S.row) { S.scrollFrom = S.row < 0 ? row * step : S.scroll; S.row = row; S.rowT = t; }
@@ -24776,7 +24780,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         tg.addColorStop(0, 'rgba(' + tc + ',0)'); tg.addColorStop(1, 'rgba(' + tc + ',' + (0.5 * ta).toFixed(3) + ')');
         ctx.fillStyle = tg; ctx.fillRect(tf.x, P.midTop + row * step - S.scroll + tbx.y, tex - tf.x, tbx.h);
       }
-      ctx.save(); glow(); if (SB_VID_CURSOR) curBox(lp.x, P.midTop + row * step - S.scroll);
+      ctx.save(); if (SB_VID_CURSOR) curBox(lp.x, P.midTop + row * step - S.scroll);
       ctx.restore();
       ctx.restore();
       // Fortschrittsbalken mit den Parts
