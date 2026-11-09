@@ -1935,12 +1935,26 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-ans .lt-opt { text-align: center; font-size: 16px; padding: 14px 8px; }
 .lt-ans .lt-opt small { display: block; font-weight: 500; opacity: 0.65; font-size: 12px; margin-top: 4px; }
 .lt-score { font-size: clamp(96px, 24vw, 160px); font-weight: 800; line-height: 0.9; color: #C9A84C; font-variant-numeric: tabular-nums; }
+.lt-tease { opacity: 0.95; }
+.lt-note { font-size: 13px; opacity: 0.6; margin: 0; }
+.lt-range { background: var(--dl-raise); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 16px; display: grid; gap: 10px; }
+.lt-rline { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 14px; }
+.lt-rline b { font-size: 26px; font-weight: 800; color: #C9A84C; font-variant-numeric: tabular-nums; }
+.lt-rtrack { position: relative; height: 8px; border-radius: 4px; background: var(--dl-line-2); overflow: hidden; }
+.lt-rtrack i { position: absolute; top: 0; bottom: 0; background: #C9A84C; border-radius: 4px; transition: left 0.6s ease, right 0.6s ease; }
+.lt-fb { font-size: 15px; font-weight: 700; color: var(--dl-gold-ink); animation: ltIn 0.35s ease; }
+.lt-type { font-size: 20px; font-weight: 800; color: var(--dl-gold-ink); }
+.lt-prof { display: grid; gap: 8px; }
+.lt-prow { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px; background: var(--dl-raise); border: 1px solid var(--dl-line); font-size: 15px; }
+.lt-prow b { font-size: 13px; font-weight: 700; opacity: 0.8; }
+.lt-prow b.on { color: var(--dl-gold-ink); opacity: 1; }
+.lt-prow b.gap { opacity: 1; }
 .lt-score span { font-size: 0.28em; color: var(--dl-ink); opacity: 0.5; margin-left: 8px; }
 .lt-facts { display: flex; flex-wrap: wrap; gap: 8px; }
 .lt-fact { padding: 6px 12px; border-radius: 999px; background: var(--dl-raise); border: 1px solid var(--dl-line); font-size: 13px; }
 .lt-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 @media (max-width: 520px) { .lt-ans { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .lt-card { animation: none; } .lt-prog i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lt-card, .lt-fb { animation: none; } .lt-prog i, .lt-rtrack i { transition: none; } }
 /* Notenstücke (02.11.2026): Laufband oder zwei Zeilen, siehe _mbRender */
 .mb { display: none; width: 100%; flex-direction: column; gap: 4px; }
 .mb.on { display: flex; }
@@ -17341,7 +17355,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-144129';
+  var DL_BUILD = '20261109-174026';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25525,7 +25539,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   var LT_KEY = 'drumlion_leveltest_v1';
   var LT_ACADEMY = 'https://www.drumlion.com/academy';
-  var LT_PLAN_URL = '';   // Systeme.io-Seite für den Startplan (Schritt 2); leer = Knopf ausgeblendet
+  var LT_MAX_ROUNDS = 8;
+  var LT_PLAN_URL = 'https://www.drumlion.com/startplan';   // Systeme.io-Seite für den Startplan (Schritt 2); leer = Knopf ausgeblendet
   // Jede zweite Runde ein Groove, dazwischen reihum die anderen Säulen, soweit es sie im Level gibt
   // (Fills enden im Kurs bei Level 8, Notes bei 7). Coordination bleibt draußen: schon in Level 1
   // laufen dort Triolen und Verschiebungen, das verzerrt die Einstufung.
@@ -25533,12 +25548,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var LT_PLAY_SEC = 20;   // so lange läuft eine Übung (Erwin: „lass die übungen etwas länger laufen“), 4–16 Takte
   var LT_Q = [
     { id: 'years', q: 'How long have you been playing drums?',
-      opts: [['0', 'Not yet – I want to start'], ['1', 'Less than a year'], ['3', '1–3 years'], ['7', '3–10 years'], ['12', 'More than 10 years']] },
-    { id: 'band', q: 'Do you play in a band?', opts: [['no', 'No'], ['hobby', 'Yes, just for fun'], ['regular', 'Yes, regularly']] },
-    { id: 'live', q: 'Have you ever played live?', opts: [['never', 'Never'], ['few', 'A few times'], ['often', 'Many times']] },
+      opts: [['0', "I haven't started yet"], ['1', 'Less than a year'], ['3', '1–3 years'], ['7', '3–10 years'], ['12', 'More than 10 years']] },
+    { id: 'band', q: 'Do you play in a band?', opts: [['no', 'No'], ['hobby', 'Yes, just for fun'], ['regular', 'Yes, regularly']], when: function(a) { return a.years !== '0'; } },
+    { id: 'live', q: 'Have you ever played live?', opts: [['never', 'Never'], ['few', 'A few times'], ['often', 'Many times']], when: function(a) { return a.years !== '0'; } },
     { id: 'gigs', q: 'How many gigs did you play in the last 6 months?', opts: [['0', 'None'], ['2', '1–3'], ['6', '4–10'], ['12', 'More than 10']],
       when: function(a) { return a.live && a.live !== 'never'; } },
-    { id: 'read', q: 'Can you read drum notation?', opts: [['no', 'No'], ['little', 'A little'], ['yes', 'Yes']] },
+    { id: 'read', q: 'Can you read drum notation?', opts: [['no', 'No'], ['little', 'A little'], ['yes', 'Yes']], when: function(a) { return a.years !== '0'; } },
     { id: 'age', q: 'How old are you?', opts: [['u13', 'Under 13'], ['13', '13–17'], ['18', '18–29'], ['30', '30–49'], ['50', '50 or older']] },
     { id: 'genres', q: 'What do you love to play?', multi: true,
       opts: [['rock', 'Rock'], ['pop', 'Pop'], ['funk', 'Funk'], ['metal', 'Metal'], ['jazz', 'Jazz'], ['worship', 'Worship / Gospel'],
@@ -25663,11 +25678,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       '<div class="lt-prog" aria-hidden="true"><i></i></div><div class="lt-body"></div></div>';
     document.body.appendChild(el);
     el.querySelector('.lt-x').addEventListener('click', _ltClose);
+    if (!_premium()) el.querySelector('.lt-x').style.display = 'none';   // öffentlich: dahinter liegt der Mitglieder-Player
     _lt = { el: el, body: el.querySelector('.lt-body'), bar: el.querySelector('.lt-prog i'), st: null };
   }
   function _ltOpen() {
     if (!_lt) _ltBuild();
-    _lt.st = { qi: 0, a: {}, round: 0, used: {}, styles: {}, lo: 0, hi: 101, L: 1, step: 12, cur: null };
+    _lt.st = { qi: 0, a: {}, round: 0, used: {}, styles: {}, lo: 0, hi: 101, L: 1, step: 12, cur: null, skills: {}, fb: '', pv: null };
     _lt.el.classList.add('open');
     document.documentElement.style.overflow = 'hidden';
     _ltIntro();
@@ -25679,7 +25695,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltQs() { return LT_Q.filter(function(q) { return !q.when || q.when(_lt.st.a); }); }
   function _ltProgress(done) {
-    var total = _ltQs().length + 6;
+    var total = _ltQs().length + LT_MAX_ROUNDS;
     _lt.bar.style.width = Math.min(100, Math.round(done / total * 100)) + '%';
   }
   // Neue Karte: Elemente per DOM, Texte per textContent
@@ -25701,15 +25717,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _ltIntro() {
     _ltProgress(0);
     var c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Free drum level test');
-    var h = _ltAdd(c, 'h1', 'lt-h', "What's your drum level?");
-    h.appendChild(document.createElement('br'));
-    h.appendChild(document.createTextNode('Out of 100.'));
-    _ltAdd(c, 'p', 'lt-p', 'A few quick questions, then real grooves and fills from the Academy – can you play them? ' +
-      'About 3 minutes. Turn your sound on.');
-    var go = _ltAdd(c, 'button', 'lt-go', 'Start the test');
+    var sc = _ltAdd(c, 'div', 'lt-score lt-tease', '??');
+    _ltAdd(sc, 'span', null, '/ 100');
+    _ltAdd(c, 'h1', 'lt-h', 'How good are you on drums?');
+    _ltAdd(c, 'p', 'lt-p', 'Find your level in about 3 minutes, with real grooves from the Academy. ' +
+      'Play along at your kit, or just watch and listen from the couch. Brand new to drums? Start here too.');
+    var go = _ltAdd(c, 'button', 'lt-go', 'Find my level');
     go.type = 'button';
     go.addEventListener('click', function() { try { initA(); } catch (e) {} _ltQuestion(); });
+    _ltAdd(c, 'p', 'lt-note', 'Free. Turn your sound on.');
     go.focus();
   }
   function _ltQuestion() {
@@ -25760,16 +25776,65 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltPlayIntro() {
     var st = _lt.st;
+    if (st.a.years === '0') { _ltFirstGroove(); return; }
     st.L = _ltPrior(st.a);
     _ltProgress(_ltQs().length);
     var c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Part 2 of 2');
-    _ltAdd(c, 'h2', 'lt-h', "Now let's see what you can play.");
-    _ltAdd(c, 'p', 'lt-p', "You'll hear and see real exercises from the Academy, at their real tempo. " +
-      'For each one, be honest: could you play it right now?');
+    _ltAdd(c, 'div', 'lt-kick', 'Now the fun part');
+    _ltAdd(c, 'h2', 'lt-h', "Let's see what you can play.");
+    _ltAdd(c, 'p', 'lt-p', "You'll hear real exercises at their real tempo. Play along, or just watch and listen. " +
+      'Then be honest: could you play it right now?');
     var go = _ltAdd(c, 'button', 'lt-go', "Let's go");
     go.type = 'button';
     go.addEventListener('click', _ltRound);
+  }
+  // Noch nie gespielt: keine Abfrage, nur der erste Groove und dann das Ergebnis
+  function _ltFirstGroove() {
+    var st = _lt.st, r = _ltPick(1, 'grooves');
+    if (!r) { _ltResult(); return; }
+    st.cur = r;
+    _ltProgress(_ltQs().length + LT_MAX_ROUNDS - 1);
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Your first groove');
+    _ltAdd(c, 'h2', 'lt-h', "This is where you'd start.");
+    _ltStage(c, r);
+    _ltAdd(c, 'p', 'lt-p', 'Three sounds, one steady pulse. Every drummer started right here.');
+    var go = _ltAdd(c, 'button', 'lt-go', 'Show my result');
+    go.type = 'button';
+    go.addEventListener('click', function() { _ltStop(); _ltResult(); });
+    _ltPlay();
+  }
+  // Notenbild mit Abspielknopf
+  function _ltStage(c, r) {
+    var ex = _ltEx(r.id), play = _ltAdd(c, 'div', 'lt-play'), meta = _ltAdd(play, 'div', 'lt-meta');
+    _ltAdd(meta, 'span', null, (ex.cat === 'rudiments' ? ex.name : (ex.catLabel || '')) + ' · ' + Math.round(r.bpm) + ' BPM');
+    var again = _ltAdd(meta, 'button', 'lt-again', '▶ Play');
+    again.type = 'button';
+    again.addEventListener('click', function() { if (_lt.playing) _ltStop(); else _ltPlay(); });
+    _lt.btn = again;
+    _lt.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    _lt.svg.setAttribute('role', 'img');
+    _lt.svg.setAttribute('aria-label', ex.name);
+    play.appendChild(_lt.svg);
+    _ltDraw(null);
+  }
+  // „Level ??“: Der Bereich wird nach jeder Antwort kleiner
+  function _ltRange(c) {
+    var st = _lt.st, lo = Math.max(1, st.lo), hi = Math.min(100, st.hi);
+    if (hi < lo) hi = lo;
+    var box = _ltAdd(c, 'div', 'lt-range');
+    var line = _ltAdd(box, 'div', 'lt-rline');
+    _ltAdd(line, 'span', null, st.round ? 'Your level is between' : 'Your level');
+    _ltAdd(line, 'b', null, st.round ? lo + ' and ' + hi : '??');
+    var track = _ltAdd(box, 'div', 'lt-rtrack'), bar = _ltAdd(track, 'i');
+    var from = st.pv || [1, 100], pct = function(v) { return (v - 1) / 99 * 100; };
+    bar.style.left = pct(from[0]) + '%';
+    bar.style.right = (100 - pct(from[1])) + '%';
+    st.pv = [lo, hi];
+    requestAnimationFrame(function() { requestAnimationFrame(function() {
+      bar.style.left = pct(lo) + '%';
+      bar.style.right = (100 - pct(hi)) + '%';
+    }); });
   }
   function _ltRound() {
     var st = _lt.st, r = null, k;
@@ -25783,20 +25848,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (r.cat === 'grooves') st.styles[_ltEx(r.id).catLabel] = 1;
     st.cur = r;
     _ltProgress(_ltQs().length + st.round);
-    var ex = _ltEx(r.id), c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Exercise ' + (st.round + 1));
-    _ltAdd(c, 'h2', 'lt-h', 'Can you play this?');
-    var play = _ltAdd(c, 'div', 'lt-play'), meta = _ltAdd(play, 'div', 'lt-meta');
-    _ltAdd(meta, 'span', null, (ex.cat === 'rudiments' ? ex.name : (ex.catLabel || '')) + ' · ' + Math.round(r.bpm) + ' BPM');
-    var again = _ltAdd(meta, 'button', 'lt-again', '▶ Play');
-    again.type = 'button';
-    again.addEventListener('click', function() { if (_lt.playing) _ltStop(); else _ltPlay(); });
-    _lt.btn = again;
-    _lt.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    _lt.svg.setAttribute('role', 'img');
-    _lt.svg.setAttribute('aria-label', ex.name);
-    play.appendChild(_lt.svg);
-    _ltDraw(null);
+    var c = _ltCard();
+    _ltRange(c);
+    if (st.fb) _ltAdd(c, 'div', 'lt-fb', st.fb);
+    _ltAdd(c, 'h2', 'lt-h', 'Could you play this?');
+    _ltStage(c, r);
     var ans = _ltAdd(c, 'div', 'lt-ans');
     [['easy', 'Easy', 'I could play it now'], ['practice', 'With practice', "I'd need a few tries"], ['not', 'Not yet', "That's beyond me"]].forEach(function(o) {
       var b = _ltAdd(ans, 'button', 'lt-opt', o[1]);
@@ -25804,18 +25860,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _ltAdd(b, 'small', null, o[2]);
       b.addEventListener('click', function() { _ltAnswer(o[0]); });
     });
+    var nr = _ltAdd(c, 'button', 'lt-link', "I can't read this");
+    nr.type = 'button';
+    nr.addEventListener('click', function() { _ltAnswer('noread'); });
     _ltPlay();
   }
   // Wie ein Sehtest: „Easy“ schiebt die Untergrenze hoch, „Not yet“ die Obergrenze runter
   function _ltAnswer(ans) {
     var st = _lt.st, L = (st.cur && st.cur.lv) || st.L;
     _ltStop();
+    var cat = st.cur && st.cur.cat;
+    if (ans === 'noread') st.noread = true;
+    else if (cat) (st.skills[cat] = st.skills[cat] || []).push(ans === 'easy' ? 2 : ans === 'practice' ? 1 : 0);
     if (ans === 'easy') st.lo = Math.max(st.lo, L);
     else if (ans === 'not') st.hi = Math.min(st.hi, L);
-    else { st.lo = Math.max(st.lo, L - 2); st.hi = Math.min(st.hi, L + 4); }
+    else if (ans === 'practice') { st.lo = Math.max(st.lo, L - 2); st.hi = Math.min(st.hi, L + 4); }
     if (st.lo >= st.hi) st.hi = st.lo + 1;
+    st.fb = { easy: "Nice. Let's go higher.", practice: "That's your zone. Next one.", not: "Got it. Let's find your edge.", noread: 'No problem. Next one.' }[ans];
     st.round++;
-    var done = st.round >= 7 || (st.round >= 4 && st.hi - st.lo <= 5) ||
+    var done = st.round >= LT_MAX_ROUNDS || (st.round >= 5 && st.hi - st.lo <= 5) ||
                (L <= 1 && ans === 'not') || (L >= 100 && ans === 'easy');
     if (done) { _ltResult(); return; }
     if (st.hi > 100) st.L = Math.min(100, L + st.step);
@@ -25825,6 +25888,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _ltRound();
   }
   function _ltLevel(st) {
+    if (st.a.years === '0') return 1;
+    if (st.hi > 100 && st.lo <= 0) return Math.max(1, st.L);
     if (st.hi > 100) return Math.max(1, Math.min(100, st.lo + 2));
     if (st.lo <= 0) return Math.max(1, st.hi - 3);
     return Math.max(1, Math.min(100, Math.round((st.lo + st.hi) / 2)));
@@ -25900,6 +25965,29 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     LT_BANDS.forEach(function(x) { if (level >= x[0]) b = x; });
     return b;
   }
+  // Profil aus den Antworten: nur, was der Test wirklich gesehen hat
+  function _ltAvg(v) { return v && v.length ? v.reduce(function(a, b) { return a + b; }, 0) / v.length : null; }
+  function _ltProfile(st) {
+    if (st.a.years === '0') return [];
+    var out = [], read = _ltAvg(st.skills.notes);
+    if (read == null) read = { yes: 2, little: 1, no: 0 }[st.a.read];
+    if (st.noread) read = 0;
+    [['Grooves', _ltAvg(st.skills.grooves)], ['Fills', _ltAvg(st.skills.fillins)], ['Rudiments', _ltAvg(st.skills.rudiments)], ['Reading', read]].forEach(function(p) {
+      if (p[1] != null) out.push({ n: p[0], v: p[1], s: p[1] >= 1.5 ? 'Strong' : p[1] >= 0.75 ? 'Growing' : 'Your next step' });
+    });
+    return out;
+  }
+  function _ltType(st) {
+    if (st.a.years === '0') return 'The Fresh Start';
+    var map = {};
+    _ltProfile(st).forEach(function(p) { map[p.n] = p.v; });
+    var g = map.Grooves || 0, r = map.Reading || 0, f = Math.max(map.Fills || 0, map.Rudiments || 0);
+    if (g >= 1.5 && r < 1) return 'The Groove Machine';
+    if (r >= 1.5 && g < 1) return 'The Reader';
+    if (f >= 1.5 && g < 1.5) return 'The Hands Specialist';
+    if (g >= 1 && r >= 1.5) return 'The All-Rounder';
+    return g >= 1 ? 'The Steady Player' : 'The Rising Drummer';
+  }
   function _ltFacts(a) {
     var out = [], yrs = { '0': 'Just starting', '1': 'Less than a year', '3': '1–3 years', '7': '3–10 years', '12': '10+ years' };
     if (yrs[a.years]) out.push(yrs[a.years]);
@@ -25921,24 +26009,34 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var sc = _ltAdd(c, 'div', 'lt-score', '1');
     var of = _ltAdd(sc, 'span', null, '/ 100');
     sc.setAttribute('aria-label', 'Level ' + level + ' of 100');
+    if (st.a.years !== '0') _ltAdd(c, 'div', 'lt-type', _ltType(st));
     _ltAdd(c, 'h2', 'lt-h', band[1]);
     _ltAdd(c, 'p', 'lt-p', band[2] + (LT_GOAL[st.a.goal] ? ' ' + LT_GOAL[st.a.goal] : ''));
     var facts = _ltAdd(c, 'div', 'lt-facts');
     _ltFacts(st.a).forEach(function(f) { _ltAdd(facts, 'span', 'lt-fact', f); });
+    var prof = _ltProfile(st);
+    if (prof.length) {
+      var pb = _ltAdd(c, 'div', 'lt-prof');
+      prof.forEach(function(p) {
+        var row0 = _ltAdd(pb, 'div', 'lt-prow');
+        _ltAdd(row0, 'span', null, p.n);
+        _ltAdd(row0, 'b', p.v >= 1.5 ? 'on' : p.v >= 0.75 ? '' : 'gap', p.s);
+      });
+    }
     var row = _ltAdd(c, 'div', 'lt-row');
-    var go = _ltAdd(row, 'a', 'lt-go', 'Start at Level ' + level);
-    go.href = LT_ACADEMY + '?level=' + level;
+    if (LT_PLAN_URL) {
+      var plan = _ltAdd(row, 'a', 'lt-go', 'Get my start plan by email');
+      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level;
+      plan.target = '_top';
+    }
+    var go = _ltAdd(row, 'a', LT_PLAN_URL ? 'lt-ghost' : 'lt-go', 'Join the Academy');
+    go.href = LT_ACADEMY;
     go.target = '_top';
     go.rel = 'noopener';
     var sh = _ltAdd(row, 'button', 'lt-ghost', 'Share my result');
     sh.type = 'button';
     sh.addEventListener('click', function() { _ltShare(level); });
     _ltPrepCard(level, band[1], _ltFacts(st.a));
-    if (LT_PLAN_URL) {
-      var plan = _ltAdd(c, 'a', 'lt-link', 'Get my personal start plan by email →');
-      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level;
-      plan.target = '_top';
-    }
     var again = _ltAdd(c, 'button', 'lt-link', 'Take the test again');
     again.type = 'button';
     again.addEventListener('click', _ltOpen);
@@ -26029,7 +26127,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   try {
     // Vorerst nur auf Dev-Geräten (Erwin: „Level Test noch nicht bitte“, 02.11.2026)
-    if (_premium() && new URLSearchParams(window.location.search).get('test') === '1') setTimeout(_ltOpen, 0);
+    if (new URLSearchParams(window.location.search).get('test') === '1') setTimeout(_ltOpen, 0);
   } catch (e) {}
 
   // ============================================================
