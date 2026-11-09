@@ -17384,7 +17384,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-195713';
+  var DL_BUILD = '20261109-200019';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18483,8 +18483,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // wie weit hinter dem ersten Impuls der Hauptschlag liegt (26–85 ms).
   var WAV_ANCHOR = {};
   // Vorschlagnoten bei Flams und Drags (Erwin, 09.11.2026): weiter vor dem Hauptschlag, 70 % leiser
-  var WAV_SPLIT = {};
   var GRACE_WIDEN = 1.35, GRACE_VOL = 0.3;
+  // Flams aus zwei vollständigen Schlägen (Vorschlag, Hauptschlag) wie beim Drag. Ein
+  // Schnitt durch die Flam-Aufnahme klang hakend (Erwin, 09.11.2026). Tom-Flams bleiben Samples.
+  var FLAM_PARTS = { snareFlam: ['snareGhost', 'snare'], snareFlamAccent: ['snareGhost', 'snareAccent'], crossStickFlam: ['crossStick', 'crossStick'] };
 
   // Nur die führende Digitalstille abschneiden, nicht den Anschlag: gesucht
   // wird der erste Abtastwert über einer sehr kleinen Schwelle, gedeckelt auf
@@ -18515,11 +18517,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         aCtx.decodeAudioData(ab, function(buf) {
           WAVS[key] = buf;
           WAV_TRIM[key] = measureLeadIn(buf);
-          // Snare und Cross Stick: Vorschlag und Hauptschlag klar getrennt. Bei den Toms klingt
-          // der Vorschlag in den Hauptschlag hinein, sie bleiben ein Stück (Gipfel als Bezug).
+          // Snare und Cross Stick: echter Einsatz des Hauptschlags. Bei den Toms klingt der
+          // Vorschlag in den Hauptschlag hinein, dort bleibt der Gipfel als Bezug.
           var _sep = /^(snare|crossStick)Flam/.test(key);
           WAV_ANCHOR[key] = _sep ? measureMainStroke(buf, WAV_TRIM[key]) : (/Flam$/i.test(key) ? measurePeakStroke(buf, WAV_TRIM[key]) : 0);
-          if (_sep && WAV_ANCHOR[key]) WAV_SPLIT[key] = WAV_TRIM[key] + WAV_ANCHOR[key] - 0.001;
         }, function() {});
       })(k);
     });
@@ -18562,27 +18563,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return (anchor > 0.005 && anchor < 0.12) ? anchor : 0;
     } catch (e) { return 0; }
   }
-  // Flam aus der echten Aufnahme: Vorschlag und Hauptschlag getrennt starten
-  function playFlamParts(key, vol, t) {
-    var buf = WAVS[key], split = WAV_SPLIT[key], trim = WAV_TRIM[key] || 0, anchor = WAV_ANCHOR[key];
-    if (!buf || !split || !aCtx) return false;
-    var now = aCtx.currentTime, mainLead = trim + anchor - split;
-    var mainAt = Math.max(now, t - mainLead), graceAt = Math.max(now, t - anchor * GRACE_WIDEN), graceLen = split - trim;
-    var fade = 0.003;
-    var gs = aCtx.createBufferSource(), gg = aCtx.createGain();
-    gs.buffer = buf; gg.gain.setValueAtTime(vol * GRACE_VOL, graceAt);
-    gg.gain.setValueAtTime(vol * GRACE_VOL, graceAt + Math.max(0, graceLen - fade));
-    gg.gain.linearRampToValueAtTime(0, graceAt + graceLen);
-    gs.connect(gg); gg.connect(_aOut());
-    gs.start(graceAt, trim, graceLen);
-    var ms = aCtx.createBufferSource(), mg = aCtx.createGain();
-    ms.buffer = buf; mg.gain.setValueAtTime(0, mainAt);
-    mg.gain.linearRampToValueAtTime(vol, mainAt + 0.002);
-    ms.connect(mg); mg.connect(_aOut());
-    ms.start(mainAt, split);
-    return true;
-  }
-
   // Puffer so starten, dass der maßgebliche Schlag exakt auf `t` liegt.
   // Bei Flams heißt das: früher anfangen, damit der Vorschlag vor der
   // Zählzeit liegt und der Hauptschlag darauf.
@@ -18673,7 +18653,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     // hh → hh-Sound, hhAccent → hhAccent-Sound, hhPedal → hhPedal-Sound
-    if (WAV_SPLIT[key] && playFlamParts(key, vol, t)) return;
+    var _fp = FLAM_PARTS[key];
+    if (_fp && WAVS[_fp[0]] && WAVS[_fp[1]] && WAV_ANCHOR[key]) {
+      playBuf(WAVS[_fp[0]], vol * 0.55 * GRACE_VOL, t - WAV_ANCHOR[key] * GRACE_WIDEN, _fp[0]);
+      playBuf(WAVS[_fp[1]], vol, t, _fp[1]);
+      return;
+    }
     if (playBuf(WAVS[key], vol, t, key)) return;
     // Fallback synth for kick/snare/hh if buffer not loaded
     if (key === 'kick' || key === 'kick2') {
