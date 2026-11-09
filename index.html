@@ -1785,10 +1785,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 }
 /* Gespielte Note leuchtet nach, eigene Ebene über der Kachel (Erwin, 09.11.2026) */
 .sb-hit-ov { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible;
-  animation: sbHit 0.7s ease-out forwards; }
+  animation: sbHitFade 0.7s ease-out forwards; }
+@keyframes sbHitFade { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
+.sb-hit-n { animation: sbHit 0.7s ease-out forwards; }
 @keyframes sbHit {
-  0%, 40% { opacity: 1; filter: drop-shadow(0 0 4px #fff3c4) drop-shadow(0 0 12px #e6c566) drop-shadow(0 0 28px #C9A84C) drop-shadow(0 0 46px #C9A84C); }
-  100% { opacity: 0; filter: drop-shadow(0 0 4px rgba(201,168,76,0.6)); }
+  0%, 40% { filter: drop-shadow(0 0 4px #fff3c4) drop-shadow(0 0 12px #e6c566) drop-shadow(0 0 26px #C9A84C); }
+  100% { filter: drop-shadow(0 0 4px rgba(201,168,76,0.6)); }
 }
 .sb-vid[data-nocur="1"] .sb-vid-cur, .sb-vid[data-nocur="1"] .sb-vid-tail, .sb-vid[data-nocur="1"] .sb-vid-head-line { display: none; }
 /* Schweif nach vorn: wächst in der Dauer der Note bis zur nächsten Note oder Pause */
@@ -1806,15 +1808,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-paper="1"] .sb-vid-mid { background-repeat: no-repeat; }
 .sb-vid[data-paper="1"] .sb-vid-parts { background: #1b1a17; }
 .sb-vid[data-paper="1"] .sb-vid-sys { background: #1a1714; }
-.sb-vid[data-paper="1"] .sb-vid-cur, .sb-vid[data-paper="1"] .sb-vid-head-line { background: rgba(201,168,76,0.3); border-color: #8f6b12; box-shadow: 0 0 10px rgba(176,134,40,0.5); }
+.sb-vid[data-paper="1"] .sb-vid-cur, .sb-vid[data-paper="1"] .sb-vid-head-line { background: rgba(201,168,76,0.3); border-color: #2c5aa3; box-shadow: 0 0 10px rgba(44,90,163,0.5); }
 .sb-vid[data-paper="1"] .sb-vid-cur.beat { animation-name: sbBeatP; }
 .sb-vid[data-paper="1"] .sb-vid-head-line.beat { animation-name: sbBeatP; }
-.sb-vid[data-paper="1"] .sb-vid-tail { background: linear-gradient(to right, rgba(176,134,40,0), rgba(176,134,40,0.42)); }
-.sb-vid[data-paper="1"] .sb-hit-ov { animation-name: sbHitP; }
-@keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(176,134,40,0.85); } to { box-shadow: 0 0 10px rgba(176,134,40,0.5); } }
+.sb-vid[data-paper="1"] .sb-vid-tail { background: linear-gradient(to right, rgba(44,90,163,0), rgba(44,90,163,0.42)); }
+.sb-vid[data-paper="1"] .sb-hit-n { animation-name: sbHitP; }
+@keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(44,90,163,0.85); } to { box-shadow: 0 0 10px rgba(44,90,163,0.5); } }
 @keyframes sbHitP {
-  0%, 40% { opacity: 1; filter: drop-shadow(0 0 4px #fff3c4) drop-shadow(0 0 12px #e0b84a) drop-shadow(0 0 26px #C9A84C) drop-shadow(0 0 44px #C9A84C); }
-  100% { opacity: 0; filter: drop-shadow(0 0 4px rgba(201,168,76,0.6)); }
+  0%, 40% { filter: drop-shadow(0 0 3px #9dbdf0) drop-shadow(0 0 10px #2c5aa3) drop-shadow(0 0 22px #2c5aa3); }
+  100% { filter: drop-shadow(0 0 3px rgba(44,90,163,0.5)); }
 }
 @media (prefers-reduced-motion: reduce) { .sb-vid-rows { transition: none; } .sb-vid-cur.beat { animation: none; } .sb-hit-ov { display: none; } }
 /* Hochformat 1080×1920 für Shorts, Reels, TikTok */
@@ -17333,7 +17335,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-120604';
+  var DL_BUILD = '20261109-121739';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21779,6 +21781,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Ränder abschneiden: die Notenlinien laufen über die Kacheln durch,
     // jeder Takt trägt nur seinen rechten Taktstrich.
     var top = vid ? _sbVidTop() : _sbTop();
+    if (vid) svg.querySelectorAll('circle[fill="rgba(201,168,76,0.6)"]').forEach(function(c) { c.remove(); });
     if (vid) svg.insertAdjacentHTML('beforeend', _sbHintSvg(bar, colors ? colors.ink : '#ffffff', prop));
     svg.setAttribute('viewBox', '32.6 ' + top + ' ' + g.vbW + ' ' + (98 - top));
     svg.setAttribute('preserveAspectRatio', 'none');
@@ -22622,7 +22625,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var SB_VID_W = 1920, SB_VID_H = 1080, SB_VID_HEAD = 0.3;   // Abspiellinie bei 30 %
   var SB_VID_PAPER = { dark: '#121211', green: '#00b140' };
   var _sbVid = null;
-  var SB_PAPER_INK = '#1a1714', SB_PAPER_HI = '#8f6b12';
+  var SB_PAPER_INK = '#1a1714', SB_PAPER_HI = '#2c5aa3';
   var _SB_NOTA_PAPER = { ink: SB_PAPER_INK, paper: '#141414', soft: 'rgba(26,23,20,0.62)', faint: 'rgba(26,23,20,0.4)', dim: 'rgba(26,23,20,0.22)', active: SB_PAPER_HI };
   function _sbPaperOn() { return _sbCamOn() || _sbPrefs.vidBg !== 'green'; }
   // Altes Papier als Bild; immer gleich (fester Zufallsstart), damit Ansicht und Export übereinstimmen
@@ -23211,28 +23214,35 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Schweif nach vorn (Erwin, 09.11.2026): zeigt, wie lange die Note gilt, nämlich bis zur nächsten Note oder Pause.
   // Liefert in Notenkoordinaten x0, x1, die Höhen der Notenköpfe und die Dauer in Sekunden.
   function _sbNoteTail(bi, slot, prop) {
-    var b = _sbSong.bars[bi], g = _sbGeom(b, prop), nx = slot + 1, ys = [];
+    var b = _sbSong.bars[bi], g = _sbGeom(b, prop), nx = slot + 1;
     while (nx < b.n && !_sbIsStop(bi, nx)) nx++;
-    (b.notes[slot] || []).forEach(function(n) {
-      var d = DRUM_MAP[n], y = d ? 40 + d.line * 8 : -1;
-      if (d && ys.indexOf(y) < 0) ys.push(y);
-    });
-    return { x0: 58 + slot * g.bs + 7, x1: nx < b.n ? 58 + nx * g.bs - 7 : 58 + b.n * g.bs - 12, ys: ys, dur: (nx - slot) * _sbBarSec(bi) / b.n };
+    return { x0: 58 + slot * g.bs - 3, x1: nx < b.n ? 58 + nx * g.bs - 3 : 58 + b.n * g.bs - 12, y: 40, h: 32, dur: (nx - slot) * _sbBarSec(bi) / b.n };
   }
   // Gespielte Noten als eigene Ebene: die Kachel wird je Slot neu gezeichnet, das Leuchten läuft darüber aus
+  var _sbTailId = 0;
   function _sbVidHit(bi, slot) {
     var V = _sbVid, el = V.tiles[bi], b = _sbSong.bars[bi];
-    if (!el || !b || !(b.notes[slot] && b.notes[slot].length) || (_sbPrefs.vidBg === 'green' && !_sbCamOn())) return;
-    var svg = el.firstChild, on = svg.querySelectorAll('[fill="#C9A84C"],[stroke="#C9A84C"],[fill="#8f6b12"],[stroke="#8f6b12"]');
-    if (!on.length) return;
-    var o = svg.cloneNode(false);
-    o.removeAttribute('style'); o.setAttribute('class', 'sb-hit-ov');
+    if (!el || !b || !_sbIsStop(bi, slot) || (_sbPrefs.vidBg === 'green' && !_sbCamOn())) return;
+    var svg = el.firstChild, on = svg.querySelectorAll('[fill="#C9A84C"],[stroke="#C9A84C"],[fill="#2c5aa3"],[stroke="#2c5aa3"]');
+    var o = svg.cloneNode(false), id = 'sbTf' + (++_sbTailId);
     var tl = _sbNoteTail(bi, slot, V.mode !== 'lines'), hold = Math.max(SB_HIT_SEC, tl.dur + 0.3);
-    o.innerHTML = tl.ys.map(function(y) {
-      return '<polygon class="sb-tail-f" style="animation-duration:' + tl.dur.toFixed(3) + 's" fill="#C9A84C" points="' +
-             tl.x0 + ',' + (y - 3.2) + ' ' + tl.x1 + ',' + y + ' ' + tl.x0 + ',' + (y + 3.2) + '"/>';
-    }).join('');
-    for (var k = 0; k < 2; k++) on.forEach(function(n) { o.appendChild(n.cloneNode(true)); });
+    o.removeAttribute('style'); o.setAttribute('class', 'sb-hit-ov');
+    // Farbrolle: voll deckend am Anfang, läuft nach vorn dünn aus
+    o.innerHTML = '<defs><linearGradient id="' + id + '"><stop offset="0" stop-color="#2c5aa3" stop-opacity="0.85"/>' +
+                  '<stop offset="0.55" stop-color="#2c5aa3" stop-opacity="0.5"/><stop offset="1" stop-color="#2c5aa3" stop-opacity="0.06"/></linearGradient></defs>' +
+                  '<rect class="sb-tail-f" style="animation-duration:' + tl.dur.toFixed(3) + 's" fill="url(#' + id + ')" x="' + tl.x0 + '" y="' + tl.y + '" width="' + (tl.x1 - tl.x0) + '" height="' + tl.h + '"/>' +
+                  '<g class="sb-hit-n" style="animation-duration:' + hold.toFixed(3) + 's"></g>';
+    var n = o.lastChild;
+    // Kopie samt Verschiebungen der Eltern (Pausen-Glyphen liegen in einer transformierten Gruppe)
+    var copy = function(x) {
+      var c = x.cloneNode(true);
+      for (var p = x.parentNode; p && p !== svg; p = p.parentNode) {
+        var tr = p.getAttribute && p.getAttribute('transform');
+        if (tr) { var w = document.createElementNS('http://www.w3.org/2000/svg', 'g'); w.setAttribute('transform', tr); w.appendChild(c); c = w; }
+      }
+      return c;
+    };
+    for (var k = 0; k < 2; k++) on.forEach(function(x) { n.appendChild(copy(x)); });
     o.style.animationDuration = hold.toFixed(3) + 's';
     o.addEventListener('animationend', function(e) { if (e.target === o) o.remove(); });
     el.appendChild(o);
@@ -24669,12 +24679,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     // ── Noten
     // Goldene Note unter der Linie: die goldene Ebene nur im Streifen des Slots
-    var hitCol = function(al) { return 'rgba(' + (P.paperOn ? '212,170,60' : '255,226,140') + ',' + al + ')'; };
+    var hitCol = function(al) { return 'rgba(' + (P.paperOn ? '44,90,163' : '255,226,140') + ',' + al + ')'; };
     // Nachleuchten: jede gespielte Note bleibt SB_HIT_SEC sichtbar (wie .sb-hit-ov in der Ansicht)
     if (!S.hits) S.hits = [];
     if (a && !a.end && (a.bar !== S.hBar || a.slot !== S.hSlot)) {
       S.hBar = a.bar; S.hSlot = a.slot;
-      if (bars[a.bar].notes[a.slot] && bars[a.bar].notes[a.slot].length && !P.green) { var ntl = _sbNoteTail(a.bar, a.slot, !P.lines); S.hits.push({ bar: a.bar, slot: a.slot, t: t, tl: ntl, T: Math.max(SB_HIT_SEC, ntl.dur + 0.3) }); }
+      if (_sbIsStop(a.bar, a.slot) && !P.green) { var ntl = _sbNoteTail(a.bar, a.slot, !P.lines); S.hits.push({ bar: a.bar, slot: a.slot, t: t, tl: ntl, T: Math.max(SB_HIT_SEC, ntl.dur + 0.3) }); }
     }
     S.hits = S.hits.filter(function(h) { return t - h.t < h.T; });
     var hitAl = function(h) { var q = (t - h.t) / h.T; return q < 0.4 ? 1 : 1 - (q - 0.4) / 0.6; };
@@ -24683,23 +24693,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!gimg) return;
       var tw = _sbExpTileW(P, bi), g = _sbGeom(bars[bi], !P.lines);
       var sx = (58 + slot * g.bs - 32.6) / g.vbW * tw, sw = g.bs / g.vbW * tw;
-      if (al != null && tail) {   // Schweif nach vorn, wächst über die Dauer der Note
-        var hk = P.H / (98 - P.top), ox = tileX - 32.6 / g.vbW * tw, ux = tw / g.vbW, grow = Math.min(1, tail.p);
+      if (al != null && tail) {   // Farbrolle über die Systemhöhe, wächst über die Dauer, läuft dünn aus
+        var hk = P.H / (98 - P.top), ox = tileX - 32.6 / g.vbW * tw, ux = tw / g.vbW;
+        var ax = ox + tail.x0 * ux, bx = ax + (tail.x1 - tail.x0) * ux * Math.min(1, tail.p), tgr = ctx.createLinearGradient(ax, 0, bx, 0);
+        tgr.addColorStop(0, 'rgba(44,90,163,0.85)'); tgr.addColorStop(0.55, 'rgba(44,90,163,0.5)'); tgr.addColorStop(1, 'rgba(44,90,163,0.06)');
         ctx.save();
-        ctx.globalAlpha = al; ctx.shadowColor = '#C9A84C'; ctx.shadowBlur = 18; ctx.fillStyle = '#C9A84C';
-        tail.ys.forEach(function(y) {
-          var ty = tileY + (y - P.top) * hk, ax = ox + tail.x0 * ux, bx = ax + (tail.x1 - tail.x0) * ux * grow;
-          ctx.beginPath(); ctx.moveTo(ax, ty - 3.2 * hk); ctx.lineTo(bx, ty); ctx.lineTo(ax, ty + 3.2 * hk); ctx.closePath(); ctx.fill();
-        });
+        ctx.globalAlpha = al; ctx.fillStyle = tgr; ctx.fillRect(ax, tileY + (tail.y - P.top) * hk, bx - ax, tail.h * hk);
         ctx.restore();
       }
       ctx.save();
       ctx.beginPath(); ctx.rect(tileX + sx - sw / 2, tileY, sw, P.H); ctx.clip();
       if (al != null) {   // Nachleuchten
-        ctx.globalAlpha = al; ctx.shadowColor = '#C9A84C'; ctx.shadowBlur = 40 * al + 8;
+        ctx.globalAlpha = al; ctx.shadowColor = P.paperOn ? '#2c5aa3' : '#C9A84C'; ctx.shadowBlur = 34 * al + 8;
         ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       } else {
-        if (!P.green) { ctx.shadowColor = P.paperOn ? 'rgba(212,170,60,0.5)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = P.paperOn ? 6 : 14; }
+        if (!P.green) { ctx.shadowColor = P.paperOn ? 'rgba(44,90,163,0.5)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = P.paperOn ? 6 : 14; }
         ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       }
       ctx.restore();
@@ -24711,14 +24719,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       pulse = Math.max(0, 1 - since / 0.22);
     }
     var curBox = function(cx, ry) {
-      var bx = _sbCurBox(P, P.top), c = P.paperOn ? '176,134,40' : '201,168,76';
+      var bx = _sbCurBox(P, P.top), c = P.paperOn ? '44,90,163' : '201,168,76';
       _sbRoundPath(ctx, cx - bx.w / 2, ry + bx.y, bx.w, bx.h, 6);
       if (!P.green) { ctx.fillStyle = P.paperOn ? 'rgba(201,168,76,0.3)' : 'rgba(' + c + ',0.16)'; ctx.fill(); }
       ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(' + c + ',0.85)'; ctx.stroke();
     };
     var glow = function() {
       if (P.green) return;
-      ctx.shadowColor = 'rgba(' + (P.paperOn ? '176,134,40' : '201,168,76') + ',' + (0.55 + 0.35 * pulse).toFixed(3) + ')';
+      ctx.shadowColor = 'rgba(' + (P.paperOn ? '44,90,163' : '201,168,76') + ',' + (0.55 + 0.35 * pulse).toFixed(3) + ')';
       ctx.shadowBlur = 14 + 20 * pulse;
     };
     if (!P.lines) {
@@ -24729,7 +24737,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var b0 = Math.max(0, _sbBandAt(P, x - P.headX) - 1), b1 = Math.min(bars.length - 1, _sbBandAt(P, x - P.headX + P.w) + 1);
       for (var bb = b0; bb <= b1; bb++) { var im = ready[bb + 'n']; if (im) ctx.drawImage(im, off0 + _sbBandX(P, bb), ly, _sbExpTileW(P, bb), P.H); }
       if (a && !a.end) slotHi(off0 + _sbBandX(P, a.bar), ly, a.bar, a.slot);
-      S.hits.forEach(function(h) { slotHi(off0 + _sbBandX(P, h.bar), ly, h.bar, h.slot, hitAl(h), { x0: h.tl.x0, x1: h.tl.x1, ys: h.tl.ys, p: (t - h.t) / h.tl.dur }); });
+      S.hits.forEach(function(h) { slotHi(off0 + _sbBandX(P, h.bar), ly, h.bar, h.slot, hitAl(h), { x0: h.tl.x0, x1: h.tl.x1, y: h.tl.y, h: h.tl.h, p: (t - h.t) / h.tl.dur }); });
       if (!P.green && !P.cam) {   // Ränder weich ausblenden wie in der Ansicht
         var fw = P.w * 0.07, gl = ctx.createLinearGradient(0, 0, fw, 0);
         gl.addColorStop(0, P.bg); gl.addColorStop(1, 'rgba(11,11,10,0)');
@@ -24758,12 +24766,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         ctx.fillStyle = P.paperOn ? SB_PAPER_INK : '#ffffff'; ctx.fillRect(0, ry + sysTop, 2, sysH);
       }
       if (a && !a.end) slotHi(P.R.col[S.sBar] * P.W, P.midTop + P.R.row[S.sBar] * step - S.scroll, S.sBar, S.sSlot);
-      S.hits.forEach(function(h) { slotHi(P.R.col[h.bar] * P.W, P.midTop + P.R.row[h.bar] * step - S.scroll, h.bar, h.slot, hitAl(h), { x0: h.tl.x0, x1: h.tl.x1, ys: h.tl.ys, p: (t - h.t) / h.tl.dur }); });
+      S.hits.forEach(function(h) { slotHi(P.R.col[h.bar] * P.W, P.midTop + P.R.row[h.bar] * step - S.scroll, h.bar, h.slot, hitAl(h), { x0: h.tl.x0, x1: h.tl.x1, y: h.tl.y, h: h.tl.h, p: (t - h.t) / h.tl.dur }); });
       var tbx = _sbCurBox(P, P.top), tf = S.jFrom == null ? null : _sbLinePos(P, S.jFrom), tex = lp.x - tbx.w / 2;
       var ta = SB_VID_CURSOR && tf && tf.row === row && tex > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
       if (ta > 0) {
         var tg = ctx.createLinearGradient(tf.x, 0, tex, 0);
-        var tc = P.paperOn ? '176,134,40' : '201,168,76';
+        var tc = P.paperOn ? '44,90,163' : '201,168,76';
         tg.addColorStop(0, 'rgba(' + tc + ',0)'); tg.addColorStop(1, 'rgba(' + tc + ',' + (0.5 * ta).toFixed(3) + ')');
         ctx.fillStyle = tg; ctx.fillRect(tf.x, P.midTop + row * step - S.scroll + tbx.y, tex - tf.x, tbx.h);
       }
