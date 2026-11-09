@@ -1953,6 +1953,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-ans .lt-opt small { display: block; font-weight: 500; opacity: 0.65; font-size: 12px; margin-top: 4px; }
 .lt-score { font-size: clamp(96px, 24vw, 160px); font-weight: 800; line-height: 0.9; color: #C9A84C; font-variant-numeric: tabular-nums; }
 .lt-tease { opacity: 0.95; }
+.lt-again.lt-big { font-size: 17px; padding: 10px 22px; border-color: #C9A84C; color: var(--dl-gold-ink); }
 .lt-calc { font-size: 16px; font-weight: 600; opacity: 0.75; min-height: 1.4em; }
 .lt-land { animation: ltLand 0.5s cubic-bezier(.2,1.5,.4,1); transform-origin: left center; }
 @keyframes ltLand { 0% { transform: scale(0.8); } 55% { transform: scale(1.12); filter: drop-shadow(0 0 22px rgba(201,168,76,0.7)); } 100% { transform: scale(1); } }
@@ -17384,7 +17385,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-202236';
+  var DL_BUILD = '20261109-204244';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25760,6 +25761,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var _lt = null, _ltMapCache = null, _ltById = null;
 
   function _ltEx(id) {
+    if (LT_BEGIN_EX[id]) return LT_BEGIN_EX[id];
     if (!_ltById) { _ltById = {}; EXERCISES.forEach(function(e) { _ltById[e.id] = e; }); }
     return _ltById[id];
   }
@@ -25938,6 +25940,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       b.type = 'button';
       if (q.multi && picked.indexOf(o[0]) !== -1) b.classList.add('on');
       b.addEventListener('click', function() {
+        if (q.id === 'years' && o[0] === '0') { st.a.years = '0'; _ltBeginKit(); return; }
         if (!q.multi) { st.a[q.id] = o[0]; st.qi++; _ltQuestion(); return; }
         var k = picked.indexOf(o[0]);
         if (k === -1) picked.push(o[0]); else picked.splice(k, 1);
@@ -25971,7 +25974,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltPlayIntro() {
     var st = _lt.st;
-    if (st.a.years === '0') { _ltFirstGroove(); return; }
     st.L = _ltPrior(st.a);
     _ltProgress(_ltQs().length);
     var c = _ltCard();
@@ -25983,22 +25985,140 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     go.type = 'button';
     go.addEventListener('click', _ltRound);
   }
-  // Noch nie gespielt: keine Abfrage, nur der erste Groove und dann das Ergebnis
-  function _ltFirstGroove() {
-    var st = _lt.st, r = _ltPick(1, 'grooves');
-    if (!r) { _ltResult(); return; }
-    st.cur = r;
-    _ltLog('first_groove');
-    _ltProgress(_ltQs().length + LT_MAX_ROUNDS - 1);
+  // Noch nie gespielt (Erwin, 09.11.2026): kein Test, sondern gleich der erste Groove in drei Schritten,
+  // Hi-Hat zählen, Bassdrum auf 1, Snare auf 3, mit Abfrage nach jedem Schritt und Noten dazu.
+  var _LT_HH = { inst: 'hh', line: -0.5, head: 'x' }, _LT_KICK = { inst: 'kick', line: 3.5, head: 'oval' }, _LT_SN = { inst: 'snare', line: 1.5, head: 'oval' };
+  function _ltBeginEx(id, n, beats) {
+    return { id: id, cat: 'grooves', name: 'Your first groove', catLabel: 'Step ' + n + ' of 3', noteValue: 'quarter', hihatHands: 'one', showLabels: true, minBPM: 60, maxBPM: 60, step: 1, beats: beats };
+  }
+  var LT_BEGIN_EX = {
+    b1: _ltBeginEx('b1', 1, [[_LT_HH], [_LT_HH], [_LT_HH], [_LT_HH]]),
+    b2: _ltBeginEx('b2', 2, [[_LT_KICK, _LT_HH], [_LT_HH], [_LT_HH], [_LT_HH]]),
+    b3: _ltBeginEx('b3', 3, [[_LT_KICK, _LT_HH], [_LT_HH], [_LT_SN, _LT_HH], [_LT_HH]])
+  };
+  LT_BEGIN_EX.b4 = _ltBeginEx('b4', 3, LT_BEGIN_EX.b3.beats);
+  LT_BEGIN_EX.b4.catLabel = 'Your first groove';
+  var LT_BEGIN_STEPS = [
+    { id: 'b1', h: 'Four on the hi-hat',
+      p: ['Count out loud and evenly: 1, 2, 3, 4.', 'With your right hand, hit the hi-hat once on every number. The x in the notes is the hi-hat, and the numbers above show where you are.'],
+      air: 'No kit? Tap your right leg instead.',
+      tip: 'Go slower than you think and say the numbers out loud. Your hand just follows your voice.' },
+    { id: 'b2', h: 'Add the bass drum',
+      p: ['Keep the hi-hat going on every number.', 'On 1, press the bass drum pedal with your right foot, at the same moment as the hi-hat. The note at the bottom of the staff is the bass drum.'],
+      air: 'No kit? Stomp your right foot on 1.',
+      tip: 'Practice just the 1 a few times, hand and foot together. Then add 2, 3, 4 on the hi-hat.' },
+    { id: 'b3', h: 'Add the snare',
+      p: ['Keep the hi-hat and the bass drum going.', 'On 3, hit the snare with your left hand, together with the hi-hat. The note in the middle of the staff is the snare.', 'Say it out loud while you play: bass on 1, snare on 3.'],
+      air: 'No kit? Tap your left leg on 3.',
+      tip: 'Leave out the bass drum for a moment and play only hi-hat and snare. When that feels easy, bring the foot back.' },
+    { id: 'b4', bpm: 80, h: 'Now a little faster',
+      p: ['Same groove, 80 instead of 60 beats per minute.', 'Keep counting out loud and stay loose. If it falls apart, that just means your hands need a few more slow rounds.'],
+      tip: 'Take a breath, shake out your hands and start again from 1. Listen to the click and let it carry you.' }
+  ];
+  function _ltBeginBar(i) { _lt.bar.style.width = Math.round(i / 8 * 100) + '%'; }
+  function _ltBeginAsk(kick, title, text, opts, onPick) {
     var c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Your first groove');
-    _ltAdd(c, 'h2', 'lt-h', "This is where you'd start.");
+    _ltAdd(c, 'div', 'lt-kick', kick);
+    _ltAdd(c, 'h2', 'lt-h', title);
+    if (text) _ltAdd(c, 'p', 'lt-p', text);
+    var box = _ltAdd(c, 'div', 'lt-opts');
+    opts.forEach(function(o) {
+      var b = _ltAdd(box, 'button', 'lt-opt', o[1]);
+      b.type = 'button';
+      b.addEventListener('click', function() { onPick(o[0]); });
+    });
+  }
+  function _ltBeginKit() {
+    _ltLog('b_kit');
+    _ltBeginBar(1);
+    _ltBeginAsk('Welcome', "Cool that you want to start playing drums.", 'Have you ever sat at a drum kit?',
+      [['own', 'Yes, I have one at home'], ['some', 'Yes, a few times'], ['never', 'No, never']],
+      function(v) { _lt.st.a.kit = v; _ltBeginWant(); });
+  }
+  function _ltBeginWant() {
+    _ltLog('b_want');
+    _ltBeginBar(2);
+    _ltBeginAsk('Your first groove', 'Want to learn your first groove right now?',
+      _lt.st.a.kit === 'own' ? 'It takes about two minutes, in three small steps.' : "It takes about two minutes, in three small steps. You don't need a kit: your legs and your right foot will do.",
+      [['yes', "Yes, let's go"], ['later', 'Maybe later']],
+      function(v) { if (v === 'yes') { _lt.st.bi = 0; _lt.st.bTip = false; _ltBeginStep(); } else { _ltBeginEnd('later'); } });
+  }
+  function _ltBeginStep() {
+    var st = _lt.st, sp = LT_BEGIN_STEPS[st.bi], r = { id: sp.id, bpm: sp.bpm || 60 };
+    st.cur = r;
+    _ltLog('b_step' + (st.bi + 1));
+    _ltBeginBar(st.bi === 3 ? 7 : 3 + st.bi);
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', st.bi < 3 ? 'Step ' + (st.bi + 1) + ' of 3' : 'One more round');
+    _ltAdd(c, 'h2', 'lt-h', sp.h);
+    if (st.bTip) _ltAdd(c, 'div', 'lt-fb', sp.tip);
+    sp.p.forEach(function(t) { _ltAdd(c, 'p', 'lt-p', t); });
+    if (st.a.kit !== 'own' && sp.air) _ltAdd(c, 'p', 'lt-note', sp.air);
     _ltStage(c, r);
-    _ltAdd(c, 'p', 'lt-p', 'Three sounds, one steady pulse. Every drummer started right here.');
-    var go = _ltAdd(c, 'button', 'lt-go', 'Show my result');
-    go.type = 'button';
-    go.addEventListener('click', function() { _ltStop(); _ltResult(); });
-    _ltPlay();
+    _lt.btn.classList.add('lt-big');
+    _lt.btn.textContent = '▶ Play along';
+    _ltAdd(c, 'p', 'lt-p', 'How did it go?');
+    var ans = _ltAdd(c, 'div', 'lt-opts');
+    [['ok', st.bi < 2 ? 'Got it. Next step' : 'Got it!'], ['no', 'Not yet. Let me try again']].forEach(function(o) {
+      var b = _ltAdd(ans, 'button', 'lt-opt', o[1]);
+      b.type = 'button';
+      b.addEventListener('click', function() {
+        _ltStop();
+        if (o[0] === 'no') { st.bTip = true; _ltLog('b_retry' + (st.bi + 1)); _ltBeginStep(); return; }
+        st.bTip = false;
+        if (st.bi < 2) { st.bi++; _ltBeginStep(); } else if (st.bi === 2) _ltBeginFaster(); else _ltBeginHow();
+      });
+    });
+    if (st.bi > 0) {
+      var back = _ltAdd(c, 'button', 'lt-link', 'Back');
+      back.type = 'button';
+      back.addEventListener('click', function() { _ltStop(); st.bi--; st.bTip = false; _ltBeginStep(); });
+    }
+  }
+  function _ltBeginFaster() {
+    _ltLog('b_faster');
+    _ltBeginBar(6);
+    _ltBeginAsk('Nice work', 'Want to try it faster now?', 'Same groove, 80 instead of 60 beats per minute.',
+      [['yes', 'Yes, faster'], ['no', "No, that's enough for now"]],
+      function(v) { if (v === 'yes') { _lt.st.bi = 3; _lt.st.bTip = false; _ltBeginStep(); } else { _ltBeginHow(); } });
+  }
+  function _ltBeginHow() {
+    _ltLog('b_how');
+    _ltBeginBar(7.5);
+    _ltBeginAsk('You did it', 'How did that go for you?', null,
+      [['great', 'It worked!'], ['almost', 'Almost'], ['hard', 'That was hard']],
+      function(v) { _ltBeginEnd(v); });
+  }
+  function _ltBeginEnd(how) {
+    var st = _lt.st;
+    st.level = 1;
+    _ltLog('b_end_' + how, 1);
+    _lt.bar.style.width = '100%';
+    try { localStorage.setItem(LT_KEY, JSON.stringify({ level: 1, at: Date.now(), a: st.a })); } catch (e) {}
+    var txt = {
+      great: ['That was your first groove.', 'Hi-hat, bass drum and snare, all working together. This pattern is the foundation of a lot of the music you know.'],
+      almost: ['Almost is a great start.', 'Hands and feet need a few days to work together. Play it slowly for a few minutes tomorrow and it will already feel easier.'],
+      hard: ["That's completely normal.", 'Your hands and feet have never had to do this before. It gets easier with every short session, and you can take it as slowly as you need.'],
+      later: ['No problem.', 'Your first groove will be waiting for you whenever you feel like it.']
+    }[how];
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Your first step');
+    _ltAdd(c, 'h2', 'lt-h', txt[0]);
+    _ltAdd(c, 'p', 'lt-p', txt[1]);
+    _ltAdd(c, 'p', 'lt-p', 'Want to keep going? In the Drumlion Academy you start at level 1 and get your next step every day, already planned for you. 15 minutes a day.');
+    var row = _ltAdd(c, 'div', 'lt-row');
+    var go = _ltAdd(row, 'a', 'lt-go', 'Keep going with Drumlion');
+    go.href = LT_ACADEMY; go.target = '_top'; go.rel = 'noopener';
+    go.addEventListener('click', function() { _ltLog('click_academy', 1); });
+    if (LT_PLAN_URL) {
+      var plan = _ltAdd(row, 'a', 'lt-ghost', 'Get my start plan by email');
+      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=1';
+      plan.target = '_top';
+      plan.addEventListener('click', function() { _ltLog('click_plan', 1); });
+    }
+    var again = _ltAdd(c, 'button', 'lt-link', 'Start over');
+    again.type = 'button';
+    again.addEventListener('click', _ltOpen);
   }
   // Notenbild mit Abspielknopf
   function _ltStage(c, r) {
