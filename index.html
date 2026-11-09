@@ -1787,9 +1787,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-hit-ov { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; overflow: visible;
   animation: sbHit 0.7s ease-out forwards; }
 @keyframes sbHit {
-  0%, 35% { opacity: 1; filter: drop-shadow(0 0 3px #fff3c4) drop-shadow(0 0 10px rgba(201,168,76,1)) drop-shadow(0 0 20px rgba(201,168,76,1)); }
-  100% { opacity: 0; filter: drop-shadow(0 0 2px rgba(201,168,76,0.6)); }
+  0%, 40% { opacity: 1; filter: drop-shadow(0 0 4px #fff3c4) drop-shadow(0 0 12px #e6c566) drop-shadow(0 0 28px #C9A84C) drop-shadow(0 0 46px #C9A84C); }
+  100% { opacity: 0; filter: drop-shadow(0 0 4px rgba(201,168,76,0.6)); }
 }
+.sb-vid[data-nocur="1"] .sb-vid-cur, .sb-vid[data-nocur="1"] .sb-vid-tail, .sb-vid[data-nocur="1"] .sb-vid-head-line { display: none; }
 /* Cursor wie im Player: Kasten um die aktuelle Stelle */
 .sb-vid-cur, .sb-vid-head-line { box-sizing: border-box; background: rgba(201,168,76,0.16); border: 1.5px solid rgba(201,168,76,0.8); border-radius: 6px; }
 .sb-vid[data-bg="green"] .sb-vid-cur, .sb-vid[data-bg="green"] .sb-vid-head-line { background: none; }
@@ -1809,8 +1810,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-paper="1"] .sb-hit-ov { animation-name: sbHitP; }
 @keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(176,134,40,0.85); } to { box-shadow: 0 0 10px rgba(176,134,40,0.5); } }
 @keyframes sbHitP {
-  0%, 35% { opacity: 1; filter: drop-shadow(0 0 3px #f3d27a) drop-shadow(0 0 10px rgba(212,170,60,1)) drop-shadow(0 0 18px rgba(212,170,60,1)); }
-  100% { opacity: 0; filter: drop-shadow(0 0 1px rgba(176,134,40,0.5)); }
+  0%, 40% { opacity: 1; filter: drop-shadow(0 0 4px #fff3c4) drop-shadow(0 0 12px #e0b84a) drop-shadow(0 0 26px #C9A84C) drop-shadow(0 0 44px #C9A84C); }
+  100% { opacity: 0; filter: drop-shadow(0 0 4px rgba(201,168,76,0.6)); }
 }
 @media (prefers-reduced-motion: reduce) { .sb-vid-rows { transition: none; } .sb-vid-cur.beat { animation: none; } .sb-hit-ov { display: none; } }
 /* Hochformat 1080×1920 für Shorts, Reels, TikTok */
@@ -17329,7 +17330,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-115527';
+  var DL_BUILD = '20261109-115928';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22661,6 +22662,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Zwei Zeilen: Der Cursor springt von Note zu Note, bei Pausen von Zählzeit zu Zählzeit (Erwin, 05.11.2026).
   // S merkt sich den Sprung; aufgerufen je Bild mit dem aktuellen Slot und dessen x-Position.
   var SB_TAIL_SEC = 0.35, SB_HIT_SEC = 0.7;
+  var SB_VID_CURSOR = false;   // Test (Erwin, 09.11.2026): nur Aufleuchten, kein Cursor; true bringt Kasten und Schweif zurück
   function _sbIsStop(bi, slot) {
     var b = _sbSong.bars[bi];
     if (!b) return false;
@@ -22969,6 +22971,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     V.el.setAttribute('data-fmt', _sbPrefs.vidFmt === 'tall' ? 'tall' : 'wide');
     V.el.setAttribute('data-layout', V.mode);
     V.el.setAttribute('data-paper', _sbPaperOn() ? '1' : '0');
+    V.el.setAttribute('data-nocur', SB_VID_CURSOR ? '0' : '1');
     _sbVidScale();
     if (V.mode === 'lines') {
       V.P = Math.max(1, Math.min(4, Math.round(_sbPrefs.vidPer) || 4));
@@ -23210,7 +23213,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!on.length) return;
     var o = svg.cloneNode(false);
     o.removeAttribute('style'); o.setAttribute('class', 'sb-hit-ov');
-    on.forEach(function(n) { o.appendChild(n.cloneNode(true)); });
+    var g = _sbGeom(b, V.mode !== 'lines');   // Lichtsäule hinter der Note
+    o.innerHTML = '<rect x="' + (58 + slot * g.bs - 16) + '" y="14" width="32" height="76" rx="10" fill="#C9A84C" opacity="0.55"/>';
+    for (var k = 0; k < 2; k++) on.forEach(function(n) { o.appendChild(n.cloneNode(true)); });
     o.addEventListener('animationend', function() { o.remove(); });
     el.appendChild(o);
   }
@@ -24660,11 +24665,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!gimg) return;
       var tw = _sbExpTileW(P, bi), g = _sbGeom(bars[bi], !P.lines);
       var sx = (58 + slot * g.bs - 32.6) / g.vbW * tw, sw = g.bs / g.vbW * tw;
+      if (al != null) {   // Lichtsäule hinter der Note
+        var hk = P.H / (98 - P.top), hw = 32 * hk;
+        ctx.save();
+        ctx.globalAlpha = al * 0.55; ctx.shadowColor = '#C9A84C'; ctx.shadowBlur = 46; ctx.fillStyle = '#C9A84C';
+        _sbRoundPath(ctx, tileX + sx - hw / 2, tileY + (14 - P.top) * hk, hw, 76 * hk, 10 * hk); ctx.fill();
+        ctx.restore();
+      }
       ctx.save();
       ctx.beginPath(); ctx.rect(tileX + sx - sw / 2, tileY, sw, P.H); ctx.clip();
       if (al != null) {   // Nachleuchten
-        ctx.globalAlpha = al; ctx.shadowColor = hitCol(1); ctx.shadowBlur = 34 * al + 8;
-        ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H);
+        ctx.globalAlpha = al; ctx.shadowColor = '#C9A84C'; ctx.shadowBlur = 40 * al + 8;
+        ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       } else {
         if (!P.green) { ctx.shadowColor = P.paperOn ? 'rgba(212,170,60,0.5)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = P.paperOn ? 6 : 14; }
         ctx.drawImage(gimg, tileX, tileY, tw, P.H);
@@ -24705,7 +24717,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         gr.addColorStop(0, 'rgba(11,11,10,0)'); gr.addColorStop(1, P.bg);
         ctx.fillStyle = gr; ctx.fillRect(P.w - fw, ly - 2, fw, P.H + 4);
       }
-      ctx.save(); glow(); curBox(P.headX, ly); ctx.restore();
+      if (SB_VID_CURSOR) { ctx.save(); glow(); curBox(P.headX, ly); ctx.restore(); }
     } else {
       var step = P.H + P.G, lastRow = P.R.rows.length - 1, lp = _sbLinePos(P, x), row = lp.row;
       if (row !== S.row) { S.scrollFrom = S.row < 0 ? row * step : S.scroll; S.row = row; S.rowT = t; }
@@ -24727,14 +24739,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (a && !a.end) slotHi(P.R.col[S.sBar] * P.W, P.midTop + P.R.row[S.sBar] * step - S.scroll, S.sBar, S.sSlot);
       S.hits.forEach(function(h) { slotHi(P.R.col[h.bar] * P.W, P.midTop + P.R.row[h.bar] * step - S.scroll, h.bar, h.slot, hitAl(h)); });
       var tbx = _sbCurBox(P, P.top), tf = S.jFrom == null ? null : _sbLinePos(P, S.jFrom), tex = lp.x - tbx.w / 2;
-      var ta = tf && tf.row === row && tex > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
+      var ta = SB_VID_CURSOR && tf && tf.row === row && tex > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
       if (ta > 0) {
         var tg = ctx.createLinearGradient(tf.x, 0, tex, 0);
         var tc = P.paperOn ? '176,134,40' : '201,168,76';
         tg.addColorStop(0, 'rgba(' + tc + ',0)'); tg.addColorStop(1, 'rgba(' + tc + ',' + (0.5 * ta).toFixed(3) + ')');
         ctx.fillStyle = tg; ctx.fillRect(tf.x, P.midTop + row * step - S.scroll + tbx.y, tex - tf.x, tbx.h);
       }
-      ctx.save(); glow(); curBox(lp.x, P.midTop + row * step - S.scroll);
+      ctx.save(); glow(); if (SB_VID_CURSOR) curBox(lp.x, P.midTop + row * step - S.scroll);
       ctx.restore();
       ctx.restore();
       // Fortschrittsbalken mit den Parts
