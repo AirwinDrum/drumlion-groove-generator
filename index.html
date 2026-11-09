@@ -17384,7 +17384,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-200356';
+  var DL_BUILD = '20261109-200647';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18616,7 +18616,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (key === 'snareDrag' || key === 'snareDragAccent') {
       var main = (key === 'snareDragAccent') ? 'snareAccent' : 'snare';
       var g1 = WAVS['snareGhost'] ? 'snareGhost' : 'snare';
-      [0.098, 0.049].forEach(function(off) {   // Abstand wie beim Flam, 70/35 ms waren zu eng (Erwin, 09.11.2026)
+      [0.12, 0.06].forEach(function(off) {   // von Erwin nach Gehör gesetzt (09.11.2026), vorher 70/35 und 98/49 ms
         if (!WAVS[g1]) return;
         var s2 = aCtx.createBufferSource(), gg = aCtx.createGain();
         s2.buffer = WAVS[g1]; gg.gain.value = 0.55 * GRACE_VOL;
