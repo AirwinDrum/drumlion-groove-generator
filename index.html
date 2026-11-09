@@ -1802,15 +1802,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-paper="1"] .sb-vid-mid { background-repeat: no-repeat; }
 .sb-vid[data-paper="1"] .sb-vid-parts { background: #1b1a17; }
 .sb-vid[data-paper="1"] .sb-vid-sys { background: #1a1714; }
-.sb-vid[data-paper="1"] .sb-vid-cur, .sb-vid[data-paper="1"] .sb-vid-head-line { background: rgba(194,65,12,0.16); border-color: rgba(194,65,12,0.85); box-shadow: 0 0 10px rgba(194,65,12,0.5); }
+.sb-vid[data-paper="1"] .sb-vid-cur, .sb-vid[data-paper="1"] .sb-vid-head-line { background: rgba(201,168,76,0.3); border-color: #8f6b12; box-shadow: 0 0 10px rgba(176,134,40,0.5); }
 .sb-vid[data-paper="1"] .sb-vid-cur.beat { animation-name: sbBeatP; }
 .sb-vid[data-paper="1"] .sb-vid-head-line.beat { animation-name: sbBeatP; }
-.sb-vid[data-paper="1"] .sb-vid-tail { background: linear-gradient(to right, rgba(194,65,12,0), rgba(194,65,12,0.42)); }
+.sb-vid[data-paper="1"] .sb-vid-tail { background: linear-gradient(to right, rgba(176,134,40,0), rgba(176,134,40,0.42)); }
 .sb-vid[data-paper="1"] .sb-hit-ov { animation-name: sbHitP; }
-@keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(194,65,12,0.85); } to { box-shadow: 0 0 10px rgba(194,65,12,0.5); } }
+@keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(176,134,40,0.85); } to { box-shadow: 0 0 10px rgba(176,134,40,0.5); } }
 @keyframes sbHitP {
-  0%, 35% { opacity: 1; filter: drop-shadow(0 0 3px #ff7a2e) drop-shadow(0 0 10px rgba(234,88,12,1)) drop-shadow(0 0 18px rgba(234,88,12,1)); }
-  100% { opacity: 0; filter: drop-shadow(0 0 1px rgba(194,65,12,0.5)); }
+  0%, 35% { opacity: 1; filter: drop-shadow(0 0 3px #f3d27a) drop-shadow(0 0 10px rgba(212,170,60,1)) drop-shadow(0 0 18px rgba(212,170,60,1)); }
+  100% { opacity: 0; filter: drop-shadow(0 0 1px rgba(176,134,40,0.5)); }
 }
 @media (prefers-reduced-motion: reduce) { .sb-vid-rows { transition: none; } .sb-vid-cur.beat { animation: none; } .sb-hit-ov { display: none; } }
 /* Hochformat 1080×1920 für Shorts, Reels, TikTok */
@@ -17329,7 +17329,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-115000';
+  var DL_BUILD = '20261109-115527';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22618,7 +22618,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var SB_VID_W = 1920, SB_VID_H = 1080, SB_VID_HEAD = 0.3;   // Abspiellinie bei 30 %
   var SB_VID_PAPER = { dark: '#121211', green: '#00b140' };
   var _sbVid = null;
-  var SB_PAPER_INK = '#1a1714', SB_PAPER_HI = '#c2410c';
+  var SB_PAPER_INK = '#1a1714', SB_PAPER_HI = '#8f6b12';
   var _SB_NOTA_PAPER = { ink: SB_PAPER_INK, paper: '#141414', soft: 'rgba(26,23,20,0.62)', faint: 'rgba(26,23,20,0.4)', dim: 'rgba(26,23,20,0.22)', active: SB_PAPER_HI };
   function _sbPaperOn() { return _sbCamOn() || _sbPrefs.vidBg !== 'green'; }
   // Altes Papier als Bild; immer gleich (fester Zufallsstart), damit Ansicht und Export übereinstimmen
@@ -22670,8 +22670,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbJump(S, a, xa, now) {
     if (a.bar !== S.jBar || a.slot !== S.jSlot) {
       S.jBar = a.bar; S.jSlot = a.slot;
-      if (S.jTo == null) { S.jFrom = S.jTo = S.jPos = xa; S.jT = now; }
-      else if (_sbIsStop(a.bar, a.slot)) { S.jFrom = S.jTo; S.jTo = xa; S.jT = now; }
+      if (S.jTo == null) { S.jFrom = S.jTo = S.jPos = xa; S.jT = now; S.sBar = a.bar; S.sSlot = a.slot; }
+      else if (_sbIsStop(a.bar, a.slot)) { S.jFrom = S.jTo; S.jTo = xa; S.jT = now; S.sBar = a.bar; S.sSlot = a.slot; }
     }
     S.jPos = S.jTo;   // ohne Einschwingen: landet im selben Bild wie das Aufleuchten (Erwin, 09.11.2026)
     return S.jPos;
@@ -23206,7 +23206,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbVidHit(bi, slot) {
     var V = _sbVid, el = V.tiles[bi], b = _sbSong.bars[bi];
     if (!el || !b || !(b.notes[slot] && b.notes[slot].length) || (_sbPrefs.vidBg === 'green' && !_sbCamOn())) return;
-    var svg = el.firstChild, on = svg.querySelectorAll('[fill="#C9A84C"],[stroke="#C9A84C"],[fill="#c2410c"],[stroke="#c2410c"]');
+    var svg = el.firstChild, on = svg.querySelectorAll('[fill="#C9A84C"],[stroke="#C9A84C"],[fill="#8f6b12"],[stroke="#8f6b12"]');
     if (!on.length) return;
     var o = svg.cloneNode(false);
     o.removeAttribute('style'); o.setAttribute('class', 'sb-hit-ov');
@@ -23233,7 +23233,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         x = xa + (xe - xa) * Math.max(0, Math.min(1, (now - a.t) / (_sbBarSec(a.bar) / nb)));
       }
       if (V.mode === 'lines') { x = _sbJump(V, a, xa, now); V.jNow = now; }
-      if (a.bar !== V.curBar || a.slot !== V.curSlot) {
+      if ((a.bar !== V.curBar || a.slot !== V.curSlot) && (V.mode !== 'lines' || _sbIsStop(a.bar, a.slot))) {
         var old = V.curBar;
         V.curBar = a.bar; V.curSlot = a.slot;
         if (old >= 0 && old !== a.bar && V.tiles[old]) _sbVidTile(old, null);
@@ -24646,7 +24646,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     // ── Noten
     // Goldene Note unter der Linie: die goldene Ebene nur im Streifen des Slots
-    var hitCol = function(al) { return 'rgba(' + (P.paperOn ? '234,88,12' : '255,226,140') + ',' + al + ')'; };
+    var hitCol = function(al) { return 'rgba(' + (P.paperOn ? '212,170,60' : '255,226,140') + ',' + al + ')'; };
     // Nachleuchten: jede gespielte Note bleibt SB_HIT_SEC sichtbar (wie .sb-hit-ov in der Ansicht)
     if (!S.hits) S.hits = [];
     if (a && !a.end && (a.bar !== S.hBar || a.slot !== S.hSlot)) {
@@ -24666,7 +24666,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         ctx.globalAlpha = al; ctx.shadowColor = hitCol(1); ctx.shadowBlur = 34 * al + 8;
         ctx.drawImage(gimg, tileX, tileY, tw, P.H); ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       } else {
-        if (!P.green) { ctx.shadowColor = P.paperOn ? 'rgba(234,88,12,0.5)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = P.paperOn ? 6 : 14; }
+        if (!P.green) { ctx.shadowColor = P.paperOn ? 'rgba(212,170,60,0.5)' : 'rgba(201,168,76,0.75)'; ctx.shadowBlur = P.paperOn ? 6 : 14; }
         ctx.drawImage(gimg, tileX, tileY, tw, P.H);
       }
       ctx.restore();
@@ -24678,14 +24678,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       pulse = Math.max(0, 1 - since / 0.22);
     }
     var curBox = function(cx, ry) {
-      var bx = _sbCurBox(P, P.top), c = P.paperOn ? '194,65,12' : '201,168,76';
+      var bx = _sbCurBox(P, P.top), c = P.paperOn ? '176,134,40' : '201,168,76';
       _sbRoundPath(ctx, cx - bx.w / 2, ry + bx.y, bx.w, bx.h, 6);
-      if (!P.green) { ctx.fillStyle = 'rgba(' + c + ',0.16)'; ctx.fill(); }
+      if (!P.green) { ctx.fillStyle = P.paperOn ? 'rgba(201,168,76,0.3)' : 'rgba(' + c + ',0.16)'; ctx.fill(); }
       ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(' + c + ',0.85)'; ctx.stroke();
     };
     var glow = function() {
       if (P.green) return;
-      ctx.shadowColor = 'rgba(' + (P.paperOn ? '194,65,12' : '201,168,76') + ',' + (0.55 + 0.35 * pulse).toFixed(3) + ')';
+      ctx.shadowColor = 'rgba(' + (P.paperOn ? '176,134,40' : '201,168,76') + ',' + (0.55 + 0.35 * pulse).toFixed(3) + ')';
       ctx.shadowBlur = 14 + 20 * pulse;
     };
     if (!P.lines) {
@@ -24724,13 +24724,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         for (var j = 0; j < P.R.rows[k].n; j++) { var im2 = ready[(P.R.rows[k].a + j) + 'n']; if (im2) ctx.drawImage(im2, j * P.W, ry, P.W, P.H); }
         ctx.fillStyle = P.paperOn ? SB_PAPER_INK : '#ffffff'; ctx.fillRect(0, ry + sysTop, 2, sysH);
       }
-      if (a && !a.end) slotHi(P.R.col[a.bar] * P.W, P.midTop + P.R.row[a.bar] * step - S.scroll, a.bar, a.slot);
+      if (a && !a.end) slotHi(P.R.col[S.sBar] * P.W, P.midTop + P.R.row[S.sBar] * step - S.scroll, S.sBar, S.sSlot);
       S.hits.forEach(function(h) { slotHi(P.R.col[h.bar] * P.W, P.midTop + P.R.row[h.bar] * step - S.scroll, h.bar, h.slot, hitAl(h)); });
       var tbx = _sbCurBox(P, P.top), tf = S.jFrom == null ? null : _sbLinePos(P, S.jFrom), tex = lp.x - tbx.w / 2;
       var ta = tf && tf.row === row && tex > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
       if (ta > 0) {
         var tg = ctx.createLinearGradient(tf.x, 0, tex, 0);
-        var tc = P.paperOn ? '194,65,12' : '201,168,76';
+        var tc = P.paperOn ? '176,134,40' : '201,168,76';
         tg.addColorStop(0, 'rgba(' + tc + ',0)'); tg.addColorStop(1, 'rgba(' + tc + ',' + (0.5 * ta).toFixed(3) + ')');
         ctx.fillStyle = tg; ctx.fillRect(tf.x, P.midTop + row * step - S.scroll + tbx.y, tex - tf.x, tbx.h);
       }
