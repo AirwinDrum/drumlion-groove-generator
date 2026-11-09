@@ -1808,12 +1808,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-paper="1"] .sb-vid-mid { background-repeat: no-repeat; }
 .sb-vid[data-paper="1"] .sb-vid-parts { background: #1b1a17; }
 .sb-vid[data-paper="1"] .sb-vid-sys { background: #1a1714; }
-.sb-vid[data-paper="1"] .sb-vid-cur, .sb-vid[data-paper="1"] .sb-vid-head-line { background: rgba(201,168,76,0.3); border-color: #2c5aa3; box-shadow: 0 0 10px rgba(44,90,163,0.5); }
+.sb-vid[data-paper="1"] .sb-vid-cur, .sb-vid[data-paper="1"] .sb-vid-head-line { background: rgba(44,90,163,0.3); border: 0; box-shadow: none; }
 .sb-vid[data-paper="1"] .sb-vid-cur.beat { animation-name: sbBeatP; }
 .sb-vid[data-paper="1"] .sb-vid-head-line.beat { animation-name: sbBeatP; }
 .sb-vid[data-paper="1"] .sb-vid-tail { background: linear-gradient(to right, rgba(44,90,163,0), rgba(44,90,163,0.42)); }
 .sb-vid[data-paper="1"] .sb-hit-n { animation-name: sbHitP; }
-@keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(44,90,163,0.85); } to { box-shadow: 0 0 10px rgba(44,90,163,0.5); } }
+@keyframes sbBeatP { from { box-shadow: 0 0 26px 5px rgba(44,90,163,0.85); } to { box-shadow: 0 0 0 rgba(44,90,163,0); } }
 @keyframes sbHitP {
   0%, 40% { filter: drop-shadow(0 0 3px #9dbdf0) drop-shadow(0 0 10px #2c5aa3) drop-shadow(0 0 22px #2c5aa3); }
   100% { filter: drop-shadow(0 0 3px rgba(44,90,163,0.5)); }
@@ -17335,7 +17335,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-121739';
+  var DL_BUILD = '20261109-122942';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22668,7 +22668,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Zwei Zeilen: Der Cursor springt von Note zu Note, bei Pausen von Zählzeit zu Zählzeit (Erwin, 05.11.2026).
   // S merkt sich den Sprung; aufgerufen je Bild mit dem aktuellen Slot und dessen x-Position.
   var SB_TAIL_SEC = 0.35, SB_HIT_SEC = 0.7;
-  var SB_VID_CURSOR = false;   // Test (Erwin, 09.11.2026): nur Aufleuchten, kein Cursor; true bringt Kasten und Schweif zurück
+  var SB_VID_CURSOR = true;   // false: nur Aufleuchten, kein Cursor
+  var SB_VID_TAIL = false;    // Schweife (Cursor und Farbrolle) sind aus: zu unruhig fürs Auge (Erwin, 09.11.2026); true bringt sie zurück
   function _sbIsStop(bi, slot) {
     var b = _sbSong.bars[bi];
     if (!b) return false;
@@ -23133,7 +23134,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Schweif nur innerhalb einer Zeile
     var from = V.jFrom == null ? null : _sbLinePos(V, V.jFrom);
     var tw = from ? pos.x - from.x - V.box.w / 2 : 0;
-    var al = from && from.row === row && tw > 0 ? 1 - (V.jNow - V.jT) / SB_TAIL_SEC : 0;
+    var al = SB_VID_TAIL && from && from.row === row && tw > 0 ? 1 - (V.jNow - V.jT) / SB_TAIL_SEC : 0;
     if (al > 0) {
       V.tail.style.top = V.box.y + 'px';
       V.tail.style.height = V.box.h + 'px';
@@ -23230,7 +23231,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Farbrolle: voll deckend am Anfang, läuft nach vorn dünn aus
     o.innerHTML = '<defs><linearGradient id="' + id + '"><stop offset="0" stop-color="#2c5aa3" stop-opacity="0.85"/>' +
                   '<stop offset="0.55" stop-color="#2c5aa3" stop-opacity="0.5"/><stop offset="1" stop-color="#2c5aa3" stop-opacity="0.06"/></linearGradient></defs>' +
-                  '<rect class="sb-tail-f" style="animation-duration:' + tl.dur.toFixed(3) + 's" fill="url(#' + id + ')" x="' + tl.x0 + '" y="' + tl.y + '" width="' + (tl.x1 - tl.x0) + '" height="' + tl.h + '"/>' +
+                  (SB_VID_TAIL ? '<rect class="sb-tail-f" style="animation-duration:' + tl.dur.toFixed(3) + 's" fill="url(#' + id + ')" x="' + tl.x0 + '" y="' + tl.y + '" width="' + (tl.x1 - tl.x0) + '" height="' + tl.h + '"/>' : '') +
                   '<g class="sb-hit-n" style="animation-duration:' + hold.toFixed(3) + 's"></g>';
     var n = o.lastChild;
     // Kopie samt Verschiebungen der Eltern (Pausen-Glyphen liegen in einer transformierten Gruppe)
@@ -24693,7 +24694,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (!gimg) return;
       var tw = _sbExpTileW(P, bi), g = _sbGeom(bars[bi], !P.lines);
       var sx = (58 + slot * g.bs - 32.6) / g.vbW * tw, sw = g.bs / g.vbW * tw;
-      if (al != null && tail) {   // Farbrolle über die Systemhöhe, wächst über die Dauer, läuft dünn aus
+      if (al != null && tail && SB_VID_TAIL) {   // Farbrolle über die Systemhöhe, wächst über die Dauer, läuft dünn aus
         var hk = P.H / (98 - P.top), ox = tileX - 32.6 / g.vbW * tw, ux = tw / g.vbW;
         var ax = ox + tail.x0 * ux, bx = ax + (tail.x1 - tail.x0) * ux * Math.min(1, tail.p), tgr = ctx.createLinearGradient(ax, 0, bx, 0);
         tgr.addColorStop(0, 'rgba(44,90,163,0.85)'); tgr.addColorStop(0.55, 'rgba(44,90,163,0.5)'); tgr.addColorStop(1, 'rgba(44,90,163,0.06)');
@@ -24721,13 +24722,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var curBox = function(cx, ry) {
       var bx = _sbCurBox(P, P.top), c = P.paperOn ? '44,90,163' : '201,168,76';
       _sbRoundPath(ctx, cx - bx.w / 2, ry + bx.y, bx.w, bx.h, 6);
-      if (!P.green) { ctx.fillStyle = P.paperOn ? 'rgba(201,168,76,0.3)' : 'rgba(' + c + ',0.16)'; ctx.fill(); }
-      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(' + c + ',0.85)'; ctx.stroke();
+      if (P.paperOn) { ctx.fillStyle = 'rgba(44,90,163,0.3)'; ctx.fill(); }
+      else { ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(' + c + ',0.85)'; ctx.stroke(); }
     };
     var glow = function() {
       if (P.green) return;
       ctx.shadowColor = 'rgba(' + (P.paperOn ? '44,90,163' : '201,168,76') + ',' + (0.55 + 0.35 * pulse).toFixed(3) + ')';
-      ctx.shadowBlur = 14 + 20 * pulse;
+      ctx.shadowBlur = (P.paperOn ? 0 : 14) + 20 * pulse;
     };
     if (!P.lines) {
       var ly = P.midTop, off0 = P.headX - x;
@@ -24768,7 +24769,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (a && !a.end) slotHi(P.R.col[S.sBar] * P.W, P.midTop + P.R.row[S.sBar] * step - S.scroll, S.sBar, S.sSlot);
       S.hits.forEach(function(h) { slotHi(P.R.col[h.bar] * P.W, P.midTop + P.R.row[h.bar] * step - S.scroll, h.bar, h.slot, hitAl(h), { x0: h.tl.x0, x1: h.tl.x1, y: h.tl.y, h: h.tl.h, p: (t - h.t) / h.tl.dur }); });
       var tbx = _sbCurBox(P, P.top), tf = S.jFrom == null ? null : _sbLinePos(P, S.jFrom), tex = lp.x - tbx.w / 2;
-      var ta = SB_VID_CURSOR && tf && tf.row === row && tex > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
+      var ta = SB_VID_TAIL && SB_VID_CURSOR && tf && tf.row === row && tex > tf.x && !P.green ? 1 - (t - S.jT) / SB_TAIL_SEC : 0;
       if (ta > 0) {
         var tg = ctx.createLinearGradient(tf.x, 0, tex, 0);
         var tc = P.paperOn ? '44,90,163' : '201,168,76';
