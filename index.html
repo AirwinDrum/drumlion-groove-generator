@@ -1887,6 +1887,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .sb-vid[data-bg="green"] .sb-vid-pfill { background: #6f5f2c; }
 .sb-vid[data-bg="green"] .sb-vid-pseg { color: #f2f2f2; border-left-color: #f2f2f2; }
 .sb-vid[data-split="1"] .sb-vid-cam-win { border: 0; border-radius: 0; box-shadow: none; }
+.sb-vid-cam-div { position: absolute; display: none; background: var(--sb-gold); }
+.sb-vid[data-split="1"] .sb-vid-cam-div { display: block; }
 .sb-vid-opt-cam { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-opt-cam { display: flex; }
 .sb-vid-cams { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
@@ -17338,7 +17340,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-123700';
+  var DL_BUILD = '20261109-124513';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22719,6 +22721,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       '<div class="sb-vid-stage" id="sbVidStage">' +
         '<video class="sb-vid-cam sb-vid-cam-main" id="sbCamMain" muted playsinline preload="auto"></video>' +
         '<video class="sb-vid-cam sb-vid-cam-win" id="sbCamWin" muted playsinline preload="auto"></video>' +
+        '<div class="sb-vid-cam-div" id="sbCamDiv"></div>' +
         // Farbe der Kameras: Weißabgleich, Helligkeit, Look (auch für den Export)
         '<svg class="sb-vid-fx" width="0" height="0" aria-hidden="true">' +
           '<filter id="sbLookMain" color-interpolation-filters="sRGB"><feColorMatrix id="sbLookMainM" type="matrix" ' +
@@ -23630,10 +23633,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Kamerabild füllend (Ränder abgeschnitten) ins Rechteck, Drehung beachtet
   // Zweigeteilt über den Noten (Erwin, 09.11.2026): links Top, rechts Füße; im Hochformat übereinander
   function _sbCamSplit(w, h, t) {
-    var g = 4;
-    if (h > w) return { a: { x: 0, y: 0, w: w, h: Math.round((t - g) / 2) }, b: { x: 0, y: Math.round((t + g) / 2), w: w, h: t - Math.round((t + g) / 2) } };
+    var g = 6;   // Bildteiler in Gold (Erwin, 09.11.2026)
+    if (h > w) {
+      var u = Math.round((t - g) / 2);
+      return { a: { x: 0, y: 0, w: w, h: u }, b: { x: 0, y: u + g, w: w, h: t - u - g }, d: { x: 0, y: u, w: w, h: g } };
+    }
     var l = Math.round((w - g) / 2);
-    return { a: { x: 0, y: 0, w: l, h: t }, b: { x: l + g, y: 0, w: w - l - g, h: t } };
+    return { a: { x: 0, y: 0, w: l, h: t }, b: { x: l + g, y: 0, w: w - l - g, h: t }, d: { x: l, y: 0, w: g, h: t } };
   }
   function _sbCamPaint(ctx, fr, rot, x, y, w, h, flt) {
     if (!fr) { ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h); return; }
@@ -23972,6 +23978,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var sp = _sbCamSplit(d.w, d.h, d.h - V.midPx);
       mn.style.left = sp.a.x + 'px'; mn.style.top = sp.a.y + 'px'; mn.style.width = sp.a.w + 'px'; mn.style.height = sp.a.h + 'px';
       r = sp.b;
+      var dv = document.getElementById('sbCamDiv');
+      dv.style.left = sp.d.x + 'px'; dv.style.top = sp.d.y + 'px'; dv.style.width = sp.d.w + 'px'; dv.style.height = sp.d.h + 'px';
     } else { mn.style.left = mn.style.top = mn.style.width = mn.style.height = ''; }
     w.style.left = r.x + 'px'; w.style.top = r.y + 'px'; w.style.width = r.w + 'px'; w.style.height = r.h + 'px';
     V.mid.style.setProperty('--sb-cam-b', (d.h > d.w ? 260 : 56) + 'px');
@@ -24637,6 +24645,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (camSp) {
         _sbCamPaint(ctx, S.camA, P.rotA, camSp.a.x, camSp.a.y, camSp.a.w, camSp.a.h, P.lookA);
         _sbCamPaint(ctx, S.camB, P.rotB, camSp.b.x, camSp.b.y, camSp.b.w, camSp.b.h, P.lookB);
+        ctx.fillStyle = SB_GOLD; ctx.fillRect(camSp.d.x, camSp.d.y, camSp.d.w, camSp.d.h);
       } else _sbCamPaint(ctx, S.camA, P.rotA, 0, 0, P.w, P.h, P.lookA);
       if (P.winOn && !camSp) {
         var wr = P.winR;
