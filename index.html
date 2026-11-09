@@ -1954,6 +1954,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-score { font-size: clamp(96px, 24vw, 160px); font-weight: 800; line-height: 0.9; color: #C9A84C; font-variant-numeric: tabular-nums; }
 .lt-tease { opacity: 0.95; }
 .lt-again.lt-big { font-size: 17px; padding: 10px 22px; border-color: #C9A84C; color: var(--dl-gold-ink); }
+.dl-mycourse { color: var(--dl-gold-ink); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+.lt-code { font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--dl-gold-ink); user-select: all; -webkit-user-select: all; }
+.lt-input { width: 100%; box-sizing: border-box; padding: 14px 16px; font: inherit; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 12px; border: 1px solid var(--dl-line); background: var(--dl-input); color: var(--dl-ink); }
+.lt-err { color: #e0735a; font-size: 14px; margin: 0; min-height: 1.2em; }
 .lt-calc { font-size: 16px; font-weight: 600; opacity: 0.75; min-height: 1.4em; }
 .lt-land { animation: ltLand 0.5s cubic-bezier(.2,1.5,.4,1); transform-origin: left center; }
 @keyframes ltLand { 0% { transform: scale(0.8); } 55% { transform: scale(1.12); filter: drop-shadow(0 0 22px rgba(201,168,76,0.7)); } 100% { transform: scale(1); } }
@@ -2399,6 +2403,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <div class="dl-set-h">Progress sync</div>
           <div class="dl-set-sync" id="dgSetSync"></div>
         </section>
+        <section class="dl-set-sec" id="dgPlaceBlock" style="display:none;">
+          <div class="dl-set-h">Course start</div>
+          <button class="dl-set-link" type="button" id="dgPlaceReset">Start from the beginning</button>
+        </section>
         <section class="dl-set-sec dl-set-keys-sec">
           <div class="dl-set-h">Keyboard</div>
           <div class="dl-set-keys">
@@ -2616,6 +2624,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Kursfortschritt
     ["Level", "Level", "Nivel", "Nível", "Niveau"],
     ["Chapter", "Kapitel", "Capítulo", "Capítulo", "Chapitre"],
+    ["Your personal course", "Dein persönlicher Kurs", "Tu curso personal", "O teu curso pessoal", "Ton cours personnalisé"],
     ["Lesson", "Lektion", "Lección", "Aula", "Leçon"],
     ["🎯 Level complete!", "🎯 Level geschafft!", "🎯 ¡Nivel completado!", "🎯 Nível concluído!", "🎯 Niveau terminé !"],
     ["⭐ Chapter complete!", "⭐ Kapitel geschafft!", "⭐ ¡Capítulo completado!", "⭐ Capítulo concluído!", "⭐ Chapitre terminé !"],
@@ -3440,6 +3449,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var LEVEL_SIZE_LEGACY = 203;
   var _lvTrackSavePending = false;
   function _levelSteps() {
+    // Eingestuft: Start beim getesteten Level, von dort anteilig bis 100 (Lektionen statt Stufen)
+    if (_cState && _cState.place && _cState.place.tot > 0 && LESSONS_PER_LEVEL > 0) {
+      var _pl = _cState.place;
+      return ((_pl.L - 1) + Math.min(1, (_cState.total || 0) / _pl.tot) * (100 - _pl.L + 1)) * LESSONS_PER_LEVEL;
+    }
     var m = _masteredSteps();
     // Beim Start kann das hier laufen, bevor die Level-Größe berechnet ist —
     // dann nichts verankern, sonst stünde eine leere Größe in der Spur.
@@ -3463,18 +3477,26 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return t.pos * L + (m - t.m);
   }
 
+  // Level für Freischaltungen: bei Eingestuften das Testlevel und weiter, sonst wie angezeigt
+  function _unlockLevel() { return Math.min(TOTAL_LEVELS, Math.floor(_levelSteps() / LESSONS_PER_LEVEL) + 1); }
   function _getLevelInfo(offset) {
-    var totalLessons    = _levelSteps() + (offset || 0);
-    var level           = Math.min(TOTAL_LEVELS, Math.floor(totalLessons / LESSONS_PER_LEVEL) + 1);
-    var lessonsInLevel  = totalLessons % LESSONS_PER_LEVEL;
-    var chapter         = Math.min(CHAPTERS_PER_LEVEL, Math.floor(lessonsInLevel / LESSONS_PER_CHAPTER) + 1);
-    var levelPct        = (lessonsInLevel / LESSONS_PER_LEVEL) * 100;
-    var chapterPct      = ((lessonsInLevel % LESSONS_PER_CHAPTER) / LESSONS_PER_CHAPTER) * 100;
-    var lessons         = Math.floor(lessonsInLevel % LESSONS_PER_CHAPTER) + 1;
+    // Eingestuft (Erwin, 09.11.2026): Das Testlevel steht nur im Test. Die Anzeige zählt den eigenen
+    // Kurs von Level 1 an; die Freischaltungen rechnen mit `_unlockLevel`.
+    var _pc = _cState && _cState.place && _cState.place.tot > 0 ? _cState.place : null;
+    var _lpl = _pc ? _pc.tot / TOTAL_LEVELS : LESSONS_PER_LEVEL, _lpc = _pc ? _lpl / CHAPTERS_PER_LEVEL : LESSONS_PER_CHAPTER;
+    var totalLessons    = _pc ? (_cState.total || 0) + (offset || 0) : _levelSteps() + (offset || 0);
+    var level           = Math.min(TOTAL_LEVELS, Math.floor(totalLessons / _lpl) + 1);
+    var lessonsInLevel  = totalLessons % _lpl;
+    var chapter         = Math.min(CHAPTERS_PER_LEVEL, Math.floor(lessonsInLevel / _lpc) + 1);
+    var levelPct        = (lessonsInLevel / _lpl) * 100;
+    var chapterPct      = ((lessonsInLevel % _lpc) / _lpc) * 100;
+    var lessons         = Math.floor(lessonsInLevel % _lpc) + 1;
     var chapterLessons  = (_cState && _cState.chapterLessons) ? _cState.chapterLessons : 0;
     // Academy = Stelle auf der Spur ÷ 100 Level, damit auch dieser Balken nie
     // zurückläuft, wenn der Kurs wächst (vorher Stufen ÷ Gesamtstufen).
     var academyPct      = Math.min(100, (totalLessons / (LESSONS_PER_LEVEL * TOTAL_LEVELS)) * 100);
+    // Eingestuft: Alle Balken starten bei null, der Academy-Balken zählt den eigenen, angepassten Kurs (Erwin, 09.11.2026)
+    if (_cState && _cState.place && _cState.place.tot > 0) academyPct = Math.min(100, ((_cState.total || 0) / _cState.place.tot) * 100);
     return { level: level, chapter: chapter, levelPct: levelPct, chapterPct: chapterPct,
              lessons: lessons, chapterLessons: chapterLessons, academyPct: academyPct };
   }
@@ -3504,6 +3526,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Titelzeile
     var el = document.getElementById('dgLvlText');
     if (el) el.innerHTML =
+      (_cState && _cState.place ? '<span class="dl-mycourse">' + _t('Your personal course') + '</span><br>' : '') +
       '<strong>' + _t('Level') + ' ' + info.level + '</strong> · ' + _t('Chapter') + ' ' + info.chapter + ' · ' + _t('Lesson') + ' ' + info.lessons;
 
     // CHAPTER bar: normaler Progressbar (chapterPct%)
@@ -3524,7 +3547,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (lp) lp.textContent = Math.round(info.levelPct) + '%';
 
     // ACADEMY bar: 100 Abschnitte = 100 Level
-    _renderSegBar('dgAcademySegs', 100, info.level - 1, info.levelPct, '#C9A84C', 'rgba(201,168,76,0.5)');
+    if (_cState && _cState.place) _renderSegBar('dgAcademySegs', 100, Math.floor(info.academyPct), (info.academyPct % 1) * 100, '#C9A84C', 'rgba(201,168,76,0.5)');
+    else _renderSegBar('dgAcademySegs', 100, info.level - 1, info.levelPct, '#C9A84C', 'rgba(201,168,76,0.5)');
     var ap = document.getElementById('dgAcademyPct');
     if (ap) ap.textContent = Math.round(info.academyPct) + '%';
   }
@@ -16634,7 +16658,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     while (cs.active.length < max && guard++ < 50) {
       var wantNew = (cs.sinceNew || 0) >= STEPS_PER_NEW_EX || cs.active.length < minA;
       var nx = wantNew ? _introNext(cat, cs, completed) : null;
-      if (nx) { cs.active.push({ id: nx.id, bpmStep: 0 }); cs.sinceNew = 0; continue; }
+      if (nx) { cs.active.push(_placeEntry(nx.id, cat)); cs.sinceNew = 0; continue; }
       var back = null;
       while (cs.park.length && !back) {
         var cand = cs.park.shift();
@@ -16685,7 +16709,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function _subUnlocked(ex) {
     if (!ex || ex.gridPer == null) return true;   // betrifft nur Unabhängigkeit
-    return _getLevelInfo().level >= (COORD_UNLOCK[ex.gridPer] || 1);
+    return _unlockLevel() >= (COORD_UNLOCK[ex.gridPer] || 1);
   }
 
   // Nächste einführbare Übung einer Kategorie holen — oder null.
@@ -16728,7 +16752,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function _getRotation() {
-    var level = _getLevelInfo().level;
+    var level = _unlockLevel();
     var r = ['grooves', 'notes', 'fillins'];
     // Unabhängigkeitsübungen laufen von Anfang an mit (Erwin, 01.09.2026):
     // die erste ist Ride und Snare gemeinsam auf den Vierteln — das ist
@@ -17385,7 +17409,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-204244';
+  var DL_BUILD = '20261109-215752';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17804,7 +17828,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         // war der Kursstand im Gerätespeicher verschwunden, die Lektionszahl
         // aber noch da — der leere Kurs galt als gleichwertig und überschrieb
         // am Server 42 Lektionen Fortschritt (18.09.2026).
-        if ((remoteCount > localCount || remoteTotal > localTotal) && remoteTotal >= localTotal) {
+        var _placeNew = (remote.course.place || remote.course.placeNo) && !_cState.place && !_cState.placeNo && localTotal === 0 && !localCount;
+        if (_placeNew || ((remoteCount > localCount || remoteTotal > localTotal) && remoteTotal >= localTotal)) {
           try {
             // Zähler nie verkleinern: hier gespielte Lektionen bleiben erhalten
             if (remote.lessons != null) localStorage.setItem(_lessonsKey, String(Math.max(remote.lessons, _getTotalLessons())));
@@ -18018,6 +18043,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _oldStep = entry.bpmStep || 0;
     entry.reps = _repCount(entry) + 1;
     entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
+    var _wasPd = !!entry.pd;
+    if (entry.pd && _fb !== 'hard') entry.pn = (entry.pn || 0) + 1;
+    delete entry.pl;
     // Höchste je erreichte Stufe — Grundlage für Level und Balken
     entry.best = Math.max(entry.best || 0, entry.bpmStep);
     if (_fb === 'easy') entry.fbEasy = (entry.fbEasy || 0) + 1; else delete entry.fbEasy;
@@ -18029,7 +18057,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // mit „Too easy" ging das Tempo schnell hoch, neue Übungen kamen aber
     // weiter erst nach fünf Erscheinungen der Kategorie — also alle 20
     // Lektionen. Fill 1 stand bei 130 BPM, Fill 2 war noch nicht in Sicht.
-    cs.sinceNew = (cs.sinceNew || 0) + Math.max(1, entry.bpmStep - _oldStep);
+    cs.sinceNew = (cs.sinceNew || 0) + (_wasPd ? 1 : Math.max(1, entry.bpmStep - _oldStep));
 
     // Graduation: Endtempo gespielt → abgeschlossen, kommt nie wieder
     if (entry.bpmStep >= _exSteps(lesson.ex)) {
@@ -18053,14 +18081,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _spiralRefill(cat, cs);
 
     // Coordination/Rudiments lazy-initialisieren wenn Level-Gate erreicht
-    var _curLevel = _getLevelInfo().level;
+    var _curLevel = _unlockLevel();
     ['coordination', 'rudiments'].forEach(function(cat) {
       var cs = _cState.cats[cat];
       if (cs && !cs.active.length && !cs.introIdx && _catPool[cat].length) {
         var gate = (cat === 'coordination') ? 1 : 2;   // Rudiments ab Level 2 (22.09.2026)
         if (_curLevel >= gate) {
           var _first = _introNext(cat, cs);
-          if (_first) cs.active.push({ id: _first.id, bpmStep: 0 });
+          if (_first) cs.active.push(_placeEntry(_first.id, cat));
         }
       }
     });
@@ -21084,6 +21112,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _feedbackStep(ex, entry, fb) {
     var cur = entry.bpmStep || 0;
     var steps = _exSteps(ex);
+    // Eingestuft (Erwin, 09.11.2026): „Too hard“ beim ersten Durchgang gleich 20 % langsamer.
+    // Bereits abgeschlossene Übungen: zweimal Starttempo, dann einmal Endtempo (Rudiments ohne).
+    if (entry.pl && fb === 'hard') return _placeSlower(ex, cur);
+    if (entry.pd && fb !== 'hard') {
+      var _pn = (entry.pn || 0) + 1;
+      if (_pn < 2) return cur;
+      if (_pn === 2) return ex.cat === 'rudiments' ? steps : Math.max(cur, steps - 1);
+      return steps;
+    }
     if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(0, cur - 1) : cur;
     if (fb !== 'easy') return cur + 1;
     // Wie oft direkt davor bei DIESER Übung schon „Too easy" kam:
@@ -25848,6 +25885,187 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return null;
   }
 
+  // ============================================================
+  // EINSTUFUNG (Erwin, 09.11.2026): Das Testergebnis bestimmt das Tempo beim Einstieg, alle Inhalte
+  // bleiben. Regeln aus 20 Einschätzungen: Testlevel = Prozent der Tempo-Spanne, Shuffles 15 BPM
+  // tiefer, Rudiments mit festem Deckel, Übungen über dem Level ganz unten, schon abgeschlossene
+  // zweimal Starttempo und einmal Endtempo. Die Einstufung liegt in `_cState.place` und reist mit
+  // dem normalen Fortschritt auf alle Geräte. Vom Test in die Academy: Code oder Test in der Academy.
+  // ============================================================
+  var LT_PLACE_MIN = 5, _placeMapCache = null, _placeFrac = { S: 1, G: 0.75, W: 0.5 };
+  function _placeMap() {
+    if (_placeMapCache) return _placeMapCache;
+    var f = {}, l = {};
+    _ltMap().forEach(function(x, i) { var lv = Math.floor(i / LESSONS_PER_LEVEL) + 1; if (f[x.id] == null) f[x.id] = lv; l[x.id] = lv; });
+    return (_placeMapCache = { f: f, l: l });
+  }
+  function _placeNearest(ex, target, upTo) {
+    var n = upTo != null ? upTo + 1 : _exSteps(ex), best = 0, dist = Infinity;
+    for (var i = 0; i < n; i++) {
+      var d = Math.abs(_exBpm(ex, i) - target);
+      if (d < dist || (d === dist && _exBpm(ex, i) > _exBpm(ex, best))) { dist = d; best = i; }
+    }
+    return best;
+  }
+  function _placeSlower(ex, cur) { return _placeNearest(ex, _exBpm(ex, cur) * 0.8, cur); }
+  function _placeTarget(ex, L) {
+    var n = _exSteps(ex), lo = _exBpm(ex, 0), hi = _exBpm(ex, n - 1), t = lo + (hi - lo) * L / 100;
+    if (ex.cat === 'rudiments') {
+      var cap = /flam|drag|ratamacue|ruff|lesson 25/i.test(ex.name) ? 70 : /paradiddle/i.test(ex.name) ? 90 : 100;
+      t = Math.min(t, cap);
+    }
+    if (/shuffle/i.test(ex.catLabel || '')) t -= 15;
+    return t;
+  }
+  function _placeInfo(ex, cat, P) {
+    var M = _placeMap(), L = (P.a && P.a[cat] != null) ? P.a[cat] : P.L, fl = M.f[ex.id];
+    if (L < LT_PLACE_MIN || fl == null || fl > L) return { s: 0 };
+    var s = Math.min(_placeNearest(ex, _placeTarget(ex, L)), _exSteps(ex) - 1);
+    return M.l[ex.id] <= L ? { s: s, done: true } : { s: s };
+  }
+  function _placeEntry(id, cat) {
+    var e = { id: id, bpmStep: 0 };
+    if (!_cState || !_cState.place) return e;
+    var ex = _ltEx(id);
+    if (!ex) return e;
+    var inf = _placeInfo(ex, cat, _cState.place);
+    if (inf.s > 0 || inf.done) { e.bpmStep = inf.s; e.reps = 0; e.pl = 1; if (inf.done) e.pd = 1; }
+    return e;
+  }
+  function _ltCode(st, level) {
+    var letter = function(v) { return v == null ? 'S' : v >= 1.5 ? 'S' : v >= 0.75 ? 'G' : 'W'; };
+    var read = (st.noread || st.a.read === 'no') ? 'N' : letter(_ltAvg(st.skills.notes));
+    return 'DL' + level + '-' + letter(_ltAvg(st.skills.grooves)) + letter(_ltAvg(st.skills.fillins)) + letter(_ltAvg(st.skills.rudiments)) + read;
+  }
+  function _placeParse(code) {
+    var m = /^\s*DL(\d{1,3})-([SGW])([SGW])([SGW])([SGWN])\s*$/i.exec(code || '');
+    if (!m) return null;
+    var L = +m[1];
+    if (L < 1 || L > 100) return null;
+    var lv = function(c) { return Math.max(1, Math.round(L * _placeFrac[c.toUpperCase()])); };
+    return { L: L, code: code.trim().toUpperCase(), a: {
+      grooves: lv(m[2]), fillins: lv(m[3]), rudiments: lv(m[4]), coordination: L,
+      notes: m[5].toUpperCase() === 'N' ? Math.min(L, 10) : lv(m[5]) } };
+  }
+  function _placeApply(P) {
+    P.at = Date.now();
+    _cState.place = P;
+    var tot = 0;
+    Object.keys(_catPool).forEach(function(cat) {
+      (_catPool[cat] || []).forEach(function(ex) {
+        if (_placeMap().f[ex.id] == null) return;
+        var inf = _placeInfo(ex, cat, P), n = _exSteps(ex);
+        tot += inf.done ? Math.min(cat === 'rudiments' ? 2 : 3, Math.max(1, n - inf.s) + 1) : n - inf.s;
+      });
+      var cs = _cState.cats[cat];
+      if (cs) ['active', 'park'].forEach(function(k) {
+        cs[k] = (cs[k] || []).map(function(e) { return _placeEntry(e.id, cat); });
+      });
+    });
+    P.tot = Math.max(1, tot);
+    _masteredInvalidate();
+    _shownLesson = null;
+    _saveState();
+    if (_syncReady()) _syncPush(false, true);
+    _ltClose();
+    _lt.academy = false;
+    _placeSettings();
+    _loadCurrentLesson(false);
+    _updateLevelUI();
+  }
+  function _placeDecline() {
+    _cState.placeNo = 1;
+    _saveState();
+    if (_syncReady()) _syncPush(false, true);
+    _ltClose();
+    _lt.academy = false;
+  }
+  function _placeSettings() {
+    var b = document.getElementById('dgPlaceBlock');
+    if (b) b.style.display = (_cState && _cState.place) ? '' : 'none';
+  }
+  function _placeResultButtons(row, code, level) {
+    if (level >= LT_PLACE_MIN) {
+      var go = _ltAdd(row, 'button', 'lt-go', 'Start my course');
+      go.type = 'button';
+      go.addEventListener('click', function() { var P = _placeParse(code); if (P) _placeApply(P); else _placeDecline(); });
+    }
+    var no = _ltAdd(row, 'button', level >= LT_PLACE_MIN ? 'lt-ghost' : 'lt-go', level >= LT_PLACE_MIN ? 'Start from the beginning' : 'Start the course');
+    no.type = 'button';
+    no.addEventListener('click', _placeDecline);
+  }
+  function _placeLocal() {
+    try {
+      var r = JSON.parse(localStorage.getItem(LT_KEY) || 'null');
+      if (r && r.code && r.level >= LT_PLACE_MIN && Date.now() - r.at < 180 * 864e5) return r;
+    } catch (e) {}
+    return null;
+  }
+  // Erster Start ohne Fortschritt: läuft erst nach dem Abgleich mit dem Server
+  function _placeGate() {
+    if (!_cState || _cState.place || _cState.placeNo || (_cState.total || 0) > 0 || _getTotalLessons() > 0) { _placeSettings(); return; }
+    if (new URLSearchParams(window.location.search).get('test') === '1') return;
+    if (!_lt) _ltBuild();
+    _lt.academy = true;
+    _lt.st = { run: null };
+    _lt.el.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    _lt.bar.style.width = '0%';
+    var r = _placeLocal();
+    if (r) _placeOfferLocal(r); else _placeChoice();
+  }
+  function _placeOfferLocal(r) {
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Welcome to the Academy');
+    _ltAdd(c, 'h2', 'lt-h', 'Your personal course is ready.');
+    _ltAdd(c, 'p', 'lt-p', 'It is built from your level test: everything is in it, at your speed. What you already know goes by quickly, and new material starts slowly. Your progress starts at zero.');
+    _placeResultButtons(_ltAdd(c, 'div', 'lt-row'), r.code, r.level);
+  }
+  function _placeChoice() {
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Welcome to the Academy');
+    _ltAdd(c, 'h2', 'lt-h', 'Where do you want to start?');
+    var box = _ltAdd(c, 'div', 'lt-opts');
+    [['Take the level test (about 3 minutes)', function() { _ltOpen(); }],
+     ['I already took it and have a code', _placeCodeForm],
+     ['Start from the beginning', _placeDecline]].forEach(function(o) {
+      var b = _ltAdd(box, 'button', 'lt-opt', o[0]);
+      b.type = 'button';
+      b.addEventListener('click', o[1]);
+    });
+  }
+  function _placeCodeForm() {
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Your code');
+    _ltAdd(c, 'h2', 'lt-h', 'Enter your Academy code');
+    _ltAdd(c, 'p', 'lt-p', 'You find it on your test result. It looks like DL45-SGWS.');
+    var inp = _ltAdd(c, 'input', 'lt-input');
+    inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.setAttribute('aria-label', 'Academy code');
+    var err = _ltAdd(c, 'p', 'lt-err', '');
+    var go = _ltAdd(c, 'button', 'lt-go', 'Start my course');
+    go.type = 'button';
+    go.addEventListener('click', function() {
+      var P = _placeParse(inp.value);
+      if (!P) { err.textContent = "That code doesn't look right. Check it against your test result."; return; }
+      if (P.L < LT_PLACE_MIN) { _placeDecline(); return; }
+      _placeApply(P);
+    });
+    var back = _ltAdd(c, 'button', 'lt-link', 'Back');
+    back.type = 'button';
+    back.addEventListener('click', _placeChoice);
+  }
+  (function() {
+    var b = document.getElementById('dgPlaceReset');
+    if (!b) return;
+    var armed = false;
+    b.addEventListener('click', function() {
+      if (!armed) { armed = true; b.textContent = 'Tap again to erase your progress and start over'; return; }
+      try { localStorage.removeItem(LT_KEY); } catch (e) {}
+      _resetAll();
+    });
+    setTimeout(_placeSettings, 0);
+  })();
+
   function _ltBuild() {
     var el = document.createElement('div');
     el.className = 'lt';
@@ -25876,7 +26094,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltLog(step, level) {
     try {
-      if (_devMode || !_lt || !_lt.st || !_lt.st.run) return;
+      if (_devMode || !_lt || _lt.academy || !_lt.st || !_lt.st.run) return;
       fetch(_SB_URL + '/rest/v1/rpc/lt_event', {
         method: 'POST', keepalive: true,
         headers: _sbHeaders({ 'Content-Type': 'application/json' }),
@@ -26105,6 +26323,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _ltAdd(c, 'div', 'lt-kick', 'Your first step');
     _ltAdd(c, 'h2', 'lt-h', txt[0]);
     _ltAdd(c, 'p', 'lt-p', txt[1]);
+    if (_lt.academy) {
+      var rowA = _ltAdd(c, 'div', 'lt-row');
+      var goA = _ltAdd(rowA, 'button', 'lt-go', 'Start the course');
+      goA.type = 'button';
+      goA.addEventListener('click', _placeDecline);
+      return;
+    }
     _ltAdd(c, 'p', 'lt-p', 'Want to keep going? In the Drumlion Academy you start at level 1 and get your next step every day, already planned for you. 15 minutes a day.');
     var row = _ltAdd(c, 'div', 'lt-row');
     var go = _ltAdd(row, 'a', 'lt-go', 'Keep going with Drumlion');
@@ -26302,7 +26527,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     st.level = level;
     _ltLog('result', level);
     _ltProgress(999);
-    try { localStorage.setItem(LT_KEY, JSON.stringify({ level: level, at: Date.now(), a: st.a })); } catch (e) {}
+    st.code = _ltCode(st, level);
+    try { localStorage.setItem(LT_KEY, JSON.stringify({ v: 2, level: level, code: st.code, at: Date.now(), a: st.a })); } catch (e) {}
     var c0 = _ltCard();
     // Spannung vor der Zahl (Erwin, 09.11.2026): kurz „rechnen“, dann landet das Level
     var kick = _ltAdd(c0, 'div', 'lt-kick', 'Calculating your level');
@@ -26340,6 +26566,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (st.a.years !== '0') _ltAdd(c, 'div', 'lt-type', _ltType(st));
     _ltAdd(c, 'h2', 'lt-h', band[1]);
     _ltAdd(c, 'p', 'lt-p', band[2] + (LT_GOAL[st.a.goal] ? ' ' + LT_GOAL[st.a.goal] : ''));
+    if (level >= LT_PLACE_MIN) _ltAdd(c, 'p', 'lt-p', 'The Academy covers everything, at your speed: what you already know goes by quickly, and new material starts slowly.');
     var facts = _ltAdd(c, 'div', 'lt-facts');
     _ltFacts(st.a).forEach(function(f) { _ltAdd(facts, 'span', 'lt-fact', f); });
     var prof = _ltProfile(st);
@@ -26352,6 +26579,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     }
     var row = _ltAdd(c, 'div', 'lt-row');
+    if (_lt.academy) { _placeResultButtons(row, st.code, level); return; }
+    if (level >= LT_PLACE_MIN) {
+      var codeLine = _ltAdd(c, 'p', 'lt-note', 'Your Academy code: ');
+      _ltAdd(codeLine, 'b', 'lt-code', st.code);
+      codeLine.appendChild(document.createTextNode('. Enter it when you start the Academy, on any device.'));
+    }
     if (LT_PLAN_URL) {
       var plan = _ltAdd(row, 'a', 'lt-go', 'Get my start plan by email');
       plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level;
@@ -27767,6 +28000,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   } else if (_syncKey() && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1) {
     // Startup-Pull: Supabase-Fortschritt laden
     _syncPull(function(changed) {
+      setTimeout(_placeGate, 0);   // erst nach dem Abgleich: ein Mitglied mit Fortschritt wird nie gefragt
       if (changed) {
         _loadCurrentLesson(false);
         _updateLevelUI();
