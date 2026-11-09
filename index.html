@@ -17384,7 +17384,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-200647';
+  var DL_BUILD = '20261109-202236';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25861,10 +25861,26 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltOpen() {
     if (!_lt) _ltBuild();
-    _lt.st = { qi: 0, a: {}, round: 0, used: {}, styles: {}, lo: 0, hi: 101, L: 1, step: 12, cur: null, skills: {}, fb: '', pv: null };
+    _lt.st = { qi: 0, a: {}, round: 0, used: {}, styles: {}, lo: 0, hi: 101, L: 1, step: 12, cur: null, skills: {}, fb: '', run: _ltRunId() };
     _lt.el.classList.add('open');
     document.documentElement.style.overflow = 'hidden';
     _ltIntro();
+  }
+  // Anonyme Zählung (Erwin, 09.11.2026): Schritte und Ergebnis, ohne Name, Mail oder Kundennummer.
+  // Die Nummer gilt für einen Durchgang und liegt nur im Speicher. Eigene Dev-Geräte zählen nicht.
+  function _ltRunId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16); });
+  }
+  function _ltLog(step, level) {
+    try {
+      if (_devMode || !_lt || !_lt.st || !_lt.st.run) return;
+      fetch(_SB_URL + '/rest/v1/rpc/lt_event', {
+        method: 'POST', keepalive: true,
+        headers: _sbHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_run: _lt.st.run, p_step: step, p_variant: null, p_level: level == null ? null : level })
+      }).catch(function() {});
+    } catch (e) {}
   }
   function _ltClose() {
     _ltStop();
@@ -25902,7 +25918,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       'Play along at your kit, or just watch and listen from the couch. Brand new to drums? Start here too.');
     var go = _ltAdd(c, 'button', 'lt-go', 'Find my level');
     go.type = 'button';
-    go.addEventListener('click', function() { try { initA(); } catch (e) {} _ltQuestion(); });
+    go.addEventListener('click', function() { _ltLog('start'); try { initA(); } catch (e) {} _ltQuestion(); });
     _ltAdd(c, 'p', 'lt-note', 'Free. Turn your sound on.');
     go.focus();
   }
@@ -25910,6 +25926,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var qs = _ltQs(), st = _lt.st;
     if (st.qi >= qs.length) { _ltPlayIntro(); return; }
     var q = qs[st.qi];
+    _ltLog('q_' + q.id);
     _ltProgress(st.qi);
     var c = _ltCard();
     _ltAdd(c, 'div', 'lt-kick', 'Question ' + (st.qi + 1) + ' of ' + qs.length);
@@ -25971,6 +25988,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var st = _lt.st, r = _ltPick(1, 'grooves');
     if (!r) { _ltResult(); return; }
     st.cur = r;
+    _ltLog('first_groove');
     _ltProgress(_ltQs().length + LT_MAX_ROUNDS - 1);
     var c = _ltCard();
     _ltAdd(c, 'div', 'lt-kick', 'Your first groove');
@@ -26007,6 +26025,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     st.used[r.id] = 1;
     if (r.cat === 'grooves') st.styles[_ltEx(r.id).catLabel] = 1;
     st.cur = r;
+    _ltLog('round_' + (st.round + 1));
     _ltProgress(_ltQs().length + st.round);
     var c = _ltCard();
     if (st.fb) _ltAdd(c, 'div', 'lt-fb', st.fb);
@@ -26161,6 +26180,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _ltResult() {
     var st = _lt.st, level = _ltLevel(st), band = _ltBand(level);
     st.level = level;
+    _ltLog('result', level);
     _ltProgress(999);
     try { localStorage.setItem(LT_KEY, JSON.stringify({ level: level, at: Date.now(), a: st.a })); } catch (e) {}
     var c0 = _ltCard();
@@ -26216,14 +26236,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var plan = _ltAdd(row, 'a', 'lt-go', 'Get my start plan by email');
       plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level;
       plan.target = '_top';
+      plan.addEventListener('click', function() { _ltLog('click_plan', level); });
     }
     var go = _ltAdd(row, 'a', LT_PLAN_URL ? 'lt-ghost' : 'lt-go', 'Join the Academy');
     go.href = LT_ACADEMY;
     go.target = '_top';
     go.rel = 'noopener';
+    go.addEventListener('click', function() { _ltLog('click_academy', level); });
     var sh = _ltAdd(row, 'button', 'lt-ghost', 'Share my result');
     sh.type = 'button';
-    sh.addEventListener('click', function() { _ltShare(level); });
+    sh.addEventListener('click', function() { _ltLog('click_share', level); _ltShare(level); });
     _ltPrepCard(level, band[1], _ltFacts(st.a));
     var again = _ltAdd(c, 'button', 'lt-link', 'Take the test again');
     again.type = 'button';
