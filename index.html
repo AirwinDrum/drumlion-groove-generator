@@ -2610,7 +2610,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Feiern
     ["Keep going!", "Weiter geht’s!", "¡Sigue así!", "Bora continuar!", "On continue !"],
     ["10 Minutes Today!", "Heute schon 10 Minuten!", "¡10 minutos hoy!", "10 minutos hoje!", "10 minutes aujourd’hui !"],
-    ["20 Minutes Today!", "Heute schon 20 Minuten!", "¡20 minutos hoy!", "20 minutos hoje!", "20 minutes aujourd’hui !"],
+    ["15 Minutes Today!", "Heute schon 15 Minuten!", "¡15 minutos hoy!", "15 minutos hoje!", "15 minutes aujourd’hui !"],
     ["30 Minutes Today!", "Heute schon 30 Minuten!", "¡30 minutos hoy!", "30 minutos hoje!", "30 minutes aujourd’hui !"],
     ["Great start — keep the momentum going!", "Starker Start – bleib dran!", "¡Buen comienzo! No pierdas el ritmo.", "Ótimo começo! Mantenha o ritmo.", "Super début, garde le rythme !"],
     ["You crushed your daily goal!", "Tagesziel geknackt!", "¡Superaste tu meta del día!", "Meta do dia batida!", "Objectif du jour explosé !"],
@@ -3524,7 +3524,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var prev = _getDailyMins();
     var next = prev + mins;
     localStorage.setItem(_dailyMinsKey, String(next));
-    var milestones = [10, 20, 30];
+    var milestones = [10, 15, 30];
     for (var i = 0; i < milestones.length; i++) {
       if (prev < milestones[i] && next >= milestones[i]) return milestones[i];
     }
@@ -3592,10 +3592,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _showDailyCelebration(milestone) {
     var configs = {
       10: { emoji: '⭐', title: _t('10 Minutes Today!'), sub: _t('Great start — keep the momentum going!') },
-      20: { emoji: '🔥', title: _t('20 Minutes Today!'), sub: _t('You crushed your daily goal!') },
+      15: { emoji: '🔥', title: _t('15 Minutes Today!'), sub: _t('You crushed your daily goal!') },
       30: { emoji: '🏆', title: _t('30 Minutes Today!'), sub: _t('Absolutely on fire. Legendary session!') }
     };
-    _celebrate(configs[milestone] || configs[20]);
+    _celebrate(configs[milestone] || configs[15]);
   }
 
   // Übung endgültig abgeschlossen: Endtempo gespielt, sie kommt nie wieder
@@ -17355,7 +17355,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-174026';
+  var DL_BUILD = '20261109-180350';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25000,7 +25000,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ctx.font = '800 84px ' + SB_FONT; ctx.fillStyle = '#E8E4DB';
     ctx.fillText('Drumlion Academy', x, y + 124);
     ctx.font = '500 36px ' + SB_FONT; ctx.fillStyle = '#c9c3b6';
-    ['Learn drums step by step – 100 levels.', 'Grooves, fills, rudiments and reading.', '20 minutes a day.'].forEach(function(l, i) {
+    ['Learn drums step by step – 100 levels.', 'Grooves, fills, rudiments and reading.', '15 minutes a day.'].forEach(function(l, i) {
       ctx.fillText(l, x, y + 196 + i * 52);
     });
     var url = 'drumlion.com/academy', uy = y + 380;
@@ -25561,7 +25561,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     { id: 'goal', q: "What's your goal?",
       opts: [['start', 'Learn the basics'], ['songs', 'Play my favorite songs'], ['band', 'Join a band'], ['live', 'Play live with confidence'],
              ['tech', 'Better technique and timing'], ['pro', 'Go pro']] },
-    { id: 'time', q: 'How much time can you practice per day?', opts: [['10', 'About 10 minutes'], ['20', 'About 20 minutes'], ['30', '30 minutes or more']] }
+    { id: 'time', q: 'How much time can you practice per day?', opts: [['10', 'About 10 minutes'], ['15', 'About 15 minutes'], ['30', '30 minutes or more']] }
   ];
   var LT_BANDS = [
     [1, 'Fresh Start', "You're right at the beginning – the perfect moment to build clean habits from day one."],
@@ -27994,7 +27994,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 <div id="dgCelebOverlay">
   <div id="dgCelebCard">
     <div id="dgCelebEmoji">🔥</div>
-    <div id="dgCelebTitle">20 Minutes Today!</div>
+    <div id="dgCelebTitle">15 Minutes Today!</div>
     <div id="dgCelebSub">You crushed your daily goal!</div>
     <button id="dgCelebDismiss">Keep going!</button>
   </div>
