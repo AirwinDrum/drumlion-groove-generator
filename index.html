@@ -1953,12 +1953,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-ans .lt-opt small { display: block; font-weight: 500; opacity: 0.65; font-size: 12px; margin-top: 4px; }
 .lt-score { font-size: clamp(96px, 24vw, 160px); font-weight: 800; line-height: 0.9; color: #C9A84C; font-variant-numeric: tabular-nums; }
 .lt-tease { opacity: 0.95; }
+.lt-calc { font-size: 16px; font-weight: 600; opacity: 0.75; min-height: 1.4em; }
+.lt-land { animation: ltLand 0.5s cubic-bezier(.2,1.5,.4,1); transform-origin: left center; }
+@keyframes ltLand { 0% { transform: scale(0.8); } 55% { transform: scale(1.12); filter: drop-shadow(0 0 22px rgba(201,168,76,0.7)); } 100% { transform: scale(1); } }
+.lt-rest { display: grid; gap: inherit; animation: ltIn 0.45s ease; }
 .lt-note { font-size: 13px; opacity: 0.6; margin: 0; }
-.lt-range { background: var(--dl-raise); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 16px; display: grid; gap: 10px; }
-.lt-rline { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 14px; }
-.lt-rline b { font-size: 26px; font-weight: 800; color: #C9A84C; font-variant-numeric: tabular-nums; }
-.lt-rtrack { position: relative; height: 8px; border-radius: 4px; background: var(--dl-line-2); overflow: hidden; }
-.lt-rtrack i { position: absolute; top: 0; bottom: 0; background: #C9A84C; border-radius: 4px; transition: left 0.6s ease, right 0.6s ease; }
 .lt-fb { font-size: 15px; font-weight: 700; color: var(--dl-gold-ink); animation: ltIn 0.35s ease; }
 .lt-type { font-size: 20px; font-weight: 800; color: var(--dl-gold-ink); }
 .lt-prof { display: grid; gap: 8px; }
@@ -1971,7 +1970,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-fact { padding: 6px 12px; border-radius: 999px; background: var(--dl-raise); border: 1px solid var(--dl-line); font-size: 13px; }
 .lt-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 @media (max-width: 520px) { .lt-ans { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: reduce) { .lt-card, .lt-fb { animation: none; } .lt-prog i, .lt-rtrack i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .lt-card, .lt-fb, .lt-rest, .lt-land { animation: none; } .lt-prog i { transition: none; } }
 /* Notenstücke (02.11.2026): Laufband oder zwei Zeilen, siehe _mbRender */
 .mb { display: none; width: 100%; flex-direction: column; gap: 4px; }
 .mb.on { display: flex; }
@@ -17385,7 +17384,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-183411';
+  var DL_BUILD = '20261109-185328';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25958,24 +25957,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     play.appendChild(_lt.svg);
     _ltDraw(null);
   }
-  // „Level ??“: Der Bereich wird nach jeder Antwort kleiner
-  function _ltRange(c) {
-    var st = _lt.st, lo = Math.max(1, st.lo), hi = Math.min(100, st.hi);
-    if (hi < lo) hi = lo;
-    var box = _ltAdd(c, 'div', 'lt-range');
-    var line = _ltAdd(box, 'div', 'lt-rline');
-    _ltAdd(line, 'span', null, st.round ? 'Your level is between' : 'Your level');
-    _ltAdd(line, 'b', null, st.round ? lo + ' and ' + hi : '??');
-    var track = _ltAdd(box, 'div', 'lt-rtrack'), bar = _ltAdd(track, 'i');
-    var from = st.pv || [1, 100], pct = function(v) { return (v - 1) / 99 * 100; };
-    bar.style.left = pct(from[0]) + '%';
-    bar.style.right = (100 - pct(from[1])) + '%';
-    st.pv = [lo, hi];
-    requestAnimationFrame(function() { requestAnimationFrame(function() {
-      bar.style.left = pct(lo) + '%';
-      bar.style.right = (100 - pct(hi)) + '%';
-    }); });
-  }
   function _ltRound() {
     var st = _lt.st, r = null, k;
     if (st.round % 2) {
@@ -25989,7 +25970,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     st.cur = r;
     _ltProgress(_ltQs().length + st.round);
     var c = _ltCard();
-    _ltRange(c);
     if (st.fb) _ltAdd(c, 'div', 'lt-fb', st.fb);
     _ltAdd(c, 'h2', 'lt-h', 'Could you play this?');
     _ltStage(c, r);
@@ -26144,11 +26124,40 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     st.level = level;
     _ltProgress(999);
     try { localStorage.setItem(LT_KEY, JSON.stringify({ level: level, at: Date.now(), a: st.a })); } catch (e) {}
-    var c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Your Drumlion level');
-    var sc = _ltAdd(c, 'div', 'lt-score', '1');
-    var of = _ltAdd(sc, 'span', null, '/ 100');
-    sc.setAttribute('aria-label', 'Level ' + level + ' of 100');
+    var c0 = _ltCard();
+    // Spannung vor der Zahl (Erwin, 09.11.2026): kurz „rechnen“, dann landet das Level
+    var kick = _ltAdd(c0, 'div', 'lt-kick', 'Calculating your level');
+    var sc = _ltAdd(c0, 'div', 'lt-score', '??');
+    _ltAdd(sc, 'span', null, '/ 100');
+    var calcLine = _ltAdd(c0, 'div', 'lt-calc', 'Checking your grooves');
+    var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var total = calm ? 900 : 2500, t0 = performance.now(), shown = 0;
+    function alive() { return _lt && _lt.st === st && c0.isConnected; }
+    function land() {
+      if (!alive()) return;
+      sc.firstChild.nodeValue = String(level);
+      sc.setAttribute('aria-label', 'Level ' + level + ' of 100');
+      sc.classList.add('lt-land');
+      calcLine.remove();
+      kick.textContent = 'Your Drumlion level';
+      setTimeout(function() { if (alive()) _ltResultRest(st, level, band, c0); }, calm ? 0 : 650);
+    }
+    (function roll() {
+      if (!alive()) return;
+      var e = performance.now() - t0;
+      if (e >= total) { land(); return; }
+      calcLine.textContent = e < total * 0.34 ? 'Checking your grooves' : e < total * 0.68 ? 'Weighing your answers' : 'Finding your level';
+      if (!calm) {
+        var v;
+        do { v = 1 + Math.floor(Math.random() * 100); } while (v === shown);
+        shown = v;
+        sc.firstChild.nodeValue = String(v);
+      }
+      setTimeout(roll, 55 + 240 * Math.pow(e / total, 4));   // wird zum Ende hin langsamer
+    })();
+  }
+  function _ltResultRest(st, level, band, c0) {
+    var c = _ltAdd(c0, 'div', 'lt-rest');
     if (st.a.years !== '0') _ltAdd(c, 'div', 'lt-type', _ltType(st));
     _ltAdd(c, 'h2', 'lt-h', band[1]);
     _ltAdd(c, 'p', 'lt-p', band[2] + (LT_GOAL[st.a.goal] ? ' ' + LT_GOAL[st.a.goal] : ''));
@@ -26180,13 +26189,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var again = _ltAdd(c, 'button', 'lt-link', 'Take the test again');
     again.type = 'button';
     again.addEventListener('click', _ltOpen);
-    // Zahl zählt hoch (ohne Bewegung bei reduzierter Animation)
-    var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, t0 = performance.now();
-    (function up(now) {
-      var p = calm ? 1 : Math.min(1, (now - t0) / 900), v = Math.max(1, Math.round(level * (1 - Math.pow(1 - p, 3))));
-      sc.firstChild.nodeValue = String(v);
-      if (p < 1) requestAnimationFrame(up);
-    })(t0);
   }
   // Teilen-Karte 1080×1350 (Instagram/WhatsApp): Level groß, Stufe, Fakten, Drumlion
   // Die Karte entsteht schon beim Ergebnis: iOS teilt nur direkt aus dem Tipp heraus,
