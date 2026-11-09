@@ -1856,7 +1856,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
    auf einem halbtransparenten Streifen — Kopf und Fortschritt entfallen */
 .sb-vid-cam { position: absolute; display: none; object-fit: cover; background: #000; }
 .sb-vid-cam-main { left: 0; top: 0; width: 100%; height: 100%; }
-.sb-vid-cam-win { border-radius: 18px; border: 3px solid rgba(232,228,219,0.9); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.sb-vid-cam-in { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.sb-vid-cam-win { overflow: hidden; border-radius: 18px; border: 3px solid rgba(232,228,219,0.9); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .sb-vid[data-cam="1"] .sb-vid-cam-main, .sb-vid[data-cam="1"] .sb-vid-cam-win.on { display: block; }
 .sb-vid[data-cam="1"] .sb-vid-head, .sb-vid[data-cam="1"] .sb-vid-foot, .sb-vid[data-cam="1"] .sb-vid-opt-bg { display: none; }
 .sb-vid[data-cam="1"] .sb-vid-mid { top: auto; bottom: var(--sb-cam-b, 56px); transform: none; }
@@ -17340,7 +17341,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-124513';
+  var DL_BUILD = '20261109-124659';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21301,6 +21302,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // Weißabgleich der Kamera: Verstärkung je Farbkanal
       if (Array.isArray(c.wb) && c.wb.length === 3 && c.wb.every(function(g) { return +g >= 0.5 && +g <= 2; }))
         o.wb = c.wb.map(function(g) { return Math.round(+g * 1000) / 1000; });
+      if (+c.tilt && Math.abs(+c.tilt) <= 15) o.tilt = Math.round(+c.tilt * 10) / 10;   // Gerade-Drehen in Grad
       return o;
     };
     if (s.cams && typeof s.cams === 'object') ['main', 'win'].forEach(function(k) {
@@ -22720,7 +22722,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     v.innerHTML =
       '<div class="sb-vid-stage" id="sbVidStage">' +
         '<video class="sb-vid-cam sb-vid-cam-main" id="sbCamMain" muted playsinline preload="auto"></video>' +
-        '<video class="sb-vid-cam sb-vid-cam-win" id="sbCamWin" muted playsinline preload="auto"></video>' +
+        '<div class="sb-vid-cam sb-vid-cam-win" id="sbCamWinBox"><video class="sb-vid-cam-in" id="sbCamWin" muted playsinline preload="auto"></video></div>' +
         '<div class="sb-vid-cam-div" id="sbCamDiv"></div>' +
         // Farbe der Kameras: Weißabgleich, Helligkeit, Look (auch für den Export)
         '<svg class="sb-vid-fx" width="0" height="0" aria-hidden="true">' +
@@ -22781,6 +22783,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             '<button type="button" data-v="tl">Top left</button><button type="button" data-v="tr">Top right</button><button type="button" data-v="split">Split: top + feet</button></span></label>' +
           '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Window size</span>' +
             '<input type="range" class="sb-zoom" id="sbVidWinSize" min="0.2" max="0.45" step="0.01"></label>' +
+          '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Straighten feet</span>' +
+            '<input type="range" class="sb-zoom" id="sbVidTilt" min="-15" max="15" step="0.1"><span class="sb-meta" id="sbVidTiltV"></span></label>' +
           '<label class="sb-group sb-vid-opt-cam"><span class="sb-lbl">Look</span><span class="sb-seg" data-vopt="vidLook">' +
             '<button type="button" data-v="off">Off</button><button type="button" data-v="natural">Natural</button>' +
             '<button type="button" data-v="warm">Warm</button><button type="button" data-v="punchy">Punchy</button></span></label>' +
@@ -22829,6 +22833,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     $('sbVidPer').addEventListener('input', function() {
       _sbPrefs.vidPer = +this.value; _sbSavePrefs(); _sbVidLayout(); _sbVidUi();
+    });
+    $('sbVidTilt').addEventListener('input', function() {
+      var m = _sbSong.cams && _sbSong.cams.win;
+      if (!m) return;
+      m.tilt = +this.value; _sbSave(); _sbCamLayout();
+      document.getElementById('sbVidTiltV').textContent = (+this.value).toFixed(1) + '°';
     });
     $('sbVidWinSize').addEventListener('input', function() {
       _sbPrefs.vidWinSize = +this.value; _sbSavePrefs(); _sbCamLayout();
@@ -22910,6 +22920,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var mx = V.el.querySelector('[data-vtog="vidMix"]');
     if (mx) mx.hidden = !_sbMixOn();
     document.getElementById('sbVidWinSize').value = _sbPrefs.vidWinSize;
+    document.getElementById('sbVidTilt').value = _sbCamTilt();
+    document.getElementById('sbVidTiltV').textContent = _sbCamTilt().toFixed(1) + '°';
     document.getElementById('sbVidBright').value = _sbPrefs.vidBright;
     _sbMixUi();
     _sbCamUi();
@@ -23631,6 +23643,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     })).then(function() { return out; });
   }
   // Kamerabild füllend (Ränder abgeschnitten) ins Rechteck, Drehung beachtet
+  // Schief aufgestelltes Fuß-Video gerade drehen (Erwin, 09.11.2026): Grad am Song gespeichert,
+  // das Bild wird so weit vergrößert, dass keine schwarzen Ecken entstehen
+  function _sbCamTilt() { var m = _sbSong.cams && _sbSong.cams.win; return (m && +m.tilt) || 0; }
+  function _sbTiltZoom(deg, w, h) {
+    var a = Math.abs(deg) * Math.PI / 180;
+    return Math.cos(a) + Math.max(w / h, h / w) * Math.sin(a);
+  }
   // Zweigeteilt über den Noten (Erwin, 09.11.2026): links Top, rechts Füße; im Hochformat übereinander
   function _sbCamSplit(w, h, t) {
     var g = 6;   // Bildteiler in Gold (Erwin, 09.11.2026)
@@ -23641,14 +23660,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var l = Math.round((w - g) / 2);
     return { a: { x: 0, y: 0, w: l, h: t }, b: { x: l + g, y: 0, w: w - l - g, h: t }, d: { x: l, y: 0, w: g, h: t } };
   }
-  function _sbCamPaint(ctx, fr, rot, x, y, w, h, flt) {
+  function _sbCamPaint(ctx, fr, rot, x, y, w, h, flt, tilt) {
     if (!fr) { ctx.fillStyle = '#000'; ctx.fillRect(x, y, w, h); return; }
     var fw = fr.displayWidth, fh = fr.displayHeight, side = rot === 90 || rot === 270;
     var k = Math.max(w / (side ? fh : fw), h / (side ? fw : fh));
+    if (tilt) k *= _sbTiltZoom(tilt, w, h);
     ctx.save();
     if (flt) ctx.filter = flt;   // Farbe: dieselbe Matrix wie in der Vorschau
     ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
     ctx.translate(x + w / 2, y + h / 2);
+    if (tilt) ctx.rotate(tilt * Math.PI / 180);
     if (rot) ctx.rotate(rot * Math.PI / 180);
     ctx.drawImage(fr, -fw * k / 2, -fh * k / 2, fw * k, fh * k);
     ctx.restore();
@@ -23970,7 +23991,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if ((el.getAttribute('src') || '') === url) return;
       if (url) el.src = url; else { el.removeAttribute('src'); el.load(); }
     });
-    var w = _sbCamEl('win'), r = _sbCamWinRect(d.w, d.h), mn = _sbCamEl('main');
+    var w = document.getElementById('sbCamWinBox'), r = _sbCamWinRect(d.w, d.h), mn = _sbCamEl('main');
     var split = win && _sbPrefs.vidWin === 'split' && V.midPx != null;
     V.el.setAttribute('data-split', split ? '1' : '0');
     w.classList.toggle('on', win);
@@ -23982,6 +24003,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       dv.style.left = sp.d.x + 'px'; dv.style.top = sp.d.y + 'px'; dv.style.width = sp.d.w + 'px'; dv.style.height = sp.d.h + 'px';
     } else { mn.style.left = mn.style.top = mn.style.width = mn.style.height = ''; }
     w.style.left = r.x + 'px'; w.style.top = r.y + 'px'; w.style.width = r.w + 'px'; w.style.height = r.h + 'px';
+    var tilt = _sbCamTilt();
+    _sbCamEl('win').style.transform = tilt ? 'rotate(' + tilt + 'deg) scale(' + _sbTiltZoom(tilt, r.w, r.h).toFixed(4) + ')' : '';
     V.mid.style.setProperty('--sb-cam-b', (d.h > d.w ? 260 : 56) + 'px');
   }
   // Ruhebild: die Kameras zeigen den Anfang des Startakts
@@ -24644,13 +24667,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var camSp = P.winOn && _sbPrefs.vidWin === 'split' ? _sbCamSplit(P.w, P.h, P.lines ? P.midTop - P.fit.t - SB_PARTS_H : P.midTop) : null;
       if (camSp) {
         _sbCamPaint(ctx, S.camA, P.rotA, camSp.a.x, camSp.a.y, camSp.a.w, camSp.a.h, P.lookA);
-        _sbCamPaint(ctx, S.camB, P.rotB, camSp.b.x, camSp.b.y, camSp.b.w, camSp.b.h, P.lookB);
+        _sbCamPaint(ctx, S.camB, P.rotB, camSp.b.x, camSp.b.y, camSp.b.w, camSp.b.h, P.lookB, _sbCamTilt());
         ctx.fillStyle = SB_GOLD; ctx.fillRect(camSp.d.x, camSp.d.y, camSp.d.w, camSp.d.h);
       } else _sbCamPaint(ctx, S.camA, P.rotA, 0, 0, P.w, P.h, P.lookA);
       if (P.winOn && !camSp) {
         var wr = P.winR;
         ctx.save(); _sbRoundPath(ctx, wr.x, wr.y, wr.w, wr.h, 18); ctx.clip();
-        _sbCamPaint(ctx, S.camB, P.rotB, wr.x, wr.y, wr.w, wr.h, P.lookB);
+        _sbCamPaint(ctx, S.camB, P.rotB, wr.x, wr.y, wr.w, wr.h, P.lookB, _sbCamTilt());
         ctx.restore();
         _sbRoundPath(ctx, wr.x + 1.5, wr.y + 1.5, wr.w - 3, wr.h - 3, 17);
         ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(232,228,219,0.9)'; ctx.stroke();
