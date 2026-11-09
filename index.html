@@ -1955,9 +1955,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-tease { opacity: 0.95; }
 .lt-again.lt-big { font-size: 17px; padding: 10px 22px; border-color: #C9A84C; color: var(--dl-gold-ink); }
 .dl-mycourse { color: var(--dl-gold-ink); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
-.lt-code { font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--dl-gold-ink); user-select: all; -webkit-user-select: all; }
-.lt-input { width: 100%; box-sizing: border-box; padding: 14px 16px; font: inherit; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 12px; border: 1px solid var(--dl-line); background: var(--dl-input); color: var(--dl-ink); }
-.lt-err { color: #e0735a; font-size: 14px; margin: 0; min-height: 1.2em; }
 .lt-calc { font-size: 16px; font-weight: 600; opacity: 0.75; min-height: 1.4em; }
 .lt-land { animation: ltLand 0.5s cubic-bezier(.2,1.5,.4,1); transform-origin: left center; }
 @keyframes ltLand { 0% { transform: scale(0.8); } 55% { transform: scale(1.12); filter: drop-shadow(0 0 22px rgba(201,168,76,0.7)); } 100% { transform: scale(1); } }
@@ -17409,7 +17406,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-215752';
+  var DL_BUILD = '20261109-221452';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25997,7 +25994,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _placeLocal() {
     try {
       var r = JSON.parse(localStorage.getItem(LT_KEY) || 'null');
-      if (r && r.code && r.level >= LT_PLACE_MIN && Date.now() - r.at < 180 * 864e5) return r;
+      if (r && r.code && Date.now() - r.at < 180 * 864e5) return r;
     } catch (e) {}
     return null;
   }
@@ -26011,8 +26008,33 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _lt.el.classList.add('open');
     document.documentElement.style.overflow = 'hidden';
     _lt.bar.style.width = '0%';
+    // Testergebnis da (selber Browser oder über den Link aus der Mail): gleich der eigene Kurs.
+    // Direkter Kauf ohne Ergebnis: der Test ist der erste Schritt vor dem Kurs (Erwin, 09.11.2026).
     var r = _placeLocal();
-    if (r) _placeOfferLocal(r); else _placeChoice();
+    if (!r) { _ltOpen(); return; }
+    if (r.level < LT_PLACE_MIN) { _placeDecline(); return; }
+    _placeOfferLocal(r);
+  }
+  // Link aus der Mail: legt das Testergebnis auf diesem Gerät ab
+  function _placeFromLink(code) {
+    var P = _placeParse(code);
+    if (!P) return false;
+    try { localStorage.setItem(LT_KEY, JSON.stringify({ v: 2, level: P.L, code: P.code, at: Date.now(), a: {} })); } catch (e) {}
+    if (!_lt) _ltBuild();
+    _lt.st = { run: null };
+    _lt.el.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    _lt.bar.style.width = '100%';
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Your personal course');
+    _ltAdd(c, 'h2', 'lt-h', 'Your test result is ready on this device.');
+    _ltAdd(c, 'p', 'lt-p', 'Open the Academy here and your personal course starts right away. Please use the same email address you used for your start plan.');
+    var row = _ltAdd(c, 'div', 'lt-row');
+    var go = _ltAdd(row, 'a', 'lt-go', 'Join the Academy');
+    go.href = LT_ACADEMY; go.target = '_top'; go.rel = 'noopener';
+    var login = _ltAdd(row, 'a', 'lt-ghost', 'Already a member? Log in');
+    login.href = 'https://www.drumlion.com/login'; login.target = '_top'; login.rel = 'noopener';
+    return true;
   }
   function _placeOfferLocal(r) {
     var c = _ltCard();
@@ -26020,39 +26042,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _ltAdd(c, 'h2', 'lt-h', 'Your personal course is ready.');
     _ltAdd(c, 'p', 'lt-p', 'It is built from your level test: everything is in it, at your speed. What you already know goes by quickly, and new material starts slowly. Your progress starts at zero.');
     _placeResultButtons(_ltAdd(c, 'div', 'lt-row'), r.code, r.level);
-  }
-  function _placeChoice() {
-    var c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Welcome to the Academy');
-    _ltAdd(c, 'h2', 'lt-h', 'Where do you want to start?');
-    var box = _ltAdd(c, 'div', 'lt-opts');
-    [['Take the level test (about 3 minutes)', function() { _ltOpen(); }],
-     ['I already took it and have a code', _placeCodeForm],
-     ['Start from the beginning', _placeDecline]].forEach(function(o) {
-      var b = _ltAdd(box, 'button', 'lt-opt', o[0]);
-      b.type = 'button';
-      b.addEventListener('click', o[1]);
-    });
-  }
-  function _placeCodeForm() {
-    var c = _ltCard();
-    _ltAdd(c, 'div', 'lt-kick', 'Your code');
-    _ltAdd(c, 'h2', 'lt-h', 'Enter your Academy code');
-    _ltAdd(c, 'p', 'lt-p', 'You find it on your test result. It looks like DL45-SGWS.');
-    var inp = _ltAdd(c, 'input', 'lt-input');
-    inp.type = 'text'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.setAttribute('aria-label', 'Academy code');
-    var err = _ltAdd(c, 'p', 'lt-err', '');
-    var go = _ltAdd(c, 'button', 'lt-go', 'Start my course');
-    go.type = 'button';
-    go.addEventListener('click', function() {
-      var P = _placeParse(inp.value);
-      if (!P) { err.textContent = "That code doesn't look right. Check it against your test result."; return; }
-      if (P.L < LT_PLACE_MIN) { _placeDecline(); return; }
-      _placeApply(P);
-    });
-    var back = _ltAdd(c, 'button', 'lt-link', 'Back');
-    back.type = 'button';
-    back.addEventListener('click', _placeChoice);
   }
   (function() {
     var b = document.getElementById('dgPlaceReset');
@@ -26139,7 +26128,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var go = _ltAdd(c, 'button', 'lt-go', 'Find my level');
     go.type = 'button';
     go.addEventListener('click', function() { _ltLog('start'); try { initA(); } catch (e) {} _ltQuestion(); });
-    _ltAdd(c, 'p', 'lt-note', 'Free. Turn your sound on.');
+    _ltAdd(c, 'p', 'lt-note', _lt.academy ? 'Your personal course starts right after. Took the test before? Open the link in your start plan email on this device.' : 'Free. Turn your sound on.');
     go.focus();
   }
   function _ltQuestion() {
@@ -26312,7 +26301,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     st.level = 1;
     _ltLog('b_end_' + how, 1);
     _lt.bar.style.width = '100%';
-    try { localStorage.setItem(LT_KEY, JSON.stringify({ level: 1, at: Date.now(), a: st.a })); } catch (e) {}
+    try { localStorage.setItem(LT_KEY, JSON.stringify({ v: 2, level: 1, code: 'DL1-SSSS', at: Date.now(), a: st.a })); } catch (e) {}
     var txt = {
       great: ['That was your first groove.', 'Hi-hat, bass drum and snare, all working together. This pattern is the foundation of a lot of the music you know.'],
       almost: ['Almost is a great start.', 'Hands and feet need a few days to work together. Play it slowly for a few minutes tomorrow and it will already feel easier.'],
@@ -26337,7 +26326,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     go.addEventListener('click', function() { _ltLog('click_academy', 1); });
     if (LT_PLAN_URL) {
       var plan = _ltAdd(row, 'a', 'lt-ghost', 'Get my start plan by email');
-      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=1';
+      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=1&code=DL1-SSSS';
       plan.target = '_top';
       plan.addEventListener('click', function() { _ltLog('click_plan', 1); });
     }
@@ -26580,14 +26569,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     var row = _ltAdd(c, 'div', 'lt-row');
     if (_lt.academy) { _placeResultButtons(row, st.code, level); return; }
-    if (level >= LT_PLACE_MIN) {
-      var codeLine = _ltAdd(c, 'p', 'lt-note', 'Your Academy code: ');
-      _ltAdd(codeLine, 'b', 'lt-code', st.code);
-      codeLine.appendChild(document.createTextNode('. Enter it when you start the Academy, on any device.'));
-    }
     if (LT_PLAN_URL) {
       var plan = _ltAdd(row, 'a', 'lt-go', 'Get my start plan by email');
-      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level;
+      plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level + '&code=' + encodeURIComponent(st.code);
       plan.target = '_top';
       plan.addEventListener('click', function() { _ltLog('click_plan', level); });
     }
@@ -26683,7 +26667,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   try {
     // Vorerst nur auf Dev-Geräten (Erwin: „Level Test noch nicht bitte“, 02.11.2026)
-    if (new URLSearchParams(window.location.search).get('test') === '1') setTimeout(_ltOpen, 0);
+    if (new URLSearchParams(window.location.search).get('test') === '1') setTimeout(function() { if (!_placeFromLink(new URLSearchParams(window.location.search).get('p'))) _ltOpen(); }, 0);
   } catch (e) {}
 
   // ============================================================
