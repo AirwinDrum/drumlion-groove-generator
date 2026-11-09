@@ -314,6 +314,12 @@ html[data-theme="light"] .notation-box, html[data-theme="light"] .lt-play, html[
   background-color: #e9dcc0; background-image: var(--dl-nota-tex, none); background-size: cover; background-position: center;
 }
 html[data-theme="light"] .sp-tile { background: transparent; }
+/* Nachleuchten der gespielten Note in Player und Editor, siehe _notaGlow */
+.nota-hit { position: absolute; margin: 0; z-index: 1; pointer-events: none; overflow: visible; will-change: opacity;
+  filter: drop-shadow(0 0 4px #fff3c4) drop-shadow(0 0 12px #e6c566) drop-shadow(0 0 26px #C9A84C); animation: notaHitFade 0.7s ease-out forwards; }
+.nota-hit.l { filter: drop-shadow(0 0 3px #e6c566) drop-shadow(0 0 10px #b08a2e); }
+@keyframes notaHitFade { 0%, 40% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .nota-hit { display: none; } }
 /* Notation box — volle Breite, kein seitlicher Radius */
 .notation-box {
   background: var(--dl-paper);
@@ -1107,6 +1113,11 @@ body.ramp-mode .dg-inner { min-height: 0; padding-top: 0; padding-bottom: 12px; 
   width: 60px; background: var(--dl-paper); color: var(--dl-ink); border: 1px solid var(--dl-line); border-radius: 6px;
   padding: 3px 6px; font: inherit; font-size: 14px;
 }
+.dev-tempo { flex-wrap: wrap; }
+.dev-tempo-edit { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; color: rgba(var(--dl-ink-rgb),0.7); }
+.dev-tempo-edit button { font: inherit; font-size: 14px; font-weight: 600; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--dl-line); background: var(--dl-raise); color: var(--dl-ink); cursor: pointer; }
+#dgDevRangeSave { background: #C9A84C; border-color: #C9A84C; color: #111; }
+#dgDevRangeMsg { color: var(--dl-gold-ink); font-weight: 600; }
 .dev-tempo-unit { font-size: 15px; color: rgba(var(--dl-ink-rgb),0.6); }
 .dev-tempo-range {
   font-size: 15px; color: var(--dl-gold-ink); white-space: nowrap; font-variant-numeric: tabular-nums;
@@ -2429,6 +2440,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       <input type="number" id="dgDevTempoNum" min="30" max="300" step="1" aria-label="Tempo (dev)">
       <span class="dev-tempo-unit">BPM</span>
       <span class="dev-tempo-range" id="dgDevRange"></span>
+      <div class="dev-tempo-edit">
+        <span>Range</span>
+        <input type="number" id="dgDevMin" min="20" max="400" step="1" aria-label="Range von">
+        <span>bis</span>
+        <input type="number" id="dgDevMax" min="20" max="400" step="1" aria-label="Range bis">
+        <span>Schritt</span>
+        <input type="number" id="dgDevStep" min="1" max="60" step="1" aria-label="Schrittweite">
+        <button type="button" id="dgDevRangeSave">Festlegen</button>
+        <button type="button" id="dgDevRangeCopy">Liste kopieren</button>
+        <span id="dgDevRangeMsg"></span>
+      </div>
     </div>
     <div id="dgCompletedBanner" style="display:none;" class="dl-completed-banner">✔ Completed</div>
     <!-- Emoji-Grafiken 🥱 👌 🥵: Noto Emoji von Google (github.com/googlefonts/noto-emoji,
@@ -14651,6 +14673,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         [],[],[],[]
       ]},
     {id:1049, cat:'rudiments', catLabel:'Rudiments', name:'Ten Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:200, step:1, showLabels:false, beamRests:true,
+      // Akzente als Achteltriolen (span:2, Erwin 09.11.2026), Klang unverändert.
       // 16tel-Triolen, nach Erwins Notenbild (16.09.2026): Akzent R, Pause,
       // acht Doppelschläge als Ghostnotes in Klammern, Akzent L, Pause —
       // zweimal im Takt. Zehn Schläge je Hälfte, 5 R / 5 L.
@@ -14658,10 +14681,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       stickings:['R',null,'L','L','R','R', 'L','L','R','R','L',null,
                  'R',null,'L','L','R','R', 'L','L','R','R','L',null],
       beats:[
-        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
-        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],
-        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
-        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[]
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',span:2}],[],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',span:2}],[],
+        [{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',span:2}],[],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',span:2}],[]
       ]},
     {id:1012, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll A', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       // Zehn 16tel (fünf Doppelschläge), dann der elfte Schlag als
@@ -14682,6 +14705,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         [],[],[],[]
       ]},
     {id:1050, cat:'rudiments', catLabel:'Rudiments', name:'Eleven Stroke Roll B', noteValue:'sixteenthTriplet', hihatHands:'alternate', minBPM:30, maxBPM:200, step:1, showLabels:false, beamRests:true,
+      // Akzente als Achteltriolen (span:2, Erwin 09.11.2026), Klang unverändert.
       // 16tel-Triolen wie Ten Stroke Roll B: die fünf Doppelschläge als
       // Ghostnotes, der elfte Schlag akzentuiert, dann eine Pause — zweimal
       // im Takt. Elf Schläge je Hälfte. maxBPM 200 wie bei Ten B (1.200 ÷ 6).
@@ -14689,9 +14713,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                  'R','R','L','L','R','R', 'L','L','R','R','L',null],
       beats:[
         [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
-        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[],
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',span:2}],[],
         [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],
-        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>'}],[]
+        [{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareGhost',line:1.5,head:'oval-ghost'}],[{inst:'snareAccent',line:1.5,head:'oval',articulation:'>',span:2}],[]
       ]},
     {id:1013, cat:'rudiments', catLabel:'Rudiments', name:'Thirteen Stroke Roll', noteValue:'sixteenth', hihatHands:'alternate', minBPM:30, maxBPM:300, step:1, showLabels:false,
       // Zwölf 16tel, der dreizehnte Schlag als akzentuierte Viertel auf 4.
@@ -16379,7 +16403,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var o = JSON.parse(raw);
       if (!o || !Object.keys(o).length) return;
       EXERCISES.forEach(function(ex) {
-        var r = o[ex.catLabel || ex.cat];
+        var r = o['#' + ex.id] || o[ex.catLabel || ex.cat];   // '#id' = einzelne Übung, direkt in der Dev-Zeile festgelegt
         if (!r || !(r.min > 0) || !(r.max > r.min) || !(r.step > 0)) return;
         ex.minBPM = r.min; ex.maxBPM = r.max; ex.step = r.step;
         delete ex.warmup;
@@ -17361,7 +17385,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261109-181228';
+  var DL_BUILD = '20261109-183411';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18537,7 +18561,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   var _hhOpenGain = null; // aktuell spielender hhOpen GainNode (für Cutoff)
 
-  function playSound(key, when) {
+  // `rud`: Rudiment-Lautstärke erzwingen (true/false); ohne Angabe gilt die aktuelle Übung
+  function playSound(key, when, rud) {
     if (!aCtx) return;
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     var vol = (key === 'crash1' || key === 'crash2') ? 0.38
@@ -18549,6 +18574,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             // Betrifft nur `hh` — Akzent, Open und Pedal behalten ihre Werte.
             : (key === 'hh') ? 0.225
             : (key === 'hhPedal' || key === 'hhClose' || key === 'hhClosing' || key === 'hhAccent') ? 0.56
+            // Normale Snareschläge in Rudiments halb so laut (Erwin, 09.11.2026), Akzente und Ghosts bleiben
+            : (key === 'snare' && (rud === undefined ? (GROOVE && GROOVE.cat === 'rudiments') : rud)) ? 0.5
             : 1.0;
 
     // Drag/Ruff: es gibt kein eigenes Sample. Zwei leise Vorschläge dicht vor
@@ -18564,7 +18591,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         s2.connect(gg); gg.connect(_aOut());
         startTrimmed(s2, Math.max(aCtx.currentTime, t - off), g1);
       });
-      playSound(main, t);
+      playSound(main, t, rud);
       return;
     }
 
@@ -19043,6 +19070,57 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _mbRender._t = setTimeout(function() { if (_mb) { _mb = null; _mbRender(_mbCur); } }, 150);
   });
 
+  // Gespielte Note leuchtet mit Schimmer am Rand nach, wie im Video-Modus (Erwin, 09.11.2026).
+  // Eigene Ebene neben dem SVG, weil renderNot das SVG bei jedem Schlag neu schreibt.
+  // Der Filter liegt auf dem äußeren <svg>: Safari wendet ihn auf innere Elemente nicht an.
+  // Klingt bis zur nächsten Note oder Pause ab: Sekunden des notierten Werts der aktuellen Note
+  function _notaHold(cur) {
+    try {
+      var g = GROOVE, two = g.beats2 && g.beats2.length && cur >= g.beats.length;
+      var arr = two ? g.beats2 : g.beats, i = two ? cur - g.beats.length : cur, grid = two ? g.grid2 : g.grid;
+      var spb = arr.length / (g.beatsPerBar || 4), sp = 1;
+      if (grid && grid.length) {
+        for (var b = 0, acc = 0; b < grid.length; b++) { if (i < acc + grid[b]) { spb = grid[b]; break; } acc += grid[b]; }
+      }
+      (arr[i] || []).forEach(function(nn) { sp = Math.max(sp, nn.span || (nn.quarter ? spb : nn.eighth ? spb / 2 : 1)); });
+      var bpm = (_sbP && _sbP.curBar >= 0) ? _sbBarBpm(_sbP.curBar)
+              : (_lt && _lt.playing && _lt.st && _lt.st.cur) ? _lt.st.cur.bpm
+              : (typeof blocks !== 'undefined' && blocks[bIdx]) ? blocks[bIdx].bpm : tBpm;
+      return Math.max(0.06, Math.min(3, sp * 60 / bpm / spb));
+    } catch (e) { return 0.7; }
+  }
+  function _notaGlow(svg, beat, col, light, hold) {
+    if (svg.__glowBeat === beat) return;
+    svg.__glowBeat = beat;
+    Promise.resolve().then(function() {   // erst nach renderNot: manche Aufrufer setzen danach noch die viewBox
+      var par = svg.parentNode;
+      if (!par || !svg.isConnected) return;
+      var sr = svg.getBoundingClientRect(), pr = par.getBoundingClientRect();
+      if (!sr.width) return;
+      var pick = Array.prototype.filter.call(svg.querySelectorAll('[data-hit]'), function(x) {   // nur Notenköpfe und Hälse (Erwin, 09.11.2026)
+        return x.tagName.toLowerCase() === 'g' || x.getAttribute('stroke') === col;
+      });
+      if (!pick.length) return;
+      if (getComputedStyle(par).position === 'static') par.style.position = 'relative';
+      var o = svg.cloneNode(false);
+      o.removeAttribute('id');
+      o.setAttribute('class', 'nota-hit' + (light ? ' l' : ''));
+      o.setAttribute('aria-hidden', 'true');
+      o.style.cssText = 'left:' + (sr.left - pr.left - par.clientLeft) + 'px;top:' + (sr.top - pr.top - par.clientTop) + 'px;width:' + sr.width + 'px;height:' + sr.height + 'px;max-height:none;max-width:none;animation-duration:' + hold.toFixed(3) + 's';
+      pick.forEach(function(x) {
+        var c = x.cloneNode(true);
+        for (var p = x.parentNode; p && p !== svg; p = p.parentNode) {
+          var tr = p.getAttribute && p.getAttribute('transform');
+          if (tr) { var w = document.createElementNS('http://www.w3.org/2000/svg', 'g'); w.setAttribute('transform', tr); w.appendChild(c); c = w; }
+        }
+        o.appendChild(c);
+      });
+      var old = par.querySelectorAll(':scope > .nota-hit');
+      if (old.length >= 6) old[0].remove();   // bei hohem Tempo nicht unbegrenzt stapeln
+      par.appendChild(o);
+      setTimeout(function() { o.remove(); }, hold * 1000 + 100);
+    });
+  }
   function renderNot(curBeat, dimmed, opt) { dimmed = false;
     if (!opt && _mbRender(curBeat)) return;
     var svg  = (opt && opt.svg) || document.getElementById('dgSvg');
@@ -19075,6 +19153,17 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var A    = _C.active;  // Drumlion Gold für aktive Note
     var h    = '';
     var twoBar = !!(GROOVE.beats2 && GROOVE.beats2.length);
+    // Ungerade Taktarten: Taktangabe klar am Anfang der Notenzeile (Erwin, 09.11.2026)
+    var _sigQ = (!_plain && GROOVE.beatsPerBar && GROOVE.beatsPerBar !== 4) ? GROOVE.beatsPerBar : 0;
+    var _sigW = _sigQ ? 24 : 0;
+    function _drawSig(stopX) {
+      if (!_sigQ) return;
+      for (var i = 0; i < 5; i++)
+        h += '<line x1="30" y1="'+(sY+i*ls)+'" x2="'+stopX+'" y2="'+(sY+i*ls)+'" stroke="'+W+'" stroke-width="0.7" opacity="'+op+'"/>';
+      [[14.5, _sigQ], [30.5, 4]].forEach(function(d) {
+        h += '<text x="43" y="'+(sY+d[0])+'" text-anchor="middle" font-size="19" font-weight="800" font-family="DM Sans,system-ui,sans-serif" fill="'+W+'" opacity="'+op+'">'+d[1]+'</text>';
+      });
+    }
 
     var LABEL_MAP = {
       kick:'Kick', kick2:'Kick 2', snare:'Snare', hh:'Hi-Hat',
@@ -19171,6 +19260,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       function slotSpan(i) {
         var a = beatsArr[i];
         if (!a || !a.length) return 1;
+        var _sp = Math.max.apply(null, a.map(function(nn){ return nn.span || 0; }));
+        if (_sp > 1) return _sp;   // z. B. Achteltriole im 16tel-Triolen-Raster (span:2)
         if (a.some(function(nn){ return nn.quarter; })) return Math.max(1, nq / 4);
         if (a.some(function(nn){ return nn.eighth;  })) return Math.max(1, nq / 8);
         return 1;
@@ -19451,7 +19542,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             var x1 = sX+16+rs*bs+5, x2 = sX+16+re*bs+5;
             h += '<rect x="'+(x1-SW)+'" y="'+BT+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                  '" fill="'+W+'" opacity="'+op+'"/>';
-            if (dbl) {
+            if (dbl && inGrp.some(function(i){ return slotSpan(i) > 1; })) {
+              // Längere Noten (span) hängen nur am ersten Balken, die weiteren laufen über die kurzen
+              var _short = inGrp.filter(function(i){ return slotSpan(i) === 1; });
+              for (var _si = 0; _si < _short.length; ) {
+                var _sj = _si;
+                while (_sj + 1 < _short.length && _short[_sj + 1] === _short[_sj] + 1) _sj++;
+                if (_sj > _si) {
+                  var _sx1 = sX+16+_short[_si]*bs+5, _sx2 = sX+16+_short[_sj]*bs+5;
+                  h += '<rect x="'+(_sx1-SW)+'" y="'+(BT+BSP)+'" width="'+(_sx2-_sx1+2*SW)+'" height="'+BH+
+                       '" fill="'+W+'" opacity="'+op+'"/>';
+                }
+                _si = _sj + 1;
+              }
+            } else if (dbl) {
               var BT2 = BT + BSP;
               h += '<rect x="'+(x1-SW)+'" y="'+BT2+'" width="'+(x2-x1+2*SW)+'" height="'+BH+
                    '" fill="'+W+'" opacity="'+op+'"/>';
@@ -19546,9 +19650,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var isHalfRest = bn.length > 0 && bn[0].rest === 'half';
         if (isHalfRest) {
           // Half rest = filled rectangle sitting ON TOP of middle staff line (line 3)
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls-3)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += '<rect x="'+(x-8)+'" y="'+(sY+2*ls-6)+'" width="16" height="6"'+
                ' fill="'+nc+'" rx="1" opacity="'+op+'"/>';
         }
@@ -19565,14 +19666,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         sortedBn.forEach(function(n) { h += drawLedgerLines(n.line, x, nc, op); });
         sortedBn.forEach(function(n, ci) {
           var y = sY + n.line * ls;
-          // Flash-Glow bei aktiver Note: kurzes Aufleuchten das schnell verblasst
-          if (isA && bn.length > 0) {
-            h += '<circle cx="'+(x + offArr[ci])+'" cy="'+y+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                 '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                 '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/>' +
-                 '</circle>';
-          }
-          h += drawNoteHead(n, x + offArr[ci], y, nc, op);
+          h += (isA ? '<g data-hit="1">' : '') + drawNoteHead(n, x + offArr[ci], y, nc, op) + (isA ? '</g>' : '');
           if (_hits) _hits.push({ x: x + offArr[ci], y: y, inst: n.inst });
           // Handsatz direkt am Notenkopf (Erwin, 10.09.2026).
           // Nur bei Unabhängigkeit: dort steht die Gliedmaße pro Instrument
@@ -19744,9 +19838,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var _rpA = !dimmed && curBeat >= globalBeat && curBeat < globalBeat + _rpD;
           var _rpC = _rpA ? A : W;
           var _rpX = (_rpBeats >= 4) ? sX + bW / 2 : x;   // Ganze Pause in der Taktmitte
-          if (_rpA) h += '<circle cx="'+_rpX+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                         '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                         '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           if (_rpBeats >= 4)      // Ganze: hängt an der zweiten Linie von oben
             h += '<rect x="'+(_rpX-8)+'" y="'+(sY+ls)+'" width="16" height="6" fill="'+_rpC+'" rx="1" opacity="'+op+'"/>';
           else if (_rpBeats >= 2) // Halbe: liegt auf der Mittellinie
@@ -19762,21 +19853,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         if (!restPlan && (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments' || GROOVE.beamRests) &&
             (_nv === 'eighth' || _nv === 'triplet') && bn.length === 0 && !coveredByQuarter &&
             !beatRest && !_sbEmpty) {
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
         if (!restPlan && beatRest && bi === _restGst && !_sbEmpty) {
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, nc, op);
         }
         if (_sbPair === 1) {
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('rest8th', x - 4, sY + 2*ls, nc, op);
         }
         // Sixteenth rest symbol — authentisches Bravura-Glyph
@@ -19790,16 +19872,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var _nv32 = GROOVE.cat === 'notes' && _nv === 'thirtysecond';
         if (!restPlan && (GROOVE.cat === 'notes' || GROOVE.cat === 'rudiments') && (_nv16 || _nv32) &&
             bn.length === 0 && !coveredByQuarter && !beatRest && !_sbPair && !_sbEmpty) {
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph(_nv32 ? 'rest32nd' : 'rest16th', x - 5, sY + 2*ls, nc, op);
         }
         // Quarter rest symbol — authentisches Bravura-Glyph
         if (!restPlan && GROOVE.cat === 'notes' && _nv === 'quarter' && bn.length === 0 && !isHalfRest) {
-          if (isA) h += '<circle cx="'+x+'" cy="'+(sY+2*ls)+'" r="12" fill="rgba(201,168,76,0.6)">' +
-                        '<animate attributeName="opacity" from="0.7" to="0" dur="0.35s" fill="freeze"/>' +
-                        '<animate attributeName="r" from="8" to="14" dur="0.35s" fill="freeze"/></circle>';
           h += bravuraGlyph('restQuarter', x - 4, sY + 2*ls, nc, op);
         }
         // Hälse bei Zweistimmigkeit: obere Stimme nach oben, untere nach unten.
@@ -19814,7 +19890,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             var y1 = up ? (sY - 18) : SB;
             var sx = x + (up ? 5 : -5);
             h += '<line x1="'+sx+'" y1="'+y0+'" x2="'+sx+'" y2="'+y1+
-                 '" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
+                 '" data-hit="1" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
             // Fähnchen, wenn die Note keinen Balken bekommen hat
             var nb = beamsForSpan(vSpan(bi, v));
             var gotBeam = (up ? beamedSlots : beamedSlotsV2)[bi];
@@ -19831,7 +19907,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var stemBot = sY + maxLine * ls;
           var stemTop = sY - 18;
           h += '<line x1="'+(x+5)+'" y1="'+stemBot+'" x2="'+(x+5)+'" y2="'+stemTop+
-               '" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
+               '" data-hit="1" stroke="'+nc+'" stroke-width="1.2" opacity="'+op+'"/>';
           // Fähnchen für einzelne Noten ohne Balken-Partner — Bravura-Glyphs
           // Ein Viertel-Nachbar ist kein Balken-Partner: er bekommt selbst keinen
           // Balken, die Achtel daneben braucht also ihr Fähnchen.
@@ -19902,7 +19978,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // Instrumentname liefe sonst ins Wiederholungszeichen.
       if (GROOVE.grid2) bs2 = (GROOVE.grid2.reduce(function(t, q) { return t + _gridBeatW(q); }, 0) + 10) / n2;
       var bW2 = n2 * bs2;
-      var sX1 = 42;
+      var sX1 = 42 + _sigW;
       var midX = sX1 + bW1 + 22;
       var sX2  = midX + 22;
       var vbW  = sX2 + bW2 + 22;
@@ -19926,6 +20002,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         });
       }
 
+      _drawSig(sX1 - 10);
       // Repeat sign left
       h += '<line x1="'+(sX1-10)+'" y1="'+sY+'" x2="'+(sX1-10)+'" y2="'+(sY+4*ls)+
            '" stroke="'+W+'" stroke-width="2.5" opacity="'+op+'"/>';
@@ -19974,7 +20051,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // in einer Zeile, mit 480 Einheiten pro Takt würde das System winzig
       if (opt && opt.barW) bs = opt.barW / Math.max(4, _nb);
       var bW = bs * _nb;
-      var sX = 42;
+      var sX = 42 + _sigW;
       // Breite wächst mit dem Raster (48er passt nicht mehr in 560),
       // Höhe wächst, sobald eine zweite Stimme nach unten schreibt.
       var _v2 = GROOVE.beats.some(function(sl){
@@ -19997,6 +20074,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           h += '<line x1="'+(sX+bW+10)+'" y1="'+sY+'" x2="'+(sX+bW+10)+'" y2="'+(sY+4*ls)+'" stroke="'+W+'" stroke-width="1.2" opacity="'+op+'"/>';
         }
       } else {
+      _drawSig(sX - 10);
       // Repeat sign left
       h += '<line x1="'+(sX-10)+'" y1="'+sY+'" x2="'+(sX-10)+'" y2="'+(sY+4*ls)+
            '" stroke="'+W+'" stroke-width="2.5" opacity="'+op+'"/>';
@@ -20020,6 +20098,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
 
     svg.innerHTML = h;
+    if (curBeat >= 0 && !GROOVE.noActiveBox) _notaGlow(svg, curBeat, A, _C === _NOTA_LIGHT, _notaHold(curBeat)); else svg.__glowBeat = -1;
   }
 
   // ============================================================
@@ -21189,6 +21268,50 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       } catch(e) {}
       rg.textContent = txt;
     }
+    // Felder zum Festlegen der Range dieser Übung
+    if (GROOVE && GROOVE.beats) {
+      var fill = function(id, v) { var el = document.getElementById(id); if (el && document.activeElement !== el) el.value = v; };
+      fill('dgDevMin', GROOVE.warmup ? GROOVE.warmup.minBPM : GROOVE.minBPM);
+      fill('dgDevMax', GROOVE.maxBPM);
+      fill('dgDevStep', GROOVE.step || 1);
+    }
+  }
+  // Range direkt in der Übung festlegen (Erwin, 09.11.2026). Gilt sofort, gespeichert
+  // in diesem Browser unter '#id' und läuft als Range-Test: der Fortschritt bleibt
+  // stehen, bis „Zurücksetzen“. Für alle Mitglieder: Liste an Claude, RANGE_MIGRATIONS.
+  function _devRangeStore() {
+    try { return JSON.parse(localStorage.getItem(DEV_RANGES_KEY) || '{}') || {}; } catch(e) { return {}; }
+  }
+  function _devRangeMsg(t) { var m = document.getElementById('dgDevRangeMsg'); if (m) m.textContent = t; }
+  function _devRangeSave() {
+    if (!GROOVE || !GROOVE.id) return;
+    var num = function(id) { return parseInt(document.getElementById(id).value, 10); };
+    var v = { min: num('dgDevMin'), max: num('dgDevMax'), step: num('dgDevStep') };
+    if (!(v.min > 0 && v.max > v.min && v.step > 0)) { _devRangeMsg('Bitte von < bis und Schritt ab 1'); return; }
+    var o = _devRangeStore();
+    o['#' + GROOVE.id] = v;
+    try { localStorage.setItem(DEV_RANGES_KEY, JSON.stringify(o)); } catch(e) { _devRangeMsg('Konnte nicht speichern'); return; }
+    var ex = EXERCISES.find(function(e) { return e.id === GROOVE.id; });
+    [ex, GROOVE].forEach(function(t) { if (t) { t.minBPM = v.min; t.maxBPM = v.max; t.step = v.step; delete t.warmup; } });
+    _devRangeActive = true; _devRanges = o;
+    if (playing) stopExercise();
+    tBpm = Math.max(v.min, Math.min(v.max, tBpm));
+    updateBpm();
+    _devTempoSync();
+    _devRangeMsg('Festgelegt · Test aktiv, Fortschritt pausiert');
+  }
+  function _devRangeCopy() {
+    var o = _devRangeStore(), lines = [];
+    Object.keys(o).forEach(function(k) {
+      if (k.charAt(0) !== '#') return;
+      var ex = EXERCISES.find(function(e) { return '#' + e.id === k; });
+      lines.push((ex ? ex.name : k) + ' (' + k + '): ' + o[k].min + '-' + o[k].max + '/' + o[k].step);
+    });
+    if (!lines.length) { _devRangeMsg('Noch nichts festgelegt'); return; }
+    var txt = 'Ranges festgelegt:\n' + lines.join('\n');
+    var ok = function() { _devRangeMsg(lines.length + ' kopiert'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function() { _devRangeMsg('Kopieren ging nicht'); });
+    else _devRangeMsg('Kopieren ging nicht');
   }
   function _devTempoSet(v) {
     v = Math.round(+v);
@@ -21203,6 +21326,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var nIn = document.getElementById('dgDevTempoNum');
     if (r) r.addEventListener('input', function() { if (nIn) nIn.value = r.value; _devTempoSet(r.value); });
     if (nIn) nIn.addEventListener('change', function() { if (r) r.value = nIn.value; _devTempoSet(nIn.value); });
+    var sv = document.getElementById('dgDevRangeSave'), cp = document.getElementById('dgDevRangeCopy');
+    if (sv) sv.addEventListener('click', _devRangeSave);
+    if (cp) cp.addEventListener('click', _devRangeCopy);
     _devTempoSync();
   })();
 
@@ -21828,7 +21954,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Ränder abschneiden: die Notenlinien laufen über die Kacheln durch,
     // jeder Takt trägt nur seinen rechten Taktstrich.
     var top = vid ? _sbVidTop() : _sbTop();
-    if (vid) svg.querySelectorAll('circle[fill="rgba(201,168,76,0.6)"]').forEach(function(c) { c.remove(); });
     if (vid) svg.insertAdjacentHTML('beforeend', _sbHintSvg(bar, colors ? colors.ink : '#ffffff', prop));
     svg.setAttribute('viewBox', '32.6 ' + top + ' ' + g.vbW + ' ' + (98 - top));
     svg.setAttribute('preserveAspectRatio', 'none');
@@ -22542,13 +22667,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ── Wiedergabe ──────────────────────────────────────────────
   // Eigener Vorausplaner wie im Player: Schläge 0,18 s im Voraus an die
   // Audio-Uhr, der Cursor folgt per requestAnimationFrame (mit Ausgabelatenz).
-  function _sbHit(k, t) {
+  function _sbHit(k, t, rud) {
     // Offene Hi-Hat klingt bis zum nächsten Hi-Hat- oder Fußschlag
     if (_hhOpenGain && (k === 'hh' || k === 'hhAccent' || k === 'hhPedal' || k === 'hhOpen')) {
       try { _hhOpenGain.gain.setValueAtTime(0.001, Math.max(t || 0, aCtx.currentTime)); } catch (e) {}
       _hhOpenGain = null;
     }
-    playSound(k, t);
+    playSound(k, t, !!rud);
   }
   // `opts` (Video-Ansicht): { video:true, from: Takt, drums, click, song } — beliebig kombinierbar.
   // Im Editor gelten die Schalter Click / Song / Drums.
@@ -25940,7 +26065,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           // Klick läuft in Vierteln mit (Erwin: „lass den klick laufen bei den Übungen“)
           for (var c2 = 0; c2 < bpb; c2++) playCountClick(c2 === 0, 1, t + c2 * qd);
           for (var s = 0; s < n; s++) {
-            (bar[s] || []).forEach(function(nt) { if (nt && nt.inst) _sbHit(nt.inst, t + s * sd); });
+            (bar[s] || []).forEach(function(nt) { if (nt && nt.inst) _sbHit(nt.inst, t + s * sd, ex.cat === 'rudiments'); });
             q.push({ t: t + s * sd, cur: off + s });
           }
           off += n;
@@ -26988,7 +27113,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       panel.addEventListener('input', function(e) { if (e.target.closest('.dv-rg')) _rangeRefresh(); });
       document.getElementById('rgApply').onclick = function() {
         var c = _rangeCollect();
-        try { localStorage.setItem(DEV_RANGES_KEY, JSON.stringify(c.map)); } catch(e) {}
+        try {
+          var _old = JSON.parse(localStorage.getItem(DEV_RANGES_KEY) || '{}');   // einzeln festgelegte Übungen bleiben
+          Object.keys(_old).forEach(function(k) { if (k.charAt(0) === '#') c.map[k] = _old[k]; });
+          localStorage.setItem(DEV_RANGES_KEY, JSON.stringify(c.map));
+        } catch(e) {}
         location.reload();
       };
       document.getElementById('rgReset').onclick = function() {
