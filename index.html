@@ -2249,7 +2249,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           </button>
           <div class="metro-select">
             <button class="metro-div-trigger" id="dgMetroDivBtn"
-                    aria-haspopup="listbox" aria-expanded="false" title="Click subdivision">
+                    aria-haspopup="listbox" aria-expanded="false" title="Click subdivision (keys 1–8)">
               <span class="metro-div-glyph" id="dgMetroDivGlyph">1/4</span>
               <span class="metro-div-text"  id="dgMetroDivText">Quarter</span>
               <svg class="metro-div-caret" viewBox="0 0 10 6" aria-hidden="true">
@@ -2259,8 +2259,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             <div class="metro-div-menu" id="dgMetroDivMenu" role="listbox" aria-label="Click subdivision">
               <button class="metro-div-opt" data-div="quarter"   data-glyph="1/4"   role="option"><span class="opt-glyph">1/4</span>Quarter</button>
               <button class="metro-div-opt" data-div="eighth"    data-glyph="1/8"   role="option"><span class="opt-glyph">1/8</span>Eighth</button>
-              <button class="metro-div-opt" data-div="sixteenth" data-glyph="1/16"  role="option"><span class="opt-glyph">1/16</span>Sixteenth</button>
               <button class="metro-div-opt" data-div="triplet"   data-glyph="3"     role="option"><span class="opt-glyph">3</span>Triplets</button>
+              <button class="metro-div-opt" data-div="sixteenth" data-glyph="1/16"  role="option"><span class="opt-glyph">1/16</span>Sixteenth</button>
+              <button class="metro-div-opt" data-div="quintuplet"   data-glyph="5"    role="option"><span class="opt-glyph">5</span>Quintuplets</button>
+              <button class="metro-div-opt" data-div="sextuplet"    data-glyph="6"    role="option"><span class="opt-glyph">6</span>Sextuplets</button>
+              <button class="metro-div-opt" data-div="septuplet"    data-glyph="7"    role="option"><span class="opt-glyph">7</span>Septuplets</button>
+              <button class="metro-div-opt" data-div="thirtysecond" data-glyph="1/32" role="option"><span class="opt-glyph">1/32</span>Thirty-second</button>
               <!-- Zählstimme: eigener Schalter, zu jeder Unterteilung dazu (Erwin, 20.10.2026).
                    Vorher eine eigene Option, die den Klick ersetzte. -->
               <div class="metro-div-sep" role="separator"></div>
@@ -2573,6 +2577,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ["Eighth", "Achtel", "Corcheas", "Colcheias", "Croches"],
     ["Sixteenth", "Sechzehntel", "Semicorcheas", "Semicolcheias", "Doubles croches"],
     ["Triplets", "Triolen", "Tresillos", "Tercinas", "Triolets"],
+    ["Quintuplets", "Quintolen", "Quintillos", "Quintinas", "Quintolets"],
+    ["Sextuplets", "Sextolen", "Seisillos", "Sextinas", "Sextolets"],
+    ["Septuplets", "Septolen", "Septillos", "Septinas", "Septolets"],
+    ["Thirty-second", "Zweiunddreißigstel", "Fusas", "Fusas", "Triples croches"],
+    ["Click subdivision (keys 1–8)", "Click-Unterteilung (Tasten 1–8)", "Subdivisión del click (teclas 1–8)", "Subdivisão do click (teclas 1–8)", "Subdivision du click (touches 1–8)"],
     ["Counting voice", "Zählstimme", "Voz que cuenta", "Voz de contagem", "Voix qui compte"],
     ["Voice", "Stimme", "voz", "voz", "voix"],
     ["Songs", "Songs", "Canciones", "Músicas", "Morceaux"],
@@ -2896,7 +2905,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // METRONOME STATE
   // ============================================================
   var metronomeOn  = true;      // Default: Klick immer an
-  var metronomeDiv = 'quarter'; // 'quarter' | 'eighth' | 'sixteenth' | 'triplet'
+  var metronomeDiv = 'quarter'; // 'quarter' | 'eighth' | 'triplet' | 'sixteenth' | 'quintuplet' | 'sextuplet' | 'septuplet' | 'thirtysecond'
+  var METRO_N = { quintuplet: 5, sextuplet: 6, septuplet: 7, thirtysecond: 8 };
+  // Tasten 1–8 = Klicks pro Viertel (Erwin, 12.11.2026)
+  var METRO_KEYS = { '1': 'quarter', '2': 'eighth', '3': 'triplet', '4': 'sixteenth', '5': 'quintuplet', '6': 'sextuplet', '7': 'septuplet', '8': 'thirtysecond' };
   var metronomeVoice = false;   // Zählstimme „1 2 3 4" zusätzlich zur Unterteilung (20.10.2026)
 
   function updateMetroBtn() {
@@ -17451,7 +17463,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-143519';
+  var DL_BUILD = '20261112-145655';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18835,6 +18847,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
     } else if (metronomeDiv === 'triplet') {
       if (posInQ === 0) { playCountClick(accent,H,when); playCountClick(false,L,when+qSec/3); playCountClick(false,L,when+qSec*2/3); }
+    } else if (METRO_N[metronomeDiv]) {
+      // 5, 6, 7 und 8 Klicks pro Viertel (Erwin, 12.11.2026): gleichmäßig verteilt,
+      // bei 6 und 8 die Mitte etwas lauter (Sextolen 3+3, Zweiunddreißigstel 4+4)
+      var nC = METRO_N[metronomeDiv];
+      if (posInQ === 0) for (var ci = 0; ci < nC; ci++)
+        playCountClick(ci === 0 && accent, ci === 0 ? H : ((nC % 2 === 0 && ci === nC / 2) ? M : L), when + qSec * ci / nC);
     }
   }
 
@@ -27240,6 +27258,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     } else if (e.code === 'KeyK') {
       e.preventDefault();
       metronomeOn = !metronomeOn;
+      updateMetroBtn();
+    } else if (METRO_KEYS[e.key] && !e.metaKey && !e.ctrlKey && !e.altKey && !_sbIsOpen && !_spIsOpen &&
+               document.getElementById('dgMetroDivBtn') && document.getElementById('dgMetroDivBtn').offsetParent) {
+      e.preventDefault();
+      metronomeDiv = METRO_KEYS[e.key];
+      metronomeOn = true;
       updateMetroBtn();
     } else if (e.code === 'ArrowRight' && _devMode) {
       e.preventDefault();
