@@ -879,6 +879,13 @@ body.one-block #dgTotal { display: none !important; }
 .metro-div-opt:hover .opt-glyph { color: rgba(var(--dl-ink-rgb),0.7); }
 .metro-div-opt.active { background: rgba(201,168,76,0.16); color: var(--dl-gold-ink); }
 .metro-div-opt.active .opt-glyph { color: var(--dl-gold-ink); }
+/* Tastenkürzel 1–8 rechts in jeder Zeile (Erwin, 12.11.2026); auf Touch-Geräten ohne Tastatur ausgeblendet */
+.metro-div-opt .opt-key {
+  margin-left: auto; padding-left: 14px; font: 600 11px/1 'DM Sans', system-ui, sans-serif;
+  color: rgba(var(--dl-ink-rgb),0.45); font-variant-numeric: tabular-nums;
+}
+.metro-div-opt.active .opt-key { color: var(--dl-gold-ink); }
+@media (hover: none) { .metro-div-opt .opt-key { display: none; } }
 /* Zählstimme als Schalter unter den Unterteilungen (20.10.2026) */
 .metro-div-sep { height: 1px; margin: 4px 8px; background: rgba(var(--dl-ink-rgb),0.12); }
 .metro-voice-opt .opt-glyph { display: flex; justify-content: center; }
@@ -2257,14 +2264,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               </svg>
             </button>
             <div class="metro-div-menu" id="dgMetroDivMenu" role="listbox" aria-label="Click subdivision">
-              <button class="metro-div-opt" data-div="quarter"   data-glyph="1/4"   role="option"><span class="opt-glyph">1/4</span>Quarter</button>
-              <button class="metro-div-opt" data-div="eighth"    data-glyph="1/8"   role="option"><span class="opt-glyph">1/8</span>Eighth</button>
-              <button class="metro-div-opt" data-div="triplet"   data-glyph="3"     role="option"><span class="opt-glyph">3</span>Triplets</button>
-              <button class="metro-div-opt" data-div="sixteenth" data-glyph="1/16"  role="option"><span class="opt-glyph">1/16</span>Sixteenth</button>
-              <button class="metro-div-opt" data-div="quintuplet"   data-glyph="5"    role="option"><span class="opt-glyph">5</span>Quintuplets</button>
-              <button class="metro-div-opt" data-div="sextuplet"    data-glyph="6"    role="option"><span class="opt-glyph">6</span>Sextuplets</button>
-              <button class="metro-div-opt" data-div="septuplet"    data-glyph="7"    role="option"><span class="opt-glyph">7</span>Septuplets</button>
-              <button class="metro-div-opt" data-div="thirtysecond" data-glyph="1/32" role="option"><span class="opt-glyph">1/32</span>Thirty-second</button>
+              <button class="metro-div-opt" data-div="quarter"   data-glyph="1/4"   role="option"><span class="opt-glyph">1/4</span>Quarter<kbd class="opt-key">1</kbd></button>
+              <button class="metro-div-opt" data-div="eighth"    data-glyph="1/8"   role="option"><span class="opt-glyph">1/8</span>Eighth<kbd class="opt-key">2</kbd></button>
+              <button class="metro-div-opt" data-div="triplet"   data-glyph="3"     role="option"><span class="opt-glyph">3</span>Triplets<kbd class="opt-key">3</kbd></button>
+              <button class="metro-div-opt" data-div="sixteenth" data-glyph="1/16"  role="option"><span class="opt-glyph">1/16</span>Sixteenth<kbd class="opt-key">4</kbd></button>
+              <button class="metro-div-opt" data-div="quintuplet"   data-glyph="5"    role="option"><span class="opt-glyph">5</span>Quintuplets<kbd class="opt-key">5</kbd></button>
+              <button class="metro-div-opt" data-div="sextuplet"    data-glyph="6"    role="option"><span class="opt-glyph">6</span>Sextuplets<kbd class="opt-key">6</kbd></button>
+              <button class="metro-div-opt" data-div="septuplet"    data-glyph="7"    role="option"><span class="opt-glyph">7</span>Septuplets<kbd class="opt-key">7</kbd></button>
+              <button class="metro-div-opt" data-div="thirtysecond" data-glyph="1/32" role="option"><span class="opt-glyph">1/32</span>Thirty-second<kbd class="opt-key">8</kbd></button>
               <!-- Zählstimme: eigener Schalter, zu jeder Unterteilung dazu (Erwin, 20.10.2026).
                    Vorher eine eigene Option, die den Klick ersetzte. -->
               <div class="metro-div-sep" role="separator"></div>
@@ -2933,7 +2940,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var glyph = document.getElementById('dgMetroDivGlyph');
       var text  = document.getElementById('dgMetroDivText');
       if (glyph) glyph.textContent = active.getAttribute('data-glyph');
-      if (text)  text.textContent  = active.textContent.replace(active.querySelector('.opt-glyph').textContent, '').trim() +
+      var _lbl = active.cloneNode(true);
+      _lbl.querySelectorAll('.opt-glyph, .opt-key').forEach(function(x) { x.remove(); });
+      if (text)  text.textContent  = _lbl.textContent.trim() +
                                      (metronomeVoice ? ' + ' + _t('Voice') : '');
     }
     var vo = document.getElementById('dgMetroVoice');
@@ -17463,7 +17472,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-145655';
+  var DL_BUILD = '20261112-150512';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
