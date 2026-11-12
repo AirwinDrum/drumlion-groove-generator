@@ -2421,6 +2421,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <div class="dl-set-h">Progress sync</div>
           <div class="dl-set-sync" id="dgSetSync"></div>
         </section>
+        <section class="dl-set-sec" id="dgRetestBlock" style="display:none;">
+          <div class="dl-set-h">Level test</div>
+          <button class="dl-set-link" type="button" id="dgRetest">Take the level test</button>
+        </section>
         <section class="dl-set-sec" id="dgPlaceBlock" style="display:none;">
           <div class="dl-set-h">Course start</div>
           <button class="dl-set-link" type="button" id="dgPlaceReset">Start from the beginning</button>
@@ -2736,6 +2740,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
      "Auto sigue el modo claro u oscuro de tu dispositivo. Se guarda en este dispositivo.",
      "Auto segue o modo claro ou escuro do seu dispositivo. Fica salvo neste dispositivo.",
      "Auto suit le mode clair ou sombre de ton appareil. Enregistré sur cet appareil."],
+    ["Level test", "Level-Test", "Test de nivel", "Teste de nível", "Test de niveau"],
+    ["Take the level test", "Level-Test machen", "Hacer el test de nivel", "Fazer o teste de nível", "Faire le test de niveau"],
+    ["Course start", "Kursstart", "Inicio del curso", "Início do curso", "Début du cours"],
+    ["Start from the beginning", "Von vorne beginnen", "Empezar desde el principio", "Começar do início", "Recommencer depuis le début"],
     ["Cursor timing", "Cursor-Timing", "Sincronía del cursor", "Sincronia do cursor", "Calage du curseur"],
     ["If the moving highlight is ahead of or behind the sound — common with Bluetooth headphones — slide until both match. Saved on this device.",
      "Läuft die Markierung dem Sound voraus oder hinterher (passiert oft mit Bluetooth-Kopfhörern), schieb den Regler, bis beides passt. Wird auf diesem Gerät gespeichert.",
@@ -17491,7 +17499,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-152604';
+  var DL_BUILD = '20261112-174941';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -26037,28 +26045,40 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       grooves: lv(m[2]), fillins: lv(m[3]), rudiments: lv(m[4]), coordination: L,
       notes: m[5].toUpperCase() === 'N' ? Math.min(L, 10) : lv(m[5]) } };
   }
-  function _placeApply(P) {
+  // keep (Nachtest): laufende Übungen nur anheben, fertige bleiben fertig, das Bisherige zählt mit
+  function _placeApply(P, keep) {
     P.at = Date.now();
     _cState.place = P;
-    var tot = 0;
+    var tot = 0, done = {}, cur = {};
+    if (keep) (_cState.completed || []).forEach(function(id) { done[id] = 1; });
     Object.keys(_catPool).forEach(function(cat) {
-      (_catPool[cat] || []).forEach(function(ex) {
-        if (_placeMap().f[ex.id] == null) return;
-        var inf = _placeInfo(ex, cat, P), n = _exSteps(ex);
-        tot += inf.done ? Math.min(cat === 'rudiments' ? 2 : 3, Math.max(1, n - inf.s) + 1) : n - inf.s;
-      });
       var cs = _cState.cats[cat];
       if (cs) ['active', 'park'].forEach(function(k) {
-        cs[k] = (cs[k] || []).map(function(e) { return _placeEntry(e.id, cat); });
+        cs[k] = (cs[k] || []).map(function(e) {
+          var n = _placeEntry(e.id, cat);
+          if (keep && (e.bpmStep || 0) > n.bpmStep) n = n.pd ? Object.assign({}, e, { pl: 1, pd: 1 }) : e;
+          cur[e.id] = n;
+          return n;
+        });
+      });
+      (_catPool[cat] || []).forEach(function(ex) {
+        if (_placeMap().f[ex.id] == null || done[ex.id]) return;
+        var n = _exSteps(ex), inf;
+        if (keep && cur[ex.id]) {
+          var e = cur[ex.id];
+          inf = { s: Math.max(0, e.bpmStep || 0), done: !!e.pd };
+        } else inf = _placeInfo(ex, cat, P);
+        tot += inf.done ? Math.min(cat === 'rudiments' ? 2 : 3, Math.max(1, n - inf.s) + 1) : Math.max(1, n - inf.s);
       });
     });
+    if (keep) tot += _cState.total || 0;
     P.tot = Math.max(1, tot);
     _masteredInvalidate();
     _shownLesson = null;
     _saveState();
     if (_syncReady()) _syncPush(false, true);
     _ltClose();
-    _lt.academy = false;
+    if (_lt) _lt.academy = false;
     _placeSettings();
     _loadCurrentLesson(false);
     _updateLevelUI();
@@ -26073,8 +26093,33 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _placeSettings() {
     var b = document.getElementById('dgPlaceBlock');
     if (b) b.style.display = (_cState && _cState.place) ? '' : 'none';
+    var r = document.getElementById('dgRetestBlock');
+    if (r) r.style.display = (_cState && !_cState.place) ? '' : 'none';
+  }
+  // Nachtest für Mitglieder, die schon ohne Einstufung geübt haben (Erwin, 12.11.2026):
+  // Knopf in den Einstellungen; das Ergebnis hebt nur Übungen an, nichts geht verloren.
+  function _placeRetest() {
+    var ov = document.getElementById('dgSettingsOverlay');
+    if (ov) ov.classList.remove('open');
+    try { if (playing) stopExercise(); } catch (e) {}
+    if (!_lt) _ltBuild();
+    _lt.academy = true;
+    _lt.retest = true;
+    _lt.el.querySelector('.lt-x').style.display = '';
+    _ltOpen();
   }
   function _placeResultButtons(row, code, level) {
+    if (_lt.retest) {
+      if (level >= LT_PLACE_MIN) {
+        var up = _ltAdd(row, 'button', 'lt-go', 'Update my course');
+        up.type = 'button';
+        up.addEventListener('click', function() { var P = _placeParse(code); if (P) _placeApply(P, true); else _ltClose(); });
+      }
+      var keep = _ltAdd(row, 'button', level >= LT_PLACE_MIN ? 'lt-ghost' : 'lt-go', level >= LT_PLACE_MIN ? 'Keep my course as it is' : 'Back to my course');
+      keep.type = 'button';
+      keep.addEventListener('click', _ltClose);
+      return;
+    }
     if (level >= LT_PLACE_MIN) {
       var go = _ltAdd(row, 'button', 'lt-go', 'Start my course');
       go.type = 'button';
@@ -26145,6 +26190,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       try { localStorage.removeItem(LT_KEY); } catch (e) {}
       _resetAll();
     });
+    var rt = document.getElementById('dgRetest');
+    if (rt) rt.addEventListener('click', _placeRetest);
     setTimeout(_placeSettings, 0);
   })();
 
@@ -26186,6 +26233,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltClose() {
     _ltStop();
+    if (_lt && _lt.retest) {
+      _lt.retest = false;
+      _lt.academy = false;
+      if (!_premium()) _lt.el.querySelector('.lt-x').style.display = 'none';
+    }
     if (_lt) _lt.el.classList.remove('open');
     document.documentElement.style.overflow = '';
   }
@@ -26221,7 +26273,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var go = _ltAdd(c, 'button', 'lt-go', 'Find my level');
     go.type = 'button';
     go.addEventListener('click', function() { _ltLog('start'); try { initA(); } catch (e) {} _ltQuestion(); });
-    _ltAdd(c, 'p', 'lt-note', _lt.academy ? 'Your personal course starts right after. Took the test before? Open the link in your start plan email on this device.' : 'Free. Turn your sound on.');
+    _ltAdd(c, 'p', 'lt-note', _lt.retest ? 'Your result only moves exercises up. Nothing you have practiced gets lost.' : _lt.academy ? 'Your personal course starts right after. Took the test before? Open the link in your start plan email on this device.' : 'Free. Turn your sound on.');
     go.focus();
   }
   function _ltQuestion() {
@@ -26407,9 +26459,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _ltAdd(c, 'p', 'lt-p', txt[1]);
     if (_lt.academy) {
       var rowA = _ltAdd(c, 'div', 'lt-row');
-      var goA = _ltAdd(rowA, 'button', 'lt-go', 'Start the course');
+      var goA = _ltAdd(rowA, 'button', 'lt-go', _lt.retest ? 'Back to my course' : 'Start the course');
       goA.type = 'button';
-      goA.addEventListener('click', _placeDecline);
+      goA.addEventListener('click', _lt.retest ? _ltClose : _placeDecline);
       return;
     }
     _ltAdd(c, 'p', 'lt-p', 'Want to keep going? In the Drumlion Academy you start at level 1 and get your next step every day, already planned for you. 15 minutes a day.');
