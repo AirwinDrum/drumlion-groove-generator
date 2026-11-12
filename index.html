@@ -16804,7 +16804,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   // BPM für einen bestimmten Schritt-Index (optional: warmup-Phase)
+  // Unter dem Starttempo (Erwin, 12.11.2026): „Too hard“ darf unter das Starttempo
+  // gehen, bei allen Übungen bis minimal 30 BPM. Negative Stufen-Indizes zählen vom
+  // Starttempo abwärts (Schrittweite der Übung), geklemmt auf BPM_FLOOR.
+  var BPM_FLOOR = 30;
+  function _exStepDown(ex) { return ex.warmup ? ex.warmup.step : ex.step; }
+  function _exMinIdx(ex) {
+    var b0 = _exBpm(ex, 0), st = _exStepDown(ex);
+    if (!(st > 0) || b0 <= BPM_FLOOR) return 0;
+    return -Math.ceil((b0 - BPM_FLOOR) / st);
+  }
   function _exBpm(ex, stepIdx) {
+    if (stepIdx < 0) {
+      var b0 = _exBpm(ex, 0);
+      return Math.max(Math.min(BPM_FLOOR, b0), b0 + stepIdx * _exStepDown(ex));
+    }
     var minB = (ex.minBPM != null) ? ex.minBPM : sphmToBpm(ex.minSPHM, ex, ex.step);
     if (ex.warmup) {
       var wSteps = Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
@@ -17219,6 +17233,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             for (var i = 0; i < EXERCISES.length; i++) if (EXERCISES[i].id === en.id) { ex = EXERCISES[i]; break; }
             if (!ex) return true;
             var oldN = _oldRangeSteps(o), n = _exSteps(ex), newMax = _exBpm(ex, n - 1);
+            // Unter dem alten Starttempo (negativer Index): Tempo halten, im neuen Raster abwärts
+            if ((en.bpmStep || 0) < 0) {
+              var ob0 = o.warmup ? o.warmup.minBPM : o.minBPM, ost = o.warmup ? o.warmup.step : o.step;
+              var ub = Math.max(BPM_FLOOR, ob0 + en.bpmStep * ost), ui = 0;
+              for (var k = _exMinIdx(ex); k <= 0; k++) if (_exBpm(ex, k) <= ub) ui = k;
+              en.bpmStep = (ub >= _exBpm(ex, 0)) ? _stageAtOrBelow(ex, ub) : ui;
+              return true;
+            }
             var step = Math.min(en.bpmStep || 0, oldN), best = Math.min(Math.max(en.best || 0, step), oldN);
             var playedTop = best > 0 ? _oldRangeBpm(o, best - 1) : 0;      // höchstes je gespieltes Tempo
             if (playedTop >= newMax) {                                      // neues Endtempo schon gespielt → fertig
@@ -17421,7 +17443,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-115223';
+  var DL_BUILD = '20261112-120520';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21118,7 +21140,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Einträge von vor dem Zähler starten mit ihrer Stufe als bester Schätzung.
   function _repCount(entry) {
     var r = parseInt(entry && entry.reps, 10);
-    return r >= 0 ? r : ((entry && parseInt(entry.bpmStep, 10)) || 0);
+    return r >= 0 ? r : Math.max(0, (entry && parseInt(entry.bpmStep, 10)) || 0);
   }
 
   function _feedbackStep(ex, entry, fb) {
@@ -21133,7 +21155,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (_pn === 2) return ex.cat === 'rudiments' ? steps : Math.max(cur, steps - 1);
       return steps;
     }
-    if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(0, cur - 1) : cur;
+    if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(_exMinIdx(ex), cur - 1) : cur;
     if (fb !== 'easy') return cur + 1;
     // Wie oft direkt davor bei DIESER Übung schon „Too easy" kam:
     // 0 → 5 % / 2 Stufen, 1 → 10 % / 3, 2 → 15 % / 4, ab 3 → 25 % / 6 Stufen.
@@ -25913,7 +25935,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _placeNearest(ex, target, upTo) {
     var n = upTo != null ? upTo + 1 : _exSteps(ex), best = 0, dist = Infinity;
-    for (var i = 0; i < n; i++) {
+    for (var i = _exMinIdx(ex); i < n; i++) {
       var d = Math.abs(_exBpm(ex, i) - target);
       if (d < dist || (d === dist && _exBpm(ex, i) > _exBpm(ex, best))) { dist = d; best = i; }
     }
