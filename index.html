@@ -17504,7 +17504,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-182918';
+  var DL_BUILD = '20261112-183758';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -26550,7 +26550,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else if (cat) (st.skills[cat] = st.skills[cat] || []).push(ans === 'easy' ? 2 : ans === 'practice' ? 1 : 0);
     if (ans === 'easy') st.lo = Math.max(st.lo, L);
     else if (ans === 'not') st.hi = Math.min(st.hi, L);
-    else if (ans === 'practice') { st.lo = Math.max(st.lo, L - 2); st.hi = Math.min(st.hi, L + 4); }
+    // „With practice“ = genau die eigene Grenze: gleichmäßig ±3, sonst rutschte man jede Runde ein Level hoch
+    // (vorher −2/+4). Die Level dieser Antworten ergeben am Ende das Ergebnis (Erwin, 12.11.2026).
+    else if (ans === 'practice') { st.lo = Math.max(st.lo, L - 3); st.hi = Math.min(st.hi, L + 3); (st.zone = st.zone || []).push(L); }
     if (st.lo >= st.hi) st.hi = st.lo + 1;
     st.fb = { easy: "Nice. Let's go higher.", practice: "That's your zone. Next one.", not: "Got it. Let's find your edge.", noread: 'No problem. Next one.' }[ans];
     st.round++;
@@ -26566,6 +26568,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltLevel(st) {
     if (st.a.years === '0') return 1;
+    if (st.zone && st.zone.length) {
+      var zs = 0;
+      st.zone.forEach(function(z) { zs += z; });
+      var za = zs / st.zone.length;
+      if (st.lo > 0) za = Math.max(za, st.lo);
+      if (st.hi <= 100) za = Math.min(za, st.hi);
+      return Math.max(1, Math.min(100, Math.round(za)));
+    }
     if (st.hi > 100 && st.lo <= 0) return Math.max(1, st.L);
     if (st.hi > 100) return Math.max(1, Math.min(100, st.lo + 2));
     if (st.lo <= 0) return Math.max(1, st.hi - 3);
