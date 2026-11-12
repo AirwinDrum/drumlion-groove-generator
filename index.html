@@ -1963,6 +1963,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-link { background: none; border: 0; color: var(--dl-gold-ink); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; align-self: flex-start; }
 .lt-play { background: var(--dl-paper); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 12px 8px; }
 .lt-play svg { display: block; width: 100%; height: auto; }
+/* Spielrunden groß (Erwin, 12.11.2026: „mach den testplayer auf jeden fall viel größer“) */
+.lt-wrap:has(.lt-play) { max-width: min(1280px, 100%); }
+.lt-card:has(.lt-play) .lt-h { font-size: clamp(22px, 3.6vw, 34px); }
+.lt-card:has(.lt-play) .lt-play { padding: 18px 18px 12px; }
+.lt-card:has(.lt-play) .lt-meta { font-size: 15px; }
 .lt-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; opacity: 0.8; margin-bottom: 4px; }
 .lt-again { background: none; border: 1px solid var(--dl-line); color: inherit; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 .lt-ans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -17499,7 +17504,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-182400';
+  var DL_BUILD = '20261112-182918';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -25861,7 +25866,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   var LT_KEY = 'drumlion_leveltest_v1';
   var LT_ACADEMY = 'https://www.drumlion.com/academy';
-  var LT_MAX_ROUNDS = 8;
+  var LT_MAX_ROUNDS = 10;
+  // Reihenfolge der Runden (Erwin, 12.11.2026: 8–10 Runden): in den ersten 8 je zweimal Grooves, Fills, Lesen, Rudiments
+  var LT_SEQ = ['grooves', 'fillins', 'notes', 'grooves', 'rudiments', 'fillins', 'notes', 'rudiments', 'grooves', 'grooves'];
   var LT_PLAN_URL = 'https://www.drumlion.com/startplan';   // Systeme.io-Seite für den Startplan (Schritt 2); leer = Knopf ausgeblendet
   // Jede zweite Runde ein Groove, dazwischen reihum die anderen Säulen, soweit es sie im Level gibt
   // (Fills enden im Kurs bei Level 8, Notes bei 7). Coordination bleibt draußen: schon in Level 1
@@ -26279,7 +26286,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var sc = _ltAdd(c, 'div', 'lt-score lt-tease', '??');
     _ltAdd(sc, 'span', null, '/ 100');
     _ltAdd(c, 'h1', 'lt-h', 'How good are you on drums?');
-    _ltAdd(c, 'p', 'lt-p', 'Find your level in about 3 minutes, with real grooves from the Academy. ' +
+    _ltAdd(c, 'p', 'lt-p', 'Find your level in about 4 minutes, with real grooves from the Academy. ' +
       'Play along at your kit, or just watch and listen from the couch. Brand new to drums? Start here too.');
     var go = _ltAdd(c, 'button', 'lt-go', 'Find my level');
     go.type = 'button';
@@ -26506,8 +26513,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltRound() {
     var st = _lt.st, r = null, k;
-    if (st.round % 2) {
-      var s0 = ((st.round - 1) / 2) % LT_OTHER.length;
+    var want = LT_SEQ[st.round] || 'grooves';
+    if (want !== 'grooves') {
+      var s0 = Math.max(0, LT_OTHER.indexOf(want));
       for (k = 0; k < LT_OTHER.length && !r; k++) r = _ltPick(st.L, LT_OTHER[(s0 + k) % LT_OTHER.length]);
     }
     r = r || _ltPick(st.L, 'grooves');
@@ -26546,8 +26554,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (st.lo >= st.hi) st.hi = st.lo + 1;
     st.fb = { easy: "Nice. Let's go higher.", practice: "That's your zone. Next one.", not: "Got it. Let's find your edge.", noread: 'No problem. Next one.' }[ans];
     st.round++;
-    // frühestens nach Runde 6, damit Fills, Rudiments und Lesen je einmal drankommen (Erwin, 12.11.2026)
-    var done = st.round >= LT_MAX_ROUNDS || (st.round >= 6 && st.hi - st.lo <= 5) ||
+    // frühestens nach Runde 8, damit Fills, Rudiments und Lesen je zweimal drankommen (Erwin, 12.11.2026)
+    var done = st.round >= LT_MAX_ROUNDS || (st.round >= 8 && st.hi - st.lo <= 5) ||
                (L <= 1 && ans === 'not') || (L >= 100 && ans === 'easy');
     if (done) { _ltResult(); return; }
     if (st.hi > 100) st.L = Math.min(100, L + st.step);
