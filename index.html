@@ -17499,7 +17499,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-174941';
+  var DL_BUILD = '20261112-182400';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18134,7 +18134,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     entry.reps = _repCount(entry) + 1;
     entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
     var _wasPd = !!entry.pd;
-    if (entry.pd && _fb !== 'hard') entry.pn = (entry.pn || 0) + 1;
+    if (entry.pd && _fb !== 'hard') entry.pn = (_fb === 'easy' && (entry.pn || 0) < 1) ? 2 : (entry.pn || 0) + 1;
     delete entry.pl;
     // Höchste je erreichte Stufe — Grundlage für Level und Balken
     entry.best = Math.max(entry.best || 0, entry.bpmStep);
@@ -18490,7 +18490,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var aCtx = null;
   var WAVS = {};
 
-  function _audioBusy() { return !!(playing || _sbP || (_sp && _sp.playing)); }
+  function _audioBusy() { return !!(playing || _sbP || (_sp && _sp.playing) || (_lt && _lt.playing)); }
   function _audioWake() {
     if (aCtx && aCtx.state !== 'running' && aCtx.state !== 'closed') {
       try { var r = aCtx.resume(); if (r && r.catch) r.catch(function() {}); } catch (e) {}
@@ -18499,17 +18499,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Zurück in den Player: Ton wieder aufwecken (ein Klick oder eine Taste zählt für Safari als Erlaubnis)
   ['focus', 'pageshow'].forEach(function(ev) { window.addEventListener(ev, _audioWake); });
   ['pointerdown', 'keydown'].forEach(function(ev) { document.addEventListener(ev, _audioWake, true); });
-  document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') _audioWake(); });
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') _audioWake(); else _aWasHidden = true;
+  });
+  var _aWasHidden = false;
 
   function initA() {
     // Safari meldet nach dem Wechsel zu YouTube oder einer anderen App „interrupted“ und bleibt dann stumm,
     // bis man neu lädt (Erwin, 09.11.2026). Steht gerade nichts, gibt es beim Start einen frischen Kontext;
     // die geladenen Klänge gelten weiter.
-    if (aCtx && aCtx.state !== 'running' && !_audioBusy()) {
+    // Nach einem Tab- oder App-Wechsel meldet Safari teils „running“ und bleibt trotzdem stumm
+    // (Erwin, 12.11.2026, Level-Test): dann beim nächsten Start ebenfalls frisch anfangen.
+    if (aCtx && (aCtx.state !== 'running' || _aWasHidden) && !_audioBusy()) {
       try { aCtx.close(); } catch (e) {}
       aCtx = null;
     }
     if (!aCtx) aCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!_audioBusy()) _aWasHidden = false;
     _audioWake();
     loadWavs();
     _volHint();
@@ -21214,6 +21220,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Bereits abgeschlossene Übungen: zweimal Starttempo, dann einmal Endtempo (Rudiments ohne).
     if (entry.pl && fb === 'hard') return _placeSlower(ex, cur);
     if (entry.pd && fb !== 'hard') {
+      // „Too easy“ bei einer bekannten Übung: gleich zum Endtempo (Erwin, 12.11.2026: fehlte bei Groove 3)
+      if (fb === 'easy' && (entry.pn || 0) < 1) return ex.cat === 'rudiments' ? steps : Math.max(cur + 1, steps - 1);
       var _pn = (entry.pn || 0) + 1;
       if (_pn < 2) return cur;
       if (_pn === 2) return ex.cat === 'rudiments' ? steps : Math.max(cur, steps - 1);
@@ -26032,7 +26040,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _ltCode(st, level) {
     var letter = function(v) { return v == null ? 'S' : v >= 1.5 ? 'S' : v >= 0.75 ? 'G' : 'W'; };
-    var read = (st.noread || st.a.read === 'no') ? 'N' : letter(_ltAvg(st.skills.notes));
+    // Keine Leserunde gespielt: Selbstauskunft wie im Profil (Erwin, 12.11.2026), vorher galt das als „Strong“
+    var rn = _ltAvg(st.skills.notes);
+    if (rn == null) rn = { yes: 2, little: 1, no: 0 }[st.a.read];
+    var read = (st.noread || st.a.read === 'no') ? 'N' : letter(rn);
     return 'DL' + level + '-' + letter(_ltAvg(st.skills.grooves)) + letter(_ltAvg(st.skills.fillins)) + letter(_ltAvg(st.skills.rudiments)) + read;
   }
   function _placeParse(code) {
@@ -26535,7 +26546,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (st.lo >= st.hi) st.hi = st.lo + 1;
     st.fb = { easy: "Nice. Let's go higher.", practice: "That's your zone. Next one.", not: "Got it. Let's find your edge.", noread: 'No problem. Next one.' }[ans];
     st.round++;
-    var done = st.round >= LT_MAX_ROUNDS || (st.round >= 5 && st.hi - st.lo <= 5) ||
+    // frühestens nach Runde 6, damit Fills, Rudiments und Lesen je einmal drankommen (Erwin, 12.11.2026)
+    var done = st.round >= LT_MAX_ROUNDS || (st.round >= 6 && st.hi - st.lo <= 5) ||
                (L <= 1 && ans === 'not') || (L >= 100 && ans === 'easy');
     if (done) { _ltResult(); return; }
     if (st.hi > 100) st.L = Math.min(100, L + st.step);
