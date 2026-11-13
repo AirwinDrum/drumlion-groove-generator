@@ -17504,7 +17504,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261112-183758';
+  var DL_BUILD = '20261113-105703';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18138,8 +18138,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var _oldStep = entry.bpmStep || 0;
     entry.reps = _repCount(entry) + 1;
     entry.bpmStep = _feedbackStep(lesson.ex, entry, _fb);
-    var _wasPd = !!entry.pd;
-    if (entry.pd && _fb !== 'hard') entry.pn = (_fb === 'easy' && (entry.pn || 0) < 1) ? 2 : (entry.pn || 0) + 1;
+    delete entry.pd; delete entry.pn;
     delete entry.pl;
     // Höchste je erreichte Stufe — Grundlage für Level und Balken
     entry.best = Math.max(entry.best || 0, entry.bpmStep);
@@ -18152,7 +18151,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // mit „Too easy" ging das Tempo schnell hoch, neue Übungen kamen aber
     // weiter erst nach fünf Erscheinungen der Kategorie — also alle 20
     // Lektionen. Fill 1 stand bei 130 BPM, Fill 2 war noch nicht in Sicht.
-    cs.sinceNew = (cs.sinceNew || 0) + (_wasPd ? 1 : Math.max(1, entry.bpmStep - _oldStep));
+    cs.sinceNew = (cs.sinceNew || 0) + Math.max(1, entry.bpmStep - _oldStep);
 
     // Graduation: Endtempo gespielt → abgeschlossen, kommt nie wieder
     if (entry.bpmStep >= _exSteps(lesson.ex)) {
@@ -21224,14 +21223,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Eingestuft (Erwin, 09.11.2026): „Too hard“ beim ersten Durchgang gleich 20 % langsamer.
     // Bereits abgeschlossene Übungen: zweimal Starttempo, dann einmal Endtempo (Rudiments ohne).
     if (entry.pl && fb === 'hard') return _placeSlower(ex, cur);
-    if (entry.pd && fb !== 'hard') {
-      // „Too easy“ bei einer bekannten Übung: gleich zum Endtempo (Erwin, 12.11.2026: fehlte bei Groove 3)
-      if (fb === 'easy' && (entry.pn || 0) < 1) return ex.cat === 'rudiments' ? steps : Math.max(cur + 1, steps - 1);
-      var _pn = (entry.pn || 0) + 1;
-      if (_pn < 2) return cur;
-      if (_pn === 2) return ex.cat === 'rudiments' ? steps : Math.max(cur, steps - 1);
-      return steps;
-    }
+    // Bekannte Übungen laufen ab dem eingestuften Tempo in den normalen Stufen bis zum Zieltempo (Erwin, 13.11.2026;
+    // vorher zweimal Starttempo, dann Endtempo). Alte `pd`-Marken in gespeicherten Ständen zählen nicht mehr.
     if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(_exMinIdx(ex), cur - 1) : cur;
     if (fb !== 'easy') return cur + 1;
     // Wie oft direkt davor bei DIESER Übung schon „Too easy" kam:
@@ -25977,7 +25970,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // der Treffer bringt sein echtes Level mit (`lv`), danach richtet sich die Einstufung.
   // Ein Level übt fast nur einen Groove-Stil (Level 30–35 nur Shuffles); deshalb nimmt ein Groove
   // zuerst einen Stil, der im Test noch nicht dran war.
+  // Rudiments im Test (Erwin, 12.11.2026: „viel zu schwer, eins war überhaupt nicht spielbar“): nur vier
+  // feste Rudiments in gemäßigtem Tempo, 60 BPM bei Level 1 bis 120 BPM bei Level 100. Je nach Level
+  // beginnt die Auswahl weiter hinten in der Liste.
+  var LT_RUDS = [1001, 1005, 1023, 1029];   // Single Stroke Roll, Double Stroke Roll, Single Paradiddle, Flam Tap
+  function _ltPickRud(L) {
+    var st = _lt.st, from = L < 20 ? 0 : L < 45 ? 1 : 2;
+    for (var k = 0; k < LT_RUDS.length; k++) {
+      var id = LT_RUDS[(from + k) % LT_RUDS.length], ex = _ltEx(id);
+      if (!ex || !ex.beats || !ex.beats.length || st.used[id]) continue;
+      return { cat: 'rudiments', id: id, bpm: Math.round((60 + 0.6 * L) / 5) * 5, lv: L };
+    }
+    return null;
+  }
   function _ltPick(L, cat) {
+    if (cat === 'rudiments') return _ltPickRud(L);
     var M = _ltMap(), lpl = LESSONS_PER_LEVEL, st = _lt.st, order = [0, -1, 1, -2, 2], k, r;
     var ok = function(x) { var ex = _ltEx(x.id); return x.cat === cat && ex && ex.beats && ex.beats.length && !ex.grid2 && !ex.bars && !st.used[x.id]; };
     var inLevel = function(lv, fresh) {
@@ -26042,7 +26049,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var ex = _ltEx(id);
     if (!ex) return e;
     var inf = _placeInfo(ex, cat, _cState.place);
-    if (inf.s > 0 || inf.done) { e.bpmStep = inf.s; e.reps = 0; e.pl = 1; if (inf.done) e.pd = 1; }
+    if (inf.s > 0) { e.bpmStep = inf.s; e.reps = 0; e.pl = 1; }
     return e;
   }
   function _ltCode(st, level) {
@@ -26063,34 +26070,37 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       grooves: lv(m[2]), fillins: lv(m[3]), rudiments: lv(m[4]), coordination: L,
       notes: m[5].toUpperCase() === 'N' ? Math.min(L, 10) : lv(m[5]) } };
   }
+  // Umfang des eigenen Kurses: schon gespielte Lektionen + alles, was ab dem jetzigen Stand noch kommt
+  // (laufende Übungen ab ihrer Stufe, neue ab der eingestuften Stufe, fertige zählen nicht mehr).
+  function _placeTot(P) {
+    var tot = 0, done = {}, cur = {};
+    (_cState.completed || []).forEach(function(id) { done[id] = 1; });
+    Object.keys(_catPool).forEach(function(cat) {
+      var cs = _cState.cats[cat];
+      if (cs) ['active', 'park'].forEach(function(k) { (cs[k] || []).forEach(function(e) { cur[e.id] = e; }); });
+      (_catPool[cat] || []).forEach(function(ex) {
+        if (_placeMap().f[ex.id] == null || done[ex.id]) return;
+        var s0 = cur[ex.id] ? Math.max(0, cur[ex.id].bpmStep || 0) : _placeInfo(ex, cat, P).s;
+        tot += Math.max(1, _exSteps(ex) - s0);
+      });
+    });
+    return Math.max(1, tot + (_cState.total || 0));
+  }
   // keep (Nachtest): laufende Übungen nur anheben, fertige bleiben fertig, das Bisherige zählt mit
   function _placeApply(P, keep) {
     P.at = Date.now();
     _cState.place = P;
-    var tot = 0, done = {}, cur = {};
-    if (keep) (_cState.completed || []).forEach(function(id) { done[id] = 1; });
     Object.keys(_catPool).forEach(function(cat) {
       var cs = _cState.cats[cat];
       if (cs) ['active', 'park'].forEach(function(k) {
         cs[k] = (cs[k] || []).map(function(e) {
           var n = _placeEntry(e.id, cat);
-          if (keep && (e.bpmStep || 0) > n.bpmStep) n = n.pd ? Object.assign({}, e, { pl: 1, pd: 1 }) : e;
-          cur[e.id] = n;
-          return n;
+          return (keep && (e.bpmStep || 0) >= n.bpmStep) ? e : n;
         });
       });
-      (_catPool[cat] || []).forEach(function(ex) {
-        if (_placeMap().f[ex.id] == null || done[ex.id]) return;
-        var n = _exSteps(ex), inf;
-        if (keep && cur[ex.id]) {
-          var e = cur[ex.id];
-          inf = { s: Math.max(0, e.bpmStep || 0), done: !!e.pd };
-        } else inf = _placeInfo(ex, cat, P);
-        tot += inf.done ? Math.min(cat === 'rudiments' ? 2 : 3, Math.max(1, n - inf.s) + 1) : Math.max(1, n - inf.s);
-      });
     });
-    if (keep) tot += _cState.total || 0;
-    P.tot = Math.max(1, tot);
+    P.tot = _placeTot(P);
+    P.tv = 2;
     _masteredInvalidate();
     _shownLesson = null;
     _saveState();
@@ -26156,6 +26166,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   // Erster Start ohne Fortschritt: läuft erst nach dem Abgleich mit dem Server
   function _placeGate() {
+    // Vor dem 13.11.2026 eingestuft: Der Kursumfang rechnete mit dem Schnelldurchlauf bekannter Übungen; neu berechnen
+    if (_cState && _cState.place && _cState.place.tv !== 2) {
+      _cState.place.tot = _placeTot(_cState.place);
+      _cState.place.tv = 2;
+      _saveState();
+      if (_syncReady()) _syncPush(false, true);
+      _updateLevelUI();
+    }
     if (!_cState || _cState.place || _cState.placeNo || (_cState.total || 0) > 0 || _getTotalLessons() > 0) { _placeSettings(); return; }
     if (new URLSearchParams(window.location.search).get('test') === '1') return;
     if (!_lt) _ltBuild();
