@@ -2674,6 +2674,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
      "Auto sigue el modo claro u oscuro de tu dispositivo. Se guarda en este dispositivo.",
      "Auto segue o modo claro ou escuro do seu dispositivo. Fica salvo neste dispositivo.",
      "Auto suit le mode clair ou sombre de ton appareil. Enregistré sur cet appareil."],
+    ["This player is part of the Drumlion Academy.", "Dieser Player gehört zur Drumlion Academy.", "Este reproductor es parte de la Drumlion Academy.", "Este player faz parte da Drumlion Academy.", "Ce lecteur fait partie de la Drumlion Academy."],
+    ["Members practice here after logging in. New here? Find your level with the free test first.",
+     "Mitglieder üben hier nach dem Login. Neu hier? Finde zuerst mit dem kostenlosen Test dein Level.",
+     "Los miembros practican aquí tras iniciar sesión. ¿Eres nuevo? Descubre primero tu nivel con el test gratuito.",
+     "Os membros praticam aqui depois de entrar. É novo por aqui? Descubra primeiro o seu nível com o teste gratuito.",
+     "Les membres s’entraînent ici après connexion. Nouveau ? Trouve d’abord ton niveau avec le test gratuit."],
+    ["Take the free level test", "Kostenlosen Level-Test machen", "Hacer el test de nivel gratis", "Fazer o teste de nível grátis", "Faire le test de niveau gratuit"],
+    ["Log in", "Einloggen", "Iniciar sesión", "Entrar", "Se connecter"],
     ["Level test", "Level-Test", "Test de nivel", "Teste de nível", "Test de niveau"],
     ["Take the level test", "Level-Test machen", "Hacer el test de nivel", "Fazer o teste de nível", "Faire le test de niveau"],
     ["Course start", "Kursstart", "Inicio del curso", "Início do curso", "Début du cours"],
@@ -17465,7 +17473,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261113-121637';
+  var DL_BUILD = '20261113-123336';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -17674,6 +17682,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function _syncReady() {
     if (_devRangeActive) return false;          // Range-Test: nichts zum Server
+    if (_gateBlocked) return false;             // Türsteher: kein Kurs, also auch kein Abgleich
     return !!_syncKey()
         && _SB_URL.indexOf('SUPABASE_PROJECT_URL') === -1
         && _SB_KEY.indexOf('SUPABASE_ANON_KEY') === -1;
@@ -20776,6 +20785,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // PLAYBACK
   // ============================================================
   function startExercise() {
+    if (_gateBlocked) return;   // Türsteher: direkt geöffnet, kein Kurs
     _showFeedback(false);
     initA();
     _sayUnlock();
@@ -21418,6 +21428,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_dp && !_devMode) _dp.style.display = 'none';
     _devToast(_devMode ? 'Dev mode on' : 'Dev mode off');
     _devTempoSync();
+    if (_devMode && _gateBlocked) setTimeout(function() { location.reload(); }, 500);
   });
 
   // Dev: Tempo-Regler (Erwin, 16.09.2026). Setzt nur das Tempo der geladenen
@@ -26178,6 +26189,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   // Erster Start ohne Fortschritt: läuft erst nach dem Abgleich mit dem Server
   function _placeGate() {
+    if (_gateBlocked) return;
     // Vor dem 13.11.2026 eingestuft: Der Kursumfang rechnete mit dem Schnelldurchlauf bekannter Übungen; neu berechnen
     if (_cState && _cState.place && _cState.place.tv !== 2) {
       _cState.place.tot = _placeTot(_cState.place);
@@ -26242,6 +26254,39 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (rt) rt.addEventListener('click', _placeRetest);
     setTimeout(_placeSettings, 0);
   })();
+
+  // ============================================================
+  // TÜRSTEHER (Erwin, 13.11.2026): Der Kurs läuft nur eingebettet, so wie in der Academy auf drumlion.com.
+  // Wer die Player-Adresse direkt öffnet, sieht statt des Kurses einen Hinweis mit Gratis-Test und Login.
+  // Frei bleiben Dev-Geräte, der öffentliche Level-Test (?test=1) und alles Eingebettete.
+  // Das ist keine echte Sperre (der Code liegt offen im Browser). Es hält aber ab, wer nur die Adresse
+  // kopiert. Die echte Sperre kommt erst, wenn die Inhalte von einem Server mit Login kommen.
+  // ============================================================
+  function _gateCheck() {
+    if (_devMode) return false;
+    try {
+      if (new URLSearchParams(window.location.search).get('test') === '1') return false;
+      return window.self === window.top;
+    } catch (e) { return false; }   // im Zweifel offen: lieber ein Gast zu viel als ein Mitglied ausgesperrt
+  }
+  var _gateBlocked = _gateCheck();
+  function _gateShow() {
+    if (!_lt) _ltBuild();
+    _lt.st = { run: null };
+    _lt.el.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    var pr = _lt.el.querySelector('.lt-prog');
+    if (pr) pr.style.display = 'none';
+    var c = _ltCard();
+    _ltAdd(c, 'div', 'lt-kick', 'Drumlion Academy');
+    _ltAdd(c, 'h2', 'lt-h', _t('This player is part of the Drumlion Academy.'));
+    _ltAdd(c, 'p', 'lt-p', _t('Members practice here after logging in. New here? Find your level with the free test first.'));
+    var row = _ltAdd(c, 'div', 'lt-row');
+    var go = _ltAdd(row, 'a', 'lt-go', _t('Take the free level test'));
+    go.href = 'https://www.drumlion.com/howgoodami'; go.target = '_top'; go.rel = 'noopener';
+    var login = _ltAdd(row, 'a', 'lt-ghost', _t('Log in'));
+    login.href = 'https://www.drumlion.com/login'; login.target = '_top'; login.rel = 'noopener';
+  }
 
   function _ltBuild() {
     var el = document.createElement('div');
@@ -26873,6 +26918,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   try {
     // Vorerst nur auf Dev-Geräten (Erwin: „Level Test noch nicht bitte“, 02.11.2026)
     if (new URLSearchParams(window.location.search).get('test') === '1') setTimeout(function() { if (!_placeFromLink(new URLSearchParams(window.location.search).get('p'))) _ltOpen(); }, 0);
+    else if (_gateBlocked) setTimeout(_gateShow, 0);
   } catch (e) {}
 
   // ============================================================
@@ -28155,8 +28201,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     if (skipBtn) skipBtn.addEventListener('click', closeModal);
 
-    // Auto-open modal nach 8s — nur wenn kein Sync und nicht aus URL
-    if (!_syncKey() && !_fromUrl) {
+    // Auto-open modal nach 8s — nur wenn kein Sync und nicht aus URL (und nicht hinter dem Türsteher)
+    if (!_syncKey() && !_fromUrl && !_gateBlocked) {
       var _syncPromptShown = false;
       try { _syncPromptShown = !!localStorage.getItem('drumlion_sync_skipped'); } catch(e) {}
       if (!_syncPromptShown) {
