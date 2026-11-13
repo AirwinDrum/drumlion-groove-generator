@@ -1,8 +1,9 @@
 # ACHTUNG: Dieses Repo ist PUBLIC (GitHub Pages).
 # Alles, was hier nicht ignoriert wird, ist im Netz lesbar.
 
-# Interne Business-Kontexte für Claude (Preise, USt, Launch-Strategie, E2Drums-Regeln)
-.claude/skills/
+# Alles unter .claude/ ist internes Arbeitswerkzeug (Skills mit Preisen, USt, Launch-Strategie,
+# E2Drums-Regeln; dazu Vorschau-Konfiguration und das Statistik-Skript). Seit 13.11.2026 komplett draußen.
+.claude/
 
 # Interne Planungsdokumente
 docs/
@@ -12,3 +13,7 @@ CLAUDE.md
 
 # macOS
 .DS_Store
+
+# Altbestand und lokale Entwürfe (13.11.2026 aus dem Repo genommen)
+lesson-urls.csv
+placement-test.html
