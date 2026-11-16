@@ -1612,6 +1612,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 }
 .sb-cnt.b { color: var(--sb-text); }
 .sb-cnt.cur { color: var(--sb-gold); }
+.sb-cnt { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.sb-cnt:hover { color: var(--sb-gold); }
+.sb-cnt.ss { background: rgba(90,150,235,0.40); color: #fff; }
+.sb-c.ss { box-shadow: inset 0 0 0 100px rgba(90,150,235,0.24); }
+.sb-c.ss.cur { box-shadow: inset 0 0 0 100px rgba(201,168,76,0.28); }
 .sb-c {
   height: 25px; display: flex; align-items: center; justify-content: center;
   background: var(--sb-cbg, #141413); border-left: 1px solid #33312c; border-bottom: 1px solid #33312c;
@@ -17473,7 +17478,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261113-123336';
+  var DL_BUILD = '20261116-120619';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21581,6 +21586,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                    vol: { drums: 1, click: 1, song: 1, mix: 1, outro: 1 } };
   var _sbRoot = null, _sbTiles = [], _sbCells = [], _sbStickEls = [], _sbCntEls = [];
   var _sbIsOpen = false, _sbP = null, _sbClip = null, _sbRepN = 3, _sbEdCur = -1;
+  var _sbSlots = null, _sbSlotClip = null, _sbSlotDrag = null;   // Auswahl von Zählzeiten im Fokus-Takt: {bi, a, b}
   var _sbDirty = {}, _sbDirtyRaf = 0, _sbDrag = null, _sbSaveT = 0, _sbPrevOverflow = '';
 
   function _sbEsc(s) {
@@ -22211,6 +22217,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _sbSelect(i, extend) {
     i = Math.max(0, Math.min(_sbSong.bars.length - 1, i));
     if (extend) _sbSel.b = i; else _sbSel = { a: i, b: i };
+    _sbSlots = null;
     _sbMarkSel();
     _sbRenderEditor();
     _sbScrollTo(i, false);
@@ -22268,6 +22275,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!ed) return;
     _sbClampSel();
     var r = _sbRange(), bi = _sbSel.b, bar = _sbSong.bars[bi], n = bar.n, per = n / _sbQ(bar), grid = _sbGridOf(bar);
+    if (_sbSlots && (_sbSlots.bi !== bi || r[0] !== r[1] || _sbSlots.a >= n)) _sbSlots = null;
+    if (_sbSlots && _sbSlots.b >= n) _sbSlots.b = n - 1;
     _sbEdCur = (_sbP && _sbP.curBar === bi) ? _sbP.curSlot : -1;
     var h = '<div class="sb-ed-top">';
     h += '<span class="sb-ed-h">' + (r[1] > r[0] ? 'Bars ' + (r[0] + 1) + '–' + (r[1] + 1) : 'Bar ' + (bi + 1)) + '</span>';
@@ -22295,7 +22304,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
          _sbBtnHtml('add', '+ Bar', 'Add an empty bar after the selection (N)') +
          _sbBtnHtml('dup', 'Duplicate', 'Duplicate the selection (⌘D)') +
          _sbBtnHtml('copy', 'Copy', 'Copy the selection (⌘C)') +
-         _sbBtnHtml('paste', 'Paste', 'Insert the copied bars after the selection (⌘V)', !_sbClip) +
+         _sbBtnHtml('paste', 'Paste', 'Overwrite the selected bar (or beats) with what you copied (⌘V)', !(_sbClip || _sbSlotClip)) +
          '</span><span class="sb-group sb-rep">' +
          _sbBtnHtml('rep', 'Repeat', 'Add copies of the selection after it') +
          '<span class="sb-lbl">×</span><input class="sb-num-in" id="sbRepN" type="number" min="1" max="64" value="' + _sbRepN + '" aria-label="Number of copies">' +
@@ -22309,7 +22318,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var cnt = _sbCounts(n, _sbQ(bar));
     h += '<div class="sb-grid-wrap"><div class="sb-grid" id="sbGrid" style="--sb-n:' + n + '">';
     h += '<div class="sb-rl"></div>';
-    for (var s = 0; s < n; s++) h += '<div class="sb-cnt' + (s % per === 0 ? ' b' : '') + (s === _sbEdCur ? ' cur' : '') + '">' + cnt[s] + '</div>';
+    for (var s = 0; s < n; s++) h += '<div class="sb-cnt' + (s % per === 0 ? ' b' : '') + (s === _sbEdCur ? ' cur' : '') + '" data-cs="' + s + '" title="Click selects a beat, drag selects a range (⌘C copies only that)">' + cnt[s] + '</div>';
     SB_ROWS.forEach(function(row, ri) {
       h += '<div class="sb-rl' + (ri % 2 ? ' z' : '') + '">' + row.name + '</div>';
       for (var s2 = 0; s2 < n; s2++) {
@@ -22335,6 +22344,40 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     _sbStickEls = Array.prototype.slice.call(grid.querySelectorAll('.sb-c[data-st]'));
     _sbCntEls = Array.prototype.slice.call(grid.querySelectorAll('.sb-cnt'));
+    _sbMarkSlots();
+  }
+  function _sbMarkSlots() {
+    var a = _sbSlots ? _sbSlots.a : 1, b = _sbSlots ? _sbSlots.b : 0;
+    var on = function(el, i) { if (el) el.classList.toggle('ss', i >= a && i <= b); };
+    _sbCntEls.forEach(on);
+    _sbStickEls.forEach(on);
+    _sbCells.forEach(function(row) { row.forEach(on); });
+  }
+  // Zählzeiten wählen: Klick auf eine Zahl = ganze Zählzeit, auf ein „&“ = dieser Schlag, Ziehen = Bereich, ⇧ erweitert
+  function _sbSlotDown(e) {
+    var c = e.target.closest && e.target.closest('.sb-grid .sb-cnt[data-cs]');
+    if (!c || e.button !== 0) return;
+    e.preventDefault();
+    var bi = _sbSel.b, bar = _sbSong.bars[bi], per = bar.n / _sbQ(bar), s = +c.getAttribute('data-cs');
+    if (_sbSel.a !== _sbSel.b) { _sbSel = { a: bi, b: bi }; _sbMarkSel(); }
+    var ua = s, ub = s % per === 0 ? Math.min(bar.n - 1, s + per - 1) : s;
+    if (e.shiftKey && _sbSlots && _sbSlots.bi === bi) { ua = Math.min(ua, _sbSlots.a); ub = Math.max(ub, _sbSlots.b); }
+    _sbSlots = { bi: bi, a: ua, b: ub };
+    _sbSlotDrag = { a: ua, b: ub };
+    _sbMarkSlots();
+  }
+  function _sbSlotMove(e) {
+    var D = _sbSlotDrag;
+    if (!D || !_sbSlots) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    var c = el && el.closest && el.closest('.sb-grid [data-cs], .sb-grid [data-s], .sb-grid [data-st]');
+    if (!c) return;
+    var t = +(c.getAttribute('data-cs') || c.getAttribute('data-s') || c.getAttribute('data-st'));
+    if (!isFinite(t)) return;
+    var a = Math.min(D.a, t), b = Math.max(D.b, t);
+    if (a === _sbSlots.a && b === _sbSlots.b) return;
+    _sbSlots.a = a; _sbSlots.b = b;
+    _sbMarkSlots();
   }
   // Spalte unter dem Wiedergabe-Cursor im Raster markieren
   function _sbEdCursor(s) {
@@ -22471,8 +22514,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (rd) rd.disabled = !_sbRedo.length;
   }
   // Takte einfügen, löschen, umbauen: danach alles neu zeichnen
-  function _sbStructural(fn) {
+  function _sbStructural(fn, keepSlots) {
     _sbPush();
+    if (!keepSlots) _sbSlots = null;
     fn();
     _sbClampSel();
     _sbSave();
@@ -22487,6 +22531,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sbData.songs[_sbData.songs.indexOf(_sbSong)] = s;
     _sbSong = s;
     if (snap.sel) _sbSel = { a: +snap.sel.a || 0, b: +snap.sel.b || 0 };
+    _sbSlots = null;
     _sbClampSel();
     _sbSave();
     _sbRenderScore();
@@ -22544,20 +22589,50 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _devToast('Added ' + add.length + (add.length === 1 ? ' bar' : ' bars'));
   }
   function _sbCopy() {
-    var r = _sbRange();
+    var r = _sbRange(), p = _sbRoot && _sbRoot.querySelector('[data-act="paste"]');
+    if (_sbSlots && r[0] === r[1] && _sbSlots.bi === _sbSel.b) {   // nur die gewählten Zählzeiten
+      var bar = _sbSong.bars[_sbSel.b], a = _sbSlots.a, b = _sbSlots.b;
+      _sbSlotClip = { notes: _sbClone(bar.notes.slice(a, b + 1)), stick: bar.stick.slice(a, b + 1) };
+      _sbClip = null;
+      if (p) p.disabled = false;
+      _devToast('Copied ' + _sbSlotClip.notes.length + (_sbSlotClip.notes.length === 1 ? ' step' : ' steps'));
+      return;
+    }
     _sbClip = _sbClone(_sbSong.bars.slice(r[0], r[1] + 1));
+    _sbSlotClip = null;
     try { localStorage.setItem(SB_CLIP_KEY, JSON.stringify(_sbClip)); } catch (e) {}
-    var p = _sbRoot && _sbRoot.querySelector('[data-act="paste"]');
     if (p) p.disabled = false;
     _devToast('Copied ' + _sbClip.length + (_sbClip.length === 1 ? ' bar' : ' bars'));
   }
+  // Einfügen überschreibt: die gewählten Zählzeiten bzw. den gewählten Takt (ab dem ersten gewählten Takt)
   function _sbPaste() {
+    if (_sbSlotClip) {
+      var bi = _sbSel.b, bar = _sbSong.bars[bi], c = _sbSlotClip;
+      var st = (_sbSlots && _sbSlots.bi === bi) ? _sbSlots.a : 0;
+      var en = (_sbSlots && _sbSlots.bi === bi) ? _sbSlots.b : st + c.notes.length - 1;
+      en = Math.min(en, bar.n - 1);
+      _sbStructural(function() {
+        for (var i = st; i <= en; i++) {
+          var j = i - st, has = j < c.notes.length;
+          bar.notes[i] = has ? _sbClone(c.notes[j]) : [];
+          bar.stick[i] = has ? (c.stick[j] || '') : '';
+        }
+        _sbSlots = { bi: bi, a: st, b: en };
+      }, true);
+      _devToast('Pasted ' + (en - st + 1) + ' steps');
+      return;
+    }
     if (!_sbClip) { _devToast('Copy some bars first'); return; }
     var cp = _sbNormSong({ bars: _sbClone(_sbClip) }).bars, r = _sbRange();
-    if (!_sbRoom(cp.length)) return;
+    var extra = Math.max(0, r[0] + cp.length - _sbSong.bars.length);
+    if (!_sbRoom(extra)) return;
     _sbStructural(function() {
-      _sbInsert(r[1] + 1, cp);
-      _sbSel = { a: r[1] + 1, b: r[1] + cp.length };
+      for (var k = 0; k < cp.length; k++) {
+        var at = r[0] + k, nb = cp[k];
+        if (at < _sbSong.bars.length) { nb.label = _sbSong.bars[at].label; nb.bpm = _sbSong.bars[at].bpm; _sbSong.bars[at] = nb; }
+        else { nb.label = ''; _sbSong.bars.push(nb); }
+      }
+      _sbSel = { a: r[0], b: r[0] + cp.length - 1 };
     });
   }
   function _sbDelete() {
@@ -25786,9 +25861,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       else if (e.target.id === 'sbRepN') _sbRepN = Math.max(1, Math.min(64, Math.round(+e.target.value) || 1));
     });
     ed.addEventListener('pointerdown', _sbGridDown);
+    ed.addEventListener('pointerdown', _sbSlotDown);
     ed.addEventListener('contextmenu', _sbGridCtx);
     window.addEventListener('pointermove', _sbGridMove);
+    window.addEventListener('pointermove', _sbSlotMove);
     window.addEventListener('pointerup', _sbGridUp);
+    window.addEventListener('pointerup', function() { _sbSlotDrag = null; });
     window.addEventListener('pointercancel', _sbGridUp);
   }
 
@@ -25840,6 +25918,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     else if (k === 'l') _sbTogglePref('loop');
     else if (k === 'k') _sbTogglePref('click');
     else if (k === 't') { if (!e.repeat) _sbTapSong(e.timeStamp); }
+    else if (e.key === 'Escape' && _sbSlots) { _sbSlots = null; _sbMarkSlots(); }
     else if (e.key === 'Escape') {
       var m = document.getElementById('sbMenu');
       if (m && m.open) m.open = false; else if (_sbP) _sbStop();
