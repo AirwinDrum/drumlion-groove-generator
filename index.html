@@ -2385,7 +2385,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           <p class="dl-set-p">Control the player from a MIDI pad: tap Assign, then hit the pad. Saved on this device.</p>
           <button class="dl-set-link" type="button" id="dgMidiConnect">Connect pad</button>
           <p class="dl-set-p dl-set-hint" id="dgMidiStatus"></p>
-          <div class="dl-midi-map" id="dgMidiMap" hidden></div>
+          <div class="dl-midi-map" id="dgMidiMap" style="display:none;"></div>
         </section>
       </div>
     </div>
@@ -2727,6 +2727,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
      "El acceso MIDI está bloqueado. Permite MIDI para este sitio en tu navegador e inténtalo de nuevo.",
      "O acesso MIDI está bloqueado. Permita MIDI para este site no navegador e tente de novo.",
      "L’accès MIDI est bloqué. Autorise le MIDI pour ce site dans ton navigateur et réessaie."],
+    ["This page blocks MIDI. Open the player directly in Chrome to use your pad.",
+     "Diese Seite sperrt MIDI. Öffne den Player direkt in Chrome, dann funktioniert dein Pad.",
+     "Esta página bloquea MIDI. Abre el reproductor directamente en Chrome para usar tu pad.",
+     "Esta página bloqueia MIDI. Abra o player diretamente no Chrome para usar seu pad.",
+     "Cette page bloque le MIDI. Ouvre le lecteur directement dans Chrome pour utiliser ton pad."],
     ["MIDI pads work in Chrome, Edge and Firefox.", "MIDI-Pads funktionieren in Chrome, Edge und Firefox.",
      "Los pads MIDI funcionan en Chrome, Edge y Firefox.", "Pads MIDI funcionam no Chrome, Edge e Firefox.",
      "Les pads MIDI fonctionnent dans Chrome, Edge et Firefox."],
@@ -17523,7 +17528,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-203521';
+  var DL_BUILD = '20261117-203947';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -28710,7 +28715,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return b;
     }
     function render() {
-      list.hidden = !access;
+      list.style.display = access ? '' : 'none';   // hidden-Attribut verliert gegen display:grid
+      if (!access) learn = null;
       list.textContent = '';
       ACTS.forEach(function(a) {
         var id = a[0], isL = (learn === id);
@@ -28775,7 +28781,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         bind(); render();
         try { localStorage.setItem(KEY_ON, '1'); } catch (e) {}
       }, function() {
-        if (!quiet) status.textContent = _t('MIDI access is blocked. Allow MIDI for this site in your browser and try again.');
+        if (quiet) return;
+        var framed = false;
+        try { framed = window.top !== window.self; } catch (e) { framed = true; }
+        status.textContent = framed
+          ? _t('This page blocks MIDI. Open the player directly in Chrome to use your pad.')
+          : _t('MIDI access is blocked. Allow MIDI for this site in your browser and try again.');
       });
     }
     connectBtn.addEventListener('click', function() { connect(false); });
