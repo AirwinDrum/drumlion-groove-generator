@@ -1187,6 +1187,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .dl-set-dot { width: 8px; height: 8px; border-radius: 50%; background: #666; flex-shrink: 0; }
 .dl-set-dot.on { background: #4caf50; }
 .dl-set-keys { display: grid; grid-template-columns: auto 1fr; gap: 8px 12px; align-items: center; font-size: 14px; color: rgba(var(--dl-ink-rgb),0.85); }
+.dl-midi-map { display: grid; gap: 8px; margin-top: 10px; }
+.dl-midi-row { display: flex; align-items: center; gap: 12px; font-size: 14px; color: rgba(var(--dl-ink-rgb),0.85); }
+.dl-midi-row > span:first-child { flex: 1; }
+.dl-midi-val { font-size: 12px; color: rgba(var(--dl-ink-rgb),0.6); min-width: 72px; text-align: right; font-variant-numeric: tabular-nums; }
+.dl-midi-row.learn .dl-midi-val { color: var(--dl-gold-ink); }
 .dl-set-keys kbd { font-family: inherit; font-size: 12px; min-width: 28px; text-align: center; background: var(--dl-paper); border: 1px solid rgba(var(--dl-ink-rgb),0.18); border-bottom-width: 2px; border-radius: 6px; padding: 2px 8px; color: var(--dl-ink); }
 /* Ohne Tastatur (Handy, Tablet) sind Tastenkürzel nutzlos */
 @media (hover: none) { .dl-set-keys-sec { display: none; } }
@@ -2375,6 +2380,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             <kbd>K</kbd><span>Click on / off</span>
           </div>
         </section>
+        <section class="dl-set-sec" id="dgMidiSec" style="display:none;">
+          <div class="dl-set-h">Drum pad (MIDI)</div>
+          <p class="dl-set-p">Control the player from a MIDI pad: tap Assign, then hit the pad. Saved on this device.</p>
+          <button class="dl-set-link" type="button" id="dgMidiConnect">Connect pad</button>
+          <p class="dl-set-p dl-set-hint" id="dgMidiStatus"></p>
+          <div class="dl-midi-map" id="dgMidiMap" hidden></div>
+        </section>
       </div>
     </div>
 
@@ -2693,6 +2705,31 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ["Tap again to restart your course. Your practice stats stay.", "Noch einmal tippen: Dein Kurs beginnt neu, deine Übungsstatistik bleibt.", "Toca otra vez: tu curso empieza de nuevo, tus estadísticas se quedan.", "Toque de novo: seu curso recomeça, suas estatísticas ficam.", "Touche encore : ton cours recommence, tes statistiques restent."],
     ["Start from the beginning", "Von vorne beginnen", "Empezar desde el principio", "Começar do início", "Recommencer depuis le début"],
     ["Cursor timing", "Cursor-Timing", "Sincronía del cursor", "Sincronia do cursor", "Calage du curseur"],
+    // MIDI-Pad (17.11.2026)
+    ["Drum pad (MIDI)", "Drum-Pad (MIDI)", "Pad de batería (MIDI)", "Pad de bateria (MIDI)", "Pad de batterie (MIDI)"],
+    ["Control the player from a MIDI pad: tap Assign, then hit the pad. Saved on this device.",
+     "Steuere den Player mit einem MIDI-Pad: auf Zuordnen tippen, dann das Pad anschlagen. Wird auf diesem Gerät gespeichert.",
+     "Controla el reproductor con un pad MIDI: toca Asignar y golpea el pad. Se guarda en este dispositivo.",
+     "Controle o player com um pad MIDI: toque em Atribuir e bata no pad. Fica salvo neste dispositivo.",
+     "Pilote le lecteur avec un pad MIDI : touche Attribuer, puis frappe le pad. Enregistré sur cet appareil."],
+    ["Connect pad", "Pad verbinden", "Conectar pad", "Conectar pad", "Connecter le pad"],
+    ["Assign", "Zuordnen", "Asignar", "Atribuir", "Attribuer"],
+    ["Cancel", "Abbrechen", "Cancelar", "Cancelar", "Annuler"],
+    ["Clear", "Entfernen", "Quitar", "Remover", "Retirer"],
+    ["Not set", "Nicht belegt", "Sin asignar", "Não atribuído", "Non attribué"],
+    ["Hit a pad…", "Pad anschlagen …", "Golpea un pad…", "Bata num pad…", "Frappe un pad…"],
+    ["Connected: {name}", "Verbunden: {name}", "Conectado: {name}", "Conectado: {name}", "Connecté : {name}"],
+    ["No pad found. Plug it in and it connects by itself.", "Kein Pad gefunden. Schließ es an, es verbindet sich von selbst.",
+     "No se encontró ningún pad. Conéctalo y se enlaza solo.", "Nenhum pad encontrado. Conecte-o e ele se liga sozinho.",
+     "Aucun pad trouvé. Branche-le, il se connecte tout seul."],
+    ["MIDI access is blocked. Allow MIDI for this site in your browser and try again.",
+     "Der MIDI-Zugriff ist gesperrt. Erlaube MIDI für diese Seite im Browser und versuch es noch einmal.",
+     "El acceso MIDI está bloqueado. Permite MIDI para este sitio en tu navegador e inténtalo de nuevo.",
+     "O acesso MIDI está bloqueado. Permita MIDI para este site no navegador e tente de novo.",
+     "L’accès MIDI est bloqué. Autorise le MIDI pour ce site dans ton navigateur et réessaie."],
+    ["MIDI pads work in Chrome, Edge and Firefox.", "MIDI-Pads funktionieren in Chrome, Edge und Firefox.",
+     "Los pads MIDI funcionan en Chrome, Edge y Firefox.", "Pads MIDI funcionam no Chrome, Edge e Firefox.",
+     "Les pads MIDI fonctionnent dans Chrome, Edge et Firefox."],
     ["If the moving highlight is ahead of or behind the sound — common with Bluetooth headphones — slide until both match. Saved on this device.",
      "Läuft die Markierung dem Sound voraus oder hinterher (passiert oft mit Bluetooth-Kopfhörern), schieb den Regler, bis beides passt. Wird auf diesem Gerät gespeichert.",
      "Si el resaltado va por delante o por detrás del sonido (pasa mucho con auriculares Bluetooth), mueve el control hasta que coincidan. Se guarda en este dispositivo.",
@@ -17486,7 +17523,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-202245';
+  var DL_BUILD = '20261117-203521';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -28628,6 +28665,126 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Wirkt sofort, auch während die Übung läuft — so lässt es sich nach Gehör einstellen
     if (r) r.addEventListener('input', function() { setOffset(r.value); });
     if (reset) reset.addEventListener('click', function() { setOffset(0); });
+  })();
+
+  // ── MIDI-Pad (Erwin, 17.11.2026: Millenium Nonapad) ──
+  // Anlernen in den Settings: „Zuordnen“, dann Pad anschlagen. Gemerkt wird nur
+  // die Nachricht (Note, CC oder Programmwechsel) je Aktion, auf diesem Gerät.
+  // MIDI-Zugriff erst nach Klick auf „Pad verbinden“ — nie beim Laden fragen.
+  // Einmal erlaubt, verbindet der Player beim nächsten Mal still wieder.
+  // Im Systeme.io-iFrame nötig: allow="autoplay; midi" am iFrame `dlPlayer`.
+  (function() {
+    var sec = document.getElementById('dgMidiSec');
+    if (!sec) return;
+    // Nur für Erwin (17.11.2026: „das ist nur für mich“): sichtbar im Dev-Modus
+    if (!_devMode) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+    var KEY = 'dl_midi_map', KEY_ON = 'dl_midi_on';
+    var ACTS = [['play', 'Start / Stop'], ['click', 'Click on / off'],
+                ['easy', 'Too easy'], ['good', 'Just right'], ['hard', 'Too hard']];
+    var map = {}, access = null, learn = null, last = {};
+    try {
+      var raw = JSON.parse(localStorage.getItem(KEY) || '{}');
+      ACTS.forEach(function(a) {
+        var v = raw && raw[a[0]];
+        if (typeof v === 'string' && /^[ncp]\d{1,3}$/.test(v)) map[a[0]] = v;
+      });
+    } catch (e) {}
+    var connectBtn = document.getElementById('dgMidiConnect');
+    var status = document.getElementById('dgMidiStatus');
+    var list = document.getElementById('dgMidiMap');
+    if (!navigator.requestMIDIAccess) {
+      connectBtn.hidden = true;
+      status.textContent = _t('MIDI pads work in Chrome, Edge and Firefox.');
+      return;
+    }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(map)); } catch (e) {} }
+    function keyLabel(k) {
+      var n = parseInt(k.slice(1), 10);
+      return k.charAt(0) === 'n' ? _t('Pad {n}', { n: n }) : (k.charAt(0) === 'c' ? 'CC ' + n : 'PC ' + n);
+    }
+    function btn(txt, fn) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'dl-set-link'; b.textContent = txt;
+      b.addEventListener('click', fn);
+      return b;
+    }
+    function render() {
+      list.hidden = !access;
+      list.textContent = '';
+      ACTS.forEach(function(a) {
+        var id = a[0], isL = (learn === id);
+        var row = document.createElement('div');
+        row.className = 'dl-midi-row' + (isL ? ' learn' : '');
+        var lbl = document.createElement('span'); lbl.textContent = _t(a[1]);
+        var val = document.createElement('span'); val.className = 'dl-midi-val';
+        val.textContent = isL ? _t('Hit a pad…') : (map[id] ? keyLabel(map[id]) : _t('Not set'));
+        row.appendChild(lbl); row.appendChild(val);
+        row.appendChild(btn(isL ? _t('Cancel') : _t('Assign'), function() { learn = isL ? null : id; render(); }));
+        if (map[id] && !isL) row.appendChild(btn(_t('Clear'), function() { delete map[id]; save(); render(); }));
+        list.appendChild(row);
+      });
+    }
+    function setStatus() {
+      var names = [];
+      access.inputs.forEach(function(inp) { if (inp.state !== 'disconnected') names.push(inp.name || 'MIDI'); });
+      status.textContent = names.length ? _t('Connected: {name}', { name: names.join(', ') })
+                                        : _t('No pad found. Plug it in and it connects by itself.');
+      connectBtn.hidden = true;
+    }
+    function act(a) {
+      if (a === 'play') {
+        if (_sbIsOpen || _spIsOpen) return;
+        if (!playing) startExercise(); else stopExercise();
+      } else if (a === 'click') {
+        metronomeOn = !metronomeOn;
+        updateMetroBtn();
+      } else {
+        var box = document.getElementById('dgFeedback');
+        if (!box || !box.classList.contains('open')) return;
+        var b = box.querySelector('[data-fb="' + a + '"]');
+        if (b) b.click();
+      }
+    }
+    function onMsg(ev) {
+      var d = ev.data;
+      if (!d || d.length < 2) return;
+      var s = d[0] & 0xF0, k = null;
+      if (s === 0x90 && d.length > 2 && d[2] > 0) k = 'n' + d[1];        // Note an
+      else if (s === 0xB0 && d.length > 2 && d[2] > 0) k = 'c' + d[1];   // Controller
+      else if (s === 0xC0) k = 'p' + d[1];                                // Programmwechsel
+      if (!k) return;
+      var now = Date.now();
+      if (last[k] && now - last[k] < 200) return;   // Pads schlagen gern doppelt an
+      last[k] = now;
+      if (learn) {
+        Object.keys(map).forEach(function(a) { if (map[a] === k) delete map[a]; });
+        map[learn] = k; learn = null; save(); render();
+        return;
+      }
+      for (var a in map) if (map[a] === k) { act(a); return; }
+    }
+    function bind() {
+      access.inputs.forEach(function(inp) { inp.onmidimessage = onMsg; });
+      setStatus();
+    }
+    function connect(quiet) {
+      navigator.requestMIDIAccess().then(function(acc) {
+        access = acc;
+        acc.onstatechange = bind;
+        bind(); render();
+        try { localStorage.setItem(KEY_ON, '1'); } catch (e) {}
+      }, function() {
+        if (!quiet) status.textContent = _t('MIDI access is blocked. Allow MIDI for this site in your browser and try again.');
+      });
+    }
+    connectBtn.addEventListener('click', function() { connect(false); });
+    var on = false;
+    try { on = localStorage.getItem(KEY_ON) === '1'; } catch (e) {}
+    if (on && navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'midi' }).then(function(pm) { if (pm.state === 'granted') connect(true); }, function() {});
+    }
+    render();
   })();
 
   // Sprache wählen: gilt für dieses Gerät. Die Lektionsseite bekommt die Wahl
