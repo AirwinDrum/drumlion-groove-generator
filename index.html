@@ -17528,7 +17528,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-203947';
+  var DL_BUILD = '20261117-204816';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -28681,10 +28681,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   (function() {
     var sec = document.getElementById('dgMidiSec');
     if (!sec) return;
-    // Nur für Erwin (17.11.2026: „das ist nur für mich“): sichtbar im Dev-Modus
-    if (!_devMode) { sec.style.display = 'none'; return; }
-    sec.style.display = '';
     var KEY = 'dl_midi_map', KEY_ON = 'dl_midi_on';
+    // Nur Erwins Geräte: einschalten im Dev-Modus; wurde auf dem Gerät einmal ein
+    // Pad verbunden, bleibt es für JEDEN Account dort sichtbar (17.11.2026: Schüler
+    // loggen sich im Unterricht an seinem Rechner ein). Mitglieder sehen es nie.
+    var onDev = false;
+    try { onDev = localStorage.getItem(KEY_ON) === '1'; } catch (e) {}
+    if (!_devMode && !onDev) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
     var ACTS = [['play', 'Start / Stop'], ['click', 'Click on / off'],
                 ['easy', 'Too easy'], ['good', 'Just right'], ['hard', 'Too hard']];
     var map = {}, access = null, learn = null, last = {};
