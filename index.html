@@ -1903,9 +1903,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-play { background: var(--dl-paper); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 12px 8px; }
 .lt-play svg { display: block; width: 100%; height: auto; }
 /* Spielrunden groß (Erwin, 12.11.2026: „mach den testplayer auf jeden fall viel größer“) */
-.lt-wrap:has(.lt-play) { max-width: min(1280px, 100%); }
+/* So groß wie der Player (Erwin, 17.11.2026: „genauso gross wie der normale player im bildschirm“):
+   volle Breite, Notenkasten mit 2 % Rand wie .notation-box */
+.lt-wrap:has(.lt-play) { max-width: 100%; }
 .lt-card:has(.lt-play) .lt-h { font-size: clamp(22px, 3.6vw, 34px); }
-.lt-card:has(.lt-play) .lt-play { padding: 18px 18px 12px; }
+.lt-card:has(.lt-play) .lt-play { padding: 18px 2% 12px; }
 .lt-card:has(.lt-play) .lt-meta { font-size: 15px; }
 .lt-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; opacity: 0.8; margin-bottom: 4px; }
 .lt-again { background: none; border: 1px solid var(--dl-line); color: inherit; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
@@ -17528,7 +17530,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-204816';
+  var DL_BUILD = '20261117-212055';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -27569,6 +27571,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   document.addEventListener('keydown', function(e) {
     if (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA') return;
+    // Level-Test offen: Tasten gehören dem Test, nicht der Übung dahinter (Erwin, 17.11.2026).
+    // Leertaste spielt bzw. stoppt das Beispiel der aktuellen Runde.
+    if (_lt && _lt.el && _lt.el.classList.contains('open')) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (_lt.btn && _lt.el.contains(_lt.btn)) { if (_lt.playing) _ltStop(); else _ltPlay(); }
+      }
+      return;
+    }
     if (e.code === 'Space') {
       e.preventDefault();
       if (!playing) startExercise(); else stopExercise();
