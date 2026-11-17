@@ -17530,7 +17530,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-212055';
+  var DL_BUILD = '20261117-212445';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21288,6 +21288,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Eingestuft (Erwin, 09.11.2026): „Too hard“ beim ersten Durchgang gleich 20 % langsamer.
     // Bereits abgeschlossene Übungen: zweimal Starttempo, dann einmal Endtempo (Rudiments ohne).
     if (entry.pl && fb === 'hard') return _placeSlower(ex, cur);
+    // Eingestufte Übungen laufen ab dem Einstufungstempo ALLE restlichen Stufen ab, auch bei „Too easy“
+    // (Erwin, 17.11.2026: „von 65 BPM auf Too easy direkt aufs Zieltempo“ — bei Grooves mit 10er-Stufen
+    // sprang Too easy 65 → 85 → 115). Erkannt über die Einstufungsregel selbst, damit es auch für
+    // schon Eingestufte gilt. Neue Übungen über dem Level behalten die normalen Too-easy-Sprünge.
+    if (fb === 'easy' && _cState && _cState.place && _placeInfo(ex, ex.cat, _cState.place).s > 0) return cur + 1;
     // Bekannte Übungen laufen ab dem eingestuften Tempo in den normalen Stufen bis zum Zieltempo (Erwin, 13.11.2026;
     // vorher zweimal Starttempo, dann Endtempo). Alte `pd`-Marken in gespeicherten Ständen zählen nicht mehr.
     if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(_exMinIdx(ex), cur - 1) : cur;
@@ -26167,10 +26172,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return best;
   }
   function _placeSlower(ex, cur) { return _placeNearest(ex, _exBpm(ex, cur) * 0.8, cur); }
+  // 17.11.2026 nach Erwins Unterricht („grooves etwas schneller, rudiments langsamer“): Grooves mit
+  // Level × 1,3 der Spanne (Level 30 → ca. 80 statt 70 BPM), Rudiment-Deckel 80 / Paradiddles 70 /
+  // Flams, Drags 60 (vorher 100 / 90 / 70 — ab Level 30 lag fast jedes Rudiment bei 99).
+  var PLACE_GROOVE_FAC = 1.3;
   function _placeTarget(ex, L) {
-    var n = _exSteps(ex), lo = _exBpm(ex, 0), hi = _exBpm(ex, n - 1), t = lo + (hi - lo) * L / 100;
+    var n = _exSteps(ex), lo = _exBpm(ex, 0), hi = _exBpm(ex, n - 1);
+    var pct = Math.min(100, ex.cat === 'grooves' ? L * PLACE_GROOVE_FAC : L), t = lo + (hi - lo) * pct / 100;
     if (ex.cat === 'rudiments') {
-      var cap = /flam|drag|ratamacue|ruff|lesson 25/i.test(ex.name) ? 70 : /paradiddle/i.test(ex.name) ? 90 : 100;
+      var cap = /flam|drag|ratamacue|ruff|lesson 25/i.test(ex.name) ? 60 : /paradiddle/i.test(ex.name) ? 70 : 80;
       t = Math.min(t, cap);
     }
     if (/shuffle/i.test(ex.catLabel || '')) t -= 15;
