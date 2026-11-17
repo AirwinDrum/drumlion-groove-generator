@@ -17530,7 +17530,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-212445';
+  var DL_BUILD = '20261117-231225';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21288,11 +21288,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Eingestuft (Erwin, 09.11.2026): „Too hard“ beim ersten Durchgang gleich 20 % langsamer.
     // Bereits abgeschlossene Übungen: zweimal Starttempo, dann einmal Endtempo (Rudiments ohne).
     if (entry.pl && fb === 'hard') return _placeSlower(ex, cur);
-    // Eingestufte Übungen laufen ab dem Einstufungstempo ALLE restlichen Stufen ab, auch bei „Too easy“
-    // (Erwin, 17.11.2026: „von 65 BPM auf Too easy direkt aufs Zieltempo“ — bei Grooves mit 10er-Stufen
-    // sprang Too easy 65 → 85 → 115). Erkannt über die Einstufungsregel selbst, damit es auch für
-    // schon Eingestufte gilt. Neue Übungen über dem Level behalten die normalen Too-easy-Sprünge.
-    if (fb === 'easy' && _cState && _cState.place && _placeInfo(ex, ex.cat, _cState.place).s > 0) return cur + 1;
+    // „Too easy“ gilt auch für eingestufte Übungen ganz normal (Erwin, 17.11.2026 — die kurz eingebaute
+    // Sonderregel „nur eine Stufe“ wieder entfernt).
     // Bekannte Übungen laufen ab dem eingestuften Tempo in den normalen Stufen bis zum Zieltempo (Erwin, 13.11.2026;
     // vorher zweimal Starttempo, dann Endtempo). Alte `pd`-Marken in gespeicherten Ständen zählen nicht mehr.
     if (fb === 'hard') return ((entry.fbHard || 0) >= 1) ? Math.max(_exMinIdx(ex), cur - 1) : cur;
