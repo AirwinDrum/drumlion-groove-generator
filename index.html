@@ -3037,6 +3037,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var total = 0;
     EXERCISES.forEach(function(ex) {
       if (ex.cat === 'fillins' && !ex.beats) return;
+      if (ex.bpms) { total += ex.bpms.length; return; }
       var minB = ex.minBPM, maxB = ex.maxBPM, s = ex.step;
       var normal = (!minB || !maxB || !s) ? 1 : Math.max(1, Math.floor((maxB - minB) / s) + 1);
       // letzte Stufe genau auf dem Endtempo, wie `_exSteps`
@@ -16446,6 +16447,36 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
   })();
 
+  // ── Rudiments in Stufen-Bändern (Erwin, 17.11.2026: „gleichmäßig verteilt erst 5 BPM Schritte, dann
+  // vierer, dann dreier und dann einer“ + „zweier Schritte hab ich vergessen“): Die Spanne vom Start- bis
+  // zum Endtempo wird in fünf gleich breite Bänder geteilt, darin 5er-, 4er-, 3er-, 2er- und 1er-Schritte.
+  // Unten geht es schnell, oben muss jedes BPM erarbeitet werden. Die Stufen stehen fertig in `ex.bpms`;
+  // `_exSteps`/`_exBpm` lesen sie von dort. Die Mischform von oben (3er bis 150, darüber 1er) hält
+  // `_RUD_TIER_OLD` für die Umrechnung gespeicherter Stufen fest (RANGE_MIGRATIONS 'r20261117-rudtier').
+  var RUD_TIER_STEPS = [5, 4, 3, 2, 1];
+  var _RUD_TIER_OLD = {};
+  function _rudTierList(min, max) {
+    var out = [min], cur = min, span = max - min, n = RUD_TIER_STEPS.length;
+    for (var k = 1; k <= n; k++) {
+      var b = (k === n) ? max : Math.round(min + span * k / n), st = RUD_TIER_STEPS[k - 1];
+      while (cur + st <= b) { cur += st; out.push(cur); }
+    }
+    if (out[out.length - 1] !== max) out.push(max);
+    return out;
+  }
+  (function _rudimentTiers() {
+    EXERCISES.forEach(function(e) {
+      var o = _RUD_MIX_OLD[e.id];
+      if (!o || e.cat !== 'rudiments') return;
+      var cur = { minBPM: e.minBPM, maxBPM: e.maxBPM, step: e.step };
+      if (e.warmup) cur.warmup = { minBPM: e.warmup.minBPM, step: e.warmup.step };
+      _RUD_TIER_OLD[e.id] = cur;
+      delete e.warmup;
+      e.minBPM = o.minBPM; e.maxBPM = o.maxBPM; e.step = 1;
+      e.bpms = _rudTierList(o.minBPM, o.maxBPM);
+    });
+  })();
+
   // Dev-Ranges aus diesem Browser auf die Übungen legen (siehe oben)
   (function _applyDevRanges() {
     try {
@@ -16457,7 +16488,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var r = o['#' + ex.id] || o[ex.catLabel || ex.cat];   // '#id' = einzelne Übung, direkt in der Dev-Zeile festgelegt
         if (!r || !(r.min > 0) || !(r.max > r.min) || !(r.step > 0)) return;
         ex.minBPM = r.min; ex.maxBPM = r.max; ex.step = r.step;
-        delete ex.warmup;
+        delete ex.warmup; delete ex.bpms;
         _devRangeActive = true;
       });
       if (_devRangeActive) _devRanges = o;
@@ -16816,6 +16847,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // sonst endete die Kategorie bei 115. Frühere Stufen behalten ihren Index.
   function _exToMax(ex) { return ex.cat === 'grooves' || ex.cat === 'fillins'; }
   function _exSteps(ex) {
+    if (ex.bpms) return ex.bpms.length;
     var minB = (ex.minBPM != null) ? ex.minBPM : sphmToBpm(ex.minSPHM, ex, ex.step);
     var maxB = (ex.maxBPM != null) ? ex.maxBPM : sphmToBpm(ex.maxSPHM, ex, ex.step);
     var normal = Math.max(1, Math.floor((maxB - minB) / ex.step) + 1);
@@ -16832,7 +16864,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // gehen, bei allen Übungen bis minimal 30 BPM. Negative Stufen-Indizes zählen vom
   // Starttempo abwärts (Schrittweite der Übung), geklemmt auf BPM_FLOOR.
   var BPM_FLOOR = 30;
-  function _exStepDown(ex) { return ex.warmup ? ex.warmup.step : ex.step; }
+  function _exStepDown(ex) { return ex.bpms ? (ex.bpms[1] - ex.bpms[0]) || 1 : ex.warmup ? ex.warmup.step : ex.step; }
   function _exMinIdx(ex) {
     var b0 = _exBpm(ex, 0), st = _exStepDown(ex);
     if (!(st > 0) || b0 <= BPM_FLOOR) return 0;
@@ -16843,6 +16875,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var b0 = _exBpm(ex, 0);
       return Math.max(Math.min(BPM_FLOOR, b0), b0 + stepIdx * _exStepDown(ex));
     }
+    if (ex.bpms) return ex.bpms[Math.min(stepIdx, ex.bpms.length - 1)];
     var minB = (ex.minBPM != null) ? ex.minBPM : sphmToBpm(ex.minSPHM, ex, ex.step);
     if (ex.warmup) {
       var wSteps = Math.floor((minB - ex.warmup.minBPM) / ex.warmup.step);
@@ -17196,6 +17229,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ,
     // Snare L 1/8 · Kick displaced startet bei 60 statt 40 (Erwin, 17.11.2026, COORD_MIN_BY_ID)
     { key: 'r20261117-coord465', old: _oldRuns([[465, 465, {minBPM:40, maxBPM:110, step:10}]]) }
+    ,
+    // Rudiments in fünf Bändern 5/4/3/2/1 statt Mischform 3er bis 150, darüber 1er (Erwin, 17.11.2026)
+    { key: 'r20261117-rudtier', old: _RUD_TIER_OLD }
   ];
   // [von-id, bis-id, alte Werte] ausschreiben; mit `cat` kommen die gedeckelten
   // Übungen dieser Säule dazu (Start und Schrittweite blieben, nur das Ende sank)
@@ -17365,7 +17401,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (_pp) {
         _pp.at = +p.place.at || 0;
         if (+p.place.tot > 0 && isFinite(+p.place.tot)) _pp.tot = +p.place.tot;
-        if (p.place.tv === 2) _pp.tv = 2;
+        if (p.place.tv === 2 || p.place.tv === 3) _pp.tv = +p.place.tv;
         p.place = _pp;
       } else delete p.place;
     }
@@ -17530,7 +17566,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261117-231225';
+  var DL_BUILD = '20261117-231936';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21510,7 +21546,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var n  = _exSteps(GROOVE);
           var lo = _exBpm(GROOVE, 0), hi = _exBpm(GROOVE, n - 1);
           var st = _stepIndexFor(GROOVE, tBpm) + 1;
-          var sw = GROOVE.warmup ? (GROOVE.warmup.step + '→' + GROOVE.step) : (GROOVE.step || '?');
+          var sw = GROOVE.bpms ? RUD_TIER_STEPS.join('→') : GROOVE.warmup ? (GROOVE.warmup.step + '→' + GROOVE.step) : (GROOVE.step || '?');
           txt = lo + '–' + hi + ' BPM · Stufe ' + st + '/' + n + ' · Schritt ' + sw;
         }
       } catch(e) {}
@@ -21540,7 +21576,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     o['#' + GROOVE.id] = v;
     try { localStorage.setItem(DEV_RANGES_KEY, JSON.stringify(o)); } catch(e) { _devRangeMsg('Konnte nicht speichern'); return; }
     var ex = EXERCISES.find(function(e) { return e.id === GROOVE.id; });
-    [ex, GROOVE].forEach(function(t) { if (t) { t.minBPM = v.min; t.maxBPM = v.max; t.step = v.step; delete t.warmup; } });
+    [ex, GROOVE].forEach(function(t) { if (t) { t.minBPM = v.min; t.maxBPM = v.max; t.step = v.step; delete t.warmup; delete t.bpms; } });
     _devRangeActive = true; _devRanges = o;
     if (playing) stopExercise();
     tBpm = Math.max(v.min, Math.min(v.max, tBpm));
@@ -26246,7 +26282,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     });
     P.tot = _placeTot(P);
-    P.tv = 2;
+    P.tv = 3;
     _masteredInvalidate();
     _shownLesson = null;
   }
@@ -26329,9 +26365,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _placeGate() {
     if (_gateBlocked) return;
     // Vor dem 13.11.2026 eingestuft: Der Kursumfang rechnete mit dem Schnelldurchlauf bekannter Übungen; neu berechnen
-    if (_cState && _cState.place && _cState.place.tv !== 2) {
+    // 17.11.2026: Rudiment-Bänder ändern die Stufenzahl → noch einmal neu rechnen (tv 3)
+    if (_cState && _cState.place && _cState.place.tv !== 3) {
       _cState.place.tot = _placeTot(_cState.place);
-      _cState.place.tv = 2;
+      _cState.place.tv = 3;
       _saveState();
       if (_syncReady()) _syncPush(false, true);
       _updateLevelUI();
@@ -27633,6 +27670,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     // ── Hilfsfunktion: BPM-Schritte ─────────────────────────
     function devExSteps(ex) {
+      if (ex.bpms) return ex.bpms.length;
       var minB = (ex.minBPM != null) ? ex.minBPM : ex.minSPHM;
       var maxB = (ex.maxBPM != null) ? ex.maxBPM : ex.maxSPHM;
       var s    = ex.step || 5;
@@ -27643,6 +27681,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return normal;
     }
     function devExBpm(ex, stepIdx) {
+      if (ex.bpms) return ex.bpms[Math.max(0, Math.min(stepIdx, ex.bpms.length - 1))];
       var minB = (ex.minBPM != null) ? ex.minBPM : ex.minSPHM;
       var b;
       if (ex.warmup) {
@@ -27823,7 +27862,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     function _rangeCalc(g, min, max, step) {
       var saved = GROOVE, ex = Object.assign({}, g.items[0]);
-      ex.minBPM = min; ex.maxBPM = max; ex.step = step; delete ex.warmup;
+      ex.minBPM = min; ex.maxBPM = max; ex.step = step; delete ex.warmup; delete ex.bpms;
       try {
         var n = _exSteps(ex), sec = 0;
         GROOVE = ex;
