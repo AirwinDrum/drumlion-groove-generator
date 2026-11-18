@@ -17392,10 +17392,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // aus dem Code neu aufbauen, Zahlen als Zahlen; Unbrauchbares fällt weg.
     if (p.place) {
       // (eigene Prüfung statt `_placeParse`: dessen Tabellen sind beim ersten Laden noch nicht angelegt)
-      var _pp = null, _pm = /^DL(\d{1,3})-([SGW])([SGW])([SGW])([SGWN])$/.exec(String(p.place.code || '').trim().toUpperCase());
+      var _pp = null, _pm = /^DL(\d{1,3})-([SGW])([SGW])([SGW])([SGWN])([SGW])?$/.exec(String(p.place.code || '').trim().toUpperCase());
       if (_pm && +_pm[1] >= 1 && +_pm[1] <= 100) {
         var _pL = +_pm[1], _pf = { S: 1, G: 0.75, W: 0.5 }, _plv = function(c) { return Math.max(1, Math.round(_pL * _pf[c])); };
-        _pp = { L: _pL, code: _pm[0], a: { grooves: _plv(_pm[2]), fillins: _plv(_pm[3]), rudiments: _plv(_pm[4]), coordination: _pL,
+        _pp = { L: _pL, code: _pm[0], a: { grooves: _plv(_pm[2]), fillins: _plv(_pm[3]), rudiments: _plv(_pm[4]), coordination: _pm[6] ? _plv(_pm[6]) : _pL,
                 notes: _pm[5] === 'N' ? Math.min(_pL, 10) : _plv(_pm[5]) } };
       }
       if (_pp) {
@@ -17566,7 +17566,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261118-180724';
+  var DL_BUILD = '20261118-181024';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -26038,7 +26038,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var LT_ACADEMY = 'https://www.drumlion.com/academy';
   var LT_MAX_ROUNDS = 10;
   // Reihenfolge der Runden (Erwin, 12.11.2026: 8–10 Runden): in den ersten 8 je zweimal Grooves, Fills, Lesen, Rudiments
-  var LT_SEQ = ['grooves', 'fillins', 'notes', 'grooves', 'rudiments', 'fillins', 'notes', 'rudiments', 'grooves', 'grooves'];
+  // 18.11.2026 (Erwin: „bring 2 der einfacheren übungen rein, nicht zu schnell“, Test gleich lang): zwei
+  // Coordination-Runden statt einer Groove- und einer Fill-Runde, beide vor Runde 8 (frühestes Ende).
+  var LT_SEQ = ['grooves', 'fillins', 'notes', 'coordination', 'rudiments', 'grooves', 'coordination', 'notes', 'rudiments', 'grooves'];
   var LT_PLAN_URL = 'https://www.drumlion.com/startplan';   // Systeme.io-Seite für den Startplan (Schritt 2); leer = Knopf ausgeblendet
   // Jede zweite Runde ein Groove, dazwischen reihum die anderen Säulen, soweit es sie im Level gibt
   // (Fills enden im Kurs bei Level 8, Notes bei 7). Coordination bleibt draußen: schon in Level 1
@@ -26160,8 +26162,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     }
     return null;
   }
+  // Coordination im Test (18.11.2026): nur zwei einfache Übungen in Achteln, ohne Triolen, 60 BPM bei
+  // Level 1 bis 90 BPM bei Level 100. Die Antworten zählen nur für die Coordination-Einstufung,
+  // nicht fürs Testlevel (Coordination hat schon früh Verschiebungen, das verzerrte das Level).
+  var LT_COORD = [469, 449];   // Ride R 1/4 · Snare L 1/8 · Ride R 1/4 · Kick displaced
+  function _ltPickCoord(L) {
+    var st = _lt.st;
+    for (var k = 0; k < LT_COORD.length; k++) {
+      var id = LT_COORD[k], ex = _ltEx(id);
+      if (!ex || !ex.beats || !ex.beats.length || st.used[id]) continue;
+      var bpm = Math.round((60 + 0.3 * L) / 5) * 5;
+      bpm = Math.max(_exBpm(ex, 0), Math.min(_exBpm(ex, _exSteps(ex) - 1), bpm));
+      return { cat: 'coordination', id: id, bpm: bpm, lv: L };
+    }
+    return null;
+  }
   function _ltPick(L, cat) {
     if (cat === 'rudiments') return _ltPickRud(L);
+    if (cat === 'coordination') return _ltPickCoord(L);
     var M = _ltMap(), lpl = LESSONS_PER_LEVEL, st = _lt.st, order = [0, -1, 1, -2, 2], k, r;
     var ok = function(x) { var ex = _ltEx(x.id); return x.cat === cat && ex && ex.beats && ex.beats.length && !ex.grid2 && !ex.bars && !st.used[x.id]; };
     var inLevel = function(lv, fresh) {
@@ -26240,16 +26258,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var rn = _ltAvg(st.skills.notes);
     if (rn == null) rn = { yes: 2, little: 1, no: 0 }[st.a.read];
     var read = (st.noread || st.a.read === 'no') ? 'N' : letter(rn);
-    return 'DL' + level + '-' + letter(_ltAvg(st.skills.grooves)) + letter(_ltAvg(st.skills.fillins)) + letter(_ltAvg(st.skills.rudiments)) + read;
+    // 5. Buchstabe Coordination (seit 18.11.2026; nur wenn eine Coordination-Runde gespielt wurde)
+    var co = _ltAvg(st.skills.coordination);
+    return 'DL' + level + '-' + letter(_ltAvg(st.skills.grooves)) + letter(_ltAvg(st.skills.fillins)) + letter(_ltAvg(st.skills.rudiments)) + read + (co == null ? '' : letter(co));
   }
   function _placeParse(code) {
-    var m = /^\s*DL(\d{1,3})-([SGW])([SGW])([SGW])([SGWN])\s*$/i.exec(code || '');
+    var m = /^\s*DL(\d{1,3})-([SGW])([SGW])([SGW])([SGWN])([SGW])?\s*$/i.exec(code || '');
     if (!m) return null;
     var L = +m[1];
     if (L < 1 || L > 100) return null;
     var lv = function(c) { return Math.max(1, Math.round(L * _placeFrac[c.toUpperCase()])); };
     return { L: L, code: code.trim().toUpperCase(), a: {
-      grooves: lv(m[2]), fillins: lv(m[3]), rudiments: lv(m[4]), coordination: L,
+      grooves: lv(m[2]), fillins: lv(m[3]), rudiments: lv(m[4]), coordination: m[6] ? lv(m[6]) : L,
       notes: m[5].toUpperCase() === 'N' ? Math.min(L, 10) : lv(m[5]) } };
   }
   // Umfang des eigenen Kurses: schon gespielte Lektionen + alles, was ab dem jetzigen Stand noch kommt
@@ -26764,7 +26784,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _ltRound() {
     var st = _lt.st, r = null, k;
     var want = LT_SEQ[st.round] || 'grooves';
-    if (want !== 'grooves') {
+    if (want === 'coordination') r = _ltPick(st.L, 'coordination');
+    if (!r && want !== 'grooves') {
       var s0 = Math.max(0, LT_OTHER.indexOf(want));
       for (k = 0; k < LT_OTHER.length && !r; k++) r = _ltPick(st.L, LT_OTHER[(s0 + k) % LT_OTHER.length]);
     }
@@ -26796,6 +26817,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var st = _lt.st, L = (st.cur && st.cur.lv) || st.L;
     _ltStop();
     var cat = st.cur && st.cur.cat;
+    // Coordination-Runde: nur die Coordination-Wertung, Testlevel und Grenzen bleiben unverändert
+    if (cat === 'coordination') {
+      if (ans !== 'noread') (st.skills.coordination = st.skills.coordination || []).push(ans === 'easy' ? 2 : ans === 'practice' ? 1 : 0);
+      st.fb = { easy: 'Nice. Next one.', practice: 'Good to know. Next one.', not: 'No problem. Next one.', noread: 'No problem. Next one.' }[ans];
+      st.round++;
+      if (st.round >= LT_MAX_ROUNDS || (st.round >= 8 && st.hi - st.lo <= 5)) { _ltResult(); return; }
+      _ltRound();
+      return;
+    }
     if (ans === 'noread') st.noread = true;
     else if (cat) (st.skills[cat] = st.skills[cat] || []).push(ans === 'easy' ? 2 : ans === 'practice' ? 1 : 0);
     if (ans === 'easy') st.lo = Math.max(st.lo, L);
@@ -26909,7 +26939,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var out = [], read = _ltAvg(st.skills.notes);
     if (read == null) read = { yes: 2, little: 1, no: 0 }[st.a.read];
     if (st.noread) read = 0;
-    [['Grooves', _ltAvg(st.skills.grooves)], ['Fills', _ltAvg(st.skills.fillins)], ['Rudiments', _ltAvg(st.skills.rudiments)], ['Reading', read]].forEach(function(p) {
+    [['Grooves', _ltAvg(st.skills.grooves)], ['Fills', _ltAvg(st.skills.fillins)], ['Rudiments', _ltAvg(st.skills.rudiments)], ['Coordination', _ltAvg(st.skills.coordination)], ['Reading', read]].forEach(function(p) {
       if (p[1] != null) out.push({ n: p[0], v: p[1], s: p[1] >= 1.5 ? 'Strong' : p[1] >= 0.75 ? 'Growing' : 'Your next step' });
     });
     return out;
