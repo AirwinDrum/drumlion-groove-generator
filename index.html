@@ -1900,7 +1900,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-ghost { padding: 14px 22px; border-radius: 999px; border: 1px solid var(--dl-line); background: transparent; color: inherit;
   font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
 .lt-link { background: none; border: 0; color: var(--dl-gold-ink); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; align-self: flex-start; }
-.lt-play { background: var(--dl-paper); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 12px 8px; }
+.lt-play { position: relative; background: var(--dl-paper); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 12px 8px; }
+/* Sichtbarer Einzähler im Test wie im Player (Erwin, 19.11.2026) */
+.lt-count { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; border-radius: 14px;
+  background: color-mix(in srgb, var(--dl-paper) 82%, transparent); color: var(--dl-gold-ink); font-weight: 800;
+  font-size: clamp(64px, 14vw, 160px); line-height: 1; pointer-events: none; font-variant-numeric: tabular-nums; }
+.lt-count.on { display: flex; }
+.lt-count.rest { opacity: 0.25; }
+.lt-kick-pro { color: var(--dl-gold-ink); }
 .lt-play svg { display: block; width: 100%; height: auto; }
 /* Spielrunden groß (Erwin, 12.11.2026: „mach den testplayer auf jeden fall viel größer“) */
 /* So groß wie der Player (Erwin, 17.11.2026: „genauso gross wie der normale player im bildschirm“):
@@ -17566,7 +17573,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261118-181024';
+  var DL_BUILD = '20261119-130527';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -26055,7 +26062,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     { id: 'gigs', q: 'How many gigs did you play in the last 6 months?', opts: [['0', 'None'], ['2', '1–3'], ['6', '4–10'], ['12', 'More than 10']],
       when: function(a) { return a.live && a.live !== 'never'; } },
     { id: 'read', q: 'Can you read drum notation?', opts: [['no', 'No'], ['little', 'A little'], ['yes', 'Yes']], when: function(a) { return a.years !== '0'; } },
-    { id: 'age', q: 'How old are you?', opts: [['u13', 'Under 13'], ['13', '13–17'], ['18', '18–29'], ['30', '30–49'], ['50', '50 or older']] },
+    { id: 'age', q: 'How old are you?', opts: [['u13', 'Under 13'], ['13', '13–17'], ['18', '18–29'], ['30', '30–49'], ['50', '50–64'], ['65', '65 or older']] },
     { id: 'genres', q: 'What do you love to play?', multi: true,
       opts: [['rock', 'Rock'], ['pop', 'Pop'], ['funk', 'Funk'], ['metal', 'Metal'], ['jazz', 'Jazz'], ['worship', 'Worship / Gospel'],
              ['hiphop', 'Hip-Hop'], ['latin', 'Latin'], ['blues', 'Blues'], ['other', 'Something else']] },
@@ -26176,6 +26183,33 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       return { cat: 'coordination', id: id, bpm: bpm, lv: L };
     }
     return null;
+  }
+  // Tempogrenze je Notenwert (Erwin, 19.11.2026: „vor allem zu schnell, teilweise gar nicht erreichbar
+  // schnell“): oben lief der Test mit den Kurs-Tempi von Level 80–100. Gilt nicht für die Profi-Checks.
+  var LT_CAP = { quarter: 160, eighth: 140, triplet: 120, sixteenth: 100, sixteenthTriplet: 75, quintuplet: 80, septuplet: 60, thirtysecond: 50 };
+  function _ltCap(ex, bpm) { var c = ex && LT_CAP[ex.noteValue]; return c ? Math.min(bpm, c) : bpm; }
+  // Angezeigte Zahl = wie gut im Vergleich zu allen Drummern (Erwin, 19.11.2026: ein Schüler landete bei
+  // 100/100 — „da bin nicht mal ich“). Die Einstufung im Kurs rechnet weiter mit dem Kurs-Level L
+  // (die passte); angezeigt wird bis 30 gleich, darüber halbiert (Kurs-Level 100 → 65). Über 65 nur mit
+  // den Profi-Checks am Ende, die bekommt, wer im Kurs-Level LT_PRO_FROM erreicht.
+  var LT_PRO_FROM = 90;
+  function _ltShown(L) { return L <= 30 ? L : Math.round(30 + (L - 30) / 2); }
+  function _ltShownFinal(st, L) {
+    var base = _ltShown(L), pts = st.pro ? st.pro.pts : 0;
+    return pts > 0 ? Math.min(100, Math.max(base, 65 + Math.round(35 * pts / 6))) : base;
+  }
+  // Drei Profi-Checks: schnelles Rudiment, schnellster Groove aus Level 100, Coordination in Sechzehnteln
+  function _ltProItems() {
+    var out = [{ cat: 'rudiments', id: 1023, bpm: 150, lv: 100, pro: 1 }];
+    var M = _ltMap(), lpl = LESSONS_PER_LEVEL, best = null;
+    for (var i = Math.max(0, M.length - lpl); i < M.length; i++) {
+      var x = M[i], ex = _ltEx(x.id);
+      if (x.cat !== 'grooves' || !ex || !ex.beats || !ex.beats.length || ex.grid2 || ex.bars || _lt.st.used[x.id]) continue;
+      if (!best || x.bpm > best.bpm) best = x;
+    }
+    if (best) out.push({ cat: 'grooves', id: best.id, bpm: best.bpm, lv: 100, pro: 1 });
+    out.push({ cat: 'coordination', id: 473, bpm: 100, lv: 100, pro: 1 });
+    return out.filter(function(r) { var ex = _ltEx(r.id); return ex && ex.beats && ex.beats.length; });
   }
   function _ltPick(L, cat) {
     if (cat === 'rudiments') return _ltPickRud(L);
@@ -26779,6 +26813,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _lt.svg.setAttribute('role', 'img');
     _lt.svg.setAttribute('aria-label', ex.name);
     play.appendChild(_lt.svg);
+    _lt.cnt = _ltAdd(play, 'div', 'lt-count');
     _ltDraw(null);
   }
   function _ltRound() {
@@ -26793,11 +26828,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!r) { _ltResult(); return; }
     st.used[r.id] = 1;
     if (r.cat === 'grooves') st.styles[_ltEx(r.id).catLabel] = 1;
+    r.bpm = _ltCap(_ltEx(r.id), r.bpm);
     st.cur = r;
     _ltLog('round_' + (st.round + 1));
     _ltProgress(_ltQs().length + st.round);
+    _ltAsk(r, st.round > 0, null, _ltAnswer);
+  }
+  // Karte „Could you play this?“ für eine Runde oder einen Profi-Check.
+  // Nach einer Antwort erscheint die nächste Übung, nach 2 s kommt der Einzähler (Erwin, 19.11.2026).
+  function _ltAsk(r, delay, kick, onAns) {
+    var st = _lt.st;
     var c = _ltCard();
     if (st.fb) _ltAdd(c, 'div', 'lt-fb', st.fb);
+    if (kick) _ltAdd(c, 'div', 'lt-kick lt-kick-pro', kick);
     _ltAdd(c, 'h2', 'lt-h', 'Could you play this?');
     _ltStage(c, r);
     var ans = _ltAdd(c, 'div', 'lt-ans');
@@ -26805,12 +26848,33 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var b = _ltAdd(ans, 'button', 'lt-opt', o[1]);
       b.type = 'button';
       _ltAdd(b, 'small', null, o[2]);
-      b.addEventListener('click', function() { _ltAnswer(o[0]); });
+      b.addEventListener('click', function() { onAns(o[0]); });
     });
     var nr = _ltAdd(c, 'button', 'lt-link', "I can't read this");
     nr.type = 'button';
-    nr.addEventListener('click', function() { _ltAnswer('noread'); });
-    _ltPlay();
+    nr.addEventListener('click', function() { onAns('noread'); });
+    clearTimeout(_lt.autoT);
+    if (!delay) { _ltPlay(); return; }
+    _lt.autoT = setTimeout(function() { if (_lt && _lt.st === st && st.cur === r && !_lt.playing) _ltPlay(); }, 2000);
+  }
+  // Profi-Checks: ändern Kurs-Level und Einstufung nicht, nur die angezeigte Zahl über 65
+  function _ltProRound() {
+    var st = _lt.st, p = st.pro;
+    if (p.i >= p.items.length) { st.proDone = true; _ltResult(); return; }
+    var r = p.items[p.i];
+    st.used[r.id] = 1;
+    st.cur = r;
+    _ltLog('pro_' + (p.i + 1));
+    _ltProgress(_ltQs().length + LT_MAX_ROUNDS - 1);
+    _ltAsk(r, true, 'Pro check ' + (p.i + 1) + ' of ' + p.items.length, _ltProAnswer);
+  }
+  function _ltProAnswer(ans) {
+    var st = _lt.st;
+    _ltStop();
+    st.pro.pts += ans === 'easy' ? 2 : ans === 'practice' ? 1 : 0;
+    st.pro.i++;
+    st.fb = { easy: 'Impressive. Next one.', practice: 'Close. Next one.', not: 'Fair enough. Next one.', noread: 'No problem. Next one.' }[ans];
+    _ltProRound();
   }
   // Wie ein Sehtest: „Easy“ schiebt die Untergrenze hoch, „Not yet“ die Obergrenze runter
   function _ltAnswer(ans) {
@@ -26882,9 +26946,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (ex.beats2 && ex.beats2.length) bars.push(ex.beats2);
     // Etwa LT_PLAY_SEC lang, 4–16 Takte, Fills in ganzen Phrasen (Groove + Fill)
     var nBars = Math.max(4, Math.min(16, Math.ceil(LT_PLAY_SEC / (bpb * qd)))), reps = Math.ceil(nBars / bars.length);
+    var cq = [];
     _sbOnBus(bus, function() {
-      for (var c = 0; c < bpb; c++) playCountClick(c === 0, 1, t + c * qd);
-      t += bpb * qd;
+      // Einzähler wie im Player: ab 60 BPM „1 – 2 – 1 2 3 4“, darunter „1 2 3 4“; andere Taktarten in ganzen Takten
+      var seq = [];
+      if (bpb === 4 && r.bpm >= 60) seq = ['1', null, '2', null, '1', '2', '3', '4'];
+      else for (var b0 = 0; b0 < (r.bpm >= 60 ? 2 : 1); b0++) for (var z = 1; z <= bpb; z++) seq.push(String(z));
+      seq.forEach(function(n, i) {
+        var at = t + i * qd;
+        if (n) { playCountClick(n === '1', 1, at); playCountVoice(n, at); }
+        cq.push({ t: at, n: n });
+      });
+      t += seq.length * qd;
       for (var k = 0; k < reps; k++) {
         var off = 0;
         bars.forEach(function(bar) {
@@ -26900,7 +26973,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         });
       }
     });
-    _lt.bus = bus; _lt.q = q; _lt.end = t; _lt.playing = true; _lt.cur = -2;
+    _lt.bus = bus; _lt.q = q; _lt.end = t; _lt.playing = true; _lt.cur = -2; _lt.cq = cq; _lt.cn = undefined;
+    _lt.start = q.length ? q[0].t : t;
     if (_lt.btn) _lt.btn.textContent = '■ Stop';
     cancelAnimationFrame(_lt.raf);
     _lt.raf = requestAnimationFrame(_ltTick);
@@ -26910,12 +26984,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var now = aCtx.currentTime - _audioLatency(), cur = -1;
     for (var i = 0; i < _lt.q.length && _lt.q[i].t <= now; i++) cur = _lt.q[i].cur;
     if (cur !== _lt.cur) { _lt.cur = cur; _ltDraw(cur >= 0 ? cur : null); }
+    // Einzähl-Ziffer groß über den Noten, bis die erste Note kommt
+    var cn = null;
+    if (_lt.cq && now < _lt.start) for (var j = 0; j < _lt.cq.length && _lt.cq[j].t <= now; j++) cn = _lt.cq[j].n || '·';
+    if (cn !== _lt.cn && _lt.cnt) {
+      _lt.cn = cn;
+      _lt.cnt.textContent = cn || '';
+      _lt.cnt.classList.toggle('on', !!cn);
+      _lt.cnt.classList.toggle('rest', cn === '·');
+    }
     if (now > _lt.end + 0.15) { _ltStop(); return; }
     _lt.raf = requestAnimationFrame(_ltTick);
   }
   function _ltStop() {
     if (!_lt) return;
     cancelAnimationFrame(_lt.raf);
+    clearTimeout(_lt.autoT);
+    if (_lt.cnt) { _lt.cnt.classList.remove('on'); _lt.cn = undefined; }
     if (_lt.bus && aCtx) {
       var b = _lt.bus;
       try { b.gain.cancelScheduledValues(aCtx.currentTime); b.gain.setValueAtTime(0, aCtx.currentTime); } catch (e) {}
@@ -26967,12 +27052,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     return out;
   }
   function _ltResult() {
-    var st = _lt.st, level = _ltLevel(st), band = _ltBand(level);
+    var st = _lt.st, L = _ltLevel(st);
+    if (!st.proDone && !st.pro && L >= LT_PRO_FROM && st.a.years !== '0') {
+      st.pro = { i: 0, pts: 0, items: _ltProItems() };
+      st.fb = "You're near the top. Three pro checks to finish.";
+      _ltProRound();
+      return;
+    }
+    // level = angezeigte Zahl; L = Kurs-Level für Code und Einstufung
+    var level = _ltShownFinal(st, L), band = _ltBand(level);
     st.level = level;
     _ltLog('result', level);
     _ltProgress(999);
-    st.code = _ltCode(st, level);
-    try { localStorage.setItem(LT_KEY, JSON.stringify({ v: 2, level: level, code: st.code, at: Date.now(), a: st.a })); } catch (e) {}
+    st.code = _ltCode(st, L);
+    try { localStorage.setItem(LT_KEY, JSON.stringify({ v: 2, level: L, shown: level, code: st.code, at: Date.now(), a: st.a })); } catch (e) {}
     var c0 = _ltCard();
     // Spannung vor der Zahl (Erwin, 09.11.2026): kurz „rechnen“, dann landet das Level
     var kick = _ltAdd(c0, 'div', 'lt-kick', 'Calculating your level');
@@ -26989,7 +27082,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       sc.classList.add('lt-land');
       calcLine.remove();
       kick.textContent = 'Your Drumlion level';
-      setTimeout(function() { if (alive()) _ltResultRest(st, level, band, c0); }, calm ? 0 : 650);
+      setTimeout(function() { if (alive()) _ltResultRest(st, level, band, c0, L); }, calm ? 0 : 650);
     }
     (function roll() {
       if (!alive()) return;
@@ -27005,12 +27098,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setTimeout(roll, 55 + 240 * Math.pow(e / total, 4));   // wird zum Ende hin langsamer
     })();
   }
-  function _ltResultRest(st, level, band, c0) {
+  function _ltResultRest(st, level, band, c0, L) {
     var c = _ltAdd(c0, 'div', 'lt-rest');
     if (st.a.years !== '0') _ltAdd(c, 'div', 'lt-type', _ltType(st));
     _ltAdd(c, 'h2', 'lt-h', band[1]);
     _ltAdd(c, 'p', 'lt-p', band[2] + (LT_GOAL[st.a.goal] ? ' ' + LT_GOAL[st.a.goal] : ''));
-    if (level >= LT_PLACE_MIN) _ltAdd(c, 'p', 'lt-p', 'The Academy covers everything, at your speed: what you already know goes by quickly, and new material starts slowly.');
+    if (L >= LT_PLACE_MIN) _ltAdd(c, 'p', 'lt-p', 'The Academy covers everything, at your speed: what you already know goes by quickly, and new material starts slowly.');
     var facts = _ltAdd(c, 'div', 'lt-facts');
     _ltFacts(st.a).forEach(function(f) { _ltAdd(facts, 'span', 'lt-fact', f); });
     var prof = _ltProfile(st);
@@ -27023,7 +27116,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     }
     var row = _ltAdd(c, 'div', 'lt-row');
-    if (_lt.academy) { _placeResultButtons(row, st.code, level); return; }
+    if (_lt.academy) { _placeResultButtons(row, st.code, L); return; }
     if (LT_PLAN_URL) {
       var plan = _ltAdd(row, 'a', 'lt-go', 'Get my start plan by email');
       plan.href = LT_PLAN_URL + (LT_PLAN_URL.indexOf('?') === -1 ? '?' : '&') + 'level=' + level + '&code=' + encodeURIComponent(st.code);
