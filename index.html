@@ -18095,7 +18095,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261119-151722';
+  var DL_BUILD = '20261119-175428';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19154,6 +19154,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_audioBusy()) _aWasHidden = false;
     _audioWake();
     loadWavs();
+    _vLoadAll(VOICE_BASE);
     _volHint();
   }
 
@@ -19475,6 +19476,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Zählende Stimme via Web Speech API (best-effort). Dieselbe natürliche
   // Stimme wie die Ansage „Timing training" (_sayPickVoice), sonst Standard.
   function speakBeat(num, when) {
+    if (aCtx && _vHas(num)) { _vPlay(num, when); return; }
     if (!aCtx || typeof window.speechSynthesis === 'undefined') return;
     var delay = Math.max(0, (when - aCtx.currentTime) * 1000 - 40);
     setTimeout(function() {
@@ -19501,6 +19503,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
     // Zählstimme zählt die Zählzeiten, die Unterteilung klickt weiter
     if (metronomeVoice && posInQ === 0) speakBeat(beatInBar + 1, when);
+    // … und spricht die Unterteilung der Click-Einstellung mit („1 and“, „1 e and a“, „1 and a“), solange
+    // höchstens etwa 6 Silben pro Sekunde fallen (Erwin, 19.11.2026)
+    if (metronomeVoice && posInQ === 0) {
+      var _sub = { eighth: [null, 'and'], sixteenth: [null, 'e', 'and', 'a'], triplet: [null, 'and', 'a'] }[metronomeDiv];
+      if (_sub && qSec / _sub.length >= 0.17) for (var _si = 1; _si < _sub.length; _si++) _vPlay(_sub[_si], when + qSec * _si / _sub.length, 0.8);
+    }
     if (metronomeDiv === 'quarter') {
       if (posInQ === 0) playCountClick(accent, H, when);
     } else if (metronomeDiv === 'eighth') {
@@ -21037,8 +21045,60 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   var COUNT_FREQS = { '1': 880, '2': 660, '3': 660, '4': 660 }; // 1 = höher (Akzent)
 
+  // ── Drumlion-Stimme (Erwin, 19.11.2026: „bau alles ein“) ───────────────
+  // ElevenLabs-Stimme „Jessica“, Dateien voice/<sprache>_<wort>.mp3 im Repo (gleicher Host, kein fremder Dienst).
+  // Geladen wird nur die eingestellte Sprache: Grundsatz (Zahlen, Silben, Ansagen) beim ersten Ton, die
+  // Tempo-Zahlen der Blöcke beim Start der Übung. Stille am Anfang wird übersprungen, damit das Wort auf dem
+  // Schlag einsetzt. Fehlt eine Datei (noch nicht geladen), bleibt es beim alten Zählton bzw. der Browserstimme.
+  var VOICE_DIR = 'voice/', VOICE_LANGS = ['en', 'de', 'es', 'pt', 'fr'];
+  var VOICE_BASE = ['1','2','3','4','5','6','7','8','9','10','11','12','e','and','a',
+                    'short_break','next_round','last_round','get_ready','timing_training','well_done','bpm'];
+  var _vBuf = {}, _vReq = {}, _vSrcs = [];
+  function _vLang() { return VOICE_LANGS.indexOf(DL_LANG) >= 0 ? DL_LANG : 'en'; }
+  function _vName(w) { return /^\d+$/.test(w) && +w > 12 ? 'n' + w : w; }   // Tempo-Zahlen heißen n95 …
+  function _vKey(w) { return _vLang() + '_' + _vName(String(w)); }
+  function _vLoad(w) {
+    var k = _vKey(w);
+    if (_vBuf[k] || _vReq[k] || !aCtx) return;
+    _vReq[k] = 1;
+    fetch(VOICE_DIR + k + '.mp3').then(function(r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function(ab) {
+      aCtx.decodeAudioData(ab, function(b) {
+        // Einsatz suchen: erstes Sample über 3 % Aussteuerung, 10 ms Vorlauf
+        var d = b.getChannelData(0), i = 0, j = d.length - 1;
+        while (i < d.length && Math.abs(d[i]) < 0.03) i++;
+        while (j > i && Math.abs(d[j]) < 0.02) j--;
+        var off = Math.max(0, i / b.sampleRate - 0.01);
+        _vBuf[k] = { b: b, off: off, dur: Math.max(0.05, (j + 1) / b.sampleRate - off) };
+      }, function() { _vReq[k] = 0; });
+    }).catch(function() { _vReq[k] = 0; });
+  }
+  function _vLoadAll(list) { list.forEach(_vLoad); }
+  function _vHas(w) { return !!_vBuf[_vKey(w)]; }
+  // Spielt ein Wort zur Audio-Zeit `when`; Rückgabe: hörbare Dauer in s (0 = nicht geladen)
+  function _vPlay(w, when, vol) {
+    var v = aCtx && _vBuf[_vKey(w)];
+    if (!v) return 0;
+    var src = aCtx.createBufferSource(), g = aCtx.createGain();
+    src.buffer = v.b; g.gain.value = vol == null ? 1 : vol;
+    src.connect(g); g.connect(_aOut());
+    var t = Math.max(when || 0, aCtx.currentTime);
+    src.start(t, v.off);
+    _vSrcs.push(src);
+    src.onended = function() { var i = _vSrcs.indexOf(src); if (i >= 0) _vSrcs.splice(i, 1); };
+    return v.dur;
+  }
+  // Mehrere Wörter hintereinander („Short break.“ „Next round.“ „95“ „BPM“); false, wenn eins fehlt
+  function _vSeq(words, when, gap) {
+    if (!words.every(_vHas)) return false;
+    var t = when;
+    words.forEach(function(w, i) { t += _vPlay(w, t) + (gap == null ? 0.12 : gap); });
+    return true;
+  }
+  function _vStopAll() { _vSrcs.splice(0).forEach(function(s) { try { s.stop(); } catch (e) {} }); }
+
   function playCountVoice(num, when) {
     if (!aCtx || !num) return;
+    if (_vHas(num)) { _vPlay(num, (when !== undefined ? when : aCtx.currentTime) + CLICK_OFFSET); return; }
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     t += CLICK_OFFSET; // gleiche Kompensation wie Click
     var freq = COUNT_FREQS[num] || 660;
@@ -21193,6 +21253,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     } catch(e) {}
   }
   function _sayCancel() {
+    _vStopAll();
     if (_sayTimer) { clearTimeout(_sayTimer); _sayTimer = null; }
     try { if (_sayOk() && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); } catch(e) {}
   }
@@ -21414,6 +21475,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _sayUnlock();
     blocks  = getBlocks(tBpm);
     pauses  = getPauses(tBpm, blocks.length);
+    _vLoadAll(blocks.map(function(b) { return String(b.bpm); }));
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
     _syncOneBlock(); _progZones(); _progSet(0); _progDur = 0;
     _noteShow(null);   // Notenname vom Antippen ausblenden
@@ -21474,7 +21536,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setTimeout(function() { if (playing && phase === 'countIn') showCountIn(s.num); }, _showIn);
       if (s.click) playCountClick(s.accent, undefined, ciNextTime);
       if (s.num) playCountVoice(s.num, ciNextTime);
-      if (s.num && metronomeVoice) speakBeat(s.num, ciNextTime);   // Zählstimme zählt mit ein
+      if (s.num && metronomeVoice && !_vHas(s.num)) speakBeat(s.num, ciNextTime);   // Zählstimme zählt mit ein (mit Drumlion-Stimme spricht schon playCountVoice)
     }
 
     // Lookahead-Scheduler für Count-In (eliminiert setInterval-Jitter)
@@ -21690,8 +21752,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       // Ansage vor den ersten Click-only-Takten des Blocks: in der Phrase davor
       if (bt === 0 && isTimingBlock && (br + 1) * barsPerPhrase === TIMING_START_BAR && totalBars > TIMING_START_BAR) {
         var phraseSec = phraseUnits * tickSecAt(when);
-        _sayAt('Timing training', when + phraseSec - Math.min(phraseSec, 1.6));
+        var _tt = when + phraseSec - Math.min(phraseSec, 1.6);
+        if (!_vPlay('timing_training', _tt)) _sayAt('Timing training', _tt);
       }
+      // „And back in.“ vor dem Wiedereinsetzen des Grooves: auf Erwins Wunsch weggelassen (19.11.2026)
       // Der Hinweis wechselt an derselben Taktgrenze wie die Infozeile.
       _visQ.push({ t: when, bt: bt, info: _info,
                    cue: (_info != null) ? cueFor(br) : undefined,
@@ -21769,8 +21833,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     setBadge('pause'); setInfo(_t('Next: {bpm} BPM', { bpm: nb }));
     renderNot(-1, false); bIdx++; renderBlocksBar();
     var left = pd; setCountdown(left);
-    // Groß über den Noten: „Next round · 8 · 90 BPM“, dazu Ansage (Erwin, 19.11.2026). Gesprochen vorerst mit
-    // der Browserstimme; Erwins ElevenLabs-Aufnahmen kommen später (Skript: Drumlion/Stimme/elevenlabs-skript.md, nicht im Repo).
+    // Groß über den Noten: „Next round · 8 · 90 BPM“, dazu Ansage (Erwin, 19.11.2026). Gesprochen mit der
+    // Drumlion-Stimme (voice/), sonst Browserstimme (Skript: Drumlion/Stimme/elevenlabs-skript.md, nicht im Repo).
     var ov = document.getElementById('dgPauseOv');
     if (ov) {
       document.getElementById('dgPauseK').textContent = _t(last ? 'Last round' : 'Next round');
@@ -21778,12 +21842,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       document.getElementById('dgPauseB').textContent = nb + ' BPM';
       ov.style.display = 'flex';
     }
-    if (aCtx && pd >= 5) _sayAt('Short break. ' + (last ? 'Last round: ' : 'Next round: ') + nb + ' BPM.', aCtx.currentTime + 0.3);
+    if (aCtx && pd >= 5 && !_vSeq(['short_break', last ? 'last_round' : 'next_round', String(nb), 'bpm'], aCtx.currentTime + 0.3))
+      _sayAt('Short break. ' + (last ? 'Last round: ' : 'Next round: ') + nb + ' BPM.', aCtx.currentTime + 0.3);
     if (intId) clearInterval(intId);
     intId = setInterval(function() {
       left--; setCountdown(left);
       var n = document.getElementById('dgPauseN'); if (n && left > 0) n.textContent = String(left);
-      if (left === 3 && aCtx) _sayAt('Get ready.', aCtx.currentTime);
+      if (left === 3 && aCtx && !_vPlay('get_ready', aCtx.currentTime)) _sayAt('Get ready.', aCtx.currentTime);
       if (left <= 0) { clearInterval(intId); hidePauseOv(); startCountIn(); }
     }, 1000);
   }
@@ -21986,6 +22051,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_freeMode) { _finishFree(); return; }
     playDoneSound();
     playing=false; _visReset(); phase='done'; bIdx=blocks.length;
+    if (aCtx) _vPlay('well_done', aCtx.currentTime + 0.7);
     setBadge('done'); setInfo('Great job!'); setCountdown(0);
     renderBlocksBar(); renderNot(-1, false); stopTotal();
     if (_progDur) { _progDur = 0; _progSet(1); }   // Linie voll stehen lassen
