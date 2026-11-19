@@ -3719,7 +3719,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       lines: [_t('{name} — goal tempo of {bpm} BPM reached.', { name: ex.name, bpm: goal }),
               _t('This exercise is finished for good. On to new ones!')],
       button: _t('Keep going!'),
-      autoMs: 0
+      autoMs: 4000   // nur wenige Sekunden stehen lassen (Erwin, 19.11.2026), vorher blieb es bis zum Klick
     });
   }
 
@@ -18095,7 +18095,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261119-135844';
+  var DL_BUILD = '20261119-151722';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21770,7 +21770,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     renderNot(-1, false); bIdx++; renderBlocksBar();
     var left = pd; setCountdown(left);
     // Groß über den Noten: „Next round · 8 · 90 BPM“, dazu Ansage (Erwin, 19.11.2026). Gesprochen vorerst mit
-    // der Browserstimme; Erwins ElevenLabs-Aufnahmen kommen später (Skript: docs/elevenlabs-skript.md).
+    // der Browserstimme; Erwins ElevenLabs-Aufnahmen kommen später (Skript: Drumlion/Stimme/elevenlabs-skript.md, nicht im Repo).
     var ov = document.getElementById('dgPauseOv');
     if (ov) {
       document.getElementById('dgPauseK').textContent = _t(last ? 'Last round' : 'Next round');
