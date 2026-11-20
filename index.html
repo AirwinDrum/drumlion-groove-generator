@@ -1914,10 +1914,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-play { position: relative; background: var(--dl-paper); border: 1px solid var(--dl-line); border-radius: 14px; padding: 12px 12px 8px; }
 /* Sichtbarer Einzähler im Test wie im Player (Erwin, 19.11.2026) */
 .lt-count { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; border-radius: 14px;
-  background: color-mix(in srgb, var(--dl-paper) 82%, transparent); color: var(--dl-gold-ink); font-weight: 800;
-  font-size: clamp(64px, 14vw, 160px); line-height: 1; pointer-events: none; font-variant-numeric: tabular-nums; }
+  pointer-events: none; z-index: 5; font-size: clamp(64px, 20vw, 124px); font-weight: 700; line-height: 1;
+  color: var(--dl-gold-ink); text-shadow: 0 0 30px rgba(201,168,76,1), 0 2px 8px rgba(0,0,0,0.9); font-variant-numeric: tabular-nums; }
 .lt-count.on { display: flex; }
-.lt-count.rest { opacity: 0.25; }
+.lt-count.rest { opacity: 0.15; }
+/* Kopfzeile und Fortschrittslinie wie im Player (Erwin, 20.11.2026: „übernimm alle gestaltungspunkte aus dem
+   normalen player in den level test“ → Quiz: Kopfzeile, Einzähler, Fortschrittslinie) */
+.lt-head { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; align-items: center; gap: 10px; margin-bottom: 6px; }
+.lt-head-bpm { justify-self: start; font-size: clamp(17px, 3vw, 24px); font-weight: 600; white-space: nowrap; }
+.lt-head-c { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; overflow: hidden; }
+.lt-head-cat { font-size: clamp(11px, 1.8vw, 15px); text-transform: uppercase; letter-spacing: 2px; line-height: 1; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.lt-head-name { font-size: clamp(24px, 4.5vw, 42px); font-weight: 700; color: var(--dl-gold-ink); line-height: 1; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.lt-head .lt-again { justify-self: end; }
+@media (max-width: 480px) { .lt-head { grid-template-columns: auto minmax(0, 1fr) auto; } }
+.lt-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; pointer-events: none; border-radius: 0 0 14px 14px; overflow: hidden; }
+.lt-prog-fill { height: 100%; width: 100%; background: #C9A84C; transform: scaleX(0); transform-origin: left center; }
 .lt-kick-pro { color: var(--dl-gold-ink); }
 .lt-play svg { display: block; width: 100%; height: auto; }
 /* Spielrunden groß (Erwin, 12.11.2026: „mach den testplayer auf jeden fall viel größer“) */
@@ -18095,7 +18108,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261119-183952';
+  var DL_BUILD = '20261120-152005';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -27339,8 +27352,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   // Notenbild mit Abspielknopf
   function _ltStage(c, r) {
-    var ex = _ltEx(r.id), play = _ltAdd(c, 'div', 'lt-play'), meta = _ltAdd(play, 'div', 'lt-meta');
-    _ltAdd(meta, 'span', null, (ex.cat === 'rudiments' ? ex.name : (ex.catLabel || '')) + ' · ' + Math.round(r.bpm) + ' BPM');
+    var ex = _ltEx(r.id), play = _ltAdd(c, 'div', 'lt-play'), meta = _ltAdd(play, 'div', 'lt-head');
+    // Wie die Kopfzeile im Player: Tempo links, Kategorie klein + Name groß in Gold mittig, Abspielknopf rechts
+    _ltAdd(meta, 'span', 'lt-head-bpm', Math.round(r.bpm) + ' BPM');
+    var hc = _ltAdd(meta, 'div', 'lt-head-c');
+    _ltAdd(hc, 'span', 'lt-head-cat', ex.cat === 'rudiments' ? 'Rudiments' : (ex.catLabel || ''));
+    _ltAdd(hc, 'span', 'lt-head-name', ex.name);
     var again = _ltAdd(meta, 'button', 'lt-again', '▶ Play');
     again.type = 'button';
     again.addEventListener('click', function() { if (_lt.playing) _ltStop(); else _ltPlay(); });
@@ -27350,6 +27367,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _lt.svg.setAttribute('aria-label', ex.name);
     play.appendChild(_lt.svg);
     _lt.cnt = _ltAdd(play, 'div', 'lt-count');
+    _lt.prog = _ltAdd(_ltAdd(play, 'div', 'lt-prog'), 'div', 'lt-prog-fill');
     _ltDraw(null);
   }
   function _ltRound() {
@@ -27528,6 +27546,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _lt.cnt.textContent = cn || '';
       _lt.cnt.classList.toggle('on', !!cn);
       _lt.cnt.classList.toggle('rest', cn === '·');
+      if (cn && cn !== '·') { _lt.cnt.style.animation = 'none'; _lt.cnt.offsetHeight; _lt.cnt.style.animation = 'dgPulse 0.28s ease-out'; }
+    }
+    // Fortschrittslinie unter den Noten, ab der ersten Note bis zum Ende
+    if (_lt.prog) {
+      var pr = _lt.end > _lt.start ? Math.max(0, Math.min(1, (now - _lt.start) / (_lt.end - _lt.start))) : 0;
+      _lt.prog.style.transform = 'scaleX(' + pr.toFixed(4) + ')';
     }
     if (now > _lt.end + 0.15) { _ltStop(); return; }
     _lt.raf = requestAnimationFrame(_ltTick);
@@ -27537,6 +27561,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     cancelAnimationFrame(_lt.raf);
     clearTimeout(_lt.autoT);
     if (_lt.cnt) { _lt.cnt.classList.remove('on'); _lt.cn = undefined; }
+    if (_lt.prog) _lt.prog.style.transform = 'scaleX(0)';
     if (_lt.bus && aCtx) {
       var b = _lt.bus;
       try { b.gain.cancelScheduledValues(aCtx.currentTime); b.gain.setValueAtTime(0, aCtx.currentTime); } catch (e) {}
