@@ -974,6 +974,10 @@ body.one-block #dgTotal { display: none !important; }
   content: ''; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px;
   border: solid #0a0a0a; border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
+/* Lautstärke der Zählstimme (Erwin, 25.11.2026) */
+.metro-voice-vol { display: flex; align-items: center; gap: 8px; padding: 6px 10px 8px; font-size: 12px; color: rgba(var(--dl-ink-rgb),0.7); }
+.metro-voice-vol input { flex: 1; min-width: 70px; accent-color: #C9A84C; }
+.metro-voice-vol output { width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
 /* Schmale Displays zeigen nur das Kürzel — dort steht „+V" für die Zählstimme */
 @media (max-width: 619px) { .metro-div-trigger.voice .metro-div-glyph::after { content: ' +V'; } }
 
@@ -2409,6 +2413,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               <button class="metro-div-opt metro-voice-opt" id="dgMetroVoice" role="menuitemcheckbox" aria-checked="false">
                 <span class="opt-glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>Counting voice<span class="metro-voice-box" aria-hidden="true"></span>
               </button>
+              <label class="metro-voice-vol"><span>Volume</span><input type="range" id="dgVoiceVol" min="0" max="150" step="5" value="100" aria-label="Counting voice volume"><output id="dgVoiceVolV">100 %</output></label>
             </div>
           </div>
         </div>
@@ -2985,6 +2990,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ["Septuplets", "Septolen", "Septillos", "Septinas", "Septolets"],
     ["Thirty-second", "Zweiunddreißigstel", "Fusas", "Fusas", "Triples croches"],
     ["Click subdivision (keys 1–8)", "Click-Unterteilung (Tasten 1–8)", "Subdivisión del click (teclas 1–8)", "Subdivisão do click (teclas 1–8)", "Subdivision du click (touches 1–8)"],
+    ["Volume", "Lautstärke", "Volumen", "Volume", "Volume"],
+    ["Counting voice volume", "Lautstärke der Zählstimme", "Volumen de la voz", "Volume da voz", "Volume de la voix"],
     ["Counting voice", "Zählstimme", "Voz que cuenta", "Voz de contagem", "Voix qui compte"],
     ["Voice", "Stimme", "voz", "voz", "voix"],
     ["Songs", "Songs", "Canciones", "Músicas", "Morceaux"],
@@ -3357,6 +3364,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var METRO_N = { quintuplet: 5, sextuplet: 6, septuplet: 7, thirtysecond: 8 };
   // Tasten 1–8 = Klicks pro Viertel (Erwin, 12.11.2026)
   var METRO_KEYS = { '1': 'quarter', '2': 'eighth', '3': 'triplet', '4': 'sixteenth', '5': 'quintuplet', '6': 'sextuplet', '7': 'septuplet', '8': 'thirtysecond' };
+  var _VOICE_VOL_KEY = 'drumlion_v1_voicevol';
+  var _voiceVol = (function() { try { var v = parseInt(localStorage.getItem(_VOICE_VOL_KEY), 10); if (v >= 0 && v <= 150) return v / 100; } catch (e) {} return 1; })();
   var metronomeVoice = false;   // Zählstimme „1 2 3 4" zusätzlich zur Unterteilung (20.10.2026)
 
   function updateMetroBtn() {
@@ -18812,7 +18821,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-142539';
+  var DL_BUILD = '20261125-162115';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20233,7 +20242,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Zählende Stimme via Web Speech API (best-effort). Dieselbe natürliche
   // Stimme wie die Ansage „Timing training" (_sayPickVoice), sonst Standard.
   function speakBeat(num, when) {
-    if (aCtx && _vHas(num)) { _vPlay(num, when); return; }
+    if (aCtx && _vHas(num)) { _vPlay(num, when, _voiceVol); return; }
     if (!aCtx || typeof window.speechSynthesis === 'undefined') return;
     var delay = Math.max(0, (when - aCtx.currentTime) * 1000 - 40);
     setTimeout(function() {
@@ -20242,7 +20251,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var u = new SpeechSynthesisUtterance(String(num));
         var v = (typeof _sayPickVoice === 'function') ? _sayPickVoice() : null;
         if (v) { u.voice = v; u.lang = v.lang; }
-        u.rate = 2.5; u.pitch = 1.1; u.volume = 1.0;
+        u.rate = 2.5; u.pitch = 1.1; u.volume = Math.min(1, _voiceVol);
+        if (_voiceVol <= 0) return;
         speechSynthesis.cancel();
         speechSynthesis.speak(u);
       } catch (e) {}
@@ -20263,7 +20273,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Mit Jessica auch die Unterteilung der Click-Einstellung („1 and“, „1 e and a“, „1 and a“), höchstens ~6 Silben/s
     if (metronomeVoice && posInQ === 0 && _vHas('and')) {
       var _sub = { eighth: [null, 'and'], sixteenth: [null, 'e', 'and', 'a'], triplet: [null, 'and', 'a'] }[metronomeDiv];
-      if (_sub && qSec / _sub.length >= 0.17) for (var _si = 1; _si < _sub.length; _si++) _vPlay(_sub[_si], when + qSec * _si / _sub.length, 0.8);
+      if (_sub && qSec / _sub.length >= 0.17) for (var _si = 1; _si < _sub.length; _si++) _vPlay(_sub[_si], when + qSec * _si / _sub.length, 0.8 * _voiceVol);
     }
     if (metronomeDiv === 'quarter') {
       if (posInQ === 0) playCountClick(accent, H, when);
@@ -21849,7 +21859,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   function playCountVoice(num, when) {
     if (!aCtx || !num) return;
-    if (_vHas(num)) { _vPlay(num, (when !== undefined ? when : aCtx.currentTime) + CLICK_OFFSET); return; }
+    if (_vHas(num)) { _vPlay(num, (when !== undefined ? when : aCtx.currentTime) + CLICK_OFFSET, _voiceVol); return; }
     var t = (when !== undefined && when > aCtx.currentTime) ? when : aCtx.currentTime;
     t += CLICK_OFFSET; // gleiche Kompensation wie Click
     var freq = COUNT_FREQS[num] || 660;
@@ -21857,7 +21867,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     o.connect(g); g.connect(_aOut());
     o.type = 'triangle'; // weicher als Sinus, trotzdem klar
     o.frequency.value = freq;
-    g.gain.setValueAtTime(0.22, t);
+    g.gain.setValueAtTime(Math.max(0.0001, 0.22 * _voiceVol), t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
     o.start(t); o.stop(t + 0.08);
   }
@@ -30710,6 +30720,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         updateMetroBtn();
       });
     });
+    // Lautstärke der Zählstimme: 0–150 %, gilt für Einzähler und Zählstimme, auf dem Gerät gespeichert
+    var vvol = document.getElementById('dgVoiceVol'), vvolV = document.getElementById('dgVoiceVolV'), vvolT = 0;
+    if (vvol) {
+      vvol.value = Math.round(_voiceVol * 100); vvolV.textContent = vvol.value + ' %';
+      vvol.addEventListener('click', function(e) { e.stopPropagation(); });
+      vvol.addEventListener('keydown', function(e) { e.stopPropagation(); });
+      vvol.addEventListener('input', function() {
+        var v = Math.max(0, Math.min(150, parseInt(vvol.value, 10) || 0));
+        _voiceVol = v / 100; vvolV.textContent = v + ' %';
+        try { localStorage.setItem(_VOICE_VOL_KEY, String(v)); } catch (e) {}
+        clearTimeout(vvolT);
+        vvolT = setTimeout(function() { if (playing) return; try { initA(); if (aCtx) playCountVoice('1', aCtx.currentTime + 0.05); } catch (e) {} }, 180);   // Hörprobe
+      });
+    }
     // Zählstimme an/aus — Menü bleibt offen, man sieht den Haken
     var voiceOpt = document.getElementById('dgMetroVoice');
     if (voiceOpt) voiceOpt.addEventListener('click', function(e) {
