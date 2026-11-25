@@ -2738,6 +2738,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
   // {name}, {bpm}, {n} … werden von _t() eingesetzt.
   var I18N_ROWS = [
+    // Four on the Floor vor Groove 20 (25.11.2026)
+    ["Four on the floor", "Four on the Floor"],
+    ["Four on the floor.", "Four on the Floor."],
+    ["The bass drum plays on every beat: 1, 2, 3, 4. Four hits on the floor. It is the beat of disco and dance music, and you hear it in lots of pop and rock songs.", "Die Bassdrum spielt auf jeden Schlag: 1, 2, 3, 4. Vier Schläge auf den Boden. Das ist der Beat von Disco und Dance, und du hörst ihn in vielen Pop- und Rocksongs."],
+    ["Snare", "Snare"],
+    ["on 2 and 4", "auf 2 und 4"],
+    ["every beat", "jeder Schlag"],
+    ["How to make it groove.", "So groovt es."],
+    ["All four bass drum hits the same volume.", "Alle vier Bassdrum-Schläge gleich laut."],
+    ["On 2 and 4, bass drum and snare land exactly together.", "Auf 2 und 4 landen Bassdrum und Snare genau zusammen."],
+    ["Keep your heel down at slow tempos, it keeps the foot steady.", "Bei langsamen Tempi die Ferse unten lassen, das hält den Fuß ruhig."],
+    ["Count out loud: 1 and 2 and 3 and 4 and.", "Zähl laut mit: 1 und 2 und 3 und 4 und."],
     // Kurs-Erklärungen (25.11.2026)
     ["Coordination & independence", "Koordination & Unabhängigkeit"],
     ["Four limbs. Four jobs.", "Vier Gliedmaßen. Vier Jobs."],
@@ -18827,7 +18839,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-171738';
+  var DL_BUILD = '20261125-172441';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22829,6 +22841,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   LP_EX.lp_rud = _lpEx('lp_rud', [[_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN]], 'eighth');
   LP_EX.lp_rud.stickings = ['R', 'L', 'R', 'L', 'R', 'L', 'R', 'L'];
   LP_EX.lp_read = _lpEx('lp_read', [[_LP_SN], [], [_LP_SN], [_LP_SN], [_LP_SN], [], [_LP_SN], [_LP_SN]], 'eighth');
+  // Erklärungen vor einer bestimmten Übung, beim ersten Mal (für alle, unabhängig von LP_PUBLIC)
+  // Groove 20 (Erwin, 25.11.2026: „vor dem ersten Durchgang eine kurze Animation, Four on the Floor erklärt“)
+  var LP_EX_INTROS = {
+    20: { id: 'ifotf', icon: '🕺', t: 'Four on the floor', d: '', steps: [
+      { k: 'lanes', v: 'lp_ff1', h: 'Four on the floor.', p: 'The bass drum plays on every beat: 1, 2, 3, 4. Four hits on the floor. It is the beat of disco and dance music, and you hear it in lots of pop and rock songs.',
+        bpm: 104, rows: [{ l: 'Hi-hat', s: 'eighth notes', inst: 'hh', hits: [0, 1, 2, 3, 4, 5, 6, 7] }, { l: 'Snare', s: 'on 2 and 4', inst: 'snare', hits: [2, 6] },
+                         { l: 'Bass drum', s: 'every beat', inst: 'kick', hits: [0, 2, 4, 6] }] },
+      { k: 'tips', v: 'lp_ff2', h: 'How to make it groove.', items: ['All four bass drum hits the same volume.', 'On 2 and 4, bass drum and snare land exactly together.', 'Keep your heel down at slow tempos, it keeps the foot steady.', 'Count out loud: 1 and 2 and 3 and 4 and.'] }
+    ] }
+  };
   // Erklärungen vor dem ersten Kontakt mit einem Bereich im Kurs (einmal; Fortschritt wie die Missionen in _ach.lp)
   var LP_INTROS = {
     coordination: { id: 'icoord', icon: '🧠', t: 'Coordination & independence', d: '', steps: [
@@ -22954,6 +22976,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _lp.el.classList.add('open');
     document.documentElement.style.overflow = 'hidden';
     _lp.intro = null;
+    _lp.el.querySelector('.lt-brand').innerHTML = 'LAUNCH<em>PAD</em>';
     _lpHub();
   }
   function _lpClose() {
@@ -23287,14 +23310,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _lp.el.classList.add('open');
     document.documentElement.style.overflow = 'hidden';
     _lp.intro = m; _lp.s = 0; _lp.taps = {}; _lp.bpm = 70;
+    _lp.el.querySelector('.lt-brand').innerHTML = 'DRUM<em>LION</em>';
     _lp.bar.style.width = '0%';
     _lpStep();
   }
   function LP_PUBLIC_REF() { return !!window.__dlLpPublic; }
   function _lpIntroCheck(lesson) {
     try {
-      if (!lesson || _rampMode || _freeMode || _gateBlocked || !(LP_PUBLIC_REF() || _devMode)) return;
-      var m = LP_INTROS[lesson.cat];
+      if (!lesson || _rampMode || _freeMode || _gateBlocked) return;
+      var m = (lesson.ex && LP_EX_INTROS[lesson.ex.id]) || ((LP_PUBLIC_REF() || _devMode) ? LP_INTROS[lesson.cat] : null);
       if (!m || _lpIsDone(m.id) || (_lp && _lp.el.classList.contains('open'))) return;
       setTimeout(function() { if (_shownLesson === lesson && !playing) _lpOpenIntro(m); }, 500);
     } catch (e) {}
@@ -30605,7 +30629,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   window.__dlLpPublic = LP_PUBLIC;
   if (!LP_PUBLIC && !_devMode) document.getElementById('dgLaunchBtn').style.display = 'none';
   try { if (_devMode && new URLSearchParams(window.location.search).get('launch') === '1') setTimeout(_lpOpen, 600); } catch (e) {}
-  try { var _ip = new URLSearchParams(window.location.search).get('intro'); if (_devMode && /^(coordination|rudiments|notes|fillins)$/.test(_ip || '')) setTimeout(function() { _lpOpenIntro(LP_INTROS[_ip]); }, 700); } catch (e) {}
+  try { var _ip = new URLSearchParams(window.location.search).get('intro'); if (_devMode && /^(coordination|rudiments|notes|fillins|fotf)$/.test(_ip || '')) setTimeout(function() { _lpOpenIntro(_ip === 'fotf' ? LP_EX_INTROS[20] : LP_INTROS[_ip]); }, 700); } catch (e) {}
   // Ganz neu (keine Lektion, keine Einstufung aus dem Test, Launchpad noch nicht begonnen): Launchpad einmal von selbst öffnen
   try {
     if (LP_PUBLIC && !_gateBlocked && !_rampMode && _getTotalLessons() === 0 && !(_cState && _cState.place) && !(_ach.lp || []).length &&
