@@ -2738,6 +2738,23 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
   // {name}, {bpm}, {n} … werden von _t() eingesetzt.
   var I18N_ROWS = [
+    // Multiple Bounce Roll (25.11.2026)
+    ["One stroke, many bounces.", "Ein Schlag, viele Abpraller."],
+    ["In a multiple bounce roll, every stroke is a buzz: the stick bounces many times on the head and makes a short bzzz. The z on the note stem tells you to buzz.", "Beim Multiple Bounce Roll ist jeder Schlag ein Buzz: Der Stick springt viele Male auf dem Fell und macht ein kurzes „bzzz“. Das z am Notenhals sagt dir: buzzen."],
+    ["buzz mark on the note", "Buzz-Zeichen an der Note"],
+    ["many bounces per stroke", "viele Abpraller pro Schlag"],
+    ["alternate hands", "Hände abwechseln"],
+    ["Press, then let it buzz.", "Drücken, dann buzzen lassen."],
+    ["Drop the stick and press it gently into the head. Not one bounce, not two: let it bounce as many times as it wants.", "Lass den Stick fallen und drück ihn leicht ins Fell. Nicht ein Abpraller, nicht zwei: Lass ihn so oft springen, wie er will."],
+    ["Right buzz, left buzz.", "Rechts buzzen, links buzzen."],
+    ["Alternate the hands. Each buzz lasts until the other hand takes over, so all the buzzes join into one smooth roll.", "Wechsel die Hände ab. Jeder Buzz klingt, bis die andere Hand übernimmt. So werden alle Buzzes zu einem durchgehenden Wirbel."],
+    ["R · buzz", "R · Buzz"],
+    ["L · buzz", "L · Buzz"],
+    ["Make it smooth.", "So wird er gleichmäßig."],
+    ["Hold the stick a little firmer than usual, but stay relaxed.", "Halt den Stick etwas fester als sonst, aber bleib locker."],
+    ["Keep the sticks low. Press into the head instead of lifting high.", "Bleib mit den Sticks tief. Ins Fell drücken statt hoch ausholen."],
+    ["Every buzz the same length and the same volume.", "Jeder Buzz gleich lang und gleich laut."],
+    ["Start slowly. Listen for a long, even sound without gaps.", "Fang langsam an. Hör auf einen langen, gleichmäßigen Klang ohne Lücken."],
     // Four on the Floor vor Groove 20 (25.11.2026)
     ["Four on the floor", "Four on the Floor"],
     ["Four on the floor.", "Four on the Floor."],
@@ -18839,7 +18856,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-172441';
+  var DL_BUILD = '20261125-172734';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -22849,6 +22866,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         bpm: 104, rows: [{ l: 'Hi-hat', s: 'eighth notes', inst: 'hh', hits: [0, 1, 2, 3, 4, 5, 6, 7] }, { l: 'Snare', s: 'on 2 and 4', inst: 'snare', hits: [2, 6] },
                          { l: 'Bass drum', s: 'every beat', inst: 'kick', hits: [0, 2, 4, 6] }] },
       { k: 'tips', v: 'lp_ff2', h: 'How to make it groove.', items: ['All four bass drum hits the same volume.', 'On 2 and 4, bass drum and snare land exactly together.', 'Keep your heel down at slow tempos, it keeps the foot steady.', 'Count out loud: 1 and 2 and 3 and 4 and.'] }
+    ] },
+    // Multiple Bounce Roll (Erwin, 25.11.2026: „Erklärung vor dem ersten Mal“)
+    1004: { id: 'ibuzz', icon: '🐝', t: 'Multiple Bounce Roll', d: '', steps: [
+      { k: 'label', v: 'lp_mb1', h: 'One stroke, many bounces.', p: 'In a multiple bounce roll, every stroke is a buzz: the stick bounces many times on the head and makes a short bzzz. The z on the note stem tells you to buzz.',
+        parts: [['z', 'buzz mark on the note'], ['bzzz', 'many bounces per stroke'], ['R L', 'alternate hands']] },
+      { k: 'how', inst: 'buzz', v: 'lp_mb2', h: 'Press, then let it buzz.', p: 'Drop the stick and press it gently into the head. Not one bounce, not two: let it bounce as many times as it wants.' },
+      { k: 'lanes', v: 'lp_mb3', h: 'Right buzz, left buzz.', p: 'Alternate the hands. Each buzz lasts until the other hand takes over, so all the buzzes join into one smooth roll.',
+        bpm: 66, rows: [{ l: 'Right hand', s: 'R · buzz', inst: 'buzz', hits: [0, 2, 4, 6] }, { l: 'Left hand', s: 'L · buzz', inst: 'buzz', hits: [1, 3, 5, 7] }] },
+      { k: 'tips', v: 'lp_mb4', h: 'Make it smooth.', items: ['Hold the stick a little firmer than usual, but stay relaxed.', 'Keep the sticks low. Press into the head instead of lifting high.', 'Every buzz the same length and the same volume.', 'Start slowly. Listen for a long, even sound without gaps.'] }
     ] }
   };
   // Erklärungen vor dem ersten Kontakt mit einem Bereich im Kurs (einmal; Fortschritt wie die Missionen in _ach.lp)
@@ -22947,7 +22973,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _lpVoiceStop() { try { if (_lp && _lp.voice) _lp.voice.stop(); } catch (e) {} if (_lp) _lp.voice = null; }
   function _lpHit(inst) {
-    try { initA(); if (!aCtx) return; _sbHit(inst, aCtx.currentTime + 0.01, false); } catch (e) {}
+    try {
+      initA(); if (!aCtx) return;
+      if (inst === 'buzz') {   // Multiple Bounce: viele schnelle, leiser werdende Abpraller zu einem „bzzz“
+        var bk = WAVS['snareGhost'] ? 'snareGhost' : 'snare', t0 = aCtx.currentTime + 0.01;
+        for (var bi = 0; bi < 8; bi++) playBuf(WAVS[bk], 0.55 * Math.pow(0.8, bi), t0 + bi * 0.032, bk);
+        return;
+      }
+      _sbHit(inst, aCtx.currentTime + 0.01, false);
+    } catch (e) {}
   }
   function _lpEl(par, tag, cls, txt) { var x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; if (par) par.appendChild(x); return x; }
   function _lpSvg(w, h) { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 ' + w + ' ' + h); s.setAttribute('class', 'lp-svg'); return s; }
@@ -30629,7 +30663,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   window.__dlLpPublic = LP_PUBLIC;
   if (!LP_PUBLIC && !_devMode) document.getElementById('dgLaunchBtn').style.display = 'none';
   try { if (_devMode && new URLSearchParams(window.location.search).get('launch') === '1') setTimeout(_lpOpen, 600); } catch (e) {}
-  try { var _ip = new URLSearchParams(window.location.search).get('intro'); if (_devMode && /^(coordination|rudiments|notes|fillins|fotf)$/.test(_ip || '')) setTimeout(function() { _lpOpenIntro(_ip === 'fotf' ? LP_EX_INTROS[20] : LP_INTROS[_ip]); }, 700); } catch (e) {}
+  try { var _ip = new URLSearchParams(window.location.search).get('intro'); if (_devMode && /^(coordination|rudiments|notes|fillins|fotf|buzz)$/.test(_ip || '')) setTimeout(function() { _lpOpenIntro(_ip === 'fotf' ? LP_EX_INTROS[20] : _ip === 'buzz' ? LP_EX_INTROS[1004] : LP_INTROS[_ip]); }, 700); } catch (e) {}
   // Ganz neu (keine Lektion, keine Einstufung aus dem Test, Launchpad noch nicht begonnen): Launchpad einmal von selbst öffnen
   try {
     if (LP_PUBLIC && !_gateBlocked && !_rampMode && _getTotalLessons() === 0 && !(_cState && _cState.place) && !(_ach.lp || []).length &&
