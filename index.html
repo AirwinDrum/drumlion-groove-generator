@@ -636,6 +636,22 @@ body.one-block #dgTotal { display: none !important; }
 }
 .nav-btn:hover:not(:disabled) { background: var(--dl-raise-h); }
 .nav-btn:disabled { opacity: 0.25; cursor: default; }
+/* Skip-Joker und Erfolge (Erwin, 25.11.2026) */
+.joker-row { display: flex; justify-content: center; margin-top: 10px; }
+.joker-btn { background: none; border: 1px solid var(--dl-line); border-radius: 999px; padding: 7px 16px; color: inherit; font: inherit;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.joker-btn:hover, .joker-btn:focus-visible { border-color: #C9A84C; color: var(--dl-gold-ink); outline: none; }
+.joker-btn[hidden] { display: none; }
+.dl-ach { margin-top: 18px; display: grid; gap: 10px; }
+.dl-ach h4 { margin: 0; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dl-gold-ink); }
+.dl-ach-top { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.dl-ach-top div { background: var(--dl-raise); border: 1px solid var(--dl-line); border-radius: 12px; padding: 10px 8px; text-align: center; }
+.dl-ach-top b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.dl-ach-top span { display: block; font-size: 12px; opacity: 0.7; margin-top: 2px; }
+.dl-ach-top small { display: block; font-size: 11px; opacity: 0.55; margin-top: 2px; }
+.dl-ach-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.dl-ach-list span { font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(201,168,76,0.45); background: rgba(201,168,76,0.08); }
+.dl-ach-hint { font-size: 13px; opacity: 0.65; margin: 0; }
 .level-display {
   font-size: clamp(17px,2.8vw,21px); color: var(--dl-ink);
   text-align: center; font-variant-numeric: tabular-nums;
@@ -2540,6 +2556,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       </div>
       <button class="nav-btn" id="dgNavNext" style="visibility:hidden;">Skip →</button>
     </div>
+    <div class="joker-row"><button type="button" class="joker-btn" id="dgJoker" hidden></button></div>
     <div class="level-display" id="dgLevelDisplay">
       <button class="level-nav-btn" id="dgLvlPrev" style="display:none;"></button>
       <span id="dgLvlText"><strong>Level 1</strong> · Lesson 1</span>
@@ -2600,6 +2617,34 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
   // {name}, {bpm}, {n} … werden von _t() eingesetzt.
   var I18N_ROWS = [
+    // Erfolge und Skip-Joker (25.11.2026)
+    ["Skip this one", "Diese überspringen", "Saltar esta", "Pular esta", "Passer celle-ci"],
+    ["Skipped. It comes back later.", "Übersprungen. Sie kommt später wieder.", "Saltada. Volverá más tarde.", "Pulada. Ela volta mais tarde.", "Passée. Elle reviendra plus tard."],
+    ["Skip earned", "Skip verdient", "Salto ganado", "Pulo conquistado", "Joker gagné"],
+    ["Use it when you don’t feel like an exercise. It comes back later.", "Setz ihn ein, wenn du auf eine Übung gerade keine Lust hast. Sie kommt später wieder.", "Úsalo cuando no te apetezca un ejercicio. Volverá más tarde.", "Use quando não estiver a fim de um exercício. Ele volta mais tarde.", "Utilise-le quand un exercice ne te dit rien. Il reviendra plus tard."],
+    ["{n} days in a row", "{n} Tage in Folge", "{n} días seguidos", "{n} dias seguidos", "{n} jours d’affilée"],
+    ["Showing up is the whole trick.", "Dranbleiben ist der ganze Trick.", "Aparecer es todo el truco.", "Aparecer é todo o segredo.", "Être là, c’est tout le secret."],
+    ["Pause joker earned", "Pause-Joker verdient", "Comodín de pausa ganado", "Coringa de pausa conquistado", "Joker pause gagné"],
+    ["Miss a day, keep your streak. You can hold 2.", "Einen Tag aussetzen, und deine Serie bleibt. Du kannst 2 haben.", "Pierde un día y mantén tu racha. Puedes tener 2.", "Perca um dia e mantenha sua sequência. Você pode ter 2.", "Rate un jour, garde ta série. Tu peux en avoir 2."],
+    ["Pause joker used", "Pause-Joker eingesetzt", "Comodín de pausa usado", "Coringa de pausa usado", "Joker pause utilisé"],
+    ["Yesterday is forgiven. Your streak lives on.", "Gestern ist verziehen. Deine Serie lebt weiter.", "Ayer queda perdonado. Tu racha sigue.", "Ontem está perdoado. Sua sequência continua.", "Hier est pardonné. Ta série continue."],
+    ["{cat} at {bpm} BPM", "{cat} mit {bpm} BPM", "{cat} a {bpm} BPM", "{cat} a {bpm} BPM", "{cat} à {bpm} BPM"],
+    ["New tempo mark. Your hands are getting faster.", "Neue Tempo-Marke. Deine Hände werden schneller.", "Nueva marca de tempo. Tus manos van más rápido.", "Nova marca de andamento. Suas mãos estão mais rápidas.", "Nouveau palier de tempo. Tes mains accélèrent."],
+    ["Allrounder of the week", "Allrounder der Woche", "Todoterreno de la semana", "Completo da semana", "Polyvalent de la semaine"],
+    ["You trained every area this week. That’s how drummers get complete.", "Du hast diese Woche jeden Bereich geübt. So wird man ein kompletter Drummer.", "Esta semana entrenaste todas las áreas. Así se hace un baterista completo.", "Você treinou todas as áreas nesta semana. É assim que se forma um baterista completo.", "Tu as travaillé chaque domaine cette semaine. C’est comme ça qu’on devient un batteur complet."],
+    ["{n} strokes played", "{n} Schläge gespielt", "{n} golpes tocados", "{n} toques tocados", "{n} coups joués"],
+    ["Every repetition counts.", "Jede Wiederholung zählt.", "Cada repetición cuenta.", "Cada repetição conta.", "Chaque répétition compte."],
+    ["First {cat} exercise mastered", "Erste {cat}-Übung gemeistert", "Primer ejercicio de {cat} dominado", "Primeiro exercício de {cat} dominado", "Premier exercice de {cat} maîtrisé"],
+    ["{n} {cat} exercises mastered", "{n} {cat}-Übungen gemeistert", "{n} ejercicios de {cat} dominados", "{n} exercícios de {cat} dominados", "{n} exercices de {cat} maîtrisés"],
+    ["Step by step, it all adds up.", "Schritt für Schritt summiert sich alles.", "Paso a paso, todo suma.", "Passo a passo, tudo soma.", "Pas à pas, tout s’additionne."],
+    ["{n} new achievements", "{n} neue Erfolge", "{n} logros nuevos", "{n} conquistas novas", "{n} nouveaux succès"],
+    ["Achievements", "Erfolge", "Logros", "Conquistas", "Succès"],
+    ["Day streak", "Tage in Folge", "Días seguidos", "Dias seguidos", "Jours d’affilée"],
+    ["Best: {n}", "Rekord: {n}", "Récord: {n}", "Recorde: {n}", "Record : {n}"],
+    ["Skips", "Skips", "Saltos", "Pulos", "Jokers"],
+    ["Pause jokers", "Pause-Joker", "Comodines de pausa", "Coringas de pausa", "Jokers pause"],
+    ["Play 10 minutes a day to earn skips and build your streak.", "Spiel 10 Minuten am Tag, dann bekommst du Skips und baust deine Serie auf.", "Toca 10 minutos al día para ganar saltos y construir tu racha.", "Toque 10 minutos por dia para ganhar pulos e construir sua sequência.", "Joue 10 minutes par jour pour gagner des jokers et construire ta série."],
+    ["{n} allrounder weeks", "{n} Allrounder-Wochen", "{n} semanas todoterreno", "{n} semanas completas", "{n} semaines polyvalentes"],
     // Kopfzeile, Metronom
     ["Metronome: ON", "Metronom: an", "Metrónomo: encendido", "Metrônomo: ligado", "Métronome : activé"],
     ["Metronome: OFF", "Metronom: aus", "Metrónomo: apagado", "Metrônomo: desligado", "Métronome : coupé"],
@@ -3737,6 +3782,195 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       30: { emoji: '🏆', title: _t('30 Minutes Today!'), sub: _t('Absolutely on fire. Legendary session!') }
     };
     _celebrate(configs[milestone] || configs[15]);
+  }
+
+  // ============================================================
+  // ERFOLGE (Erwin, 25.11.2026: „lass uns im Player kleine Achievements einbauen … mach alles jetzt sofort,
+  // damit meine Schüler es schon haben“). Skip-Joker: 10 Minuten am Tag → 1 Skip, höchstens 3. Ein Skip
+  // schiebt die Übung nach hinten (Park der Spirale), sie kommt später wieder. Tage in Folge (Tag zählt ab
+  // 10 Minuten) mit Pause-Joker (alle 7 Tage einer, höchstens 2, verzeiht genau einen verpassten Tag).
+  // Schlag-Meilensteine, Tempo-Marken je Bereich, Allrounder-Woche, Abzeichen für abgeschlossene Übungen.
+  // Zähler wachsen nur (verdient/verbraucht getrennt), zwei Geräte einigen sich per Maximum wie _stats.
+  // ============================================================
+  var _ACH_KEY = _nsKey('drumlion_v1_ach');
+  var ACH_SKIP_MAX = 3, ACH_FREEZE_MAX = 2;
+  var ACH_STROKES = [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+  var ACH_BPM = [60, 80, 100, 120, 140, 160, 180, 200];
+  var ACH_DONE = [1, 5, 10, 25, 50, 100];
+  var ACH_STREAK = [3, 7, 14, 30, 60, 100, 200, 365];
+  var ACH_CATS = { grooves: 'Grooves', fillins: 'Fills', rudiments: 'Rudiments', coordination: 'Coordination', notes: 'Reading' };
+  var _ACH_DAY = /^\d{4}-\d{2}-\d{2}$/, _ACH_WK = /^\d{4}-W\d{2}$/;
+  function _achBlank() { return { se: 0, su: 0, sd: '', dl: '', dc: 0, db: 0, sm: 0, fe: 0, fu: 0, rep: 0, tb: {}, pb: {}, aw: '', ac: [], ad: '', an: 0 }; }
+  function _achNum(v) { v = Math.floor(+v || 0); return v > 0 && v < 1e9 ? v : 0; }
+  function _achStr(v, re) { v = String(v || ''); return re.test(v) ? v : ''; }
+  function _achMergeInto(a, o) {
+    if (!o || typeof o !== 'object') return false;
+    var ch = false;
+    ['se', 'su', 'fe', 'fu', 'rep', 'an', 'db', 'sm'].forEach(function(k) { var v = _achNum(o[k]); if (v > a[k]) { a[k] = v; ch = true; } });
+    var sd = _achStr(o.sd, _ACH_DAY); if (sd > a.sd) { a.sd = sd; ch = true; }
+    var ad = _achStr(o.ad, _ACH_WK); if (ad > a.ad) { a.ad = ad; ch = true; }
+    var dl = _achStr(o.dl, _ACH_DAY), dc = _achNum(o.dc);
+    if (dl > a.dl || (dl && dl === a.dl && dc > a.dc)) { a.dl = dl; a.dc = dc; ch = true; }
+    ['tb', 'pb'].forEach(function(f) {
+      var src = o[f];
+      if (!src || typeof src !== 'object') return;
+      Object.keys(ACH_CATS).forEach(function(c) { var v = _achNum(src[c]); if (v > (a[f][c] || 0)) { a[f][c] = v; ch = true; } });
+    });
+    var aw = _achStr(o.aw, _ACH_WK), ac = Array.isArray(o.ac) ? o.ac.filter(function(c) { return ACH_CATS.hasOwnProperty(c); }) : [];
+    if (aw > a.aw) { a.aw = aw; a.ac = ac.slice(0, 5); ch = true; }
+    else if (aw && aw === a.aw) ac.forEach(function(c) { if (a.ac.indexOf(c) === -1) { a.ac.push(c); ch = true; } });
+    if (a.dc > a.db) { a.db = a.dc; ch = true; }
+    return ch;
+  }
+  function _achLoad() {
+    var o = _achBlank();
+    try { var p = JSON.parse(localStorage.getItem(_ACH_KEY) || 'null'); if (p) _achMergeInto(o, p); } catch (e) {}
+    return o;
+  }
+  var _ach = _achLoad();
+  function _achSave() { try { localStorage.setItem(_ACH_KEY, JSON.stringify(_ach)); } catch (e) {} }
+  function _achMerge(o) { if (_achMergeInto(_ach, o)) { _achSave(); _achUi(); } }
+  function _achClear() { _ach = _achBlank(); try { localStorage.removeItem(_ACH_KEY); } catch (e) {} _achUi(); }
+  function _achSkips() { return Math.max(0, Math.min(ACH_SKIP_MAX, _ach.se - _ach.su)); }
+  function _achFreezes() { return Math.max(0, Math.min(ACH_FREEZE_MAX, _ach.fe - _ach.fu)); }
+  function _achDay(back) { return new Date(Date.now() - (back || 0) * 86400000).toISOString().slice(0, 10); }   // wie _getDailyMins (UTC-Tag)
+  function _achStreakNow() { return (_ach.dl === _achDay(0) || _ach.dl === _achDay(1)) ? _ach.dc : 0; }
+  function _achDirty() { _achSave(); _statsDirty = true; _statsCommit(true); }
+  function _achShow(got, delay) {
+    if (!got.length) return;
+    var cfg = got.length === 1
+      ? { emoji: got[0].e, title: got[0].t, sub: got[0].s, confetti: false, autoMs: 8000 }
+      : { emoji: '🏅', title: _t('{n} new achievements', { n: got.length }), lines: got.map(function(g) { return g.e + ' ' + g.t; }), confetti: false, autoMs: 9000 };
+    setTimeout(function() { _celebrate(cfg); }, delay || 1600);
+  }
+  function _achCatName(c) { return _t(ACH_CATS[c] || c); }
+  // Nach jeder fertigen Kurs-Lektion: alles Neue sammeln und in EINER Feier zeigen
+  function _achAfterLesson(lesson) {
+    if (!lesson || _devRangeActive) return;
+    var got = [], today = _achDay(0), ch = false, cat = lesson.cat, n;
+    if (_getDailyMins() >= 10 && _ach.dl !== today) {
+      if (_ach.dl === _achDay(1)) _ach.dc++;
+      else if (_ach.dl === _achDay(2) && _achFreezes() > 0) {
+        _ach.fu++; _ach.dc++;
+        got.push({ e: '🧊', t: _t('Pause joker used'), s: _t('Yesterday is forgiven. Your streak lives on.') });
+      } else _ach.dc = 1;
+      _ach.dl = today;
+      if (_ach.dc > _ach.db) _ach.db = _ach.dc;
+      if (_ach.dc % 7 === 0 && _achFreezes() < ACH_FREEZE_MAX) {
+        if (_ach.fe < _ach.fu) _ach.fe = _ach.fu;
+        _ach.fe++;
+        got.push({ e: '🧊', t: _t('Pause joker earned'), s: _t('Miss a day, keep your streak. You can hold 2.') });
+      }
+      n = 0;
+      ACH_STREAK.forEach(function(x) { if (_ach.dc >= x) n = x; });
+      if (n > _ach.sm) { _ach.sm = n; got.push({ e: '🔥', t: _t('{n} days in a row', { n: n }), s: _t('Showing up is the whole trick.') }); }
+      if (_ach.sd !== today) {
+        _ach.sd = today;
+        if (_achSkips() < ACH_SKIP_MAX) {
+          if (_ach.se < _ach.su) _ach.se = _ach.su;
+          _ach.se++;
+          got.push({ e: '⏭️', t: _t('Skip earned'), s: _t('Use it when you don’t feel like an exercise. It comes back later.') });
+        }
+      }
+      ch = true;
+    }
+    if (ACH_CATS[cat]) {
+      // Tempo-Marken: erst ab der zweiten Marke feiern (oder ab 100 BPM), sonst käme gleich die erste Lektion
+      var bpm = Math.round(lesson.bpm || 0), mk = 0;
+      ACH_BPM.forEach(function(b) { if (bpm >= b) mk = b; });
+      if (mk > (_ach.tb[cat] || 0)) {
+        var first = !_ach.tb[cat];
+        _ach.tb[cat] = mk; ch = true;
+        if (!first || mk >= 100) got.push({ e: '⚡', t: _t('{cat} at {bpm} BPM', { cat: _achCatName(cat), bpm: mk }), s: _t('New tempo mark. Your hands are getting faster.') });
+      }
+      // Allrounder-Woche: alle Bereiche, die gerade im Kurs laufen (mindestens 3), in einer Kalenderwoche
+      var wk = _weekId();
+      if (_ach.aw !== wk) { _ach.aw = wk; _ach.ac = []; ch = true; }
+      if (_ach.ac.indexOf(cat) === -1) { _ach.ac.push(cat); ch = true; }
+      var need = Object.keys(ACH_CATS).filter(function(c) { var k = _cState.cats[c]; return k && (((k.active || []).length) || ((k.park || []).length)); });
+      if (_ach.ad !== wk && need.length >= 3 && need.every(function(c) { return _ach.ac.indexOf(c) !== -1; })) {
+        _ach.ad = wk; _ach.an++; ch = true;
+        got.push({ e: '🎯', t: _t('Allrounder of the week'), s: _t('You trained every area this week. That’s how drummers get complete.') });
+      }
+    }
+    n = 0;
+    ACH_STROKES.forEach(function(x) { if (_stats.strokes >= x) n = x; });
+    if (n > _ach.rep) { _ach.rep = n; ch = true; got.push({ e: '🥁', t: _t('{n} strokes played', { n: _fmtNum(n) }), s: _t('Every repetition counts.') }); }
+    if (ch) _achDirty();
+    _achShow(got, 1600);
+    _achUi();
+  }
+  // Abgeschlossene Übungen je Bereich: Abzeichen bei 1, 5, 10, 25, 50, 100
+  function _achMastered() {
+    var cnt = {}, got = [], ch = false;
+    (_cState.completed || []).forEach(function(id) {
+      var ex = EXERCISES.find(function(e) { return e.id === id; });
+      if (ex && ACH_CATS[ex.cat]) cnt[ex.cat] = (cnt[ex.cat] || 0) + 1;
+    });
+    Object.keys(cnt).forEach(function(c) {
+      var mk = 0;
+      ACH_DONE.forEach(function(x) { if (cnt[c] >= x) mk = x; });
+      if (mk > (_ach.pb[c] || 0)) {
+        _ach.pb[c] = mk; ch = true;
+        got.push({ e: '🏅', t: mk === 1 ? _t('First {cat} exercise mastered', { cat: _achCatName(c) }) : _t('{n} {cat} exercises mastered', { n: mk, cat: _achCatName(c) }), s: _t('Step by step, it all adds up.') });
+      }
+    });
+    if (ch) _achDirty();
+    _achShow(got, 900);
+  }
+  // Skip-Joker: aktuelle Kurs-Lektion nach hinten schieben (wie das Ende einer Zeitscheibe), nichts gutschreiben
+  function _achUseSkip() {
+    if (_achSkips() < 1 || playing || _freeMode || _rampMode || _gateBlocked) return;
+    var lesson = _shownLesson;
+    if (!lesson) return;
+    var cs = _cState.cats[lesson.cat];
+    var entry = cs && cs.active.find(function(e) { return e.id === lesson.entry.id; });
+    if (entry) {
+      entry.slice = 0;
+      cs.active = cs.active.filter(function(e) { return e.id !== entry.id; });
+      (cs.park || (cs.park = [])).push(entry);
+      _spiralRefill(lesson.cat, cs);
+    }
+    _shownLesson = null;
+    _rotateOn(lesson.cat);
+    _saveState();
+    if (_ach.se - _ach.su > ACH_SKIP_MAX) _ach.su = _ach.se - ACH_SKIP_MAX;
+    _ach.su++;
+    _achDirty();
+    _loadCurrentLesson(false);
+    setInfo(_t('Skipped. It comes back later.'));
+  }
+  function _achUi() {
+    var b = document.getElementById('dgJoker');
+    if (b) {
+      var n = _achSkips();
+      var show = n > 0 && !playing && phase !== 'done' && !_freeMode && !_rampMode && !_gateBlocked && !!_shownLesson;
+      b.hidden = !show;
+      if (show) b.textContent = '⏭ ' + _t('Skip this one') + ' · ' + n;
+    }
+    _achRender();
+  }
+  // Erfolge im Statistik-Fenster
+  function _achRender() {
+    var el = document.getElementById('dgAch');
+    if (!el) return;
+    el.textContent = '';
+    var add = function(par, tag, cls, txt) { var x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; par.appendChild(x); return x; };
+    add(el, 'h4', null, _t('Achievements'));
+    var top = add(el, 'div', 'dl-ach-top');
+    [['🔥 ' + _achStreakNow(), _t('Day streak'), _t('Best: {n}', { n: _ach.db })], ['⏭ ' + _achSkips(), _t('Skips'), ''], ['🧊 ' + _achFreezes(), _t('Pause jokers'), '']].forEach(function(t) {
+      var d = add(top, 'div'); add(d, 'b', null, t[0]); add(d, 'span', null, t[1]); if (t[2]) add(d, 'small', null, t[2]);
+    });
+    var list = [];
+    if (_ach.rep) list.push('🥁 ' + _t('{n} strokes played', { n: _fmtNum(_ach.rep) }));
+    Object.keys(ACH_CATS).forEach(function(c) { if (_ach.tb[c] >= 80) list.push('⚡ ' + _t('{cat} at {bpm} BPM', { cat: _achCatName(c), bpm: _ach.tb[c] })); });
+    Object.keys(ACH_CATS).forEach(function(c) {
+      var m = _ach.pb[c];
+      if (m) list.push('🏅 ' + (m === 1 ? _t('First {cat} exercise mastered', { cat: _achCatName(c) }) : _t('{n} {cat} exercises mastered', { n: m, cat: _achCatName(c) })));
+    });
+    if (_ach.an) list.push('🎯 ' + _t('{n} allrounder weeks', { n: _ach.an }));
+    if (list.length) { var l = add(el, 'div', 'dl-ach-list'); list.forEach(function(t) { add(l, 'span', null, t); }); }
+    if (!_ach.db) add(el, 'p', 'dl-ach-hint', _t('Play 10 minutes a day to earn skips and build your streak.'));
   }
 
   // Übung endgültig abgeschlossen: Endtempo gespielt, sie kommt nie wieder
@@ -18073,7 +18307,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       localStorage.removeItem(_lessonsKey);
       localStorage.removeItem(_timeKey);
     } catch(e) {}
-    _statsClear();
+    _statsClear(); _achClear();
     _markResetSeen(_newResetId());   // andere Geräte setzen sich beim nächsten Abgleich mit zurück
     // Leeren Stand hochschieben, damit auch die Cloud sauber ist. keepalive,
     // damit der Request das folgende Neuladen überlebt.
@@ -18121,7 +18355,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       localStorage.removeItem(_lessonsKey);
       localStorage.removeItem(_timeKey);
     } catch(e) {}
-    _statsClear();
+    _statsClear(); _achClear();
     _markResetSeen(_newResetId());
   }
 
@@ -18139,7 +18373,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-123009';
+  var DL_BUILD = '20261125-124247';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -18332,6 +18566,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       stats:   { sec: Math.round(_stats.sec), strokes: _stats.strokes,
                  wk: _stats.wk || undefined, wkSec: Math.round(_stats.wkSec),
                  bestSec: Math.round(_stats.bestSec), bestWk: _stats.bestWk || undefined },
+      ach:     _ach,
       resetId: _resetSeen() || undefined
     });
   }
@@ -18340,7 +18575,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _syncParse(raw) {
     var p = JSON.parse(raw);
     if (p && p.v === 2 && p.course) {
-      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0, stats: p.stats || null, resetId: p.resetId || null };
+      return { course: p.course, lessons: p.lessons || 0, minutes: p.minutes || 0, stats: p.stats || null, ach: p.ach || null, resetId: p.resetId || null };
     }
     // Altformat: nur der Kurs-State, Zähler unbekannt
     return { course: p, lessons: null, minutes: null, stats: null, resetId: null };
@@ -18423,7 +18658,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           return;
         }
         // Ein anderes Gerät kann bei gleicher Lektionszahl mehr Schläge haben
-        if (remoteParsed) _statsMergeAndClamp(remoteParsed.stats);
+        if (remoteParsed) { _statsMergeAndClamp(remoteParsed.stats); _achMerge(remoteParsed.ach); }
         _syncWrite(false);
       }).catch(function() { _syncWrite(false); });
       return;
@@ -18552,8 +18787,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
             localStorage.removeItem(_dailyDateKey);
             localStorage.removeItem(_dailyMinsKey);
           } catch(e) {}
-          _statsClear();
-          _statsMergeAndClamp(remote.stats);
+          _statsClear(); _achClear();
+          _statsMergeAndClamp(remote.stats); _achMerge(remote.ach);
           _cState = Object.keys(remote.course.cats).length ? _sanitizeCourse(remote.course) : _initState();
           _masteredInvalidate();
           _cState.pfloor = 0;   // Reset: auch die Untergrenze fällt weg
@@ -18616,7 +18851,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var _cleaned = JSON.stringify(_cState) !== _before;
           try { localStorage.setItem(COURSE_KEY, JSON.stringify(_cState)); } catch(e) {}
           if (_cleaned) _syncSchedule();   // bereinigten Stand zurückschreiben
-          _statsMergeAndClamp(remote.stats);
+          _statsMergeAndClamp(remote.stats); _achMerge(remote.ach);
           _statsBackfill();
           _syncSetStatus('ok', 'Progress loaded ✓');
           onDone(true); // state changed, needs UI reload
@@ -18632,7 +18867,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               localStorage.setItem(_timeKey, String(remote.minutes));
           } catch(e) {}
           _counterRemember();
-          _statsMergeAndClamp(remote.stats);
+          _statsMergeAndClamp(remote.stats); _achMerge(remote.ach);
           _placeIn();
           if (_getTotalLessons() >= remote.lessons) {
             _syncSetStatus('ok', 'Progress loaded ✓');
@@ -18643,7 +18878,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           onDone(true);
         } else {
           _syncSetStatus('ok', 'Up to date ✓');
-          _statsMergeAndClamp(remote.stats);
+          _statsMergeAndClamp(remote.stats); _achMerge(remote.ach);
           var _rs = remote.stats || {};
           var _placed = _placeIn();
           if (remoteCount < localCount) _syncPush();
@@ -18958,6 +19193,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _updateCourseUI();
     updateBpm();
     _showCompletedBanner(lesson.ex.id);
+    _achUi();
     if (autoStart) setTimeout(startExercise, 80);
   }
 
@@ -21543,6 +21779,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     blocks  = getBlocks(tBpm);
     pauses  = getPauses(tBpm, blocks.length);
     bIdx=0; beat=0; bar=0; playing=true; phase='countIn';
+    _achUi();
     _syncOneBlock(); _progZones(); _progSet(0); _progDur = 0;
     _noteShow(null);   // Notenname vom Antippen ausblenden
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-stp" id="dgStop">■ ' + _t('Stop') + '</button>';
@@ -22097,6 +22334,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                   : null;   // „Chapter complete“ entfiel mit der Kapitel-Anzeige (12.11.2026)
     var mastered = (played && _cState.completed.length > doneBefore &&
                     _cState.completed.indexOf(played.ex.id) !== -1) ? played.ex : null;
+    if (mastered) _achMastered();
     // Transition animation
     var wrap = document.querySelector('.dg-inner');
     if (wrap) {
@@ -22130,6 +22368,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _updateLevelUI();
     var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
     if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
+    if (!_rampMode) _achAfterLesson(_shownLesson);
     document.getElementById('dgTotal').style.display='inline';
     document.getElementById('dgCtrl').innerHTML =
       '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>' + _t('Again') + '</button>'+
@@ -22153,6 +22392,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     document.getElementById('dgCtrl').innerHTML = '<button class="btn-go" id="dgStart2"><span class="btn-play-icon"></span>' + _t('Start') + '</button>';
     document.getElementById('dgStart2').addEventListener('click', startExercise);
     renderNot(-1, false); updateBpm();
+    _achUi();
   }
 
   // ============================================================
@@ -29165,6 +29405,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (confirm(_t('Reset the course? All progress will be deleted.'))) _resetAll();
   });
 
+  // Skip-Joker (25.11.2026)
+  document.getElementById('dgJoker').addEventListener('click', _achUseSkip);
+
   // Prev = zurück in der History
   document.getElementById('dgNavPrev').addEventListener('click', function() {
     if (_navPos > 0) _loadHistoryLesson(_navPos - 1, false);
@@ -29625,8 +29868,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           tile('dgStDone',    _t('Exercises completed'), 480, true) +
         '</div>' +
         '<p class="dl-stat-note" id="dgStNote" style="animation-delay:540ms">' + lessonsTxt + '<br>' +
-        _t('Counts only what you play: no count-ins, breaks or clicks.') + '</p>';
+        _t('Counts only what you play: no count-ins, breaks or clicks.') + '</p>' +
+        '<div class="dl-ach" id="dgAch"></div>';
       _statsBuilt = true;
+      _achRender();
       _statsStopAnims();
 
       // Balken wachsen lassen (erst im nächsten Frame, sonst greift kein Übergang)
@@ -29658,6 +29903,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     });
     _setNum(document.getElementById('dgStTime'),    _fmtPlayTime(_stats.sec));
     _setNum(document.getElementById('dgStStrokes'), _fmtNum(_stats.strokes));
+    _achRender();
     _setNum(document.getElementById('dgStWeek'),    _fmtPlayTime(_stats.wkSec));
     _setNum(document.getElementById('dgStBest'),    _fmtPlayTime(_stats.bestSec));
     _setNum(document.getElementById('dgStDone'),    _fmtNum(exDone) + '<small>' + _t('of') + ' ' + _fmtNum(courseTotal) + '</small>');
