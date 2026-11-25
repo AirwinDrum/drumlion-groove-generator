@@ -18108,7 +18108,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-114747';
+  var DL_BUILD = '20261125-115832';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -27184,13 +27184,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, function() { return Math.floor(Math.random() * 16).toString(16); });
   }
+  // Herkunft (Erwin, 25.11.2026): Die Testseite reicht ?src= durch (ig, yt, tt, fb, mail). Nur bekannte Kürzel,
+  // landet im Feld variant von lt_events. Weiterhin ohne Name, Mail oder Kundennummer.
+  var _ltSrc = (function() {
+    try { var v = (new URLSearchParams(window.location.search).get('src') || '').toLowerCase(); return /^(ig|yt|tt|fb|mail)$/.test(v) ? v : null; }
+    catch (e) { return null; }
+  })();
   function _ltLog(step, level) {
     try {
       if (_devMode || !_lt || _lt.academy || !_lt.st || !_lt.st.run) return;
       fetch(_SB_URL + '/rest/v1/rpc/lt_event', {
         method: 'POST', keepalive: true,
         headers: _sbHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ p_run: _lt.st.run, p_step: step, p_variant: null, p_level: level == null ? null : level })
+        body: JSON.stringify({ p_run: _lt.st.run, p_step: step, p_variant: _ltSrc, p_level: level == null ? null : level })
       }).catch(function() {});
     } catch (e) {}
   }
