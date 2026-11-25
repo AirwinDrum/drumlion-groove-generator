@@ -728,6 +728,27 @@ body.one-block #dgTotal { display: none !important; }
 @keyframes lpStick { 0% { transform: rotate(-14deg); } 30% { transform: rotate(10deg); } 100% { transform: rotate(-14deg); } }
 @keyframes lpCue { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .lp-part.focus, .lp-fulcrum, .lp-body, .lp-pedal.down, .lp-beater.down, .lp-stickarm.down { animation: none; } }
+/* Kurs-Erklärungen (Erwin, 25.11.2026): Spuren, Aufschlüsselung, Tipps, Zählen */
+.lp-lanes { display: grid; gap: 8px; }
+.lp-lane { display: grid; grid-template-columns: minmax(96px, 30%) 1fr; align-items: center; gap: 10px; }
+.lp-lane b { font-size: 14px; }
+.lp-lane small { display: block; font-size: 12px; opacity: 0.65; font-weight: 500; }
+.lp-cells { display: grid; grid-template-columns: repeat(var(--n, 8), 1fr); gap: 4px; }
+.lp-cells i { height: 30px; border-radius: 8px; background: var(--dl-raise); border: 1px solid var(--dl-line); transition: background 0.08s, transform 0.08s; }
+.lp-cells i.on { background: rgba(201,168,76,0.35); border-color: rgba(201,168,76,0.6); }
+.lp-cells i.on.now { background: #C9A84C; transform: scale(1.08); box-shadow: 0 0 14px rgba(201,168,76,0.8); }
+.lp-cells i.now { border-color: #C9A84C; background: rgba(201,168,76,0.14); }
+.lp-break { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.lp-break div { min-width: 92px; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(201,168,76,0.5); background: rgba(201,168,76,0.08); text-align: center; animation: ltIn 0.4s ease both; }
+.lp-break b { display: block; font-size: 26px; color: var(--dl-gold-ink); }
+.lp-break span { font-size: 13px; opacity: 0.8; }
+.lp-tips { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: lpt; }
+.lp-tips li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--dl-raise); border: 1px solid var(--dl-line); font-size: 15px; animation: ltIn 0.4s ease both; }
+.lp-tips li::before { counter-increment: lpt; content: counter(lpt); flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #C9A84C; color: #0b0b0a; font-weight: 800; }
+.lp-countrow { display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); gap: 6px; }
+.lp-countrow span { padding: 14px 0; border-radius: 10px; text-align: center; font-size: clamp(16px, 4vw, 26px); font-weight: 800; background: var(--dl-raise); border: 1px solid var(--dl-line); transition: background 0.08s, transform 0.08s; }
+.lp-countrow span.now { background: #C9A84C; color: #0b0b0a; transform: scale(1.06); }
+.lp-skipintro { align-self: flex-end; }
 /* Lese-Quiz im Kurs (Erwin, 25.11.2026) */
 .cq-ov { position: fixed; inset: 0; z-index: 99990; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: ltIn 0.25s ease; }
 .cq-card { width: min(720px, 100%); max-height: 92vh; overflow: auto; background: var(--dl-paper); color: var(--dl-ink); border: 1px solid var(--dl-line); border-radius: 18px; padding: 20px; display: grid; gap: 12px; }
@@ -2706,6 +2727,73 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
   // {name}, {bpm}, {n} … werden von _t() eingesetzt.
   var I18N_ROWS = [
+    // Kurs-Erklärungen (25.11.2026)
+    ["Coordination & independence", "Koordination & Unabhängigkeit"],
+    ["Four limbs. Four jobs.", "Vier Gliedmaßen. Vier Jobs."],
+    ["Independence means every limb does its own thing while the others keep going. Coordination means they all fit together, exactly on time.", "Unabhängigkeit heißt: Jede Hand und jeder Fuß macht ihr eigenes Ding, während die anderen weiterlaufen. Koordination heißt: Alles passt genau im Timing zusammen."],
+    ["Right hand", "Rechte Hand"],
+    ["Left hand", "Linke Hand"],
+    ["Right foot", "Rechter Fuß"],
+    ["Left foot", "Linker Fuß"],
+    ["Ride · every beat", "Ride · jeder Schlag"],
+    ["Snare · on 2 and 4", "Snare · auf 2 und 4"],
+    ["Bass drum · on 1 and 3", "Bassdrum · auf 1 und 3"],
+    ["Hi-hat pedal · on 2 and 4", "Hi-Hat-Pedal · auf 2 und 4"],
+    ["How to read the exercise names.", "So liest du die Übungsnamen."],
+    ["Every coordination exercise tells you what each hand plays.", "Jede Koordinations-Übung sagt dir, was jede Hand spielt."],
+    ["what to play", "was du spielst"],
+    ["right hand", "rechte Hand"],
+    ["left hand", "linke Hand"],
+    ["quarter notes", "Viertelnoten"],
+    ["eighth notes", "Achtelnoten"],
+    ["The method that always works.", "Die Methode, die immer funktioniert."],
+    ["Start with the steady limb alone until it runs on autopilot.", "Fang mit der gleichbleibenden Hand allein an, bis sie wie von selbst läuft."],
+    ["Add the second limb very slowly.", "Nimm die zweite Hand ganz langsam dazu."],
+    ["Count out loud the whole time.", "Zähl die ganze Zeit laut mit."],
+    ["If it falls apart, slow down. Never stop the steady limb.", "Wenn es auseinanderfällt: langsamer. Die gleichbleibende Hand nie anhalten."],
+    ["Try it.", "Probier es."],
+    ["Right hand on the ride, every beat. Left hand on the snare, in between. Keep the ride steady no matter what.", "Rechte Hand auf dem Ride, jeder Schlag. Linke Hand auf der Snare, genau dazwischen. Das Ride bleibt gleichmäßig, egal was passiert."],
+    ["Rudiments", "Rudiments"],
+    ["The alphabet of drumming.", "Das Alphabet des Schlagzeugs."],
+    ["Rudiments are sticking patterns. They make your hands fast, even and free.", "Rudiments sind Schlagfolgen für die Hände. Sie machen deine Hände schnell, gleichmäßig und frei."],
+    ["single strokes", "Einzelschläge"],
+    ["double strokes", "Doppelschläge"],
+    ["paradiddle", "Paradiddle"],
+    ["Watch the hands.", "Schau auf die Hände."],
+    ["Single strokes: right, left, right, left. Every note the same volume.", "Einzelschläge: rechts, links, rechts, links. Jede Note gleich laut."],
+    ["Clean beats fast.", "Sauber schlägt schnell."],
+    ["Read the letters above the notes: R or L.", "Lies die Buchstaben über den Noten: R oder L."],
+    ["Keep both sticks at the same height.", "Halt beide Sticks auf gleicher Höhe."],
+    ["Loose grip, let the sticks bounce.", "Lockerer Griff, lass die Sticks federn."],
+    ["Speed comes from clean, slow repetitions.", "Tempo kommt von sauberen, langsamen Wiederholungen."],
+    ["Single strokes.", "Einzelschläge."],
+    ["Right, left, right, left. Even and relaxed.", "Rechts, links, rechts, links. Gleichmäßig und locker."],
+    ["Reading and counting", "Lesen und Zählen"],
+    ["Count everything.", "Zähl alles."],
+    ["Counting is the secret of reading. Quarter notes: 1 2 3 4. Eighth notes: 1 and 2 and. Sixteenth notes: 1 e and a.", "Zählen ist das Geheimnis beim Lesen. Viertel: 1 2 3 4. Achtel: 1 und 2 und. Sechzehntel: 1 e und a."],
+    ["Quarter notes", "Viertelnoten"],
+    ["Eighth notes", "Achtelnoten"],
+    ["Sixteenth notes", "Sechzehntelnoten"],
+    ["Read like a drummer.", "Lies wie ein Drummer."],
+    ["The numbers above the staff show where you are.", "Die Zahlen über der Notenzeile zeigen dir, wo du bist."],
+    ["Say the count out loud, then play only where there is a note.", "Sprich die Zählzeit laut mit und spiel nur dort, wo eine Note steht."],
+    ["Rests are silent, but you still count them.", "Pausen sind still, aber du zählst sie trotzdem."],
+    ["Read and play.", "Lesen und spielen."],
+    ["Count 1 and 2 and 3 and 4 and. Play only where you see a note.", "Zähl 1 und 2 und 3 und 4 und. Spiel nur, wo du eine Note siehst."],
+    ["Fills", "Fills"],
+    ["A fill connects two parts.", "Ein Fill verbindet zwei Teile."],
+    ["Groove, groove, groove, fill, then the crash on ONE starts the next part. Fills are short and always land on ONE.", "Groove, Groove, Groove, Fill, dann startet das Crash auf der EINS den nächsten Teil. Fills sind kurz und landen immer auf der EINS."],
+    ["Land on ONE.", "Lande auf der EINS."],
+    ["Keep counting during the fill.", "Zähl während des Fills weiter."],
+    ["The fill ends right before the next ONE.", "Der Fill endet kurz vor der nächsten EINS."],
+    ["Hit the crash and the bass drum together on ONE.", "Crash und Bassdrum zusammen auf der EINS."],
+    ["Groove, fill, crash!", "Groove, Fill, Crash!"],
+    ["Count the bars: one, two, three, fill!", "Zähl die Takte: eins, zwei, drei, Fill!"],
+    ["On to the lesson", "Weiter zur Lektion"],
+    ["Skip intro", "Erklärung überspringen"],
+    ["Ready? Press Start.", "Bereit? Drück Start."],
+    ["Again", "Nochmal"],
+    ["Got it", "Verstanden"],
     // Launchpad Fills (25.11.2026)
     ["The crash cymbal", "Das Crash-Becken"],
     ["The big splash on ONE.", "Der große Knall auf der EINS."],
@@ -18724,7 +18812,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-141518';
+  var DL_BUILD = '20261125-142338';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19545,6 +19633,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     updateBpm();
     _showCompletedBanner(lesson.ex.id);
     _achUi();
+    if (!autoStart) _lpIntroCheck(lesson);
     if (autoStart) setTimeout(startExercise, 80);
   }
 
@@ -22718,6 +22807,42 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   ];
   LP_EX.lp_fill.cueInst = { crash1: 'CRASH!', tom1: 'FILL!', tom2: 'FILL!', tom3: 'FILL!' };
   LP_EX.lp_crash.cueInst = { crash1: 'CRASH!' };
+  var _LP_RD = { inst: 'ride', line: 0.0, head: 'x' };
+  LP_EX.lp_coord = _lpEx('lp_coord', [[_LP_RD], [_LP_SN], [_LP_RD], [_LP_SN], [_LP_RD], [_LP_SN], [_LP_RD], [_LP_SN]], 'eighth');
+  LP_EX.lp_coord.cueInst = { snare: 'LEFT!' };
+  LP_EX.lp_rud = _lpEx('lp_rud', [[_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN], [_LP_SN]], 'eighth');
+  LP_EX.lp_rud.stickings = ['R', 'L', 'R', 'L', 'R', 'L', 'R', 'L'];
+  LP_EX.lp_read = _lpEx('lp_read', [[_LP_SN], [], [_LP_SN], [_LP_SN], [_LP_SN], [], [_LP_SN], [_LP_SN]], 'eighth');
+  // Erklärungen vor dem ersten Kontakt mit einem Bereich im Kurs (einmal; Fortschritt wie die Missionen in _ach.lp)
+  var LP_INTROS = {
+    coordination: { id: 'icoord', icon: '🧠', t: 'Coordination & independence', d: '', steps: [
+      { k: 'lanes', v: 'lp_co1', h: 'Four limbs. Four jobs.', p: 'Independence means every limb does its own thing while the others keep going. Coordination means they all fit together, exactly on time.',
+        bpm: 76, rows: [{ l: 'Right hand', s: 'Ride · every beat', inst: 'ride', hits: [0, 2, 4, 6] }, { l: 'Left hand', s: 'Snare · on 2 and 4', inst: 'snare', hits: [2, 6] },
+                        { l: 'Right foot', s: 'Bass drum · on 1 and 3', inst: 'kick', hits: [0, 4] }, { l: 'Left foot', s: 'Hi-hat pedal · on 2 and 4', inst: 'hhPedal', hits: [2, 6] }] },
+      { k: 'label', v: 'lp_co2', h: 'How to read the exercise names.', p: 'Every coordination exercise tells you what each hand plays.',
+        parts: [['Ride', 'what to play'], ['R', 'right hand'], ['1/4', 'quarter notes'], ['·', ''], ['Snare', 'what to play'], ['L', 'left hand'], ['1/8', 'eighth notes']] },
+      { k: 'tips', v: 'lp_co3', h: 'The method that always works.', items: ['Start with the steady limb alone until it runs on autopilot.', 'Add the second limb very slowly.', 'Count out loud the whole time.', 'If it falls apart, slow down. Never stop the steady limb.'] },
+      { k: 'play', ex: 'lp_coord', cue: 'LEFT!', v: 'lp_co4', h: 'Try it.', p: 'Right hand on the ride, every beat. Left hand on the snare, in between. Keep the ride steady no matter what.' },
+      { k: 'check' } ] },
+    rudiments: { id: 'irud', icon: '✊', t: 'Rudiments', d: '', steps: [
+      { k: 'label', v: 'lp_ru1', h: 'The alphabet of drumming.', p: 'Rudiments are sticking patterns. They make your hands fast, even and free.',
+        parts: [['R', 'right hand'], ['L', 'left hand'], ['RLRL', 'single strokes'], ['RRLL', 'double strokes'], ['RLRR LRLL', 'paradiddle']] },
+      { k: 'lanes', v: 'lp_ru2', h: 'Watch the hands.', p: 'Single strokes: right, left, right, left. Every note the same volume.', bpm: 80,
+        rows: [{ l: 'Right hand', s: 'R', inst: 'snare', hits: [0, 2, 4, 6] }, { l: 'Left hand', s: 'L', inst: 'snare', hits: [1, 3, 5, 7] }] },
+      { k: 'tips', v: 'lp_ru3', h: 'Clean beats fast.', items: ['Read the letters above the notes: R or L.', 'Keep both sticks at the same height.', 'Loose grip, let the sticks bounce.', 'Speed comes from clean, slow repetitions.'] },
+      { k: 'play', ex: 'lp_rud', cue: 'R L', v: 'lp_ru4', h: 'Single strokes.', p: 'Right, left, right, left. Even and relaxed.' },
+      { k: 'check' } ] },
+    notes: { id: 'iread', icon: '🔢', t: 'Reading and counting', d: '', steps: [
+      { k: 'count', v: 'lp_re1', h: 'Count everything.', p: 'Counting is the secret of reading. Quarter notes: 1 2 3 4. Eighth notes: 1 and 2 and. Sixteenth notes: 1 e and a.', bpm: 72 },
+      { k: 'tips', v: 'lp_re2', h: 'Read like a drummer.', items: ['The numbers above the staff show where you are.', 'Say the count out loud, then play only where there is a note.', 'Rests are silent, but you still count them.'] },
+      { k: 'play', ex: 'lp_read', cue: 'HIT!', v: 'lp_re3', h: 'Read and play.', p: 'Count 1 and 2 and 3 and 4 and. Play only where you see a note.' },
+      { k: 'check' } ] },
+    fillins: { id: 'ifill', icon: '🔥', t: 'Fills', d: '', steps: [
+      { k: 'note', inst: 'fill', v: 'lp_fi1', h: 'A fill connects two parts.', p: 'Groove, groove, groove, fill, then the crash on ONE starts the next part. Fills are short and always land on ONE.' },
+      { k: 'tips', v: 'lp_fi2', h: 'Land on ONE.', items: ['Keep counting during the fill.', 'The fill ends right before the next ONE.', 'Hit the crash and the bass drum together on ONE.'] },
+      { k: 'play', ex: 'lp_fill', cue: 'FILL!', v: 'lp_fl2', h: 'Groove, fill, crash!', p: 'Count the bars: one, two, three, fill!' },
+      { k: 'check' } ] }
+  };
   var LP_MISSIONS = [
     { id: 'kit', icon: '🥁', t: 'Meet your kit', d: 'Tap every part and hear it.', steps: [
       { k: 'kit', v: 'lp_kit', h: 'This is a drum kit.', p: 'Tap the parts to hear them. Find at least three.' } ] },
@@ -22812,11 +22937,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!_lp) _lpBuild();
     _lp.el.classList.add('open');
     document.documentElement.style.overflow = 'hidden';
+    _lp.intro = null;
     _lpHub();
   }
   function _lpClose() {
     _lpStopAll();
     if (!_lp) return;
+    if (_lp.intro) { if (!_lpIsDone(_lp.intro.id)) { _ach.lp = _ach.lp || []; _ach.lp.push(_lp.intro.id); _achDirty(); } _lp.intro = null; }
     _lp.el.classList.remove('open');
     document.documentElement.style.overflow = '';
     _achUi();
@@ -22861,7 +22988,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (next >= 0) { var go = _lpEl(row, 'button', 'lt-go', next === 0 ? _t("Let's go 🚀") : _t('Next mission')); go.type = 'button'; go.addEventListener('click', function() { _lpMission(next); }); }
     var back = _lpEl(row, 'button', 'lt-ghost', _t('To my course')); back.type = 'button'; back.addEventListener('click', _lpClose);
   }
-  function _lpMission(i) { _lp.m = i; _lp.s = 0; _lp.taps = {}; _lp.bpm = 70; _lpStep(); }
+  function _lpCur() { return _lp.intro || LP_MISSIONS[_lp.m]; }
+  function _lpMission(i) { _lp.intro = null; _lp.m = i; _lp.s = 0; _lp.taps = {}; _lp.bpm = 70; _lpStep(); }
   function _lpNext() { _lp.s++; _lpStep(); }
   function _lpHead(c, st, m) {
     var top = _lpEl(c, 'div', 'lp-head');
@@ -22870,9 +22998,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     m.steps.forEach(function(x, k) { _lpEl(dots, 'i', k < _lp.s ? 'on' : (k === _lp.s ? 'cur' : '')); });
     if (st.h) _lpEl(c, 'h2', 'lt-h lp-h', _t(st.h));
     if (st.p) _lpEl(c, 'p', 'lt-p', _t(st.p));
+    if (_lp.intro) { var sk = _lpEl(top, 'button', 'lt-link lp-skipintro', _t('Skip intro')); sk.type = 'button'; sk.addEventListener('click', function() { _lpComplete(_lp.intro, { skip: true }); }); }
   }
   function _lpStep() {
-    var m = LP_MISSIONS[_lp.m], st = m.steps[_lp.s];
+    var m = _lpCur(), st = m.steps[_lp.s];
     if (!st) { _lpComplete(m, {}); return; }   // Missionen ohne Abfrage (Schlagzeug, Sitzen) gelten nach dem letzten Schritt als geschafft
     var c = _lpCard();
     if (st.k !== 'check') _lpHead(c, st, m);
@@ -22938,6 +23067,77 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       setTimeout(function() { if (_lp && _lp.s >= 0) { hit(); _lp.timer = setInterval(hit, 1000); } }, 500);
       row = _lpEl(c, 'div', 'lt-row');
       var gh = _lpEl(row, 'button', 'lt-go', _t('Continue')); gh.type = 'button'; gh.addEventListener('click', _lpNext);
+    } else if (st.k === 'lanes') {
+      var lw = _lpEl(c, 'div', 'lp-lanes'), cells = [], nst = 8;
+      st.rows.forEach(function(r) {
+        var ln = _lpEl(lw, 'div', 'lp-lane'), lb = _lpEl(ln, 'b', null, _t(r.l));
+        _lpEl(lb, 'small', null, _t(r.s));
+        var cl = _lpEl(ln, 'div', 'lp-cells'); cl.style.setProperty('--n', nst);
+        var arr = [];
+        for (var q2 = 0; q2 < nst; q2++) arr.push(_lpEl(cl, 'i', r.hits.indexOf(q2) !== -1 ? 'on' : ''));
+        cells.push({ r: r, a: arr });
+      });
+      var pos = -1;
+      setTimeout(function() {
+        if (!_lp) return;
+        _lp.timer = setInterval(function() {
+          pos = (pos + 1) % nst;
+          cells.forEach(function(x) {
+            x.a.forEach(function(el, q3) { el.classList.toggle('now', q3 === pos); });
+            if (x.r.hits.indexOf(pos) !== -1) _lpHit(x.r.inst);
+          });
+        }, 60000 / (st.bpm || 76) / 2);
+      }, 600);
+      row = _lpEl(c, 'div', 'lt-row');
+      var gl = _lpEl(row, 'button', 'lt-go', _t('Continue')); gl.type = 'button'; gl.addEventListener('click', _lpNext);
+    } else if (st.k === 'label') {
+      var bw = _lpEl(c, 'div', 'lp-break');
+      st.parts.forEach(function(pt, i2) { var d = _lpEl(bw, 'div'); d.style.animationDelay = (i2 * 0.18) + 's'; _lpEl(d, 'b', null, pt[0]); if (pt[1]) _lpEl(d, 'span', null, _t(pt[1])); });
+      row = _lpEl(c, 'div', 'lt-row');
+      var gb = _lpEl(row, 'button', 'lt-go', _t('Got it')); gb.type = 'button'; gb.addEventListener('click', _lpNext);
+    } else if (st.k === 'tips') {
+      var ul = _lpEl(c, 'ol', 'lp-tips');
+      st.items.forEach(function(it, i3) { var li = _lpEl(ul, 'li', null, _t(it)); li.style.animationDelay = (i3 * 0.25) + 's'; });
+      row = _lpEl(c, 'div', 'lt-row');
+      var gtp = _lpEl(row, 'button', 'lt-go', _t('Got it')); gtp.type = 'button'; gtp.addEventListener('click', _lpNext);
+    } else if (st.k === 'count') {
+      var lbl = _lpEl(c, 'div', 'lp-label', ''), cr = _lpEl(c, 'div', 'lp-countrow');
+      var phases = [['Quarter notes', ['1', '2', '3', '4']], ['Eighth notes', ['1', 'and', '2', 'and', '3', 'and', '4', 'and']],
+                    ['Sixteenth notes', ['1', 'e', 'and', 'a', '2', 'e', 'and', 'a', '3', 'e', 'and', 'a', '4', 'e', 'and', 'a']]];
+      var shown = function(w) { return w === 'and' ? '&' : w; };
+      var runCount = function() {
+        _lpStopAll();
+        try { initA(); } catch (e) {}
+        if (!aCtx) return;
+        var qd = 60 / (st.bpm || 72), t = aCtx.currentTime + 0.2, ev = [];
+        phases.forEach(function(ph) {
+          var n = ph[1].length, sd = 4 * qd / n;
+          for (var c3 = 0; c3 < 4; c3++) playCountClick(c3 === 0, 0.7, t + c3 * qd);
+          ph[1].forEach(function(w, i4) { var at = t + i4 * sd; playCountVoice(w, at); ev.push({ t: at, ph: ph, i: i4 }); });
+          t += 4 * qd;
+        });
+        _lp.playing = true;
+        var lastPh = null, end = t, spans = [];
+        var tick = function() {
+          if (!_lp || !_lp.playing) return;
+          var now = aCtx.currentTime - _audioLatency(), cur = null;
+          for (var j = 0; j < ev.length && ev[j].t <= now; j++) cur = ev[j];
+          if (cur) {
+            if (cur.ph !== lastPh) {
+              lastPh = cur.ph; lbl.textContent = _t(cur.ph[0]); cr.textContent = ''; cr.style.setProperty('--n', Math.min(8, cur.ph[1].length));
+              spans = cur.ph[1].map(function(w) { return _lpEl(cr, 'span', null, shown(w)); });
+            }
+            spans.forEach(function(sp, k3) { sp.classList.toggle('now', k3 === cur.i); });
+          }
+          if (now > end + 0.2) { _lp.playing = false; spans.forEach(function(sp) { sp.classList.remove('now'); }); return; }
+          _lp.raf = requestAnimationFrame(tick);
+        };
+        _lp.raf = requestAnimationFrame(tick);
+      };
+      row = _lpEl(c, 'div', 'lt-row');
+      var again2 = _lpEl(row, 'button', 'lt-ghost', '▶ ' + _t('Again')); again2.type = 'button'; again2.addEventListener('click', runCount);
+      var gc = _lpEl(row, 'button', 'lt-go', _t('Continue')); gc.type = 'button'; gc.addEventListener('click', _lpNext);
+      setTimeout(function() { if (_lp && _lpCur().steps[_lp.s] === st) runCount(); }, st.v && DL_LANG === 'en' ? 6500 : 700);
     } else if (st.k === 'note') {
       var box = _lpEl(c, 'div', 'lt-play lp-notebox');
       var nsvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); box.appendChild(nsvg);
@@ -22967,7 +23167,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _lpEl(c, 'h2', 'lt-h', _t('Could you play along?'));
       _lpEl(c, 'p', 'lt-p', _t('Be honest. You can repeat it as often as you like.'));
       var ans = _lpEl(c, 'div', 'lt-ans');
-      [['yes', _t('Yes! 🚀'), _t('Next mission')], ['again', _t('Again'), _t('Same tempo')], ['slow', _t('Slower'), _t('A bit easier')]].forEach(function(o) {
+      [['yes', _t('Yes! 🚀'), _t(_lp.intro ? 'On to the lesson' : 'Next mission')], ['again', _t('Again'), _t('Same tempo')], ['slow', _t('Slower'), _t('A bit easier')]].forEach(function(o) {
         var b = _lpEl(ans, 'button', 'lt-opt', o[1]); b.type = 'button'; _lpEl(b, 'small', null, o[2]);
         b.addEventListener('click', function() {
           if (o[0] === 'yes') { _lpComplete(m, st); return; }
@@ -23041,7 +23241,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     };
     btn.addEventListener('click', function() { if (_lp.playing) { _lpStopAll(); btn.textContent = '▶ ' + _t('Play'); dn.disabled = false; } else start(); });
     _lpSay(st.v);
-    setTimeout(function() { if (_lp && !_lp.playing && LP_MISSIONS[_lp.m].steps[_lp.s] === st) start(); }, st.v && DL_LANG === 'en' ? 4200 : 900);
+    setTimeout(function() { if (_lp && !_lp.playing && _lpCur().steps[_lp.s] === st) start(); }, st.v && DL_LANG === 'en' ? 4200 : 900);
   }
   // Musik-Platzhalter: weiche Akkorde (C–G–Am–F) und Bass auf 1 und 3, bis die Suno-Begleitungen da sind
   function _lpMusic(bus, t0, bars, bpm) {
@@ -23065,7 +23265,33 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     }
   }
+  function _lpOpenIntro(m) {
+    if (playing) stopExercise();
+    if (!_lp) _lpBuild();
+    _lp.el.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    _lp.intro = m; _lp.s = 0; _lp.taps = {}; _lp.bpm = 70;
+    _lp.bar.style.width = '0%';
+    _lpStep();
+  }
+  function LP_PUBLIC_REF() { return !!window.__dlLpPublic; }
+  function _lpIntroCheck(lesson) {
+    try {
+      if (!lesson || _rampMode || _freeMode || _gateBlocked || !(LP_PUBLIC_REF() || _devMode)) return;
+      var m = LP_INTROS[lesson.cat];
+      if (!m || _lpIsDone(m.id) || (_lp && _lp.el.classList.contains('open'))) return;
+      setTimeout(function() { if (_shownLesson === lesson && !playing) _lpOpenIntro(m); }, 500);
+    } catch (e) {}
+  }
   function _lpComplete(m, st) {
+    if (_lp.intro) {
+      if (!_lpIsDone(m.id)) { _ach.lp = _ach.lp || []; _ach.lp.push(m.id); _achDirty(); }
+      if (!st.skip) { _ltChime(); }
+      _lp.intro = null;
+      _lpClose();
+      setInfo(_t('Ready? Press Start.'));
+      return;
+    }
     var first = !_lpIsDone(m.id), got = [];
     if (first) {
       _ach.lp = _ach.lp || [];
@@ -30331,6 +30557,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Bis Erwin freigibt (25.11.2026: „ich will es doch erst testen und sehen“): nur im Dev-Modus sichtbar.
   // Direkt testen: Player mit ?dev=1&launch=1 öffnen. Freigabe = LP_PUBLIC auf true.
   var LP_PUBLIC = false;
+  window.__dlLpPublic = LP_PUBLIC;
   if (!LP_PUBLIC && !_devMode) document.getElementById('dgLaunchBtn').style.display = 'none';
   try { if (_devMode && new URLSearchParams(window.location.search).get('launch') === '1') setTimeout(_lpOpen, 600); } catch (e) {}
   // Ganz neu (keine Lektion, keine Einstufung aus dem Test, Launchpad noch nicht begonnen): Launchpad einmal von selbst öffnen
