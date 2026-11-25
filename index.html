@@ -18694,7 +18694,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-134700';
+  var DL_BUILD = '20261125-134911';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -30260,9 +30260,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Skip-Joker (25.11.2026)
   document.getElementById('dgJoker').addEventListener('click', _achUseSkip);
   document.getElementById('dgLaunchBtn').addEventListener('click', _lpOpen);
+  // Bis Erwin freigibt (25.11.2026: „ich will es doch erst testen und sehen“): nur im Dev-Modus sichtbar.
+  // Direkt testen: Player mit ?dev=1&launch=1 öffnen. Freigabe = LP_PUBLIC auf true.
+  var LP_PUBLIC = false;
+  if (!LP_PUBLIC && !_devMode) document.getElementById('dgLaunchBtn').style.display = 'none';
+  try { if (_devMode && new URLSearchParams(window.location.search).get('launch') === '1') setTimeout(_lpOpen, 600); } catch (e) {}
   // Ganz neu (keine Lektion, keine Einstufung aus dem Test, Launchpad noch nicht begonnen): Launchpad einmal von selbst öffnen
   try {
-    if (!_gateBlocked && !_rampMode && _getTotalLessons() === 0 && !(_cState && _cState.place) && !(_ach.lp || []).length &&
+    if (LP_PUBLIC && !_gateBlocked && !_rampMode && _getTotalLessons() === 0 && !(_cState && _cState.place) && !(_ach.lp || []).length &&
         new URLSearchParams(window.location.search).get('test') !== '1' && !localStorage.getItem(_nsKey('drumlion_v1_lpseen'))) {
       localStorage.setItem(_nsKey('drumlion_v1_lpseen'), '1');
       setTimeout(_lpOpen, 600);
