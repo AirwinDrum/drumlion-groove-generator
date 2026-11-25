@@ -1945,6 +1945,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 .lt-ans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .lt-ans .lt-opt { text-align: center; font-size: 16px; padding: 14px 8px; }
 .lt-ans .lt-opt small { display: block; font-weight: 500; opacity: 0.65; font-size: 12px; margin-top: 4px; }
+/* Noten-Quiz (Erwin, 25.11.2026): zwei Takte hören, zwei Antwort-Notenzeilen, richtig = Ton + Effekt */
+.lt-quiz { display: grid; gap: 12px; margin: 6px 0 12px; }
+.lt-qopt { position: relative; display: block; width: 100%; text-align: left; padding: 22px 2% 6px; border-radius: 14px; border: 2px solid var(--dl-line);
+  background: var(--dl-raise); color: inherit; font: inherit; cursor: pointer; transition: border-color 0.15s, box-shadow 0.2s, opacity 0.2s; }
+.lt-qopt:hover, .lt-qopt:focus-visible { border-color: #C9A84C; outline: none; }
+.lt-qopt b { position: absolute; top: 6px; left: 12px; font-size: 13px; letter-spacing: 0.12em; color: var(--dl-gold-ink); }
+.lt-qopt svg { display: block; width: 100%; height: auto; pointer-events: none; }
+.lt-qopt.ok { border-color: #3fb27f; box-shadow: 0 0 0 4px rgba(63,178,127,0.18), 0 0 28px rgba(63,178,127,0.35); animation: ltPop 0.45s cubic-bezier(.2,1.6,.4,1); }
+.lt-qopt.bad { border-color: #d0605e; opacity: 0.6; animation: ltShake 0.35s; }
+.lt-qopt.dim { opacity: 0.4; }
+.lt-qmark { position: absolute; right: 14px; top: 4px; font-size: 24px; font-weight: 800; animation: ltIn 0.3s ease; }
+.lt-qopt.ok .lt-qmark { color: #3fb27f; }
+.lt-qopt.bad .lt-qmark { color: #d0605e; }
+.lt-burst { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; border-radius: 50%; background: #C9A84C; pointer-events: none;
+  animation: ltBurst 0.75s ease-out forwards; }
+@keyframes ltPop { 0% { transform: scale(0.97); } 55% { transform: scale(1.03); } 100% { transform: scale(1); } }
+@keyframes ltShake { 0%, 100% { transform: none; } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes ltBurst { from { transform: translate(-50%, -50%); opacity: 1; } to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .lt-qopt.ok, .lt-qopt.bad { animation: none; } .lt-burst { display: none; } }
 .lt-score { font-size: clamp(96px, 24vw, 160px); font-weight: 800; line-height: 0.9; color: #C9A84C; font-variant-numeric: tabular-nums; }
 .lt-tease { opacity: 0.95; }
 .lt-again.lt-big { font-size: 17px; padding: 10px 22px; border-color: #C9A84C; color: var(--dl-gold-ink); }
@@ -18108,7 +18127,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-115832';
+  var DL_BUILD = '20261125-122351';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -26684,11 +26703,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // ============================================================
   var LT_KEY = 'drumlion_leveltest_v1';
   var LT_ACADEMY = 'https://www.drumlion.com/academy';
-  var LT_MAX_ROUNDS = 10;
+  var LT_MAX_ROUNDS = 8;
   // Reihenfolge der Runden (Erwin, 12.11.2026: 8–10 Runden): in den ersten 8 je zweimal Grooves, Fills, Lesen, Rudiments
   // 18.11.2026 (Erwin: „bring 2 der einfacheren übungen rein, nicht zu schnell“, Test gleich lang): zwei
   // Coordination-Runden statt einer Groove- und einer Fill-Runde, beide vor Runde 8 (frühestes Ende).
-  var LT_SEQ = ['grooves', 'fillins', 'notes', 'coordination', 'rudiments', 'grooves', 'coordination', 'notes', 'rudiments', 'grooves'];
+  // 25.11.2026 (Erwin: „mach den test catchier“): 8 statt 10 Runden, Lesen als Quiz (zwei Antwortzeilen),
+  // erste Groove-Runde immer Groove 1 (16tel-Bassdrum-Grooves kommen dazu, sobald die Kategorie gebaut ist).
+  var LT_SEQ = ['grooves', 'fillins', 'notes', 'coordination', 'rudiments', 'grooves', 'notes', 'grooves'];
   var LT_PLAN_URL = 'https://www.drumlion.com/startplan';   // Systeme.io-Seite für den Startplan (Schritt 2); leer = Knopf ausgeblendet
   // Jede zweite Runde ein Groove, dazwischen reihum die anderen Säulen, soweit es sie im Level gibt
   // (Fills enden im Kurs bei Level 8, Notes bei 7). Coordination bleibt draußen: schon in Level 1
@@ -27301,7 +27322,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _ltAdd(c, 'div', 'lt-kick', 'Now the fun part');
     _ltAdd(c, 'h2', 'lt-h', "Let's see what you can play.");
     _ltAdd(c, 'p', 'lt-p', "You'll hear real exercises at their real tempo. Play along, or just watch and listen. " +
-      'Then be honest: could you play it right now?');
+      'Then be honest: could you play it right now? Two quick reading quizzes are in there too.');
     var go = _ltAdd(c, 'button', 'lt-go', "Let's go");
     go.type = 'button';
     go.addEventListener('click', _ltRound);
@@ -27471,6 +27492,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _ltRound() {
     var st = _lt.st, r = null, k;
     var want = LT_SEQ[st.round] || 'grooves';
+    if (want === 'notes' && st.noread) want = 'rudiments';
+    if (want === 'notes' && _ltQuiz()) return;
+    if (want === 'grooves' && !st.g1) r = _ltG1(st.L);
     if (want === 'coordination') r = _ltPick(st.L, 'coordination');
     if (!r && want !== 'grooves') {
       var s0 = Math.max(0, LT_OTHER.indexOf(want));
@@ -27508,6 +27532,161 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     clearTimeout(_lt.autoT);
     if (!delay) { _ltPlay(); return; }
     _lt.autoT = setTimeout(function() { if (_lt && _lt.st === st && st.cur === r && !_lt.playing) _ltPlay(); }, 2000);
+  }
+  // Erste Groove-Runde: Groove 1 im Tempo, das zum vermuteten Level passt (wie die Einstufung)
+  function _ltG1(L) {
+    var st = _lt.st, ex = _ltEx(1);
+    if (!ex || st.used[1]) return null;
+    st.g1 = 1;
+    var i = Math.min(_placeNearest(ex, _placeTarget(ex, Math.max(1, L))), _exSteps(ex) - 1);
+    return { cat: 'grooves', id: 1, bpm: _exBpm(ex, i), lv: L };
+  }
+  // ---- Noten-Quiz (Erwin, 25.11.2026): Zwei Takte werden gespielt, zwei Notenzeilen stehen zur Wahl.
+  // Erstes Quiz deutlich verschieden, zweites nur im zweiten Takt anders. Zählt nur für „Reading“,
+  // Testlevel und Grenzen bleiben unverändert (wie Coordination).
+  var _ltQuizPool = null;
+  function _ltQuizList() {
+    if (_ltQuizPool) return _ltQuizPool;
+    var num = function(e) { return parseInt((String(e.name).match(/\d+/) || ['0'])[0], 10); };
+    _ltQuizPool = EXERCISES.filter(function(e) {
+      return e.cat === 'notes' && e.beats && e.beats.length && !(e.beats2 && e.beats2.length) && !e.grid2 && !e.grid && !e.bars && (!e.beatsPerBar || e.beatsPerBar === 4);
+    }).sort(function(a, b) { return num(a) - num(b); });
+    return _ltQuizPool;
+  }
+  function _ltSig(beats) {
+    return beats.map(function(st) { return (st || []).map(function(n) { return n.rest ? 'r' + n.rest : (n.inst || '') + ':' + (n.head || ''); }).sort().join('+'); });
+  }
+  function _ltDist(a, b) { if (a.length !== b.length) return -1; var d = 0; for (var i = 0; i < a.length; i++) if (a[i] !== b[i]) d++; return d; }
+  function _ltQuizEx(id, base, b1, b2) {
+    var e = {}, k;
+    for (k in base) e[k] = base[k];
+    e.id = id; e.name = 'Reading quiz'; e.catLabel = 'Reading'; e.beats = b1; e.beats2 = b2;
+    delete e.stickings;
+    LT_BEGIN_EX[id] = e;
+    return e;
+  }
+  function _ltQuiz() {
+    var st = _lt.st, pool = _ltQuizList(), n = pool.length;
+    if (n < 4) return false;
+    var qn = st.quizN || 0, hard = qn > 0;
+    var idx = Math.max(0, Math.min(n - 1, Math.round(Math.max(1, st.L) / 60 * (n - 1))));
+    if (hard) idx = Math.max(0, Math.min(n - 1, idx + (st.quizOk ? 3 : -3)));
+    var X = pool[idx], sx = _ltSig(X.beats), best = null;
+    pool.forEach(function(Y, j) {
+      if (Y === X) return;
+      var d = _ltDist(sx, _ltSig(Y.beats));
+      if (d <= 0) return;
+      if (hard && Y.noteValue !== X.noteValue) d += 100;
+      var near = Math.abs(j - idx);
+      if (!best || (hard ? (d < best.d || (d === best.d && near < best.near)) : (d > best.d || (d === best.d && near < best.near)))) best = { ex: Y, d: d, near: near };
+    });
+    if (!best) return false;
+    var Y = best.ex, right, wrong, t;
+    if (hard) {
+      right = _ltQuizEx('qz_a', X, X.beats, X.beats);
+      wrong = _ltQuizEx('qz_b', X, X.beats, Y.beats);
+    } else {
+      right = _ltQuizEx('qz_a', X, X.beats, X.beats);
+      wrong = _ltQuizEx('qz_b', Y, Y.beats, Y.beats);
+    }
+    if (Math.random() < 0.5) { t = right; right = wrong; wrong = t; }
+    var bpm = Math.round(Math.min(100, Math.max(70, right.minBPM || 80)));
+    st.quizN = qn + 1;
+    st.cur = { cat: 'notes', id: right.id, bpm: bpm, lv: st.L, quiz: true };
+    _ltLog('round_' + (st.round + 1));
+    _ltProgress(_ltQs().length + st.round);
+    var c = _ltCard();
+    if (st.fb) _ltAdd(c, 'div', 'lt-fb', st.fb);
+    _ltAdd(c, 'div', 'lt-kick', hard ? 'Reading quiz · listen closely' : 'Reading quiz');
+    _ltAdd(c, 'h2', 'lt-h', 'Which line do you hear?');
+    var play = _ltAdd(c, 'div', 'lt-play'), meta = _ltAdd(play, 'div', 'lt-head');
+    _ltAdd(meta, 'span', 'lt-head-bpm', bpm + ' BPM');
+    var hc = _ltAdd(meta, 'div', 'lt-head-c');
+    _ltAdd(hc, 'span', 'lt-head-cat', 'Reading');
+    _ltAdd(hc, 'span', 'lt-head-name', hard ? 'Spot the difference' : 'Pick the line');
+    var again = _ltAdd(meta, 'button', 'lt-again', '▶ Play');
+    again.type = 'button';
+    again.addEventListener('click', function() { if (_lt.playing) _ltStop(); else _ltPlay(); });
+    _lt.btn = again;
+    _lt.svg = null;
+    var box = _ltAdd(play, 'div', 'lt-quiz'), opts = [right, wrong], done = false;
+    if (Math.random() < 0.5) opts.reverse();
+    opts.forEach(function(ex, i) {
+      var b = _ltAdd(box, 'button', 'lt-qopt');
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Line ' + 'AB'[i]);
+      _ltAdd(b, 'b', null, 'AB'[i]);
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('aria-hidden', 'true');
+      b.appendChild(svg);
+      var keep = GROOVE;
+      GROOVE = ex;
+      try { renderNot(-1, false, { svg: svg }); } catch (e) {}
+      finally { GROOVE = keep; }
+      b.addEventListener('click', function() { if (done) return; done = true; _ltQuizAnswer(ex === right, b, box); });
+    });
+    _lt.cnt = _ltAdd(play, 'div', 'lt-count');
+    _lt.prog = _ltAdd(_ltAdd(play, 'div', 'lt-prog'), 'div', 'lt-prog-fill');
+    var nr = _ltAdd(c, 'button', 'lt-link', "I can't read notes");
+    nr.type = 'button';
+    nr.addEventListener('click', function() { if (done) return; done = true; _ltStop(); st.noread = true; st.fb = 'No problem. Next one.'; _ltQuizNext(); });
+    clearTimeout(_lt.autoT);
+    var cur = st.cur;
+    _lt.autoT = setTimeout(function() { if (_lt && _lt.st === st && st.cur === cur && !_lt.playing) _ltPlay(); }, st.round > 0 ? 2000 : 700);
+    return true;
+  }
+  function _ltQuizAnswer(ok, btn, box) {
+    var st = _lt.st;
+    _ltStop();
+    btn.classList.add(ok ? 'ok' : 'bad');
+    _ltAdd(btn, 'span', 'lt-qmark', ok ? '✓' : '✗');
+    [].forEach.call(box.children, function(b) {
+      if (b === btn) return;
+      if (ok) b.classList.add('dim');
+      else { b.classList.add('ok'); _ltAdd(b, 'span', 'lt-qmark', '✓'); }
+    });
+    if (ok) { _ltChime(); _ltBurst(btn); }
+    (st.skills.notes = st.skills.notes || []).push(ok ? 2 : 0);
+    st.quizOk = ok;
+    _ltLog(ok ? 'quiz_right' : 'quiz_wrong');
+    st.fb = ok ? 'Right! Your eyes and ears work together.' : 'Close one. Reading gets easier with practice.';
+    clearTimeout(_lt.autoT);
+    _lt.autoT = setTimeout(_ltQuizNext, ok ? 1400 : 2000);
+  }
+  function _ltQuizNext() {
+    if (!_lt || !_lt.st) return;
+    var st = _lt.st;
+    st.round++;
+    if (st.round >= LT_MAX_ROUNDS) { _ltResult(); return; }
+    _ltRound();
+  }
+  // Kleiner Erfolgs-Klang (drei Töne aufwärts) und goldene Funken bei richtigen Quiz-Antworten
+  function _ltChime() {
+    try {
+      initA();
+      if (!aCtx) return;
+      var t = aCtx.currentTime + 0.02, out = _aOut();
+      [[784, 0], [1175, 0.09], [1568, 0.18]].forEach(function(p) {
+        var o = aCtx.createOscillator(), g = aCtx.createGain();
+        o.type = 'sine';
+        o.frequency.value = p[0];
+        g.gain.setValueAtTime(0.0001, t + p[1]);
+        g.gain.exponentialRampToValueAtTime(0.22, t + p[1] + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + p[1] + 0.35);
+        o.connect(g); g.connect(out);
+        o.start(t + p[1]); o.stop(t + p[1] + 0.4);
+      });
+    } catch (e) {}
+  }
+  function _ltBurst(el) {
+    for (var i = 0; i < 12; i++) {
+      var sp = document.createElement('span'), a = i / 12 * Math.PI * 2, d = 50 + Math.random() * 40;
+      sp.className = 'lt-burst';
+      sp.style.setProperty('--dx', Math.round(Math.cos(a) * d * 2) + 'px');
+      sp.style.setProperty('--dy', Math.round(Math.sin(a) * d) + 'px');
+      el.appendChild(sp);
+      setTimeout(function(x) { return function() { x.remove(); }; }(sp), 850);
+    }
   }
   // Profi-Checks: ändern Kurs-Level und Einstufung nicht, nur die angezeigte Zahl über 65
   function _ltProRound() {
@@ -27597,7 +27776,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var bars = [ex.beats];
     if (ex.beats2 && ex.beats2.length) bars.push(ex.beats2);
     // Etwa LT_PLAY_SEC lang, 4–16 Takte, Fills in ganzen Phrasen (Groove + Fill)
-    var nBars = Math.max(4, Math.min(16, Math.ceil(LT_PLAY_SEC / (bpb * qd)))), reps = Math.ceil(nBars / bars.length);
+    var nBars = r.quiz ? 4 : Math.max(4, Math.min(16, Math.ceil(LT_PLAY_SEC / (bpb * qd)))), reps = Math.ceil(nBars / bars.length);
     var cq = [];
     _sbOnBus(bus, function() {
       // Einzähler wie im Player: ab 60 BPM „1 – 2 – 1 2 3 4“, darunter „1 2 3 4“; andere Taktarten in ganzen Takten
