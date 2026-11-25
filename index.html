@@ -759,6 +759,11 @@ body.one-block #dgTotal { display: none !important; }
 .cq-msg { margin: 0; min-height: 1.4em; font-weight: 700; color: var(--dl-gold-ink); }
 .cq-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .cq-next[hidden] { display: none; }
+.cq-inline { width: 100%; max-height: none; margin: 10px 0 4px; animation: ltIn 0.3s ease; }
+.dg-inner.cq-mode .notation-box, .dg-inner.cq-mode .metro-cluster, .dg-inner.cq-mode .timing-cue, .dg-inner.cq-mode .dl-ex-actions,
+.dg-inner.cq-mode .phase-row, .dg-inner.cq-mode #dgInfo, .dg-inner.cq-mode #dgBlocks, .dg-inner.cq-mode .dev-tempo,
+.dg-inner.cq-mode #dgCompletedBanner, .dg-inner.cq-mode .nav-row, .dg-inner.cq-mode .joker-row, .dg-inner.cq-mode .ach-bar,
+.dg-inner.cq-mode #dgFree, .dg-inner.cq-mode #dgInfoLeft, .dg-inner.cq-mode #dgInfoRight, .dg-inner.cq-mode #dgInfoBar { display: none !important; }
 .level-display {
   font-size: clamp(17px,2.8vw,21px); color: var(--dl-ink);
   text-align: center; font-variant-numeric: tabular-nums;
@@ -18822,7 +18827,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-162255';
+  var DL_BUILD = '20261125-164434';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -23407,14 +23412,22 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (c.cnt) { c.cnt.classList.remove('on'); c.cnt.textContent = ''; }
     if (c.btn) c.btn.textContent = '▶ ' + _t('Play');
   }
+  // Seit 25.11.2026 kein Popup mehr (Erwin: „sie sind Teil der Note-Reading-Säule“): das Quiz erscheint im Player
+  // selbst als eigene Lektion, an der Stelle des Notenbilds, mit Säulen-Kopfzeile und „Weiter“ wie jede Lektion.
+  var _cqInline = null;
   function _cqOpen(done) {
     var lesson = _shownLesson, Q = lesson && _cqBuild(lesson.ex);
     _cqShownFor = _cqState.n;
-    if (!Q) { done(); return; }
+    var inner = document.querySelector('.dg-inner'), grp = inner && inner.querySelector('.notation-group');
+    if (!Q || !inner || !grp) { done(); return; }
     var add = function(par, tag, cls, txt) { var x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; par.appendChild(x); return x; };
-    var ov = add(document.body, 'div', 'cq-ov'), card = add(ov, 'div', 'cq-card'), answered = false, closed = false;
-    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
-    add(card, 'div', 'lt-kick', Q.hard ? _t('Reading quiz') + ' · ' + _t('listen closely') : _t('Reading quiz'));
+    var nameEl = document.getElementById('dgName'), keepName = nameEl ? nameEl.textContent : '';
+    var card = document.createElement('section'), answered = false, closed = false;
+    card.className = 'cq-card cq-inline';
+    card.setAttribute('aria-label', _t('Reading quiz'));
+    var nb = grp.querySelector('.notation-box');
+    grp.insertBefore(card, nb ? nb.nextSibling : null);
+    if (Q.hard) add(card, 'div', 'lt-kick', _t('listen closely'));
     add(card, 'h3', 'cq-h', _t('Which line do you hear?'));
     var head = add(card, 'div', 'cq-head');
     add(head, 'span', 'cq-bpm', Q.bpm + ' BPM');
@@ -23426,16 +23439,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     skip.type = 'button';
     var next = add(foot, 'button', 'lt-go cq-next', _t('Continue'));
     next.type = 'button'; next.hidden = true;
+    // Player in den Quiz-Zustand: Kopfzeile bleibt (Säule), Titel wird „Lese-Quiz“, Übungs-Bedienung ausgeblendet
+    inner.classList.add('cq-mode');
+    if (nameEl) nameEl.textContent = _t('Reading quiz');
     var close = function() {
       if (closed) return;
       closed = true;
       _cqStop();
-      ov.remove();
-      document.removeEventListener('keydown', onKey, true);
+      _cqInline = null;
+      card.remove();
+      inner.classList.remove('cq-mode');
+      if (nameEl) nameEl.textContent = keepName;
       done();
     };
-    var onKey = function(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
-    document.addEventListener('keydown', onKey, true);
+    var toggle = function() { if (answered) { close(); return; } if (_cq) _cqStop(); else _cqPlay(Q.right, Q.bpm, cnt, play); };
+    _cqInline = { toggle: toggle, close: close };
     var opts = [Q.right, Q.wrong];
     if (Math.random() < 0.5) opts.reverse();
     opts.forEach(function(ex, i) {
@@ -23472,12 +23490,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     play.addEventListener('click', function() { if (_cq) _cqStop(); else _cqPlay(Q.right, Q.bpm, cnt, play); });
     skip.addEventListener('click', close);
     next.addEventListener('click', close);
-    setTimeout(function() { if (!answered && !closed) _cqPlay(Q.right, Q.bpm, cnt, play); }, 600);
+    setTimeout(function() { if (!answered && !closed) _cqPlay(Q.right, Q.bpm, cnt, play); }, 900);
   }
 
   function _doneNext() {
     if (!_doneNextArmed) return;
-    if (_cqDue()) { _showFeedback(false); _cqOpen(_doneNext); return; }
+    if (_cqDue()) {
+      _showFeedback(false);
+      var cw = document.querySelector('.dg-inner');
+      if (cw) { cw.style.transition = 'opacity 0.35s'; cw.style.opacity = '0'; setTimeout(function() { _cqOpen(_doneNext); cw.style.opacity = '1'; }, 400); }
+      else _cqOpen(_doneNext);
+      return;
+    }
     _doneNextArmed = false;
     _showFeedback(false);
     // War das die Lektion im Endtempo, landet die Übung jetzt in `completed`
@@ -30021,6 +30045,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         e.preventDefault();
         if (_lt.btn && _lt.el.contains(_lt.btn)) { if (_lt.playing) _ltStop(); else _ltPlay(); }
       }
+      return;
+    }
+    if (_cqInline) {
+      if (e.code === 'Space') { e.preventDefault(); _cqInline.toggle(); }
       return;
     }
     if (e.code === 'Space') {
