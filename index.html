@@ -652,6 +652,18 @@ body.one-block #dgTotal { display: none !important; }
 .dl-ach-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .dl-ach-list span { font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(201,168,76,0.45); background: rgba(201,168,76,0.08); }
 .dl-ach-hint { font-size: 13px; opacity: 0.65; margin: 0; }
+.dl-ach-sub { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; margin: 4px 0 0; }
+.dl-ach-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.dl-ach-colors button { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--dl-line);
+  background: var(--dl-raise); color: inherit; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.dl-ach-colors button i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.dl-ach-colors button.on { border-color: #C9A84C; box-shadow: 0 0 0 2px rgba(201,168,76,0.25); }
+.dl-ach-colors button:disabled { opacity: 0.45; cursor: default; }
+.dl-ach-colors small { font-weight: 500; opacity: 0.8; }
+.dl-ach-bonus { display: grid; gap: 6px; }
+.dl-ach-bonus button { text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(201,168,76,0.45); background: rgba(201,168,76,0.08);
+  color: inherit; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+.dl-ach-bonus button span { font-weight: 500; opacity: 0.7; }
 /* Erfolgs-Leiste direkt im Player (Erwin, 25.11.2026: „direkt in den player einblenden“) */
 .ach-bar { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 4px; width: 100%; }
 .ach-bar[hidden] { display: none; }
@@ -2644,6 +2656,20 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ["Right! Your eyes and ears work together.", "Richtig! Augen und Ohren arbeiten zusammen.", "¡Correcto! Tus ojos y oídos trabajan juntos.", "Certo! Seus olhos e ouvidos trabalham juntos.", "Bien vu ! Tes yeux et tes oreilles travaillent ensemble."],
     ["Close one. Reading gets easier with practice.", "Knapp daneben. Lesen wird mit Übung leichter.", "Casi. Leer se vuelve más fácil con práctica.", "Quase. Ler fica mais fácil com prática.", "Presque. La lecture devient plus facile avec la pratique."],
     ["Play 10 minutes today to earn a skip", "Spiel heute 10 Minuten für einen Skip", "Toca 10 minutos hoy para ganar un salto", "Toque 10 minutos hoje para ganhar um pulo", "Joue 10 minutes aujourd’hui pour gagner un joker"],
+    // Belohnungen (25.11.2026)
+    ["New note color unlocked", "Neue Notenfarbe freigeschaltet", "Nuevo color de notas desbloqueado", "Nova cor de notas desbloqueada", "Nouvelle couleur de notes débloquée"],
+    ["Pick it under Achievements.", "Wähle sie unter Erfolge aus.", "Elígelo en Logros.", "Escolha em Conquistas.", "Choisis-la dans Succès."],
+    ["Note color", "Notenfarbe", "Color de notas", "Cor das notas", "Couleur des notes"],
+    ["Gold", "Gold", "Oro", "Ouro", "Or"],
+    ["Blue", "Blau", "Azul", "Azul", "Bleu"],
+    ["Green", "Grün", "Verde", "Verde", "Vert"],
+    ["Ruby", "Rubin", "Rubí", "Rubi", "Rubis"],
+    ["Purple", "Lila", "Morado", "Roxo", "Violet"],
+    ["+1 skip", "+1 Skip", "+1 salto", "+1 pulo", "+1 joker"],
+    ["Bonus exercise unlocked", "Bonus-Übung freigeschaltet", "Ejercicio extra desbloqueado", "Exercício bônus desbloqueado", "Exercice bonus débloqué"],
+    ["A sneak peek from a higher level. Find it under Achievements.", "Ein Vorgeschmack aus einem höheren Level. Du findest sie unter Erfolge.", "Un adelanto de un nivel superior. Lo encuentras en Logros.", "Uma prévia de um nível mais alto. Está em Conquistas.", "Un avant-goût d’un niveau supérieur. Tu le trouves dans Succès."],
+    ["Bonus exercises", "Bonus-Übungen", "Ejercicios extra", "Exercícios bônus", "Exercices bonus"],
+    ["Level {n}", "Level {n}", "Nivel {n}", "Nível {n}", "Niveau {n}"],
     // Erfolge und Skip-Joker (25.11.2026)
     ["Skip this one", "Diese überspringen", "Saltar esta", "Pular esta", "Passer celle-ci"],
     ["Skipped. It comes back later.", "Übersprungen. Sie kommt später wieder.", "Saltada. Volverá más tarde.", "Pulada. Ela volta mais tarde.", "Passée. Elle reviendra plus tard."],
@@ -3827,7 +3853,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var ACH_STREAK = [3, 7, 14, 30, 60, 100, 200, 365];
   var ACH_CATS = { grooves: 'Grooves', fillins: 'Fills', rudiments: 'Rudiments', coordination: 'Coordination', notes: 'Reading' };
   var _ACH_DAY = /^\d{4}-\d{2}-\d{2}$/, _ACH_WK = /^\d{4}-W\d{2}$/;
-  function _achBlank() { return { se: 0, su: 0, sd: '', dl: '', dc: 0, db: 0, sm: 0, fe: 0, fu: 0, rep: 0, tb: {}, pb: {}, aw: '', ac: [], ad: '', an: 0 }; }
+  function _achBlank() { return { se: 0, su: 0, sd: '', dl: '', dc: 0, db: 0, sm: 0, fe: 0, fu: 0, rep: 0, tb: {}, pb: {}, aw: '', ac: [], ad: '', an: 0, bx: [] }; }
   function _achNum(v) { v = Math.floor(+v || 0); return v > 0 && v < 1e9 ? v : 0; }
   function _achStr(v, re) { v = String(v || ''); return re.test(v) ? v : ''; }
   function _achMergeInto(a, o) {
@@ -3846,6 +3872,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var aw = _achStr(o.aw, _ACH_WK), ac = Array.isArray(o.ac) ? o.ac.filter(function(c) { return ACH_CATS.hasOwnProperty(c); }) : [];
     if (aw > a.aw) { a.aw = aw; a.ac = ac.slice(0, 5); ch = true; }
     else if (aw && aw === a.aw) ac.forEach(function(c) { if (a.ac.indexOf(c) === -1) { a.ac.push(c); ch = true; } });
+    if (Array.isArray(o.bx)) o.bx.forEach(function(id) {
+      id = Math.floor(+id || 0);
+      if (id > 0 && a.bx.indexOf(id) === -1 && a.bx.length < 60) { a.bx.push(id); ch = true; }
+    });
     if (a.dc > a.db) { a.db = a.dc; ch = true; }
     return ch;
   }
@@ -3871,10 +3901,64 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     setTimeout(function() { _celebrate(cfg); }, delay || 1600);
   }
   function _achCatName(c) { return _t(ACH_CATS[c] || c); }
+  // ---- Belohnungen (Erwin, 25.11.2026): Extra-Skip bei Abzeichen, Notenfarben, Bonus-Übungen
+  function _achGiveSkip(got) {
+    if (_achSkips() >= ACH_SKIP_MAX) return;
+    if (_ach.se < _ach.su) _ach.se = _ach.su;
+    _ach.se++;
+    got.push({ e: '⏭️', t: _t('+1 skip'), s: _t('Use it when you don’t feel like an exercise. It comes back later.') });
+  }
+  // Farbe der laufenden Note; Freischaltung ergibt sich aus dem Erfolgs-Stand (kein eigener Sync nötig)
+  var ACH_COLORS = [
+    { id: 'gold',   n: 'Gold',   d: '#C9A84C', l: '#7d5e12', ok: function() { return true; } },
+    { id: 'blue',   n: 'Blue',   d: '#5b8fd9', l: '#2c5aa3', ok: function() { return _ach.db >= 7; },      req: function() { return _t('{n} days in a row', { n: 7 }); } },
+    { id: 'green',  n: 'Green',  d: '#3fb27f', l: '#1f7a52', ok: function() { return _ach.rep >= 10000; }, req: function() { return _t('{n} strokes played', { n: _fmtNum(10000) }); } },
+    { id: 'ruby',   n: 'Ruby',   d: '#e0566b', l: '#a8263b', ok: function() { return _ach.an >= 1; },      req: function() { return _t('Allrounder of the week'); } },
+    { id: 'purple', n: 'Purple', d: '#a77bdb', l: '#6a3fa0', ok: function() { return _ach.db >= 30; },     req: function() { return _t('{n} days in a row', { n: 30 }); } }
+  ];
+  var _ACH_HL_KEY = _nsKey('drumlion_v1_notecolor');
+  function _achUnlocked() { return ACH_COLORS.filter(function(c) { return c.ok(); }).map(function(c) { return c.id; }); }
+  function _achHlColor(light) {
+    var id = 'gold';
+    try { id = localStorage.getItem(_ACH_HL_KEY) || 'gold'; } catch (e) {}
+    var c = ACH_COLORS.filter(function(x) { return x.id === id; })[0];
+    if (!c || c.id === 'gold' || !c.ok()) return null;
+    return light ? c.l : c.d;
+  }
+  function _achSetColor(id) {
+    try { localStorage.setItem(_ACH_HL_KEY, id); } catch (e) {}
+    try { if (!playing) renderNot(-1, false); } catch (e) {}
+    _achRender();
+  }
+  // Bonus-Übung: eine Übung 3–15 Level über dem aktuellen, die noch nicht im Kurs läuft
+  function _achPickBonus() {
+    var M = _ltMap(), lpl = LESSONS_PER_LEVEL, lv = (_getLevelInfo() || {}).level || 1, skip = {}, i, L;
+    (_ach.bx || []).forEach(function(id) { skip[id] = 1; });
+    (_cState.completed || []).forEach(function(id) { skip[id] = 1; });
+    Object.keys(_cState.cats || {}).forEach(function(c) { var k = _cState.cats[c]; ((k && k.active) || []).concat((k && k.park) || []).forEach(function(e) { skip[e.id] = 1; }); });
+    for (L = lv + 3; L <= Math.min(100, lv + 15); L++) {
+      for (i = (L - 1) * lpl; i < Math.min(M.length, L * lpl); i++) {
+        var id = M[i].id, ex = _ltEx(id);
+        if (!skip[id] && ex && ex.beats && ex.beats.length) return id;
+      }
+    }
+    return null;
+  }
+  function _achGiveBonus(got) {
+    var id = _achPickBonus();
+    if (!id) return;
+    _ach.bx.push(id);
+    got.push({ e: '🎁', t: _t('Bonus exercise unlocked'), s: _t('A sneak peek from a higher level. Find it under Achievements.') });
+  }
+  function _achBonusLevel(id) {
+    var M = _ltMap();
+    for (var i = 0; i < M.length; i++) if (M[i].id === id) return Math.floor(i / LESSONS_PER_LEVEL) + 1;
+    return null;
+  }
   // Nach jeder fertigen Kurs-Lektion: alles Neue sammeln und in EINER Feier zeigen
   function _achAfterLesson(lesson) {
     if (!lesson || _devRangeActive) return;
-    var got = [], today = _achDay(0), ch = false, cat = lesson.cat, n;
+    var got = [], today = _achDay(0), ch = false, cat = lesson.cat, n, colBefore = _achUnlocked().length;
     if (_getDailyMins() >= 10 && _ach.dl !== today) {
       if (_ach.dl === _achDay(1)) _ach.dc++;
       else if (_ach.dl === _achDay(2) && _achFreezes() > 0) {
@@ -3890,7 +3974,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       n = 0;
       ACH_STREAK.forEach(function(x) { if (_ach.dc >= x) n = x; });
-      if (n > _ach.sm) { _ach.sm = n; got.push({ e: '🔥', t: _t('{n} days in a row', { n: n }), s: _t('Showing up is the whole trick.') }); }
+      if (n > _ach.sm) { _ach.sm = n; got.push({ e: '🔥', t: _t('{n} days in a row', { n: n }), s: _t('Showing up is the whole trick.') }); _achGiveBonus(got); }
       if (_ach.sd !== today) {
         _ach.sd = today;
         if (_achSkips() < ACH_SKIP_MAX) {
@@ -3918,11 +4002,13 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (_ach.ad !== wk && need.length >= 3 && need.every(function(c) { return _ach.ac.indexOf(c) !== -1; })) {
         _ach.ad = wk; _ach.an++; ch = true;
         got.push({ e: '🎯', t: _t('Allrounder of the week'), s: _t('You trained every area this week. That’s how drummers get complete.') });
+        _achGiveSkip(got);
       }
     }
     n = 0;
     ACH_STROKES.forEach(function(x) { if (_stats.strokes >= x) n = x; });
-    if (n > _ach.rep) { _ach.rep = n; ch = true; got.push({ e: '🥁', t: _t('{n} strokes played', { n: _fmtNum(n) }), s: _t('Every repetition counts.') }); }
+    if (n > _ach.rep) { _ach.rep = n; ch = true; got.push({ e: '🥁', t: _t('{n} strokes played', { n: _fmtNum(n) }), s: _t('Every repetition counts.') }); _achGiveBonus(got); }
+    if (_achUnlocked().length > colBefore) got.push({ e: '🎨', t: _t('New note color unlocked'), s: _t('Pick it under Achievements.') });
     if (ch) _achDirty();
     _achShow(got, 1600);
     _achUi();
@@ -3940,6 +4026,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (mk > (_ach.pb[c] || 0)) {
         _ach.pb[c] = mk; ch = true;
         got.push({ e: '🏅', t: mk === 1 ? _t('First {cat} exercise mastered', { cat: _achCatName(c) }) : _t('{n} {cat} exercises mastered', { n: mk, cat: _achCatName(c) }), s: _t('Step by step, it all adds up.') });
+        _achGiveSkip(got);
       }
     });
     if (ch) _achDirty();
@@ -3983,11 +4070,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       Object.keys(ACH_CATS).forEach(function(c) { if (_ach.tb[c] >= 80) badges++; if (_ach.pb[c]) badges++; });
       var chip = function(txt, hot) { var x = document.createElement('span'); x.textContent = txt; if (hot) x.className = 'hot'; bar.appendChild(x); };
       var st = _achStreakNow();
-      if (st || _ach.db || _achSkips() || _achFreezes() || badges) {
+      if (st || _ach.db || _achSkips() || _achFreezes() || badges || (_ach.bx || []).length) {
         chip('🔥 ' + st, st >= 3);
         chip('⏭ ' + _achSkips(), _achSkips() > 0);
         chip('🧊 ' + _achFreezes(), false);
         chip('🏅 ' + badges, badges > 0);
+        if ((_ach.bx || []).length) chip('🎁 ' + _ach.bx.length, true);
       } else {
         var em = document.createElement('em'); em.textContent = '⏭ ' + _t('Play 10 minutes today to earn a skip'); bar.appendChild(em);
       }
@@ -4016,6 +4104,35 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_ach.an) list.push('🎯 ' + _t('{n} allrounder weeks', { n: _ach.an }));
     if (list.length) { var l = add(el, 'div', 'dl-ach-list'); list.forEach(function(t) { add(l, 'span', null, t); }); }
     if (!_ach.db) add(el, 'p', 'dl-ach-hint', _t('Play 10 minutes a day to earn skips and build your streak.'));
+    add(el, 'p', 'dl-ach-sub', '🎨 ' + _t('Note color'));
+    var cur = 'gold';
+    try { cur = localStorage.getItem(_ACH_HL_KEY) || 'gold'; } catch (e) {}
+    var cw = add(el, 'div', 'dl-ach-colors'), light = document.documentElement.getAttribute('data-theme') === 'light';
+    var eff = ACH_COLORS.some(function(x) { return x.id === cur && x.ok(); }) ? cur : 'gold';
+    ACH_COLORS.forEach(function(c) {
+      var b = add(cw, 'button'), ok = c.ok();
+      b.type = 'button';
+      var dot = add(b, 'i'); dot.style.background = light ? c.l : c.d;
+      b.appendChild(document.createTextNode(_t(c.n)));
+      if (!ok) { b.disabled = true; add(b, 'small', null, '🔒 ' + c.req()); }
+      if (ok && c.id === eff) b.classList.add('on');
+      b.addEventListener('click', function() { if (ok) _achSetColor(c.id); });
+    });
+    var bx = (_ach.bx || []).map(function(id) { return EXERCISES.find(function(e) { return e.id === id; }); }).filter(Boolean);
+    if (bx.length) {
+      add(el, 'p', 'dl-ach-sub', '🎁 ' + _t('Bonus exercises'));
+      var bw = add(el, 'div', 'dl-ach-bonus');
+      bx.slice().reverse().forEach(function(ex) {
+        var b = add(bw, 'button'), lv = _achBonusLevel(ex.id);
+        b.type = 'button';
+        b.appendChild(document.createTextNode(ex.name));
+        add(b, 'span', null, (ex.catLabel || '') + (lv ? ' · ' + _t('Level {n}', { n: lv }) : '') + ' · ' + _t('Practice →'));
+        b.addEventListener('click', function() {
+          try { if (typeof statsOverlay !== 'undefined' && statsOverlay) _closePanel(statsOverlay); } catch (e) {}
+          _startFree(ex);
+        });
+      });
+    }
   }
 
   // Übung endgültig abgeschlossen: Endtempo gespielt, sie kommt nie wieder
@@ -18418,7 +18535,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-125337';
+  var DL_BUILD = '20261125-132413';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20031,8 +20148,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                       faint: 'rgba(255,255,255,0.35)', dim: 'rgba(255,255,255,0.2)', active: '#C9A84C' };
   var _NOTA_LIGHT = { ink: '#1c1b18', paper: '#e9dcc0', soft: 'rgba(28,27,24,0.62)',
                       faint: 'rgba(28,27,24,0.42)', dim: 'rgba(28,27,24,0.2)', active: '#7d5e12' };   // aktive Note: dunkler, sonst geht sie auf dem Papier unter
+  var _notaHlCache = {};
   function _notaColors() {
-    return document.documentElement.getAttribute('data-theme') === 'light' ? _NOTA_LIGHT : _NOTA_DARK;
+    var light = document.documentElement.getAttribute('data-theme') === 'light', base = light ? _NOTA_LIGHT : _NOTA_DARK;
+    var hl = _achHlColor(light);
+    if (!hl) return base;
+    var k = (light ? 'L' : 'D') + hl;
+    if (!_notaHlCache[k]) { var o = {}, x; for (x in base) o[x] = base[x]; o.active = hl; _notaHlCache[k] = o; }
+    return _notaHlCache[k];
   }
 
   // `opt` (Song-Builder, 20.10.2026): { svg: Ziel-SVG statt #dgSvg, plain: einfache
