@@ -652,6 +652,23 @@ body.one-block #dgTotal { display: none !important; }
 .dl-ach-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .dl-ach-list span { font-size: 13px; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(201,168,76,0.45); background: rgba(201,168,76,0.08); }
 .dl-ach-hint { font-size: 13px; opacity: 0.65; margin: 0; }
+/* Erfolgs-Leiste direkt im Player (Erwin, 25.11.2026: „direkt in den player einblenden“) */
+.ach-bar { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 4px; width: 100%; }
+.ach-bar[hidden] { display: none; }
+.ach-bar span { font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--dl-raise); border: 1px solid var(--dl-line); font-variant-numeric: tabular-nums; }
+.ach-bar span.hot { border-color: rgba(201,168,76,0.6); }
+.ach-bar em { font-style: normal; font-size: 13px; opacity: 0.65; }
+.ach-bar:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; border-radius: 12px; }
+/* Lese-Quiz im Kurs (Erwin, 25.11.2026) */
+.cq-ov { position: fixed; inset: 0; z-index: 99990; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: ltIn 0.25s ease; }
+.cq-card { width: min(720px, 100%); max-height: 92vh; overflow: auto; background: var(--dl-paper); color: var(--dl-ink); border: 1px solid var(--dl-line); border-radius: 18px; padding: 20px; display: grid; gap: 12px; }
+.cq-h { margin: 0; font-size: clamp(20px, 3.4vw, 28px); font-weight: 800; }
+.cq-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cq-bpm { font-weight: 700; }
+.cq-wrap { position: relative; }
+.cq-msg { margin: 0; min-height: 1.4em; font-weight: 700; color: var(--dl-gold-ink); }
+.cq-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.cq-next[hidden] { display: none; }
 .level-display {
   font-size: clamp(17px,2.8vw,21px); color: var(--dl-ink);
   text-align: center; font-variant-numeric: tabular-nums;
@@ -2557,6 +2574,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       <button class="nav-btn" id="dgNavNext" style="visibility:hidden;">Skip →</button>
     </div>
     <div class="joker-row"><button type="button" class="joker-btn" id="dgJoker" hidden></button></div>
+    <button type="button" class="ach-bar" id="dgAchBar" hidden></button>
     <div class="level-display" id="dgLevelDisplay">
       <button class="level-nav-btn" id="dgLvlPrev" style="display:none;"></button>
       <span id="dgLvlText"><strong>Level 1</strong> · Lesson 1</span>
@@ -2617,6 +2635,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
   // {name}, {bpm}, {n} … werden von _t() eingesetzt.
   var I18N_ROWS = [
+    // Lese-Quiz im Kurs und Erfolgs-Leiste (25.11.2026)
+    ["Reading quiz", "Lese-Quiz", "Quiz de lectura", "Quiz de leitura", "Quiz de lecture"],
+    ["listen closely", "genau hinhören", "escucha con atención", "ouça com atenção", "écoute bien"],
+    ["Which line do you hear?", "Welche Zeile hörst du?", "¿Qué línea escuchas?", "Qual linha você ouve?", "Quelle ligne entends-tu ?"],
+    ["Skip quiz", "Quiz überspringen", "Saltar quiz", "Pular quiz", "Passer le quiz"],
+    ["Continue", "Weiter", "Continuar", "Continuar", "Continuer"],
+    ["Right! Your eyes and ears work together.", "Richtig! Augen und Ohren arbeiten zusammen.", "¡Correcto! Tus ojos y oídos trabajan juntos.", "Certo! Seus olhos e ouvidos trabalham juntos.", "Bien vu ! Tes yeux et tes oreilles travaillent ensemble."],
+    ["Close one. Reading gets easier with practice.", "Knapp daneben. Lesen wird mit Übung leichter.", "Casi. Leer se vuelve más fácil con práctica.", "Quase. Ler fica mais fácil com prática.", "Presque. La lecture devient plus facile avec la pratique."],
+    ["Play 10 minutes today to earn a skip", "Spiel heute 10 Minuten für einen Skip", "Toca 10 minutos hoy para ganar un salto", "Toque 10 minutos hoje para ganhar um pulo", "Joue 10 minutes aujourd’hui pour gagner un joker"],
     // Erfolge und Skip-Joker (25.11.2026)
     ["Skip this one", "Diese überspringen", "Saltar esta", "Pular esta", "Passer celle-ci"],
     ["Skipped. It comes back later.", "Übersprungen. Sie kommt später wieder.", "Saltada. Volverá más tarde.", "Pulada. Ela volta mais tarde.", "Passée. Elle reviendra plus tard."],
@@ -3947,6 +3974,24 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var show = n > 0 && !playing && phase !== 'done' && !_freeMode && !_rampMode && !_gateBlocked && !!_shownLesson;
       b.hidden = !show;
       if (show) b.textContent = '⏭ ' + _t('Skip this one') + ' · ' + n;
+    }
+    var bar = document.getElementById('dgAchBar');
+    if (bar) {
+      bar.textContent = '';
+      bar.hidden = !!_gateBlocked;
+      var badges = (_ach.rep ? 1 : 0) + (_ach.an ? 1 : 0);
+      Object.keys(ACH_CATS).forEach(function(c) { if (_ach.tb[c] >= 80) badges++; if (_ach.pb[c]) badges++; });
+      var chip = function(txt, hot) { var x = document.createElement('span'); x.textContent = txt; if (hot) x.className = 'hot'; bar.appendChild(x); };
+      var st = _achStreakNow();
+      if (st || _ach.db || _achSkips() || _achFreezes() || badges) {
+        chip('🔥 ' + st, st >= 3);
+        chip('⏭ ' + _achSkips(), _achSkips() > 0);
+        chip('🧊 ' + _achFreezes(), false);
+        chip('🏅 ' + badges, badges > 0);
+      } else {
+        var em = document.createElement('em'); em.textContent = '⏭ ' + _t('Play 10 minutes today to earn a skip'); bar.appendChild(em);
+      }
+      bar.setAttribute('aria-label', _t('Achievements'));
     }
     _achRender();
   }
@@ -18373,7 +18418,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-124247';
+  var DL_BUILD = '20261125-125337';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19446,6 +19491,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     try { if (_lt && _lt.playing && typeof _ltStop === 'function') _ltStop(); } catch (e) {}
     try { if (_sbP && typeof _sbStop === 'function') _sbStop(); } catch (e) {}
     try { if (_sp && _sp.playing && typeof _spStop === 'function') _spStop(); } catch (e) {}
+    try { _cqStop(); } catch (e) {}
     try { if (aCtx && aCtx.state === 'running') { var r = aCtx.suspend(); if (r && r.catch) r.catch(function() {}); } } catch (e) {}
     try { if (_iosSil && !_iosSil.paused) _iosSil.pause(); } catch (e) {}
   }
@@ -22319,8 +22365,160 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // im Popup. Nur einmal pro abgeschlossenem Durchgang: ein doppelter Tipp
   // (Popup zu, darunter liegt „Done → Next") würde sonst zwei Lektionen weiterschalten.
   var _doneNextArmed = false;
+  // ============================================================
+  // LESE-QUIZ IM KURS (Erwin, 25.11.2026: „diesen Test auch im Kurs haben in Note Reading. Aber nicht zu viel“)
+  // Nach jeder dritten Noten-Lektion beim Klick auf „Weiter“: zwei Takte hören, die richtige von zwei
+  // Notenzeilen wählen. Grundlage ist die gerade gespielte Lese-Übung; nach einem Treffer kommt die schwere
+  // Fassung („nur der zweite Takt anders“). Ändert den Kurs nicht. Bausteine aus dem Level-Test (_ltQuiz…).
+  // ============================================================
+  var _CQ_KEY = _nsKey('drumlion_v1_cquiz');
+  var _cqState = (function() {
+    try { var o = JSON.parse(localStorage.getItem(_CQ_KEY) || 'null'); if (o && typeof o === 'object') return { n: _achNum(o.n), ok: !!o.ok }; } catch (e) {}
+    return { n: 0, ok: false };
+  })();
+  var _cqShownFor = -1, _cq = null;
+  function _cqSave() { try { localStorage.setItem(_CQ_KEY, JSON.stringify(_cqState)); } catch (e) {} }
+  function _cqCount(lesson) { if (lesson && lesson.cat === 'notes' && !_rampMode) { _cqState.n++; _cqSave(); } }
+  function _cqDue() {
+    var l = _shownLesson;
+    return !!(l && l.cat === 'notes' && !_rampMode && !_freeMode && _cqState.n > 0 && _cqState.n % 3 === 0 && _cqShownFor !== _cqState.n);
+  }
+  function _cqNum(e) { return parseInt((String(e.name).match(/\d+/) || ['0'])[0], 10); }
+  function _cqBuild(ex) {
+    var pool = _ltQuizList(), n = pool.length;
+    if (n < 4 || !ex) return null;
+    var idx = pool.indexOf(ex);
+    if (idx < 0) { var num = _cqNum(ex); idx = 0; pool.forEach(function(p, i) { if (_cqNum(p) <= num) idx = i; }); }
+    var hard = _cqState.ok, X = pool[idx], sx = _ltSig(X.beats), best = null;
+    pool.forEach(function(Y, j) {
+      if (Y === X) return;
+      var d = _ltDist(sx, _ltSig(Y.beats));
+      if (d <= 0) return;
+      if (hard && Y.noteValue !== X.noteValue) d += 100;
+      var near = Math.abs(j - idx);
+      if (!best || (hard ? (d < best.d || (d === best.d && near < best.near)) : (d > best.d || (d === best.d && near < best.near)))) best = { ex: Y, d: d, near: near };
+    });
+    if (!best) return null;
+    var Y = best.ex, right = _ltQuizEx('cq_a', X, X.beats, X.beats);
+    var wrong = hard ? _ltQuizEx('cq_b', X, X.beats, Y.beats) : _ltQuizEx('cq_b', Y, Y.beats, Y.beats);
+    if (Math.random() < 0.5) { var t = right; right = wrong; wrong = t; }
+    return { right: right, wrong: wrong, hard: hard, bpm: Math.round(Math.min(100, Math.max(70, right.minBPM || 80))) };
+  }
+  function _cqPlay(ex, bpm, cntEl, btn) {
+    _cqStop();
+    try { initA(); } catch (e) {}
+    if (!aCtx) return;
+    var bus = aCtx.createGain(), qd = 60 / bpm, t = aCtx.currentTime + 0.12, cq = [], start;
+    bus.connect(_aOut());
+    _sbOnBus(bus, function() {
+      var seq = bpm >= 60 ? ['1', null, '2', null, '1', '2', '3', '4'] : ['1', '2', '3', '4'];
+      seq.forEach(function(n, i) {
+        var at = t + i * qd;
+        if (n) { playCountClick(n === '1', 1, at); playCountVoice(n, at); }
+        cq.push({ t: at, n: n });
+      });
+      t += seq.length * qd;
+      start = t;
+      for (var k = 0; k < 2; k++) [ex.beats, ex.beats2].forEach(function(bar) {
+        var n = bar.length, sd = 4 * qd / n;
+        for (var c2 = 0; c2 < 4; c2++) playCountClick(c2 === 0, 1, t + c2 * qd);
+        for (var s = 0; s < n; s++) (bar[s] || []).forEach(function(nt) { if (nt && nt.inst) _sbHit(nt.inst, t + s * sd, false); });
+        t += 4 * qd;
+      });
+    });
+    _cq = { bus: bus, end: t, start: start, playing: true, cnt: cntEl, btn: btn };
+    if (btn) btn.textContent = '■ ' + _t('Stop');
+    var tick = function() {
+      if (!_cq || !_cq.playing) return;
+      var now = aCtx.currentTime - _audioLatency(), cn = null;
+      if (now < _cq.start) for (var j = 0; j < cq.length && cq[j].t <= now; j++) cn = cq[j].n || '·';
+      if (cntEl) { cntEl.textContent = cn || ''; cntEl.classList.toggle('on', !!cn); cntEl.classList.toggle('rest', cn === '·'); }
+      if (now > _cq.end + 0.15) { _cqStop(); return; }
+      _cq.raf = requestAnimationFrame(tick);
+    };
+    _cq.raf = requestAnimationFrame(tick);
+  }
+  function _cqStop() {
+    if (!_cq) return;
+    var c = _cq;
+    _cq = null;
+    cancelAnimationFrame(c.raf);
+    try { c.bus.gain.cancelScheduledValues(aCtx.currentTime); c.bus.gain.setValueAtTime(0, aCtx.currentTime); } catch (e) {}
+    setTimeout(function() { try { c.bus.disconnect(); } catch (e) {} }, 200);
+    if (c.cnt) { c.cnt.classList.remove('on'); c.cnt.textContent = ''; }
+    if (c.btn) c.btn.textContent = '▶ ' + _t('Play');
+  }
+  function _cqOpen(done) {
+    var lesson = _shownLesson, Q = lesson && _cqBuild(lesson.ex);
+    _cqShownFor = _cqState.n;
+    if (!Q) { done(); return; }
+    var add = function(par, tag, cls, txt) { var x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; par.appendChild(x); return x; };
+    var ov = add(document.body, 'div', 'cq-ov'), card = add(ov, 'div', 'cq-card'), answered = false, closed = false;
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    add(card, 'div', 'lt-kick', Q.hard ? _t('Reading quiz') + ' · ' + _t('listen closely') : _t('Reading quiz'));
+    add(card, 'h3', 'cq-h', _t('Which line do you hear?'));
+    var head = add(card, 'div', 'cq-head');
+    add(head, 'span', 'cq-bpm', Q.bpm + ' BPM');
+    var play = add(head, 'button', 'lt-again', '▶ ' + _t('Play'));
+    play.type = 'button';
+    var wrap = add(card, 'div', 'cq-wrap'), box = add(wrap, 'div', 'lt-quiz'), cnt = add(wrap, 'div', 'lt-count');
+    var msg = add(card, 'p', 'cq-msg', ''), foot = add(card, 'div', 'cq-foot');
+    var skip = add(foot, 'button', 'lt-link', _t('Skip quiz'));
+    skip.type = 'button';
+    var next = add(foot, 'button', 'lt-go cq-next', _t('Continue'));
+    next.type = 'button'; next.hidden = true;
+    var close = function() {
+      if (closed) return;
+      closed = true;
+      _cqStop();
+      ov.remove();
+      document.removeEventListener('keydown', onKey, true);
+      done();
+    };
+    var onKey = function(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    document.addEventListener('keydown', onKey, true);
+    var opts = [Q.right, Q.wrong];
+    if (Math.random() < 0.5) opts.reverse();
+    opts.forEach(function(ex, i) {
+      var b = add(box, 'button', 'lt-qopt');
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Line ' + 'AB'[i]);
+      add(b, 'b', null, 'AB'[i]);
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('aria-hidden', 'true');
+      b.appendChild(svg);
+      var keep = GROOVE;
+      GROOVE = ex;
+      try { renderNot(-1, false, { svg: svg }); } catch (e) {}
+      finally { GROOVE = keep; }
+      b.addEventListener('click', function() {
+        if (answered) return;
+        answered = true;
+        _cqStop();
+        var ok = ex === Q.right;
+        b.classList.add(ok ? 'ok' : 'bad');
+        add(b, 'span', 'lt-qmark', ok ? '✓' : '✗');
+        [].forEach.call(box.children, function(o) {
+          if (o === b) return;
+          if (ok) o.classList.add('dim');
+          else { o.classList.add('ok'); add(o, 'span', 'lt-qmark', '✓'); }
+        });
+        if (ok) { _ltChime(); _ltBurst(b); }
+        msg.textContent = ok ? _t('Right! Your eyes and ears work together.') : _t('Close one. Reading gets easier with practice.');
+        _cqState.ok = ok; _cqSave();
+        skip.hidden = true; next.hidden = false;
+        try { next.focus(); } catch (e) {}
+      });
+    });
+    play.addEventListener('click', function() { if (_cq) _cqStop(); else _cqPlay(Q.right, Q.bpm, cnt, play); });
+    skip.addEventListener('click', close);
+    next.addEventListener('click', close);
+    setTimeout(function() { if (!answered && !closed) _cqPlay(Q.right, Q.bpm, cnt, play); }, 600);
+  }
+
   function _doneNext() {
     if (!_doneNextArmed) return;
+    if (_cqDue()) { _showFeedback(false); _cqOpen(_doneNext); return; }
     _doneNextArmed = false;
     _showFeedback(false);
     // War das die Lektion im Endtempo, landet die Übung jetzt in `completed`
@@ -22368,7 +22566,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     _updateLevelUI();
     var _dailyMilestone = _addDailyTime(_lessonDurationMinutes());
     if (_dailyMilestone) setTimeout(function(){ _showDailyCelebration(_dailyMilestone); }, 1400);
-    if (!_rampMode) _achAfterLesson(_shownLesson);
+    if (!_rampMode) { _achAfterLesson(_shownLesson); _cqCount(_shownLesson); }
     document.getElementById('dgTotal').style.display='inline';
     document.getElementById('dgCtrl').innerHTML =
       '<button class="btn-stp" id="dgAgain"><span class="btn-play-icon" style="border-color:transparent transparent transparent #ffffff;"></span>' + _t('Again') + '</button>'+
@@ -29407,6 +29605,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Skip-Joker (25.11.2026)
   document.getElementById('dgJoker').addEventListener('click', _achUseSkip);
+  document.getElementById('dgAchBar').addEventListener('click', function() { var sb = document.getElementById('dgStatsBtn'); if (sb) sb.click(); });
 
   // Prev = zurück in der History
   document.getElementById('dgNavPrev').addEventListener('click', function() {
