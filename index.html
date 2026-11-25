@@ -671,6 +671,63 @@ body.one-block #dgTotal { display: none !important; }
 .ach-bar span.hot { border-color: rgba(201,168,76,0.6); }
 .ach-bar em { font-style: normal; font-size: 13px; opacity: 0.65; }
 .ach-bar:focus-visible { outline: 2px solid #C9A84C; outline-offset: 2px; border-radius: 12px; }
+/* Launchpad (Erwin, 25.11.2026): Einstieg für absolute Anfänger, interaktiv mit Animation und Musik */
+.lp .lt-brand em { color: var(--dl-gold-ink); }
+.lp-list { display: grid; gap: 10px; }
+.lp-m { display: flex; align-items: center; gap: 14px; text-align: left; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--dl-line);
+  background: var(--dl-raise); color: inherit; font: inherit; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
+.lp-m:hover:not(:disabled), .lp-m:focus-visible { border-color: #C9A84C; outline: none; transform: translateY(-1px); }
+.lp-m.next { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.18); }
+.lp-m.done .lp-m-i { background: #3fb27f; color: #0b0b0a; }
+.lp-m.locked { opacity: 0.45; cursor: default; }
+.lp-m-i { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; background: rgba(201,168,76,0.14); }
+.lp-m-t { display: grid; gap: 2px; }
+.lp-m-t b { font-size: 17px; }
+.lp-m-t small { font-size: 13px; opacity: 0.7; }
+.lp-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.lp-dots { display: flex; gap: 6px; }
+.lp-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--dl-line); }
+.lp-dots i.on { background: #C9A84C; }
+.lp-dots i.cur { background: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.3); }
+.lp-svg { width: 100%; height: auto; max-height: 46vh; display: block; }
+.lp-part { cursor: pointer; transition: opacity 0.2s; }
+.lp-part.dim { opacity: 0.25; cursor: default; }
+.lp-part.focus { animation: lpPulse 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.lp-part.hit .lp-head, .lp-part.hit .lp-cym { fill: rgba(201,168,76,0.55); }
+.lp-shell { fill: var(--dl-raise); stroke: #C9A84C; stroke-width: 2; }
+.lp-head { fill: var(--dl-paper); stroke: var(--dl-ink); stroke-width: 1.5; opacity: 0.95; transition: fill 0.1s; }
+.lp-cym { fill: rgba(201,168,76,0.25); stroke: #C9A84C; stroke-width: 1.5; transition: fill 0.1s; }
+.lp-stand { stroke: var(--dl-ink); stroke-width: 2; opacity: 0.45; }
+.lp-logo { font: 800 11px 'DM Sans', system-ui, sans-serif; letter-spacing: 2px; fill: #C9A84C; pointer-events: none; }
+.lp-label { min-height: 1.5em; font-size: 17px; font-weight: 700; color: var(--dl-gold-ink); text-align: center; }
+.lp-count { text-align: center; font-size: 13px; opacity: 0.7; }
+.lp-skin { fill: #d9a77a; stroke: #8a5a36; stroke-width: 1.5; }
+.lp-limb { stroke: var(--dl-ink); stroke-width: 9; stroke-linecap: round; }
+.lp-thr, .lp-ped { fill: #C9A84C; }
+.lp-angle { fill: none; stroke: #C9A84C; stroke-width: 2; }
+.lp-note { font: 600 14px 'DM Sans', system-ui, sans-serif; fill: var(--dl-ink); opacity: 0.85; }
+.lp-stick { fill: #e9d6a8; stroke: #8a6a2a; stroke-width: 1; }
+.lp-tip { fill: #e9d6a8; stroke: #8a6a2a; stroke-width: 1; }
+.lp-fulcrum { fill: none; stroke: #3fb27f; stroke-width: 3; animation: lpPulse 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.lp-body { animation: lpBob 2.4s ease-in-out infinite; }
+.lp-pedal { transform-box: view-box; transform-origin: 70px 202px; transition: transform 0.12s ease-out; }
+.lp-pedal.down { animation: lpPedal 0.42s ease-out; }
+.lp-beater { transform-box: view-box; transform-origin: 168px 200px; }
+.lp-beater.down { animation: lpBeater 0.42s ease-out; }
+.lp-stickarm { transform-box: view-box; transform-origin: 70px 101px; }
+.lp-stickarm.down { animation: lpStick 0.42s ease-out; }
+.lp-notebox svg, .lp-playbox svg { display: block; width: 100%; height: auto; }
+.lp-cue { position: absolute; left: 50%; top: 66%; transform: translate(-50%, -50%) scale(0.6); font-size: clamp(40px, 10vw, 84px); font-weight: 900;
+  color: #C9A84C; text-shadow: 0 0 26px rgba(201,168,76,0.9); opacity: 0; pointer-events: none; z-index: 6; letter-spacing: 0.04em; }
+.lp-cue.go { animation: lpCue 0.5s ease-out; }
+.lp-star { font-size: 84px; line-height: 1; animation: ltLand 0.6s cubic-bezier(.2,1.5,.4,1); }
+@keyframes lpPulse { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(201,168,76,0)); } 50% { transform: scale(1.04); filter: drop-shadow(0 0 14px rgba(201,168,76,0.8)); } }
+@keyframes lpBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes lpPedal { 0% { transform: rotate(0); } 30% { transform: rotate(9deg); } 100% { transform: rotate(0); } }
+@keyframes lpBeater { 0% { transform: rotate(0); } 30% { transform: rotate(16deg); } 100% { transform: rotate(0); } }
+@keyframes lpStick { 0% { transform: rotate(-14deg); } 30% { transform: rotate(10deg); } 100% { transform: rotate(-14deg); } }
+@keyframes lpCue { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .lp-part.focus, .lp-fulcrum, .lp-body, .lp-pedal.down, .lp-beater.down, .lp-stickarm.down { animation: none; } }
 /* Lese-Quiz im Kurs (Erwin, 25.11.2026) */
 .cq-ov { position: fixed; inset: 0; z-index: 99990; background: rgba(0,0,0,0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: ltIn 0.25s ease; }
 .cq-card { width: min(720px, 100%); max-height: 92vh; overflow: auto; background: var(--dl-paper); color: var(--dl-ink); border: 1px solid var(--dl-line); border-radius: 18px; padding: 20px; display: grid; gap: 12px; }
@@ -2359,6 +2416,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
               <circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/>
             </svg>
           </button>
+          <!-- Launchpad (25.11.2026) -->
+          <button class="legend-btn" id="dgLaunchBtn" type="button" title="Launchpad" aria-label="Launchpad"><span aria-hidden="true" style="font-size:13px;line-height:1">🚀</span></button>
           <!-- Stats (16.09.2026) -->
           <button class="legend-btn" id="dgStatsBtn" type="button" title="Your stats" aria-label="Your stats">
             <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
@@ -2647,6 +2706,103 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // [Englisch (Schlüssel), Deutsch, Español, Português (BR), Français]
   // {name}, {bpm}, {n} … werden von _t() eingesetzt.
   var I18N_ROWS = [
+    // Launchpad (25.11.2026), vorerst nur Deutsch übersetzt
+    ["A bit easier", "Etwas leichter"],
+    ["All missions", "Alle Missionen"],
+    ["All three together.", "Alle drei zusammen."],
+    ["Back straight", "Rücken gerade"],
+    ["Bass drum", "Bassdrum"],
+    ["Be honest. You can repeat it as often as you like.", "Sei ehrlich. Du kannst es so oft wiederholen, wie du willst."],
+    ["Brand new to drums?", "Ganz neu am Schlagzeug?"],
+    ["Could you play along?", "Konntest du mitspielen?"],
+    ["Crash cymbal", "Crash-Becken"],
+    ["Done", "Fertig"],
+    ["Floor tom", "Standtom"],
+    ["Foot on pedal", "Fuß auf dem Pedal"],
+    ["Got it", "Verstanden"],
+    ["Heel down, press with the ball of your foot", "Ferse unten, mit dem Fußballen drücken"],
+    ["Hi-hat", "Hi-Hat"],
+    ["Hi-hat on every beat. Bass drum on 1. Snare on 3. That is a real drum groove.", "Hi-Hat auf jedem Schlag. Bassdrum auf 1. Snare auf 3. Das ist ein echter Schlagzeug-Groove."],
+    ["High tom", "Hängetom hoch"],
+    ["Hit the middle of the drum and let the stick bounce right back up.", "Triff die Mitte der Trommel und lass den Stick sofort zurückfedern."],
+    ["Hold the sticks like this.", "So hältst du die Sticks."],
+    ["It sits between your knees and gives that sharp crack. Tap it.", "Sie steht zwischen deinen Knien und macht diesen knackigen Schlag. Tipp sie an."],
+    ["It's also called the kick. It's the big drum on the floor. Tap it.", "Sie heißt auch Kick. Es ist die große Trommel auf dem Boden. Tipp sie an."],
+    ["Its note is an x.", "Ihre Note ist ein x."],
+    ["Launchpad complete!", "Launchpad geschafft!"],
+    ["Let the stick drop onto the top cymbal and bounce back. Small, relaxed movements.", "Lass den Stick auf das obere Becken fallen und zurückfedern. Kleine, lockere Bewegungen."],
+    ["Let's go 🚀", "Los geht's 🚀"],
+    ["Meet your kit", "Dein Schlagzeug"],
+    ["Mid tom", "Hängetom tief"],
+    ["Mission complete!", "Mission geschafft!"],
+    ["Next mission", "Nächste Mission"],
+    ["One hit on every number: 1, 2, 3, 4. Count out loud with me.", "Ein Schlag auf jede Zahl: 1, 2, 3, 4. Zähl laut mit."],
+    ["One step closer to your first groove.", "Ein Schritt näher an deinem ersten Groove."],
+    ["Pinch here: thumb + index finger", "Hier greifen: Daumen + Zeigefinger"],
+    ["Pinch the stick between thumb and index finger, about a third from the end. The other fingers wrap around it loosely. Let the stick bounce.", "Klemm den Stick zwischen Daumen und Zeigefinger, etwa ein Drittel vom Ende. Die anderen Finger umschließen ihn locker. Lass den Stick federn."],
+    ["Play", "Abspielen"],
+    ["Play it with your left hand.", "Spiel sie mit der linken Hand."],
+    ["Play it with your right foot.", "Spiel sie mit dem rechten Fuß."],
+    ["Play it with your right hand.", "Spiel sie mit der rechten Hand."],
+    ["Play on every beat.", "Spiel auf jeden Schlag."],
+    ["Play the bass drum every time the note lights up: always on ONE. Listen to the count-in.", "Spiel die Bassdrum jedes Mal, wenn die Note aufleuchtet: immer auf der EINS. Hör auf den Einzähler."],
+    ["Play your first groove!", "Spiel deinen ersten Groove!"],
+    ["Posture and how to hold the sticks.", "Haltung und wie du die Sticks hältst."],
+    ["Press the pedal down and let it bounce back up. Heel down, use your ankle.", "Drück das Pedal runter und lass es zurückfedern. Ferse unten, aus dem Fußgelenk."],
+    ["Put it all together.", "Alles zusammen."],
+    ["Ride cymbal", "Ride-Becken"],
+    ["Same tempo", "Gleiches Tempo"],
+    ["Short missions. Tap, listen, play along with music. No experience needed.", "Kurze Missionen. Antippen, hören, zur Musik mitspielen. Keine Vorkenntnisse nötig."],
+    ["Sit like a drummer", "Sitzen wie ein Drummer"],
+    ["Sit tall, stay loose.", "Aufrecht sitzen, locker bleiben."],
+    ["Slower", "Langsamer"],
+    ["Snare drum", "Snare"],
+    ["Snare on 2 and 4.", "Snare auf 2 und 4."],
+    ["Start my course", "Meinen Kurs starten"],
+    ["Start slow. Count out loud. If it falls apart, just keep the hi-hat going.", "Fang langsam an. Zähl laut mit. Wenn es auseinanderfällt, spiel einfach die Hi-Hat weiter."],
+    ["Tap a drum", "Tipp eine Trommel an"],
+    ["Tap every part and hear it.", "Tipp jedes Teil an und hör es dir an."],
+    ["Tap the parts to hear them. Find at least three.", "Tipp die Teile an, um sie zu hören. Finde mindestens drei."],
+    ["The bass drum", "Die Bassdrum"],
+    ["The bass drum sits in the bottom space of the staff.", "Die Bassdrum steht im untersten Zwischenraum der Notenzeile."],
+    ["The crack on 2 and 4.", "Der Knall auf 2 und 4."],
+    ["The hi-hat", "Die Hi-Hat"],
+    ["The hi-hat sits above the staff and looks like an x.", "Die Hi-Hat steht über der Notenzeile und sieht aus wie ein x."],
+    ["The snare drum", "Die Snare"],
+    ["The snare sits in the middle of the staff.", "Die Snare steht in der Mitte der Notenzeile."],
+    ["Thighs level", "Oberschenkel waagerecht"],
+    ["Thighs level or slightly down. Feet flat on the pedals. Back straight, shoulders relaxed.", "Oberschenkel waagerecht oder leicht abfallend. Füße flach auf den Pedalen. Rücken gerade, Schultern locker."],
+    ["This is a drum kit.", "Das ist ein Schlagzeug."],
+    ["This is its note.", "Das ist ihre Note."],
+    ["This is the backbeat. Play on 2 and on 4. Feel the music push you.", "Das ist der Backbeat. Spiel auf 2 und auf 4. Spür, wie die Musik dich schiebt."],
+    ["This is the bass drum.", "Das ist die Bassdrum."],
+    ["This is the hi-hat.", "Das ist die Hi-Hat."],
+    ["This is the snare drum.", "Das ist die Snare."],
+    ["To my course", "Zu meinem Kurs"],
+    ["Two cymbals on a stand. Keep the pedal down so they stay closed. Tap it.", "Zwei Becken auf einem Ständer. Halt das Pedal unten, dann bleiben sie geschlossen. Tipp sie an."],
+    ["Watch, then try it on your kit.", "Schau zu und probier es dann an deinem Set."],
+    ["Yes! 🚀", "Ja! 🚀"],
+    ["You just played your first groove. Welcome to drumming.", "Du hast gerade deinen ersten Groove gespielt. Willkommen am Schlagzeug."],
+    ["You launched!", "Du bist gestartet!"],
+    ["You launched! 🚀", "Du bist gestartet! 🚀"],
+    ["Your course starts now. Every lesson is planned for you.", "Jetzt startet dein Kurs. Jede Lektion ist für dich geplant."],
+    ["Your first 10 minutes on drums.", "Deine ersten 10 Minuten am Schlagzeug."],
+    ["Your first exercise!", "Deine erste Übung!"],
+    ["Your first groove", "Dein erster Groove"],
+    ["Your right foot starts the beat.", "Dein rechter Fuß startet den Beat."],
+    ["Your right hand keeps time.", "Deine rechte Hand hält den Takt."],
+    ["also called the kick", "auch Kick genannt"],
+    ["for big accents", "für große Akzente"],
+    ["for steady patterns", "für gleichmäßige Muster"],
+    ["the sharp crack in the middle", "der knackige Schlag in der Mitte"],
+    ["two cymbals on a stand", "zwei Becken auf einem Ständer"],
+    ["x = hi-hat · middle = snare · bottom = bass drum", "x = Hi-Hat · Mitte = Snare · unten = Bassdrum"],
+    ["{n} found", "{n} gefunden"],
+    ["{n} of {m} missions done", "{n} von {m} Missionen geschafft"],
+    ["bottom space", "unterster Zwischenraum"],
+    ["x above the staff", "x über der Notenzeile"],
+    ["middle space", "mittlerer Zwischenraum"],
+    ["Launchpad", "Launchpad"],
     // Lese-Quiz im Kurs und Erfolgs-Leiste (25.11.2026)
     ["Reading quiz", "Lese-Quiz", "Quiz de lectura", "Quiz de leitura", "Quiz de lecture"],
     ["listen closely", "genau hinhören", "escucha con atención", "ouça com atenção", "écoute bien"],
@@ -3853,7 +4009,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var ACH_STREAK = [3, 7, 14, 30, 60, 100, 200, 365];
   var ACH_CATS = { grooves: 'Grooves', fillins: 'Fills', rudiments: 'Rudiments', coordination: 'Coordination', notes: 'Reading' };
   var _ACH_DAY = /^\d{4}-\d{2}-\d{2}$/, _ACH_WK = /^\d{4}-W\d{2}$/;
-  function _achBlank() { return { se: 0, su: 0, sd: '', dl: '', dc: 0, db: 0, sm: 0, fe: 0, fu: 0, rep: 0, tb: {}, pb: {}, aw: '', ac: [], ad: '', an: 0, bx: [] }; }
+  function _achBlank() { return { se: 0, su: 0, sd: '', dl: '', dc: 0, db: 0, sm: 0, fe: 0, fu: 0, rep: 0, tb: {}, pb: {}, aw: '', ac: [], ad: '', an: 0, bx: [], lp: [] }; }
   function _achNum(v) { v = Math.floor(+v || 0); return v > 0 && v < 1e9 ? v : 0; }
   function _achStr(v, re) { v = String(v || ''); return re.test(v) ? v : ''; }
   function _achMergeInto(a, o) {
@@ -3872,6 +4028,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var aw = _achStr(o.aw, _ACH_WK), ac = Array.isArray(o.ac) ? o.ac.filter(function(c) { return ACH_CATS.hasOwnProperty(c); }) : [];
     if (aw > a.aw) { a.aw = aw; a.ac = ac.slice(0, 5); ch = true; }
     else if (aw && aw === a.aw) ac.forEach(function(c) { if (a.ac.indexOf(c) === -1) { a.ac.push(c); ch = true; } });
+    if (Array.isArray(o.lp)) o.lp.forEach(function(id) {
+      if (typeof id === 'string' && /^[a-z]{2,10}$/.test(id) && a.lp.indexOf(id) === -1 && a.lp.length < 20) { a.lp.push(id); ch = true; }
+    });
     if (Array.isArray(o.bx)) o.bx.forEach(function(id) {
       id = Math.floor(+id || 0);
       if (id > 0 && a.bx.indexOf(id) === -1 && a.bx.length < 60) { a.bx.push(id); ch = true; }
@@ -18535,7 +18694,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-132413';
+  var DL_BUILD = '20261125-134700';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -19609,6 +19768,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     try { if (_sbP && typeof _sbStop === 'function') _sbStop(); } catch (e) {}
     try { if (_sp && _sp.playing && typeof _spStop === 'function') _spStop(); } catch (e) {}
     try { _cqStop(); } catch (e) {}
+    try { _lpStopAll(); } catch (e) {}
     try { if (aCtx && aCtx.state === 'running') { var r = aCtx.suspend(); if (r && r.catch) r.catch(function() {}); } } catch (e) {}
     try { if (_iosSil && !_iosSil.paused) _iosSil.pause(); } catch (e) {}
   }
@@ -22488,6 +22648,377 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // im Popup. Nur einmal pro abgeschlossenem Durchgang: ein doppelter Tipp
   // (Popup zu, darunter liegt „Done → Next") würde sonst zwei Lektionen weiterschalten.
   var _doneNextArmed = false;
+  // ============================================================
+  // LAUNCHPAD (Erwin, 25.11.2026: „für absolute Beginner direkt ein super krass leichter Einstieg mit Musik und
+  // Animations-Lektionen … das hier ist die Bassdrum … so spielst du sie … so sieht die Note aus … hier kommt deine
+  // erste Übung“). Interaktiv im Player statt Video; Stimme Sarah (voice2/en_lp_*.mp3, fehlt sie, bleibt es still);
+  // Musik vorerst als einfacher Platzhalter (Bass + Akkorde), später Suno. Prüfen per Selbsteinschätzung.
+  // Fortschritt in _ach.lp (wird mit den Erfolgen synchronisiert).
+  // ============================================================
+  var LP_PARTS = {
+    kick:   { n: 'Bass drum', alt: 'also called the kick' },
+    snare:  { n: 'Snare drum', alt: 'the sharp crack in the middle' },
+    hh:     { n: 'Hi-hat', alt: 'two cymbals on a stand' },
+    tom1:   { n: 'High tom', alt: '' },
+    tom2:   { n: 'Mid tom', alt: '' },
+    tom3:   { n: 'Floor tom', alt: '' },
+    crash1: { n: 'Crash cymbal', alt: 'for big accents' },
+    ride:   { n: 'Ride cymbal', alt: 'for steady patterns' }
+  };
+  var _LP_KICK = { inst: 'kick', line: 3.5, head: 'oval' }, _LP_SN = { inst: 'snare', line: 1.5, head: 'oval' }, _LP_HH = { inst: 'hh', line: -0.5, head: 'x' };
+  function _lpEx(id, beats, nv) {
+    return { id: id, cat: 'grooves', name: 'Launchpad', catLabel: 'Launchpad', noteValue: nv || 'quarter', hihatHands: 'one', showLabels: true, minBPM: 70, maxBPM: 70, step: 1, beats: beats };
+  }
+  var LP_EX = {
+    lp_kick:  _lpEx('lp_kick',  [[_LP_KICK], [], [], []]),
+    lp_hh:    _lpEx('lp_hh',    [[_LP_HH], [_LP_HH], [_LP_HH], [_LP_HH]]),
+    lp_snare: _lpEx('lp_snare', [[], [_LP_SN], [], [_LP_SN]]),
+    lp_groove:_lpEx('lp_groove',[[_LP_KICK, _LP_HH], [_LP_HH], [_LP_SN, _LP_HH], [_LP_HH]])
+  };
+  var LP_MISSIONS = [
+    { id: 'kit', icon: '🥁', t: 'Meet your kit', d: 'Tap every part and hear it.', steps: [
+      { k: 'kit', v: 'lp_kit', h: 'This is a drum kit.', p: 'Tap the parts to hear them. Find at least three.' } ] },
+    { id: 'sit', icon: '🪑', t: 'Sit like a drummer', d: 'Posture and how to hold the sticks.', steps: [
+      { k: 'pose', v: 'lp_pose', h: 'Sit tall, stay loose.', p: 'Thighs level or slightly down. Feet flat on the pedals. Back straight, shoulders relaxed.' },
+      { k: 'grip', v: 'lp_grip', h: 'Hold the sticks like this.', p: 'Pinch the stick between thumb and index finger, about a third from the end. The other fingers wrap around it loosely. Let the stick bounce.' } ] },
+    { id: 'kick', icon: '🦶', t: 'The bass drum', d: 'Your right foot starts the beat.', steps: [
+      { k: 'focus', inst: 'kick', v: 'lp_kick1', h: 'This is the bass drum.', p: "It's also called the kick. It's the big drum on the floor. Tap it." },
+      { k: 'how', inst: 'kick', v: 'lp_kick2', h: 'Play it with your right foot.', p: 'Press the pedal down and let it bounce back up. Heel down, use your ankle.' },
+      { k: 'note', inst: 'kick', v: 'lp_kick3', h: 'This is its note.', p: 'The bass drum sits in the bottom space of the staff.' },
+      { k: 'play', ex: 'lp_kick', cue: 'KICK!', v: 'lp_kick4', h: 'Your first exercise!', p: 'Play the bass drum every time the note lights up: always on ONE. Listen to the count-in.' },
+      { k: 'check' } ] },
+    { id: 'hh', icon: '✋', t: 'The hi-hat', d: 'Your right hand keeps time.', steps: [
+      { k: 'focus', inst: 'hh', v: 'lp_hh1', h: 'This is the hi-hat.', p: 'Two cymbals on a stand. Keep the pedal down so they stay closed. Tap it.' },
+      { k: 'how', inst: 'hh', v: 'lp_hh2', h: 'Play it with your right hand.', p: 'Let the stick drop onto the top cymbal and bounce back. Small, relaxed movements.' },
+      { k: 'note', inst: 'hh', v: 'lp_hh3', h: 'Its note is an x.', p: 'The hi-hat sits above the staff and looks like an x.' },
+      { k: 'play', ex: 'lp_hh', cue: 'HI-HAT!', v: 'lp_hh4', h: 'Play on every beat.', p: 'One hit on every number: 1, 2, 3, 4. Count out loud with me.' },
+      { k: 'check' } ] },
+    { id: 'snare', icon: '💥', t: 'The snare drum', d: 'The crack on 2 and 4.', steps: [
+      { k: 'focus', inst: 'snare', v: 'lp_sn1', h: 'This is the snare drum.', p: 'It sits between your knees and gives that sharp crack. Tap it.' },
+      { k: 'how', inst: 'snare', v: 'lp_sn2', h: 'Play it with your left hand.', p: 'Hit the middle of the drum and let the stick bounce right back up.' },
+      { k: 'note', inst: 'snare', v: 'lp_sn3', h: 'This is its note.', p: 'The snare sits in the middle of the staff.' },
+      { k: 'play', ex: 'lp_snare', cue: 'SNARE!', v: 'lp_sn4', h: 'Snare on 2 and 4.', p: 'This is the backbeat. Play on 2 and on 4. Feel the music push you.' },
+      { k: 'check' } ] },
+    { id: 'groove', icon: '🚀', t: 'Your first groove', d: 'Put it all together.', steps: [
+      { k: 'note', inst: 'all', v: 'lp_gr1', h: 'All three together.', p: 'Hi-hat on every beat. Bass drum on 1. Snare on 3. That is a real drum groove.' },
+      { k: 'play', ex: 'lp_groove', cue: 'GROOVE!', v: 'lp_gr2', h: 'Play your first groove!', p: 'Start slow. Count out loud. If it falls apart, just keep the hi-hat going.' },
+      { k: 'check', last: true } ] }
+  ];
+  var _lp = null;
+  function _lpDone() { return (_ach.lp || []).slice(); }
+  function _lpIsDone(id) { return (_ach.lp || []).indexOf(id) !== -1; }
+  function _lpUnlocked(i) { return i === 0 || _lpIsDone(LP_MISSIONS[i - 1].id); }
+  // Sarah-Sätze: werden bei Bedarf geladen; fehlt die Datei, bleibt es still
+  var _lpVoiceBuf = {};
+  function _lpSay(key) {
+    if (!key || DL_LANG !== 'en') return;
+    try {
+      initA();
+      if (!aCtx) return;
+      var play = function(buf) { if (!buf || !_lp) return; _lpVoiceStop(); var s = aCtx.createBufferSource(); s.buffer = buf; s.connect(_aOut()); s.start(aCtx.currentTime + 0.05); _lp.voice = s; };
+      if (_lpVoiceBuf[key] !== undefined) { play(_lpVoiceBuf[key]); return; }
+      _lpVoiceBuf[key] = null;
+      fetch(VOICE_DIR + 'en_' + key + '.mp3').then(function(r) { if (!r.ok) throw 0; return r.arrayBuffer(); })
+        .then(function(ab) { return aCtx.decodeAudioData(ab); })
+        .then(function(buf) { _lpVoiceBuf[key] = buf; play(buf); }).catch(function() {});
+    } catch (e) {}
+  }
+  function _lpVoiceStop() { try { if (_lp && _lp.voice) _lp.voice.stop(); } catch (e) {} if (_lp) _lp.voice = null; }
+  function _lpHit(inst) {
+    try { initA(); if (!aCtx) return; _sbHit(inst, aCtx.currentTime + 0.01, false); } catch (e) {}
+  }
+  function _lpEl(par, tag, cls, txt) { var x = document.createElement(tag); if (cls) x.className = cls; if (txt != null) x.textContent = txt; if (par) par.appendChild(x); return x; }
+  function _lpSvg(w, h) { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 ' + w + ' ' + h); s.setAttribute('class', 'lp-svg'); return s; }
+  // Schlagzeug von vorn, jedes Teil eine Gruppe mit data-inst
+  var LP_KIT_SVG =
+    '<g class="lp-part" data-inst="crash1"><line x1="95" y1="62" x2="95" y2="235" class="lp-stand"/><ellipse cx="95" cy="60" rx="58" ry="10" class="lp-cym"/></g>' +
+    '<g class="lp-part" data-inst="ride"><line x1="318" y1="72" x2="318" y2="235" class="lp-stand"/><ellipse cx="318" cy="70" rx="62" ry="11" class="lp-cym"/></g>' +
+    '<g class="lp-part" data-inst="hh"><line x1="52" y1="128" x2="52" y2="235" class="lp-stand"/><ellipse cx="52" cy="126" rx="40" ry="7" class="lp-cym"/><ellipse cx="52" cy="119" rx="40" ry="7" class="lp-cym"/></g>' +
+    '<g class="lp-part" data-inst="tom1"><rect x="138" y="96" width="56" height="34" rx="6" class="lp-shell"/><ellipse cx="166" cy="96" rx="28" ry="8" class="lp-head"/></g>' +
+    '<g class="lp-part" data-inst="tom2"><rect x="208" y="96" width="56" height="34" rx="6" class="lp-shell"/><ellipse cx="236" cy="96" rx="28" ry="8" class="lp-head"/></g>' +
+    '<g class="lp-part" data-inst="tom3"><rect x="282" y="160" width="76" height="64" rx="6" class="lp-shell"/><ellipse cx="320" cy="160" rx="38" ry="10" class="lp-head"/></g>' +
+    '<g class="lp-part" data-inst="snare"><rect x="86" y="160" width="80" height="26" rx="5" class="lp-shell"/><ellipse cx="126" cy="160" rx="40" ry="10" class="lp-head"/></g>' +
+    '<g class="lp-part" data-inst="kick"><circle cx="201" cy="186" r="62" class="lp-shell"/><circle cx="201" cy="186" r="48" class="lp-head"/><text x="201" y="193" text-anchor="middle" class="lp-logo">DRUMLION</text></g>';
+  function _lpBuild() {
+    var el = _lpEl(document.body, 'div', 'lt lp');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Launchpad');
+    el.innerHTML = '<div class="lt-wrap"><div class="lt-top"><div class="lt-brand">LAUNCH<em>PAD</em></div>' +
+      '<button type="button" class="lt-x" aria-label="Close">×</button></div><div class="lt-prog" aria-hidden="true"><i></i></div><div class="lt-body"></div></div>';
+    el.querySelector('.lt-x').addEventListener('click', _lpClose);
+    _lp = { el: el, body: el.querySelector('.lt-body'), bar: el.querySelector('.lt-prog i'), m: -1, s: 0, timer: 0, bus: null, raf: 0 };
+  }
+  function _lpOpen() {
+    if (playing) stopExercise();
+    if (!_lp) _lpBuild();
+    _lp.el.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    _lpHub();
+  }
+  function _lpClose() {
+    _lpStopAll();
+    if (!_lp) return;
+    _lp.el.classList.remove('open');
+    document.documentElement.style.overflow = '';
+    _achUi();
+  }
+  function _lpStopAll() {
+    if (!_lp) return;
+    clearInterval(_lp.timer); _lp.timer = 0;
+    cancelAnimationFrame(_lp.raf);
+    _lpVoiceStop();
+    if (_lp.bus && aCtx) {
+      var b = _lp.bus;
+      try { b.gain.cancelScheduledValues(aCtx.currentTime); b.gain.setValueAtTime(0, aCtx.currentTime); } catch (e) {}
+      setTimeout(function() { try { b.disconnect(); } catch (e) {} }, 200);
+    }
+    _lp.bus = null; _lp.playing = false;
+  }
+  function _lpCard() { _lpStopAll(); _lp.body.textContent = ''; _lp.el.scrollTop = 0; return _lpEl(_lp.body, 'div', 'lt-card lp-card'); }
+  function _lpProg() {
+    var done = LP_MISSIONS.filter(function(m) { return _lpIsDone(m.id); }).length;
+    _lp.bar.style.width = Math.round(done / LP_MISSIONS.length * 100) + '%';
+    return done;
+  }
+  // Übersicht: Missionen mit Status, die nächste offene groß
+  function _lpHub() {
+    var c = _lpCard(), done = _lpProg();
+    _lpEl(c, 'div', 'lt-kick', done ? _t('{n} of {m} missions done', { n: done, m: LP_MISSIONS.length }) : _t('Brand new to drums?'));
+    _lpEl(c, 'h2', 'lt-h', done === LP_MISSIONS.length ? _t('You launched! 🚀') : _t('Your first 10 minutes on drums.'));
+    _lpEl(c, 'p', 'lt-p', _t('Short missions. Tap, listen, play along with music. No experience needed.'));
+    var list = _lpEl(c, 'div', 'lp-list'), next = -1;
+    LP_MISSIONS.forEach(function(m, i) {
+      var ok = _lpUnlocked(i), d = _lpIsDone(m.id);
+      if (next < 0 && ok && !d) next = i;
+      var b = _lpEl(list, 'button', 'lp-m' + (d ? ' done' : '') + (ok ? '' : ' locked') + (next === i ? ' next' : ''));
+      b.type = 'button'; b.disabled = !ok;
+      _lpEl(b, 'span', 'lp-m-i', d ? '✓' : (ok ? m.icon : '🔒'));
+      var tx = _lpEl(b, 'span', 'lp-m-t');
+      _lpEl(tx, 'b', null, (i + 1) + '. ' + _t(m.t));
+      _lpEl(tx, 'small', null, _t(m.d));
+      if (ok) b.addEventListener('click', function() { _lpMission(i); });
+    });
+    var row = _lpEl(c, 'div', 'lt-row');
+    if (next >= 0) { var go = _lpEl(row, 'button', 'lt-go', next === 0 ? _t("Let's go 🚀") : _t('Next mission')); go.type = 'button'; go.addEventListener('click', function() { _lpMission(next); }); }
+    var back = _lpEl(row, 'button', 'lt-ghost', _t('To my course')); back.type = 'button'; back.addEventListener('click', _lpClose);
+  }
+  function _lpMission(i) { _lp.m = i; _lp.s = 0; _lp.taps = {}; _lp.bpm = 70; _lpStep(); }
+  function _lpNext() { _lp.s++; _lpStep(); }
+  function _lpHead(c, st, m) {
+    var top = _lpEl(c, 'div', 'lp-head');
+    _lpEl(top, 'span', 'lt-kick', m.icon + ' ' + _t(m.t));
+    var dots = _lpEl(top, 'span', 'lp-dots');
+    m.steps.forEach(function(x, k) { _lpEl(dots, 'i', k < _lp.s ? 'on' : (k === _lp.s ? 'cur' : '')); });
+    if (st.h) _lpEl(c, 'h2', 'lt-h lp-h', _t(st.h));
+    if (st.p) _lpEl(c, 'p', 'lt-p', _t(st.p));
+  }
+  function _lpStep() {
+    var m = LP_MISSIONS[_lp.m], st = m.steps[_lp.s];
+    if (!st) { _lpComplete(m, {}); return; }   // Missionen ohne Abfrage (Schlagzeug, Sitzen) gelten nach dem letzten Schritt als geschafft
+    var c = _lpCard();
+    if (st.k !== 'check') _lpHead(c, st, m);
+    var row;
+    if (st.k === 'kit' || st.k === 'focus') {
+      var svg = _lpSvg(400, 250); svg.innerHTML = LP_KIT_SVG; c.appendChild(svg);
+      var lab = _lpEl(c, 'div', 'lp-label', st.k === 'kit' ? _t('Tap a drum') : '');
+      var need = st.k === 'kit' ? 3 : 1;
+      [].forEach.call(svg.querySelectorAll('.lp-part'), function(g) {
+        var inst = g.getAttribute('data-inst');
+        if (st.k === 'focus') g.classList.add(inst === st.inst ? 'focus' : 'dim');
+        g.addEventListener('click', function() {
+          if (st.k === 'focus' && inst !== st.inst) return;
+          _lpHit(inst);
+          g.classList.remove('hit'); void g.getBoundingClientRect(); g.classList.add('hit');
+          _lp.taps[inst] = 1;
+          var P = LP_PARTS[inst];
+          lab.textContent = _t(P.n) + (P.alt ? ' · ' + _t(P.alt) : '');
+          var n = Object.keys(_lp.taps).length;
+          if (st.k === 'kit') cnt.textContent = _t('{n} found', { n: n });
+          if (n >= need) nxt.disabled = false;
+        });
+      });
+      var cnt = _lpEl(c, 'div', 'lp-count', st.k === 'kit' ? _t('{n} found', { n: 0 }) : '');
+      row = _lpEl(c, 'div', 'lt-row');
+      var nxt = _lpEl(row, 'button', 'lt-go', _t('Continue')); nxt.type = 'button'; nxt.disabled = true; nxt.addEventListener('click', _lpNext);
+    } else if (st.k === 'pose' || st.k === 'grip') {
+      var ps = _lpSvg(400, 260);
+      ps.innerHTML = st.k === 'pose'
+        ? '<rect x="150" y="170" width="70" height="10" rx="4" class="lp-thr"/><line x1="185" y1="180" x2="185" y2="245" class="lp-stand"/>' +
+          '<g class="lp-body"><circle cx="185" cy="58" r="22" class="lp-skin"/><line x1="185" y1="80" x2="185" y2="165" class="lp-limb"/>' +
+          '<line x1="185" y1="165" x2="262" y2="172" class="lp-limb"/><line x1="262" y1="172" x2="262" y2="238" class="lp-limb"/>' +
+          '<line x1="185" y1="100" x2="245" y2="140" class="lp-limb lp-arm"/></g>' +
+          '<rect x="246" y="238" width="44" height="8" rx="3" class="lp-ped"/>' +
+          '<path d="M205 165 A 22 22 0 0 1 207 173" class="lp-angle"/><text x="300" y="176" class="lp-note">≈ 90°</text>' +
+          '<text x="30" y="70" class="lp-note">' + _t('Back straight') + '</text><text x="30" y="160" class="lp-note">' + _t('Thighs level') + '</text><text x="300" y="232" class="lp-note">' + _t('Foot on pedal') + '</text>'
+        : '<rect x="60" y="122" width="300" height="12" rx="6" class="lp-stick"/><circle cx="356" cy="128" r="7" class="lp-tip"/>' +
+          '<g class="lp-hand"><ellipse cx="130" cy="128" rx="44" ry="30" class="lp-skin"/><ellipse cx="166" cy="116" rx="16" ry="9" class="lp-skin lp-thumb"/></g>' +
+          '<circle cx="160" cy="128" r="6" class="lp-fulcrum"/><text x="120" y="190" class="lp-note">' + _t('Pinch here: thumb + index finger') + '</text>' +
+          '<text x="60" y="100" class="lp-note">⅓</text><text x="250" y="100" class="lp-note">⅔</text>';
+      c.appendChild(ps);
+      row = _lpEl(c, 'div', 'lt-row');
+      var gn = _lpEl(row, 'button', 'lt-go', _t('Got it')); gn.type = 'button'; gn.addEventListener('click', _lpNext);
+    } else if (st.k === 'how') {
+      var hs = _lpSvg(400, 240), foot = st.inst === 'kick';
+      hs.innerHTML = foot
+        ? '<circle cx="270" cy="120" r="80" class="lp-shell"/><circle cx="270" cy="120" r="64" class="lp-head"/>' +
+          '<g class="lp-beater"><line x1="168" y1="200" x2="186" y2="122" class="lp-stand"/><circle cx="186" cy="118" r="10" class="lp-tip"/></g>' +
+          '<g class="lp-pedal"><rect x="70" y="196" width="110" height="12" rx="4" class="lp-ped"/><path d="M60 192 Q 100 168 150 186 L 158 196 L 64 200 Z" class="lp-skin"/></g>' +
+          '<text x="40" y="232" class="lp-note">' + _t('Heel down, press with the ball of your foot') + '</text>'
+        : '<ellipse cx="250" cy="170" rx="110" ry="24" class="' + (st.inst === 'hh' ? 'lp-cym' : 'lp-head') + '"/>' +
+          (st.inst === 'hh' ? '<ellipse cx="250" cy="180" rx="110" ry="22" class="lp-cym"/>' : '<rect x="140" y="170" width="220" height="50" rx="8" class="lp-shell"/>') +
+          '<g class="lp-stickarm"><rect x="40" y="96" width="210" height="10" rx="5" class="lp-stick"/><circle cx="248" cy="101" r="6" class="lp-tip"/><ellipse cx="70" cy="101" rx="26" ry="18" class="lp-skin"/></g>';
+      c.appendChild(hs);
+      var mv = hs.querySelector(foot ? '.lp-pedal' : '.lp-stickarm'), bt = hs.querySelector('.lp-beater'), beat = 0;
+      var hit = function() {
+        if (mv) { mv.classList.remove('down'); void mv.getBoundingClientRect(); mv.classList.add('down'); }
+        if (bt) { bt.classList.remove('down'); void bt.getBoundingClientRect(); bt.classList.add('down'); }
+        _lpHit(st.inst);
+        beat++;
+      };
+      _lpEl(c, 'div', 'lp-label', _t('Watch, then try it on your kit.'));
+      setTimeout(function() { if (_lp && _lp.s >= 0) { hit(); _lp.timer = setInterval(hit, 1000); } }, 500);
+      row = _lpEl(c, 'div', 'lt-row');
+      var gh = _lpEl(row, 'button', 'lt-go', _t('Continue')); gh.type = 'button'; gh.addEventListener('click', _lpNext);
+    } else if (st.k === 'note') {
+      var box = _lpEl(c, 'div', 'lt-play lp-notebox');
+      var nsvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); box.appendChild(nsvg);
+      var ex = st.inst === 'all' ? LP_EX.lp_groove : LP_EX[st.inst === 'kick' ? 'lp_kick' : st.inst === 'hh' ? 'lp_hh' : 'lp_snare'];
+      var keep = GROOVE; GROOVE = ex;
+      try { renderNot(0, false, { svg: nsvg }); } catch (e) {}
+      finally { GROOVE = keep; }
+      _lpEl(c, 'div', 'lp-label', st.inst === 'all' ? _t('x = hi-hat · middle = snare · bottom = bass drum') : _t(LP_PARTS[st.inst].n) + ' = ' + _t(st.inst === 'kick' ? 'bottom space' : st.inst === 'hh' ? 'x above the staff' : 'middle space'));
+      var demo = 0;
+      _lp.timer = setInterval(function() {
+        demo = (demo + 1) % 4;
+        var k2 = GROOVE; GROOVE = ex;
+        try { renderNot(demo, false, { svg: nsvg }); } catch (e) {}
+        finally { GROOVE = k2; }
+        (ex.beats[demo] || []).forEach(function(nt) { if (nt.inst) _lpHit(nt.inst); });
+      }, 860);
+      row = _lpEl(c, 'div', 'lt-row');
+      var gt = _lpEl(row, 'button', 'lt-go', _t('Continue')); gt.type = 'button'; gt.addEventListener('click', _lpNext);
+    } else if (st.k === 'play') {
+      _lpPlayStep(c, st);
+    } else if (st.k === 'check') {
+      _lpEl(c, 'div', 'lt-kick', m.icon + ' ' + _t(m.t));
+      _lpEl(c, 'h2', 'lt-h', _t('Could you play along?'));
+      _lpEl(c, 'p', 'lt-p', _t('Be honest. You can repeat it as often as you like.'));
+      var ans = _lpEl(c, 'div', 'lt-ans');
+      [['yes', _t('Yes! 🚀'), _t('Next mission')], ['again', _t('Again'), _t('Same tempo')], ['slow', _t('Slower'), _t('A bit easier')]].forEach(function(o) {
+        var b = _lpEl(ans, 'button', 'lt-opt', o[1]); b.type = 'button'; _lpEl(b, 'small', null, o[2]);
+        b.addEventListener('click', function() {
+          if (o[0] === 'yes') { _lpComplete(m, st); return; }
+          if (o[0] === 'slow') _lp.bpm = Math.max(50, _lp.bpm - 10);
+          _lp.s = m.steps.length - 2; _lpStep();
+        });
+      });
+    }
+    if (st.v && st.k !== 'play') setTimeout(function() { _lpSay(st.v); }, 300);
+  }
+  // Übung mit Notenbild, Einzähler, Musik-Platzhalter und großem Hinweis bei jedem Ziel-Schlag
+  function _lpPlayStep(c, st) {
+    var ex = LP_EX[st.ex], bpm = _lp.bpm || 70;
+    var box = _lpEl(c, 'div', 'lt-play lp-playbox');
+    var head = _lpEl(box, 'div', 'lt-head');
+    _lpEl(head, 'span', 'lt-head-bpm', bpm + ' BPM');
+    var hc = _lpEl(head, 'div', 'lt-head-c'); _lpEl(hc, 'span', 'lt-head-cat', 'Launchpad'); _lpEl(hc, 'span', 'lt-head-name', _t(st.h));
+    var btn = _lpEl(head, 'button', 'lt-again', '▶ ' + _t('Play')); btn.type = 'button';
+    var nsvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); box.appendChild(nsvg);
+    var cnt = _lpEl(box, 'div', 'lt-count'), cue = _lpEl(box, 'div', 'lp-cue', st.cue);
+    var prog = _lpEl(_lpEl(box, 'div', 'lt-prog'), 'div', 'lt-prog-fill');
+    var draw = function(cur) { var k = GROOVE; GROOVE = ex; try { renderNot(cur, false, { svg: nsvg }); } catch (e) {} finally { GROOVE = k; } };
+    draw(-1);
+    var row = _lpEl(c, 'div', 'lt-row');
+    var dn = _lpEl(row, 'button', 'lt-go', _t('Done')); dn.type = 'button'; dn.disabled = true;
+    dn.addEventListener('click', _lpNext);
+    var start = function() {
+      _lpStopAll();
+      try { initA(); } catch (e) {}
+      if (!aCtx) return;
+      var bus = aCtx.createGain(), qd = 60 / bpm, t = aCtx.currentTime + 0.15, q = [], cq = [], hits = [], bars = 8;
+      bus.connect(_aOut());
+      _sbOnBus(bus, function() {
+        ['1', null, '2', null, '1', '2', '3', '4'].forEach(function(n, i) { var at = t + i * qd; if (n) { playCountClick(n === '1', 1, at); playCountVoice(n, at); } cq.push({ t: at, n: n }); });
+        t += 8 * qd;
+        var t0 = t;
+        _lpMusic(bus, t0, bars, bpm);
+        for (var b = 0; b < bars; b++) {
+          var n = ex.beats.length, sd = 4 * qd / n;
+          for (var cc = 0; cc < 4; cc++) playCountClick(cc === 0, 0.6, t + cc * qd);
+          for (var s2 = 0; s2 < n; s2++) {
+            q.push({ t: t + s2 * sd, cur: s2 });
+            if ((ex.beats[s2] || []).length) hits.push(t + s2 * sd);
+          }
+          t += 4 * qd;
+        }
+      });
+      _lp.bus = bus; _lp.playing = true;
+      var end = t, st0 = q.length ? q[0].t : t, lastCur = -2, hi = 0, cn0;
+      btn.textContent = '■ ' + _t('Stop');
+      var tick = function() {
+        if (!_lp || !_lp.playing) return;
+        var now = aCtx.currentTime - _audioLatency(), cur = -1, i;
+        for (i = 0; i < q.length && q[i].t <= now; i++) cur = q[i].cur;
+        if (now < st0) cur = -1;
+        if (cur !== lastCur) { lastCur = cur; draw(cur >= 0 ? cur : -1); }
+        var cn = null;
+        if (now < st0) for (i = 0; i < cq.length && cq[i].t <= now; i++) cn = cq[i].n || '·';
+        if (cn !== cn0) { cn0 = cn; cnt.textContent = cn || ''; cnt.classList.toggle('on', !!cn); cnt.classList.toggle('rest', cn === '·'); }
+        while (hi < hits.length && hits[hi] <= now + 0.02) { hi++; cue.classList.remove('go'); void cue.offsetWidth; cue.classList.add('go'); }
+        prog.style.transform = 'scaleX(' + Math.max(0, Math.min(1, (now - st0) / (end - st0))).toFixed(4) + ')';
+        if (now > end + 0.2) { _lpStopAll(); btn.textContent = '▶ ' + _t('Play again'); dn.disabled = false; return; }
+        _lp.raf = requestAnimationFrame(tick);
+      };
+      _lp.raf = requestAnimationFrame(tick);
+    };
+    btn.addEventListener('click', function() { if (_lp.playing) { _lpStopAll(); btn.textContent = '▶ ' + _t('Play'); dn.disabled = false; } else start(); });
+    _lpSay(st.v);
+    setTimeout(function() { if (_lp && !_lp.playing && LP_MISSIONS[_lp.m].steps[_lp.s] === st) start(); }, st.v && DL_LANG === 'en' ? 4200 : 900);
+  }
+  // Musik-Platzhalter: weiche Akkorde (C–G–Am–F) und Bass auf 1 und 3, bis die Suno-Begleitungen da sind
+  function _lpMusic(bus, t0, bars, bpm) {
+    var qd = 60 / bpm, prog = [[48, 60, 64, 67], [43, 59, 62, 67], [45, 60, 64, 69], [41, 60, 65, 69]];
+    var hz = function(m) { return 440 * Math.pow(2, (m - 69) / 12); };
+    var mus = aCtx.createGain(); mus.gain.value = 0.18; mus.connect(bus);
+    var lp = aCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(mus);
+    for (var b = 0; b < bars; b++) {
+      var ch = prog[b % 4], tb = t0 + b * 4 * qd;
+      ch.slice(1).forEach(function(m) {
+        var o = aCtx.createOscillator(), g = aCtx.createGain();
+        o.type = 'triangle'; o.frequency.value = hz(m);
+        g.gain.setValueAtTime(0.0001, tb); g.gain.linearRampToValueAtTime(0.22, tb + 0.08); g.gain.linearRampToValueAtTime(0.14, tb + 4 * qd - 0.1); g.gain.linearRampToValueAtTime(0.0001, tb + 4 * qd);
+        o.connect(g); g.connect(lp); o.start(tb); o.stop(tb + 4 * qd + 0.05);
+      });
+      [0, 2].forEach(function(beatI) {
+        var tt = tb + beatI * qd, o = aCtx.createOscillator(), g = aCtx.createGain();
+        o.type = 'sine'; o.frequency.value = hz(ch[0] - 12 + 12);
+        g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(0.9, tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, tt + 1.6 * qd);
+        o.connect(g); g.connect(mus); o.start(tt); o.stop(tt + 1.7 * qd);
+      });
+    }
+  }
+  function _lpComplete(m, st) {
+    var first = !_lpIsDone(m.id), got = [];
+    if (first) {
+      _ach.lp = _ach.lp || [];
+      _ach.lp.push(m.id);
+      if (st.last) { _achGiveSkip(got); got.unshift({ e: '🚀', t: _t('Launchpad complete!'), s: _t('You just played your first groove. Welcome to drumming.') }); }
+      _achDirty();
+    }
+    var c = _lpCard();
+    _lpProg();
+    _lpEl(c, 'div', 'lp-star', st.last ? '🚀' : '⭐');
+    _lpEl(c, 'h2', 'lt-h', st.last ? _t('You launched!') : _t('Mission complete!'));
+    _lpEl(c, 'p', 'lt-p', st.last ? _t('Your course starts now. Every lesson is planned for you.') : _t('One step closer to your first groove.'));
+    _ltChime(); _ltBurst(c);
+    var row = _lpEl(c, 'div', 'lt-row');
+    var nx = LP_MISSIONS.findIndex(function(x, i) { return !_lpIsDone(x.id) && _lpUnlocked(i); });
+    if (nx >= 0) { var b = _lpEl(row, 'button', 'lt-go', _t('Next mission')); b.type = 'button'; b.addEventListener('click', function() { _lpMission(nx); }); }
+    else { var b2 = _lpEl(row, 'button', 'lt-go', _t('Start my course')); b2.type = 'button'; b2.addEventListener('click', _lpClose); }
+    var hub = _lpEl(row, 'button', 'lt-ghost', _t('All missions')); hub.type = 'button'; hub.addEventListener('click', _lpHub);
+    if (got.length) _achShow(got, 900);
+  }
+
   // ============================================================
   // LESE-QUIZ IM KURS (Erwin, 25.11.2026: „diesen Test auch im Kurs haben in Note Reading. Aber nicht zu viel“)
   // Nach jeder dritten Noten-Lektion beim Klick auf „Weiter“: zwei Takte hören, die richtige von zwei
@@ -29728,6 +30259,15 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
 
   // Skip-Joker (25.11.2026)
   document.getElementById('dgJoker').addEventListener('click', _achUseSkip);
+  document.getElementById('dgLaunchBtn').addEventListener('click', _lpOpen);
+  // Ganz neu (keine Lektion, keine Einstufung aus dem Test, Launchpad noch nicht begonnen): Launchpad einmal von selbst öffnen
+  try {
+    if (!_gateBlocked && !_rampMode && _getTotalLessons() === 0 && !(_cState && _cState.place) && !(_ach.lp || []).length &&
+        new URLSearchParams(window.location.search).get('test') !== '1' && !localStorage.getItem(_nsKey('drumlion_v1_lpseen'))) {
+      localStorage.setItem(_nsKey('drumlion_v1_lpseen'), '1');
+      setTimeout(_lpOpen, 600);
+    }
+  } catch (e) {}
   document.getElementById('dgAchBar').addEventListener('click', function() { var sb = document.getElementById('dgStatsBtn'); if (sb) sb.click(); });
 
   // Prev = zurück in der History
