@@ -2420,6 +2420,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
                 <span class="opt-glyph"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></span>Counting voice<kbd class="opt-key">V</kbd><span class="metro-voice-box" aria-hidden="true"></span>
               </button>
               <label class="metro-voice-vol"><span>Volume</span><input type="range" id="dgVoiceVol" min="0" max="150" step="5" value="100" aria-label="Counting voice volume"><output id="dgVoiceVolV">100 %</output></label>
+              <!-- Begleitmusik zu Grooves und Fills (26.11.2026), 0 = aus; vorerst nur im Dev-Modus sichtbar -->
+              <label class="metro-voice-vol" id="dgMusicVolRow" hidden><span>Music</span><input type="range" id="dgMusicVol" min="0" max="100" step="5" value="70" aria-label="Music volume"><output id="dgMusicVolV">70 %</output></label>
             </div>
           </div>
         </div>
@@ -3029,6 +3031,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     ["Counting voice volume", "Lautstärke der Zählstimme", "Volumen de la voz", "Volume da voz", "Volume de la voix"],
     ["Counting voice", "Zählstimme", "Voz que cuenta", "Voz de contagem", "Voix qui compte"],
     ["Voice", "Stimme", "voz", "voz", "voix"],
+    ["Music", "Musik", "Música", "Música", "Musique"],
     ["Songs", "Songs", "Canciones", "Músicas", "Morceaux"],
     ["My Exercises", "Meine Übungen", "Mis ejercicios", "Meus exercícios", "Mes exercices"],
     ["My exercises", "Meine Übungen", "Mis ejercicios", "Meus exercícios", "Mes exercices"],
@@ -18799,7 +18802,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261126-152151';
+  var DL_BUILD = '20261126-154751';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20281,6 +20284,89 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (posInQ === 0) for (var ci = 0; ci < nC; ci++)
         playCountClick(ci === 0 && accent, ci === 0 ? H : ((nC % 2 === 0 && ci === nC / 2) ? M : L), when + qSec * ci / nC);
     }
+  }
+
+  // ============================================================
+  // BEGLEITMUSIK zu Grooves und Fills (Erwin, 26.11.2026: „besser machen, erstmal bei Grooves und Fills.
+  // der Rhythmus, vor allem der Bass soll genau auf den Bassdrumschlägen gespielt werden“)
+  // Bass auf jedem Bassdrum-Schlag (klingt bis zum nächsten Kick bzw. Taktende), E-Piano-Akkord auf
+  // Snare-Schlägen auf der Zählzeit (nur im Groove-Takt), leiser Flächen-Akkord je Takt.
+  // Akkorde I–V–vi–IV, Tonart je Übung verschieden. Schweigt in Click-only-Takten, im Level-Test
+  // (Rampe) und bei Notenstücken. Regler „Music“ im Metronom-Menü (0 = aus).
+  // Vorerst nur im Dev-Modus (MUS_PUBLIC = false), Erwin testet zuerst.
+  // ============================================================
+  var MUS_PUBLIC = false;
+  var _MUS_VOL_KEY = 'drumlion_v1_musicvol';
+  var _musVol = (function() { try { var v = parseInt(localStorage.getItem(_MUS_VOL_KEY), 10); if (v >= 0 && v <= 100) return v / 100; } catch (e) {} return 0.7; })();
+  var _musBus = null, _musKey = 0;
+  var MUS_KEYS = [0, 2, -3, 5, -2, 3, -5];          // C, D, A, F, Bb, Eb, G
+  var MUS_PROG = [[0, 4, 7], [7, 11, 14], [9, 12, 16], [5, 9, 12]];   // I V vi IV
+  function _musWanted() {
+    return (MUS_PUBLIC || _devMode) && _musVol > 0 && !_rampMode && !!GROOVE &&
+           (GROOVE.cat === 'grooves' || GROOVE.cat === 'fillins');
+  }
+  function _musHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function _musStart() {
+    if (!aCtx) return;
+    _musStop();
+    _musKey = MUS_KEYS[Math.abs(GROOVE.id | 0) % MUS_KEYS.length];
+    _musBus = aCtx.createGain();
+    _musBus.gain.value = _musVol * 0.55;
+    _musBus.connect(_aOut());
+  }
+  function _musStop() {
+    if (!_musBus || !aCtx) { _musBus = null; return; }
+    var b = _musBus; _musBus = null;
+    try { b.gain.cancelScheduledValues(aCtx.currentTime); b.gain.setTargetAtTime(0, aCtx.currentTime, 0.04); } catch (e) {}
+    setTimeout(function() { try { b.disconnect(); } catch (e) {} }, 500);
+  }
+  function _musChord(bar) { return MUS_PROG[bar % MUS_PROG.length]; }
+  // Akkordtöne in die Lage um G3–G4 legen (enge Stimmführung)
+  function _musVoicing(bar) {
+    return _musChord(bar).map(function(iv) { var m = 60 + _musKey + iv; while (m > 67) m -= 12; while (m < 55) m += 12; return m; }).sort();
+  }
+  function _musBass(bar, t, dur) {
+    if (!_musBus) return;
+    var m = 36 + _musKey + _musChord(bar)[0];
+    while (m > 45) m -= 12; while (m < 33) m += 12;
+    var f = _musHz(m), end = t + Math.max(0.08, dur * 0.94);
+    var g = aCtx.createGain(), lp = aCtx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.Q.value = 5;
+    lp.frequency.setValueAtTime(1300, t); lp.frequency.exponentialRampToValueAtTime(260, t + 0.14);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.42, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.28, t + 0.25); g.gain.setValueAtTime(0.28, Math.max(t + 0.01, end - 0.05));
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    var o1 = aCtx.createOscillator(), o2 = aCtx.createOscillator(), g1 = aCtx.createGain();
+    o1.type = 'sine'; o1.frequency.value = f;
+    o2.type = 'sawtooth'; o2.frequency.value = f; g1.gain.value = 0.55;
+    o1.connect(g); o2.connect(g1); g1.connect(lp); lp.connect(g); g.connect(_musBus);
+    [o1, o2].forEach(function(o) { o.start(t); o.stop(end + 0.02); });
+  }
+  function _musStab(bar, t) {
+    if (!_musBus) return;
+    _musVoicing(bar).forEach(function(m) {
+      var f = _musHz(m), c = aCtx.createOscillator(), mo = aCtx.createOscillator(), mg = aCtx.createGain(), g = aCtx.createGain();
+      c.type = 'sine'; c.frequency.value = f; mo.type = 'sine'; mo.frequency.value = f;
+      mg.gain.setValueAtTime(f * 2.2, t); mg.gain.exponentialRampToValueAtTime(f * 0.15, t + 0.35);
+      mo.connect(mg); mg.connect(c.frequency);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.11, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+      c.connect(g); g.connect(_musBus);
+      c.start(t); mo.start(t); c.stop(t + 0.9); mo.stop(t + 0.9);
+    });
+  }
+  function _musPad(bar, t, dur) {
+    if (!_musBus) return;
+    var lp = aCtx.createBiquadFilter(), g = aCtx.createGain(), end = t + dur;
+    lp.type = 'lowpass'; lp.frequency.value = 900;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.035, t + Math.min(0.3, dur / 3));
+    g.gain.setValueAtTime(0.035, Math.max(t + 0.31, end - 0.12)); g.gain.linearRampToValueAtTime(0.0001, end + 0.05);
+    lp.connect(g); g.connect(_musBus);
+    _musVoicing(bar).forEach(function(m) {
+      [-6, 6].forEach(function(ct) {
+        var o = aCtx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = _musHz(m); o.detune.value = ct;
+        o.connect(lp); o.start(t); o.stop(end + 0.08);
+      });
+    });
   }
 
   function playBeat(bi, when) {
@@ -22409,6 +22495,21 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // totalRealBars = tatsächliche Takte (für Info-Anzeige)
     var totalRealBars = mb ? loopBars * mb.bars : totalBars;
 
+    // Begleitmusik (siehe _musWanted): Bass auf den Kicks, Akkord auf Snare-Zählzeiten, Fläche je Takt
+    var musOn = !mb && _musWanted();
+    if (musOn) _musStart(); else _musStop();
+    function slotN(i) { return (isFill ? (i < n1 ? GROOVE.beats[i] : GROOVE.beats2[i - n1]) : GROOVE.beats[i]) || []; }
+    function hasKick(i) { return slotN(i).some(function(n) { return !n.rest && n.inst === 'kick'; }); }
+    function musTick(bt, br, when) {
+      if (!musOn || !_musBus) return;
+      var inFill = isFill && bt >= n1, b0 = inFill ? n1 : 0, bEnd = (isFill && !inFill) ? n1 : phraseLen;
+      var realBar = isFill ? br * 2 + (inFill ? 1 : 0) : br, tk = tickSecAt(when), k, u;
+      if (bt === b0) { u = 0; for (k = b0; k < bEnd; k++) u += slotMul(k); _musPad(realBar, when, u * tk); }
+      if (hasKick(bt)) { u = slotMul(bt); for (k = bt + 1; k < bEnd && !hasKick(k); k++) u += slotMul(k); _musBass(realBar, when, u * tk); }
+      if (!inFill && ticksPerBeat % 1 === 0 && bt % ticksPerBeat === 0 &&
+          slotN(bt).some(function(n) { return !n.rest && (n.inst === 'snare' || n.inst === 'snareAccent'); })) _musStab(realBar, when);
+    }
+
     function infoLine(br, bt) {
       var realBar;
       if (mb) {
@@ -22464,6 +22565,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var clickOnly = isTimingBlock && !grooveOn(br);
           if (grooveOn(br)) {
             GROOVE.beats[bt].forEach(function(n) { if (!n.rest) playSound(n.inst, when); });
+            musTick(bt, br, when);
             scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
           } else { scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly); }
         } else {
@@ -22478,6 +22580,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           var _mQ = _g ? _g.q : ticksPerBeat;
           if (grooveOn(br)) {
             GROOVE.beats2[fb].forEach(function(n) { if (!n.rest) playSound(n.inst, when); });
+            musTick(bt, br, when);
             scheduleMetroClicks(_mBt, _mTick, _mQ, when);
           } else { scheduleMetroClicks(_mBt, _mTick, _mQ, when, clickOnly); }
         }
@@ -22486,6 +22589,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         var clickOnly = isTimingBlock && !grooveOn(br);
         if (grooveOn(br)) {
           if (bt < GROOVE.beats.length) playBeat(bt, when);
+          musTick(bt, br, when);
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when);
         } else {
           scheduleMetroClicks(bt, eighthMs/1000, ticksPerBeat, when, clickOnly);
@@ -23573,6 +23677,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
 
   function stopExercise() {
+    _musStop();
     _showFeedback(false);
     if (aCtx) _statsDrain(aCtx.currentTime);
     _statQ.length = 0;
@@ -30778,6 +30883,19 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
         try { localStorage.setItem(_VOICE_VOL_KEY, String(v)); } catch (e) {}
         clearTimeout(vvolT);
         vvolT = setTimeout(function() { if (playing) return; try { initA(); if (aCtx) playCountVoice('1', aCtx.currentTime + 0.05); } catch (e) {} }, 180);   // Hörprobe
+      });
+    }
+    var mvol = document.getElementById('dgMusicVol'), mvolV = document.getElementById('dgMusicVolV'), mrow = document.getElementById('dgMusicVolRow');
+    if (mvol && mrow) {
+      mrow.hidden = !(MUS_PUBLIC || _devMode);
+      mvol.value = Math.round(_musVol * 100); mvolV.textContent = mvol.value + ' %';
+      mvol.addEventListener('click', function(e) { e.stopPropagation(); });
+      mvol.addEventListener('keydown', function(e) { e.stopPropagation(); });
+      mvol.addEventListener('input', function() {
+        var v = Math.max(0, Math.min(100, parseInt(mvol.value, 10) || 0));
+        _musVol = v / 100; mvolV.textContent = v + ' %';
+        if (_musBus && aCtx) _musBus.gain.setTargetAtTime(_musVol * 0.55, aCtx.currentTime, 0.05);
+        try { localStorage.setItem(_MUS_VOL_KEY, String(v)); } catch (e) {}
       });
     }
     // Zählstimme an/aus — Menü bleibt offen, man sieht den Haken
