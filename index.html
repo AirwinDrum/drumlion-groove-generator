@@ -4218,7 +4218,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (!got.length) return;
     var cfg = got.length === 1
       ? { emoji: got[0].e, title: got[0].t, sub: got[0].s, confetti: false, autoMs: 8000 }
-      : { emoji: '🏅', title: _t('{n} new achievements', { n: got.length }), lines: got.map(function(g) { return g.e + ' ' + g.t; }), confetti: false, autoMs: 9000 };
+      : { emoji: '✨', title: _t('{n} new achievements', { n: got.length }), lines: got.map(function(g) { return g.e + ' ' + g.t; }), confetti: false, autoMs: 9000 };
     setTimeout(function() { _celebrate(cfg); }, delay || 1600);
   }
   function _achCatName(c) { return _t(ACH_CATS[c] || c); }
@@ -4251,31 +4251,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     try { if (!playing) renderNot(-1, false); } catch (e) {}
     _achRender();
   }
-  // Bonus-Übung: eine Übung 3–15 Level über dem aktuellen, die noch nicht im Kurs läuft
-  function _achPickBonus() {
-    var M = _ltMap(), lpl = LESSONS_PER_LEVEL, lv = (_getLevelInfo() || {}).level || 1, skip = {}, i, L;
-    (_ach.bx || []).forEach(function(id) { skip[id] = 1; });
-    (_cState.completed || []).forEach(function(id) { skip[id] = 1; });
-    Object.keys(_cState.cats || {}).forEach(function(c) { var k = _cState.cats[c]; ((k && k.active) || []).concat((k && k.park) || []).forEach(function(e) { skip[e.id] = 1; }); });
-    for (L = lv + 3; L <= Math.min(100, lv + 15); L++) {
-      for (i = (L - 1) * lpl; i < Math.min(M.length, L * lpl); i++) {
-        var id = M[i].id, ex = _ltEx(id);
-        if (!skip[id] && ex && ex.beats && ex.beats.length) return id;
-      }
-    }
-    return null;
-  }
-  function _achGiveBonus(got) {
-    var id = _achPickBonus();
-    if (!id) return;
-    _ach.bx.push(id);
-    got.push({ e: '🎁', t: _t('Bonus exercise unlocked'), s: _t('A sneak peek from a higher level. Find it under Achievements.') });
-  }
-  function _achBonusLevel(id) {
-    var M = _ltMap();
-    for (var i = 0; i < M.length; i++) if (M[i].id === id) return Math.floor(i / LESSONS_PER_LEVEL) + 1;
-    return null;
-  }
+  // Bonus-Übungen und Medaillen (🏅) entfernt (Erwin, 26.11.2026: „mach die Medaillen weg, die Bonus-Übungen auch“).
+  // Die Zählerstände (_ach.rep/tb/pb/an) laufen still weiter, weil die Notenfarben daran hängen.
   // Nach jeder fertigen Kurs-Lektion: alles Neue sammeln und in EINER Feier zeigen
   function _achAfterLesson(lesson) {
     if (!lesson || _devRangeActive) return;
@@ -4295,7 +4272,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       }
       n = 0;
       ACH_STREAK.forEach(function(x) { if (_ach.dc >= x) n = x; });
-      if (n > _ach.sm) { _ach.sm = n; got.push({ e: '🔥', t: _t('{n} days in a row', { n: n }), s: _t('Showing up is the whole trick.') }); _achGiveBonus(got); }
+      if (n > _ach.sm) { _ach.sm = n; got.push({ e: '🔥', t: _t('{n} days in a row', { n: n }), s: _t('Showing up is the whole trick.') }); }
       if (_ach.sd !== today) {
         _ach.sd = today;
         if (_achSkips() < ACH_SKIP_MAX) {
@@ -4311,9 +4288,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var bpm = Math.round(lesson.bpm || 0), mk = 0;
       ACH_BPM.forEach(function(b) { if (bpm >= b) mk = b; });
       if (mk > (_ach.tb[cat] || 0)) {
-        var first = !_ach.tb[cat];
         _ach.tb[cat] = mk; ch = true;
-        if (!first || mk >= 100) got.push({ e: '⚡', t: _t('{cat} at {bpm} BPM', { cat: _achCatName(cat), bpm: mk }), s: _t('New tempo mark. Your hands are getting faster.') });
       }
       // Allrounder-Woche: alle Bereiche, die gerade im Kurs laufen (mindestens 3), in einer Kalenderwoche
       var wk = _weekId();
@@ -4322,13 +4297,11 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       var need = Object.keys(ACH_CATS).filter(function(c) { var k = _cState.cats[c]; return k && (((k.active || []).length) || ((k.park || []).length)); });
       if (_ach.ad !== wk && need.length >= 3 && need.every(function(c) { return _ach.ac.indexOf(c) !== -1; })) {
         _ach.ad = wk; _ach.an++; ch = true;
-        got.push({ e: '🎯', t: _t('Allrounder of the week'), s: _t('You trained every area this week. That’s how drummers get complete.') });
-        _achGiveSkip(got);
       }
     }
     n = 0;
     ACH_STROKES.forEach(function(x) { if (_stats.strokes >= x) n = x; });
-    if (n > _ach.rep) { _ach.rep = n; ch = true; got.push({ e: '🥁', t: _t('{n} strokes played', { n: _fmtNum(n) }), s: _t('Every repetition counts.') }); _achGiveBonus(got); }
+    if (n > _ach.rep) { _ach.rep = n; ch = true; }
     if (_achUnlocked().length > colBefore) got.push({ e: '🎨', t: _t('New note color unlocked'), s: _t('Pick it under Achievements.') });
     if (ch) _achDirty();
     _achShow(got, 1600);
@@ -4346,8 +4319,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       ACH_DONE.forEach(function(x) { if (cnt[c] >= x) mk = x; });
       if (mk > (_ach.pb[c] || 0)) {
         _ach.pb[c] = mk; ch = true;
-        got.push({ e: '🏅', t: mk === 1 ? _t('First {cat} exercise mastered', { cat: _achCatName(c) }) : _t('{n} {cat} exercises mastered', { n: mk, cat: _achCatName(c) }), s: _t('Step by step, it all adds up.') });
-        _achGiveSkip(got);
       }
     });
     if (ch) _achDirty();
@@ -4387,16 +4358,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (bar) {
       bar.textContent = '';
       bar.hidden = !!_gateBlocked;
-      var badges = (_ach.rep ? 1 : 0) + (_ach.an ? 1 : 0);
-      Object.keys(ACH_CATS).forEach(function(c) { if (_ach.tb[c] >= 80) badges++; if (_ach.pb[c]) badges++; });
       var chip = function(txt, hot) { var x = document.createElement('span'); x.textContent = txt; if (hot) x.className = 'hot'; bar.appendChild(x); };
       var st = _achStreakNow();
-      if (st || _ach.db || _achSkips() || _achFreezes() || badges || (_ach.bx || []).length) {
+      if (st || _ach.db || _achSkips() || _achFreezes()) {
         chip('🔥 ' + st, st >= 3);
         chip('⏭ ' + _achSkips(), _achSkips() > 0);
         chip('🧊 ' + _achFreezes(), false);
-        chip('🏅 ' + badges, badges > 0);
-        if ((_ach.bx || []).length) chip('🎁 ' + _ach.bx.length, true);
       } else {
         var em = document.createElement('em'); em.textContent = '⏭ ' + _t('Play 10 minutes today to earn a skip'); bar.appendChild(em);
       }
@@ -4415,15 +4382,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     [['🔥 ' + _achStreakNow(), _t('Day streak'), _t('Best: {n}', { n: _ach.db })], ['⏭ ' + _achSkips(), _t('Skips'), ''], ['🧊 ' + _achFreezes(), _t('Pause jokers'), '']].forEach(function(t) {
       var d = add(top, 'div'); add(d, 'b', null, t[0]); add(d, 'span', null, t[1]); if (t[2]) add(d, 'small', null, t[2]);
     });
-    var list = [];
-    if (_ach.rep) list.push('🥁 ' + _t('{n} strokes played', { n: _fmtNum(_ach.rep) }));
-    Object.keys(ACH_CATS).forEach(function(c) { if (_ach.tb[c] >= 80) list.push('⚡ ' + _t('{cat} at {bpm} BPM', { cat: _achCatName(c), bpm: _ach.tb[c] })); });
-    Object.keys(ACH_CATS).forEach(function(c) {
-      var m = _ach.pb[c];
-      if (m) list.push('🏅 ' + (m === 1 ? _t('First {cat} exercise mastered', { cat: _achCatName(c) }) : _t('{n} {cat} exercises mastered', { n: m, cat: _achCatName(c) })));
-    });
-    if (_ach.an) list.push('🎯 ' + _t('{n} allrounder weeks', { n: _ach.an }));
-    if (list.length) { var l = add(el, 'div', 'dl-ach-list'); list.forEach(function(t) { add(l, 'span', null, t); }); }
     if (!_ach.db) add(el, 'p', 'dl-ach-hint', _t('Play 10 minutes a day to earn skips and build your streak.'));
     add(el, 'p', 'dl-ach-sub', '🎨 ' + _t('Note color'));
     var cur = 'gold';
@@ -4439,21 +4397,6 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       if (ok && c.id === eff) b.classList.add('on');
       b.addEventListener('click', function() { if (ok) _achSetColor(c.id); });
     });
-    var bx = (_ach.bx || []).map(function(id) { return EXERCISES.find(function(e) { return e.id === id; }); }).filter(Boolean);
-    if (bx.length) {
-      add(el, 'p', 'dl-ach-sub', '🎁 ' + _t('Bonus exercises'));
-      var bw = add(el, 'div', 'dl-ach-bonus');
-      bx.slice().reverse().forEach(function(ex) {
-        var b = add(bw, 'button'), lv = _achBonusLevel(ex.id);
-        b.type = 'button';
-        b.appendChild(document.createTextNode(ex.name));
-        add(b, 'span', null, (ex.catLabel || '') + (lv ? ' · ' + _t('Level {n}', { n: lv }) : '') + ' · ' + _t('Practice →'));
-        b.addEventListener('click', function() {
-          try { if (typeof statsOverlay !== 'undefined' && statsOverlay) _closePanel(statsOverlay); } catch (e) {}
-          _startFree(ex);
-        });
-      });
-    }
   }
 
   // Übung endgültig abgeschlossen: Endtempo gespielt, sie kommt nie wieder
@@ -18856,7 +18799,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261126-142857';
+  var DL_BUILD = '20261126-152011';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
