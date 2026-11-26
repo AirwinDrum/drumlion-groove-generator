@@ -18802,7 +18802,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261126-155917';
+  var DL_BUILD = '20261126-161230';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -20298,7 +20298,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   var MUS_PUBLIC = false;
   var _MUS_VOL_KEY = 'drumlion_v1_musicvol';
   var _musVol = (function() { try { var v = parseInt(localStorage.getItem(_MUS_VOL_KEY), 10); if (v >= 0 && v <= 100) return v / 100; } catch (e) {} return 0.7; })();
-  var _musBus = null, _musKey = 0;
+  var _musBus = null, _musKey = 0, _musSatCurve = null;
   var MUS_KEYS = [0, 2, -3, 5, -2, 3, -5];          // C, D, A, F, Bb, Eb, G
   // Akkordfolgen je Übung verschieden (Erwin, 26.11.2026: „muss ja nicht immer dieselbe sein“).
   // Stufe → [Grundton in Halbtönen, Dur/Moll]
@@ -20345,17 +20345,25 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     var m = 36 + _musKey + _musChord(bar)[0];
     while (m > 45) m -= 12; while (m < 33) m += 12;
     var f = _musHz(m), end = t + Math.max(0.08, dur * 0.94);
-    var g = aCtx.createGain(), lp = aCtx.createBiquadFilter();
-    lp.type = 'lowpass'; lp.Q.value = 5;
-    lp.frequency.setValueAtTime(1300, t); lp.frequency.exponentialRampToValueAtTime(260, t + 0.14);
-    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.42, t + 0.006);
-    g.gain.exponentialRampToValueAtTime(0.28, t + 0.25); g.gain.setValueAtTime(0.28, Math.max(t + 0.01, end - 0.05));
+    // Erwin 26.11.2026: „der Bass soll etwas fetter klingen“ → zwei verstimmte Saws + Square, Filter offener,
+    // leichte Sättigung, mehr Pegel und Sustain
+    var g = aCtx.createGain(), lp = aCtx.createBiquadFilter(), sat = aCtx.createWaveShaper();
+    if (!_musSatCurve) { _musSatCurve = new Float32Array(1024); for (var ci = 0; ci < 1024; ci++) { var x = ci / 511.5 - 1; _musSatCurve[ci] = Math.tanh(2.2 * x) / Math.tanh(2.2); } }
+    sat.curve = _musSatCurve;
+    lp.type = 'lowpass'; lp.Q.value = 4;
+    lp.frequency.setValueAtTime(1600, t); lp.frequency.exponentialRampToValueAtTime(420, t + 0.18);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.38, t + 0.25); g.gain.setValueAtTime(0.38, Math.max(t + 0.01, end - 0.05));
     g.gain.exponentialRampToValueAtTime(0.0001, end);
-    var o1 = aCtx.createOscillator(), o2 = aCtx.createOscillator(), g1 = aCtx.createGain();
+    var o1 = aCtx.createOscillator(), o2 = aCtx.createOscillator(), o3 = aCtx.createOscillator(), o4 = aCtx.createOscillator(), g1 = aCtx.createGain();
     o1.type = 'sine'; o1.frequency.value = f;
-    o2.type = 'sawtooth'; o2.frequency.value = f; g1.gain.value = 0.55;
-    o1.connect(g); o2.connect(g1); g1.connect(lp); lp.connect(g); g.connect(_musBus);
-    [o1, o2].forEach(function(o) { o.start(t); o.stop(end + 0.02); });
+    o2.type = 'sawtooth'; o2.frequency.value = f; o2.detune.value = -8;
+    o3.type = 'sawtooth'; o3.frequency.value = f; o3.detune.value = 8;
+    o4.type = 'square'; o4.frequency.value = f; 
+    g1.gain.value = 0.32;
+    o1.connect(g); [o2, o3, o4].forEach(function(o) { o.connect(g1); });
+    g1.connect(sat); sat.connect(lp); lp.connect(g); g.connect(_musBus);
+    [o1, o2, o3, o4].forEach(function(o) { o.start(t); o.stop(end + 0.02); });
   }
   function _musStab(bar, t) {
     if (!_musBus) return;
@@ -20380,7 +20388,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     for (var i = 0; i < n; i++) {
       var tt = t + i * sd, o = aCtx.createOscillator(), g = aCtx.createGain(), len = Math.min(0.22, sd * 1.6);
       o.type = 'triangle'; o.frequency.value = _musHz(tones[_musArp[i % _musArp.length]]);
-      g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(i % 4 === 0 ? 0.03 : 0.02, tt + 0.006);
+      g.gain.setValueAtTime(0.0001, tt); g.gain.linearRampToValueAtTime(i % 4 === 0 ? 0.045 : 0.032, tt + 0.006);   // 26.11.: etwas hörbarer (Erwin: „ist der Arp da?“)
       g.gain.exponentialRampToValueAtTime(0.0001, tt + len);
       o.connect(g); g.connect(lp); o.start(tt); o.stop(tt + len + 0.02);
     }
@@ -23563,9 +23571,12 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Seit 25.11.2026 kein Popup mehr (Erwin: „sie sind Teil der Note-Reading-Säule“): das Quiz erscheint im Player
   // selbst als eigene Lektion, an der Stelle des Notenbilds, mit Säulen-Kopfzeile und „Weiter“ wie jede Lektion.
   var _cqInline = null;
+  // 26.11.2026 (Erwin: „mach bei den Quizzes drei Fragen“): CQ_ROUNDS Fragen; Frage 2 und 3 auf Nachbar-Übungen
+  var CQ_ROUNDS = 3;
   function _cqOpen(done, left) {
-    left = left || 2;
-    var lesson = _shownLesson, Q = lesson && _cqBuild(lesson.ex, left === 1 ? -1 : 0);
+    left = left || CQ_ROUNDS;
+    var round = CQ_ROUNDS - left + 1;
+    var lesson = _shownLesson, Q = lesson && _cqBuild(lesson.ex, [0, 0, -1, 1, -2][round] || 0);
     _cqShownFor = _cqState.n;
     var inner = document.querySelector('.dg-inner'), grp = inner && inner.querySelector('.notation-group');
     if (!Q || !inner || !grp) { done(); return; }
@@ -23579,7 +23590,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (Q.hard) add(card, 'div', 'lt-kick', _t('listen closely'));
     add(card, 'h3', 'cq-h', _t('Which line do you hear?'));
     var head = add(card, 'div', 'cq-head');
-    add(head, 'span', 'cq-bpm', (3 - left) + '/2 · ' + Q.bpm + ' BPM');
+    add(head, 'span', 'cq-bpm', round + '/' + CQ_ROUNDS + ' · ' + Q.bpm + ' BPM');
     var play = add(head, 'button', 'lt-again', '▶ ' + _t('Play'));
     play.type = 'button';
     var wrap = add(card, 'div', 'cq-wrap'), box = add(wrap, 'div', 'lt-quiz'), cnt = add(wrap, 'div', 'lt-count');
