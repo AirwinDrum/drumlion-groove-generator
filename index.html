@@ -18856,7 +18856,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261125-172734';
+  var DL_BUILD = '20261126-142857';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -21879,11 +21879,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _vHas(w) { var k = _vKey(w); return !!(k && _vBuf[k]); }
   function _vActive() { return !!_vLang(); }
+  // Erwin 26.11.2026: „Einzähler-Stimme usw. ist viel lauter als der Klick“ → alle Sarah-Ansagen −6 dB.
+  // Der Regler „Stimme“ (0–150 %) wirkt weiter obendrauf.
+  var VOICE_TRIM = 0.5;
   function _vPlay(w, when, vol) {
     var v = aCtx && _vHas(w) && _vBuf[_vKey(w)];
     if (!v) return 0;
     var src = aCtx.createBufferSource(), g = aCtx.createGain();
-    src.buffer = v.b; g.gain.value = vol == null ? 1 : vol;
+    src.buffer = v.b; g.gain.value = (vol == null ? 1 : vol) * VOICE_TRIM;
     src.connect(g); g.connect(_aOut());
     src.start(Math.max(when || 0, aCtx.currentTime), v.off);
     _vSrcs.push(src);
@@ -22684,7 +22687,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       o.type = 'sine'; o.frequency.value = freq;
       var t = now + i * 0.13;
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.20, t + 0.04);
+      g.gain.linearRampToValueAtTime(0.08, t + 0.04); // Erwin 26.11.2026: Fertig-Signal zu laut (vorher 0.20)
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
       o.start(t); o.stop(t + 0.6);
     });
@@ -22695,7 +22698,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       o.type = 'sine'; o.frequency.value = freq;
       var t = now + 0.55;
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.10, t + 0.12);
+      g.gain.linearRampToValueAtTime(0.04, t + 0.12); // vorher 0.10
       g.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
       o.start(t); o.stop(t + 1.85);
     });
