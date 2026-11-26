@@ -18802,7 +18802,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261126-161230';
+  var DL_BUILD = '20261126-163714';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -24023,6 +24023,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (_cm(s.mix)) out.mix = _cm(s.mix);
     if (s.outro && s.outro.name) out.outro = { name: String(s.outro.name).slice(0, 160) };
     if (+s.updated > 0) out.updated = +s.updated;   // für den Abgleich mit dem Ordner
+    if (s.pub === true) out.pub = true;              // als Cover auf YouTube veröffentlicht (26.11.2026)
     return out;
   }
   // Alter Behelf aus mscz2song.py (28.10.2026): ein 2/4-Takt stand als 4/4-Takt im
@@ -25145,9 +25146,18 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   }
   function _sbRenderTop() {
     var sel = document.getElementById('sbSongSel');
-    sel.innerHTML = _sbData.songs.map(function(s) {
-      return '<option value="' + _sbEsc(s.id) + '"' + (s === _sbSong ? ' selected' : '') + '>' + _sbEsc(s.title || 'Untitled song') + '</option>';
-    }).join('');
+    // Songliste in zwei Gruppen (Erwin, 26.11.2026: „alle vorhandenen Songs mit Kennzeichnung ob schon
+    // veröffentlicht oder nicht“): ✓ auf YouTube veröffentlicht, ○ noch nicht; je Gruppe nach Titel
+    var _opt = function(s) {
+      return '<option value="' + _sbEsc(s.id) + '"' + (s === _sbSong ? ' selected' : '') + '>' + (s.pub ? '✓ ' : '○ ') + _sbEsc(s.title || 'Untitled song') + '</option>';
+    };
+    var _byT = function(a, b) { return String(a.title || '').localeCompare(String(b.title || ''), undefined, { sensitivity: 'base' }); };
+    var _pubS = _sbData.songs.filter(function(s) { return s.pub; }).sort(_byT);
+    var _opS = _sbData.songs.filter(function(s) { return !s.pub; }).sort(_byT);
+    sel.innerHTML = (_opS.length ? '<optgroup label="○ Not published yet">' + _opS.map(_opt).join('') + '</optgroup>' : '') +
+                    (_pubS.length ? '<optgroup label="✓ Published on YouTube">' + _pubS.map(_opt).join('') + '</optgroup>' : '');
+    var _pb = document.querySelector('#sbMenu [data-song="pub"]');
+    if (_pb) _pb.textContent = _sbSong.pub ? 'Mark as not published' : 'Mark as published on YouTube';
     var ti = document.getElementById('sbTitle');
     if (document.activeElement !== ti) ti.value = _sbSong.title;
     var bp = document.getElementById('sbBpm');
@@ -25185,9 +25195,14 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       _sbSwitch(ns.id);
       var ti = document.getElementById('sbTitle');
       ti.focus(); ti.select();
+    } else if (act === 'pub') {
+      if (_sbSong.pub) delete _sbSong.pub; else _sbSong.pub = true;
+      _sbSave();
+      _sbRenderTop();
     } else if (act === 'dupsong') {
       var ds = _sbClone(_sbSong);
       ds.id = _sbId(); ds.title = (ds.title + ' (copy)').slice(0, 80);
+      delete ds.pub;
       _sbData.songs.push(ds);
       _sbSwitch(ds.id);
     } else if (act === 'delsong') {
@@ -28052,6 +28067,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
           '<details class="sb-menu" id="sbMenu"><summary class="sb-btn">Song ▾</summary><div class="sb-menu-list">' +
             '<button type="button" data-song="new">New song</button>' +
             '<button type="button" data-song="dupsong">Duplicate song</button>' +
+            '<button type="button" data-song="pub">Mark as published on YouTube</button>' +
             '<button type="button" data-song="import">Import from file…</button>' +
             '<button type="button" data-song="export">Export to file</button>' +
             '<button type="button" data-song="pdf">Sheet music as PDF…</button>' +
