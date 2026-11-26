@@ -18799,7 +18799,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // lädt sich neu, sobald dort ein anderer Stempel steht — aber nur,
   // wenn gerade nicht gespielt wird. Damit muss DL_VERSION im
   // Systeme.io-Einbettungscode nie wieder angefasst werden.
-  var DL_BUILD = '20261126-152011';
+  var DL_BUILD = '20261126-152151';
   (function checkForUpdate() {
     function look() {
       if (typeof playing !== 'undefined' && playing) return;   // nicht mitten im Üben
@@ -23338,6 +23338,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Nach jeder dritten Noten-Lektion beim Klick auf „Weiter“: zwei Takte hören, die richtige von zwei
   // Notenzeilen wählen. Grundlage ist die gerade gespielte Lese-Übung; nach einem Treffer kommt die schwere
   // Fassung („nur der zweite Takt anders“). Ändert den Kurs nicht. Bausteine aus dem Level-Test (_ltQuiz…).
+  // 26.11.2026 (Erwin: „mach bei den Quizzes zwei Fragen hintereinander. und lass sie doppelt so oft kommen“):
+  // statt nach jeder dritten jetzt nach zwei von drei Noten-Lektionen, jedes Mal zwei Fragen (1/2, 2/2);
+  // die zweite baut auf einer Nachbar-Übung auf, damit sie sich von der ersten unterscheidet.
   // ============================================================
   var _CQ_KEY = _nsKey('drumlion_v1_cquiz');
   var _cqState = (function() {
@@ -23349,14 +23352,16 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   function _cqCount(lesson) { if (lesson && lesson.cat === 'notes' && !_rampMode) { _cqState.n++; _cqSave(); } }
   function _cqDue() {
     var l = _shownLesson;
-    return !!(l && l.cat === 'notes' && !_rampMode && !_freeMode && _cqState.n > 0 && _cqState.n % 3 === 0 && _cqShownFor !== _cqState.n);
+    return !!(l && l.cat === 'notes' && !_rampMode && !_freeMode && _cqState.n > 0 && _cqState.n % 3 !== 1 && _cqShownFor !== _cqState.n);
   }
   function _cqNum(e) { return parseInt((String(e.name).match(/\d+/) || ['0'])[0], 10); }
-  function _cqBuild(ex) {
+  function _cqBuild(ex, shift) {
     var pool = _ltQuizList(), n = pool.length;
     if (n < 4 || !ex) return null;
     var idx = pool.indexOf(ex);
     if (idx < 0) { var num = _cqNum(ex); idx = 0; pool.forEach(function(p, i) { if (_cqNum(p) <= num) idx = i; }); }
+    if (shift) idx = idx + shift >= 0 ? idx + shift : idx - shift;
+    idx = Math.max(0, Math.min(n - 1, idx));
     var hard = _cqState.ok, X = pool[idx], sx = _ltSig(X.beats), best = null;
     pool.forEach(function(Y, j) {
       if (Y === X) return;
@@ -23419,8 +23424,9 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
   // Seit 25.11.2026 kein Popup mehr (Erwin: „sie sind Teil der Note-Reading-Säule“): das Quiz erscheint im Player
   // selbst als eigene Lektion, an der Stelle des Notenbilds, mit Säulen-Kopfzeile und „Weiter“ wie jede Lektion.
   var _cqInline = null;
-  function _cqOpen(done) {
-    var lesson = _shownLesson, Q = lesson && _cqBuild(lesson.ex);
+  function _cqOpen(done, left) {
+    left = left || 2;
+    var lesson = _shownLesson, Q = lesson && _cqBuild(lesson.ex, left === 1 ? -1 : 0);
     _cqShownFor = _cqState.n;
     var inner = document.querySelector('.dg-inner'), grp = inner && inner.querySelector('.notation-group');
     if (!Q || !inner || !grp) { done(); return; }
@@ -23434,7 +23440,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     if (Q.hard) add(card, 'div', 'lt-kick', _t('listen closely'));
     add(card, 'h3', 'cq-h', _t('Which line do you hear?'));
     var head = add(card, 'div', 'cq-head');
-    add(head, 'span', 'cq-bpm', Q.bpm + ' BPM');
+    add(head, 'span', 'cq-bpm', (3 - left) + '/2 · ' + Q.bpm + ' BPM');
     var play = add(head, 'button', 'lt-again', '▶ ' + _t('Play'));
     play.type = 'button';
     var wrap = add(card, 'div', 'cq-wrap'), box = add(wrap, 'div', 'lt-quiz'), cnt = add(wrap, 'div', 'lt-count');
@@ -23446,7 +23452,7 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
     // Player in den Quiz-Zustand: Kopfzeile bleibt (Säule), Titel wird „Lese-Quiz“, Übungs-Bedienung ausgeblendet
     inner.classList.add('cq-mode');
     if (nameEl) nameEl.textContent = _t('Reading quiz');
-    var close = function() {
+    var close = function(more) {
       if (closed) return;
       closed = true;
       _cqStop();
@@ -23454,9 +23460,10 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       card.remove();
       inner.classList.remove('cq-mode');
       if (nameEl) nameEl.textContent = keepName;
-      done();
+      if (more === true && left > 1) _cqOpen(done, left - 1);
+      else done();
     };
-    var toggle = function() { if (answered) { close(); return; } if (_cq) _cqStop(); else _cqPlay(Q.right, Q.bpm, cnt, play); };
+    var toggle = function() { if (answered) { close(true); return; } if (_cq) _cqStop(); else _cqPlay(Q.right, Q.bpm, cnt, play); };
     _cqInline = { toggle: toggle, close: close };
     var opts = [Q.right, Q.wrong];
     if (Math.random() < 0.5) opts.reverse();
@@ -23492,8 +23499,8 @@ body.dl-hdr #dgStatsBtn, body.dl-hdr #dgSettingsBtn { display: none; }
       });
     });
     play.addEventListener('click', function() { if (_cq) _cqStop(); else _cqPlay(Q.right, Q.bpm, cnt, play); });
-    skip.addEventListener('click', close);
-    next.addEventListener('click', close);
+    skip.addEventListener('click', function() { close(false); });
+    next.addEventListener('click', function() { close(true); });
     setTimeout(function() { if (!answered && !closed) _cqPlay(Q.right, Q.bpm, cnt, play); }, 900);
   }
 
